@@ -1,8 +1,10 @@
 """AWS Braket backends."""
+import datetime
 from abc import ABC
 from typing import Iterable, Union, List
 
-from qiskit.providers import BackendV2, QubitProperties
+from braket.devices import Device
+from qiskit.providers import BackendV2, QubitProperties, Provider
 from qiskit.transpiler import Target
 
 
@@ -66,13 +68,30 @@ class AWSBraketLocalBackend(AWSBraketBackend):
 class AWSBraketDeviceBackend(AWSBraketBackend):
     """AWSBraketBackend."""
 
-    def __init__(self, **fields):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        device: Device,
+        provider: Provider = None,
+        name: str = None,
+        description: str = None,
+        online_date: datetime.datetime = None,
+        backend_version: str = None,
+        **fields
+    ):
         """AWSBraketBackend for execution circuits against AWS Braket devices.
 
         Args:
             **fields:
         """
-        super().__init__(**fields)
+        super().__init__(
+            provider=provider,
+            name=name,
+            description=description,
+            online_date=online_date,
+            backend_version=backend_version,
+            **fields
+        )
+        self._device = device
         self._target = Target()
 
     @property
