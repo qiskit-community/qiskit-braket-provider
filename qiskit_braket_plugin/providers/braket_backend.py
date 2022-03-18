@@ -81,7 +81,13 @@ class AWSBraketDeviceBackend(AWSBraketBackend):
         """AWSBraketBackend for execution circuits against AWS Braket devices.
 
         Args:
-            **fields:
+            device: Braket device class
+            provider: Qiskit provider for this backend
+            name: name of backend
+            description: description of backend
+            online_date: online date
+            backend_version: backend version
+            **fields: other arguments
         """
         super().__init__(
             provider=provider,

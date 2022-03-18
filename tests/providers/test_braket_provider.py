@@ -15,6 +15,9 @@ from qiskit_braket_plugin.providers.braket_backend import AWSBraketBackend
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
 SV1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
 TN1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/tn1"
+RIGETTI_REGION = "us-west-1"
+SIMULATOR_REGION = "us-west-1"
+
 
 MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON_1 = {
     "braketSchemaHeader": {
@@ -61,7 +64,6 @@ MOCK_GATE_MODEL_QPU_1 = {
     "deviceArn": RIGETTI_ARN,
     "deviceCapabilities": MOCK_GATE_MODEL_QPU_CAPABILITIES_1.json(),
 }
-RIGETTI_REGION = "us-west-1"
 
 MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON = {
     "braketSchemaHeader": {
@@ -93,6 +95,24 @@ MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES = GateModelSimulatorDeviceCapabilities.pa
     MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON
 )
 
+MOCK_GATE_MODEL_SIMULATOR_SV = {
+    "deviceName": "sv1",
+    "deviceType": "SIMULATOR",
+    "providerName": "provider1",
+    "deviceStatus": "ONLINE",
+    "deviceArn": SV1_ARN,
+    "deviceCapabilities": MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES.json(),
+}
+
+MOCK_GATE_MODEL_SIMULATOR_TN = {
+    "deviceName": "tn1",
+    "deviceType": "SIMULATOR",
+    "providerName": "provider1",
+    "deviceStatus": "ONLINE",
+    "deviceArn": TN1_ARN,
+    "deviceCapabilities": MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES.json(),
+}
+
 
 class TestAWSBraketProvider(TestCase):
     """Tests AWSBraketProvider."""
@@ -100,10 +120,11 @@ class TestAWSBraketProvider(TestCase):
     def test_provider_backends(self):
         """Tests provider."""
         mock_session = Mock()
-        mock_session.get_device.return_value = MOCK_GATE_MODEL_QPU_1
-        mock_session.region = RIGETTI_REGION
-        mock_session.boto_session.region_name = RIGETTI_REGION
-        mock_session.search_devices.return_value = [MOCK_GATE_MODEL_QPU_1]
+        simulators = [MOCK_GATE_MODEL_SIMULATOR_SV, MOCK_GATE_MODEL_SIMULATOR_TN]
+        mock_session.get_device.side_effect = simulators
+        mock_session.region = SIMULATOR_REGION
+        mock_session.boto_session.region_name = SIMULATOR_REGION
+        mock_session.search_devices.return_value = simulators
 
         provider = AWSBraketProvider()
         backends = provider.backends(
