@@ -11,6 +11,9 @@ from qiskit.transpiler import Target
 class AWSBraketBackend(BackendV2, ABC):
     """AWSBraketBackend."""
 
+    def __repr__(self):
+        return f"AWSBraketBackend[{self.name}]"
+
 
 class AWSBraketLocalBackend(AWSBraketBackend):
     """AWSBraketLocalBackend."""
@@ -76,7 +79,7 @@ class AWSBraketDeviceBackend(AWSBraketBackend):
         description: str = None,
         online_date: datetime.datetime = None,
         backend_version: str = None,
-        **fields
+        **fields,
     ):
         """AWSBraketBackend for execution circuits against AWS Braket devices.
 
@@ -95,7 +98,7 @@ class AWSBraketDeviceBackend(AWSBraketBackend):
             description=description,
             online_date=online_date,
             backend_version=backend_version,
-            **fields
+            **fields,
         )
         self._device = device
         self._target = Target()

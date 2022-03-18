@@ -1,5 +1,5 @@
 """Tests for AWS Braket provider."""
-
+import unittest
 from unittest import TestCase
 from unittest.mock import Mock
 
@@ -133,5 +133,22 @@ class TestAWSBraketProvider(TestCase):
 
         self.assertTrue(len(backends) > 0)
         for backend in backends:
+            with self.subTest(f"{backend.name}"):
+                self.assertIsInstance(backend, AWSBraketBackend)
+
+    @unittest.skip("Call to external service")
+    def test_real_devices(self):
+        """Tests real devices."""
+        provider = AWSBraketProvider()
+        backends = provider.backends()
+        self.assertTrue(len(backends) > 0)
+        for backend in backends:
+            with self.subTest(f"{backend.name}"):
+                self.assertIsInstance(backend, AWSBraketBackend)
+
+        online_simulators_backends = provider.backends(
+            statuses=["ONLINE"], types=["SIMULATOR"]
+        )
+        for backend in online_simulators_backends:
             with self.subTest(f"{backend.name}"):
                 self.assertIsInstance(backend, AWSBraketBackend)
