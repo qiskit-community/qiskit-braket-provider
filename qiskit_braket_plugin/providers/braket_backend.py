@@ -5,6 +5,7 @@ import logging
 from abc import ABC
 
 from braket.devices import LocalSimulator
+from qiskit import QuantumCircuit
 
 from .braket_job import AWSBraketJob
 from typing import Iterable, Union, List
@@ -15,7 +16,7 @@ from qiskit.providers import BackendV2, QubitProperties
 from qiskit.qobj import QasmQobj
 from qiskit.transpiler import Target
 
-from .transpilation import convert_qasm_qobj
+from .transpilation import convert_circuit
 
 logger = logging.getLogger(__name__)
 
@@ -83,10 +84,13 @@ class AWSBraketLocalBackend(AWSBraketBackend):
     def control_channel(self, qubits: Iterable[int]):
         pass
 
-    def run(self, qobj: QasmQobj, **options):
+    def run(self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options):
         # If we get here, then we can continue with running, else ValueError!
-        circuits: List[Circuit] = list(convert_qasm_qobj(qobj))
-        shots = qobj.config.shots
+
+        circuits: List[Circuit] = list(convert_circuit([run_input]))
+
+        #TODO: change
+        shots = 1024
 
         tasks = []
         try:
@@ -108,10 +112,11 @@ class AWSBraketLocalBackend(AWSBraketBackend):
             raise ex
 
         job = AWSBraketJob(
-            job_id=qobj.qobj_id,
-            qobj=qobj,
+            # TODO: use correct job_id
+            job_id="TODO",
             tasks=tasks,
-            backend=self._aws_device
+            backend=self._aws_device,
+            circuit=circuit
         )
         return job
 

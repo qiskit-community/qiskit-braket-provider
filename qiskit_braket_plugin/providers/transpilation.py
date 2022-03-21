@@ -1,5 +1,3 @@
-# Copyright 2020 Carsten Blank
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,11 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 import braket.circuits.gates as gates
 import numpy
 from braket.circuits import Instruction, Circuit, result_types, Gate
+from qiskit import QuantumCircuit
 from qiskit.qobj import QasmQobj, QasmQobjExperiment, QasmQobjInstruction
 
 logger = logging.getLogger(__name__)
@@ -59,11 +58,11 @@ logger = logging.getLogger(__name__)
 # First element is executed first!
 _qiskit_2_braket_conversion = {
     "u1": lambda lam: [gates.Rz(lam)],
-    "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(numpy.pi/2), gates.Rz(phi)],
+    "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(numpy.pi / 2), gates.Rz(phi)],
     "u3": lambda theta, phi, lam: [gates.Rz(lam),
-                                   gates.Rx(numpy.pi/2),
+                                   gates.Rx(numpy.pi / 2),
                                    gates.Rz(theta),
-                                   gates.Rx(-numpy.pi/2),
+                                   gates.Rx(-numpy.pi / 2),
                                    gates.Rz(phi)],
     "cx": lambda: [gates.CNot()],
     "x": lambda: [gates.X()],
@@ -97,30 +96,41 @@ _qiskit_2_braket_conversion = {
 }
 
 
-def convert_experiment(experiment: QasmQobjExperiment) -> Circuit:
+def convert_experiment(circuit) -> Circuit:
     qc = Circuit()
-
-    qasm_obj_instruction: QasmQobjInstruction
-    for qasm_obj_instruction in experiment.instructions:
-        name = qasm_obj_instruction.name
+    print(circuit)
+    for qiskitGates in circuit.data:
+        print("--N-")
+        print(qiskitGates[0].name)
+        name = qiskitGates[0].name
         if name == 'measure':
-            qc.add_result_type(result_types.Probability(qasm_obj_instruction.qubits))
+            print("--m--")
+            print([qiskitGates[1][0].index])
+            qc.add_result_type(result_types.Probability([qiskitGates[1][0].index]))
         elif name == 'barrier':
             # This does not exist
             pass
         else:
             params = []
-            if hasattr(qasm_obj_instruction, 'params'):
-                params = qasm_obj_instruction.params
+            if hasattr(qiskitGates[0], 'params'):
+                print("--P--")
+                print(qiskitGates[0].params)
+                params = qiskitGates[0].params
             gates: List[Gate] = _qiskit_2_braket_conversion[name](*params)
             for gate in gates:
-                instruction = Instruction(operator=gate, target=qasm_obj_instruction.qubits)
+                print("operator")
+                print(gate)
+                print("qbit")
+                print([i.index for i in qiskitGates[1]])
+                instruction = Instruction(operator=gate, target=[i.index for i in qiskitGates[1]])
                 qc += instruction
-
+        print()
+        print()
+        print()
+    print(qc)
     return qc
 
 
-def convert_qasm_qobj(qobj: QasmQobj) -> Iterable[Circuit]:
-    experiment: QasmQobjExperiment
-    for experiment in qobj.experiments:
+def convert_circuit(circuit: Union[QuantumCircuit, List[QuantumCircuit]]) -> Iterable[Circuit]:
+    for experiment in circuit:
         yield convert_experiment(experiment)

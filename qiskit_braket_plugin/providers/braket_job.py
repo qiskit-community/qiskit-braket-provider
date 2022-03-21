@@ -35,27 +35,24 @@ def map_measurements(counts: Counter, qasm_experiment: QasmQobjExperiment) -> Di
 class AWSBraketJob(JobV1):
     """AWSBraketJob."""
 
-
-    _qobj: QasmQobj
-    _job_id: str
     _tasks: List[AwsQuantumTask]
     _backend: 'awsbackend.AWSBackend'
 
-    def __init__(self, job_id: str, qobj: QasmQobj, backend: 'awsbackend.AWSBackend', tasks: List[AwsQuantumTask],
+    def __init__(self, job_id: str, backend, tasks: List[AwsQuantumTask], circuit,
                  extra_data: Optional[dict] = None, s3_bucket: str = None) -> None:
         super().__init__(backend, job_id)
         self._aws_device = backend
+        self._circuit = circuit
         self._tasks = tasks
         self._extra_data = extra_data
         self._date_of_creation = datetime.now()
-        self._qobj = qobj
         self._job_id = job_id
         self._s3_bucket = s3_bucket
         self.backend = backend
 
     @property
     def shots(self) -> int:
-        return self._qobj.config.shots
+        return 1024
 
     def submit(self):
         pass
@@ -66,16 +63,21 @@ class AWSBraketJob(JobV1):
         experiment_results: List[ExperimentResult] = []
         task: AwsQuantumTask
         qasm_experiment: QasmQobjExperiment
-        for task, qasm_experiment in zip(self._tasks, self._qobj.experiments):
+        result: GateModelQuantumTaskResult = self._tasks[0].result()
+        print("---RR----")
+        print(result.measurement_counts)
+        for task in self._tasks:
             result: GateModelQuantumTaskResult = task.result()
-            counts: Dict[str, int] = map_measurements(result.measurement_counts, qasm_experiment)
+            print("---RR2----")
+            print(result.measurement_counts)
+            #counts: Dict[str, int] = map_measurements(result.measurement_counts, qasm_experiment)
             data = ExperimentResultData(
-                counts=dict(counts)
+                counts=dict(result.measurement_counts)
             )
             experiment_result = ExperimentResult(
                 shots=self.shots,
                 success=task.state() == 'COMPLETED',
-                header=qasm_experiment.header,
+                header="header",
                 status=task.state(),
                 data=data
             )
@@ -84,7 +86,7 @@ class AWSBraketJob(JobV1):
             backend_name=self._backend,
             # TODO fill
             backend_version=1,
-            qobj_id=self._qobj.qobj_id,
+            qobj_id=1,
             job_id=self._job_id,
             success=self.status(),
             results=experiment_results
