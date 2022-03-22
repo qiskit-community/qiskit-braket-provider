@@ -1,7 +1,7 @@
 """AWS Braket backends."""
 import datetime
 from abc import ABC
-from typing import Iterable, Union, List
+from typing import Union, List
 
 from braket.devices import Device
 from qiskit.providers import BackendV2, QubitProperties, Provider
@@ -50,18 +50,6 @@ class AWSBraketLocalBackend(AWSBraketBackend):
     def qubit_properties(
         self, qubit: Union[int, List[int]]
     ) -> Union[QubitProperties, List[QubitProperties]]:
-        pass
-
-    def drive_channel(self, qubit: int):
-        pass
-
-    def measure_channel(self, qubit: int):
-        pass
-
-    def acquire_channel(self, qubit: int):
-        pass
-
-    def control_channel(self, qubits: Iterable[int]):
         pass
 
     def run(self, run_input, **options):
@@ -126,18 +114,6 @@ class AWSBraketDeviceBackend(AWSBraketBackend):
     def qubit_properties(
         self, qubit: Union[int, List[int]]
     ) -> Union[QubitProperties, List[QubitProperties]]:
-        pass
-
-    def drive_channel(self, qubit: int):
-        pass
-
-    def measure_channel(self, qubit: int):
-        pass
-
-    def acquire_channel(self, qubit: int):
-        pass
-
-    def control_channel(self, qubits: Iterable[int]):
         pass
 
     def run(self, run_input, **options):

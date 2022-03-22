@@ -1,27 +1,38 @@
-from typing import Union
+"""Util function for provider."""
+from typing import Dict, Tuple, Union, Optional
 
 from braket.aws import AwsDevice
-from braket.device_schema import JaqcdDeviceActionProperties, GateModelQpuParadigmProperties, DeviceActionType
+from braket.device_schema import (
+    JaqcdDeviceActionProperties,
+    GateModelQpuParadigmProperties,
+    DeviceActionType,
+)
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from qiskit.circuit import Instruction
-from qiskit.transpiler import Target
+from qiskit.circuit.library import HGate
+from qiskit.transpiler import Target, InstructionProperties
 
 from qiskit_braket_plugin.exception import QiskitBraketException
 
 
-def _op_to_instruction(op: str) -> Instruction:
+def _op_to_instruction(operation: str) -> Instruction:
     """Converts Braket operation to Qiskit Instruction.
 
     Args:
-        op: operation
+        operation: operation
 
     Returns:
         Circuit Instruction
     """
-    pass
+    # TODO: switch to converter  # pylint: disable=fixme
+    op_to_gate_mapping = {"h": HGate()}
+    operation = operation.lower()
+    if operation not in op_to_gate_mapping:
+        raise QiskitBraketException(f"Operation {operation} is not supported yet.")
+    return op_to_gate_mapping[operation]
 
 
 def aws_device_to_target(device: AwsDevice) -> Target:
@@ -37,17 +48,23 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     target = Target(description=f"Target for AWS Device: {device.name}")
     properties = device.properties
     # gate model devices
-    if isinstance(properties, IonqDeviceCapabilities) or \
-            isinstance(properties, RigettiDeviceCapabilities) or \
-            isinstance(properties, OqcDeviceCapabilities):
-        action_properties: JaqcdDeviceActionProperties = properties.action.get(DeviceActionType.JAQCD)
+    if isinstance(
+        properties,
+        (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
+    ):
+        action_properties: JaqcdDeviceActionProperties = properties.action.get(
+            DeviceActionType.JAQCD
+        )
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
         connectivity = paradigm.connectivity
-        instructions = [_op_to_instruction(op)
-                        for op in action_properties.supportedOperations]
+        instructions = [
+            _op_to_instruction(op) for op in action_properties.supportedOperations
+        ]
 
         for instruction in instructions:
-            instruction_props = dict()
+            instruction_props: Dict[
+                Union[Tuple[int], Tuple[int, int]], Optional[InstructionProperties]
+            ] = {}
             # adding 1 qubit instructions
             if instruction.num_qubits == 1:
                 for i in range(paradigm.qubitCount):
@@ -67,14 +84,18 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                         for dst in connections:
                             instruction_props[(src, dst)] = None
             else:
-                raise QiskitBraketException(f"Instruction for {instruction.num_qubits}"
-                                            f" qubits are not supported.")
+                raise QiskitBraketException(
+                    f"Instruction for {instruction.num_qubits}"
+                    f" qubits are not supported."
+                )
             target.add_instruction(instruction, instruction_props)
     # annealing devices
     elif isinstance(properties, DwaveDeviceCapabilities):
         raise NotImplementedError("Dwave devices are not supported yet.")
     else:
-        raise QiskitBraketException(f"Cannot convert to target. "
-                                    f"{properties.__class__} device capabilities are not supported yet.")
+        raise QiskitBraketException(
+            f"Cannot convert to target. "
+            f"{properties.__class__} device capabilities are not supported yet."
+        )
 
     return target
