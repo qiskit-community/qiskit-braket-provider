@@ -6,26 +6,34 @@ from unittest.mock import Mock
 
 from qiskit.transpiler import Target
 
-from qiskit_braket_plugin.providers import AWSBraketDeviceBackend, AWSBraketLocalBackend
+from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_plugin.providers.utils import aws_device_to_target
-from tests.providers.test_braket_provider import MOCK_GATE_MODEL_QPU_CAPABILITIES_1
+from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
 
 class TestAWSBraketBackend(TestCase):
-    """Tests AWSBraketBackend."""
+    """Tests BraketBackend."""
 
     def test_device_backend(self):
         """Tests device backend."""
         device = Mock()
-        backend = AWSBraketDeviceBackend(device)
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        backend = AWSBraketBackend(device)
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
-        self.assertIsNone(backend.meas_map)
+        with self.assertRaises(NotImplementedError):
+            backend.drive_channel(0)
+        with self.assertRaises(NotImplementedError):
+            backend.acquire_channel(0)
+        with self.assertRaises(NotImplementedError):
+            backend.measure_channel(0)
+        with self.assertRaises(NotImplementedError):
+            backend.control_channel([0, 1])
 
     def test_local_backend(self):
         """Tests local backend."""
-        backend = AWSBraketLocalBackend()
+        backend = BraketLocalBackend()
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
@@ -38,7 +46,7 @@ class TestAWSBackendTarget(TestCase):
     def test_target(self):
         """Tests target."""
         mock_device = Mock()
-        mock_device.properties = MOCK_GATE_MODEL_QPU_CAPABILITIES_1
+        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
         target = aws_device_to_target(mock_device)
         self.assertEqual(target.num_qubits, 30)

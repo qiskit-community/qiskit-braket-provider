@@ -2,7 +2,7 @@
 
 from unittest import TestCase
 
-from qiskit_braket_plugin.providers import AWSBraketJob, AWSBraketLocalBackend
+from qiskit_braket_plugin.providers import AWSBraketJob, BraketLocalBackend
 
 
 class TestAWSBraketJob(TestCase):
@@ -10,7 +10,7 @@ class TestAWSBraketJob(TestCase):
 
     def test_job(self):
         """Tests job."""
-        job = AWSBraketJob(AWSBraketLocalBackend(), job_id="AwesomeId")
+        job = AWSBraketJob(BraketLocalBackend(), job_id="AwesomeId")
         self.assertTrue(job)
         self.assertIsNone(job.result())
         self.assertIsNone(job.status())
