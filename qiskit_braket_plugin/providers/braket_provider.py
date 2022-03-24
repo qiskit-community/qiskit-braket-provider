@@ -1,9 +1,10 @@
 """AWS Braket provider."""
 
 from braket.aws import AwsDevice
+from braket.device_schema.dwave import DwaveDeviceCapabilities
 from qiskit.providers import ProviderV1
 
-from .braket_backend import AWSBraketDeviceBackend
+from .braket_backend import AWSBraketBackend
 
 
 class AWSBraketProvider(ProviderV1):
@@ -12,10 +13,15 @@ class AWSBraketProvider(ProviderV1):
     def backends(self, name=None, **kwargs):
         names = [name] if name else None
         devices = AwsDevice.get_devices(names=names, **kwargs)
+        # filter by supported devices
+        # gate models are only supported
+        supported_devices = [
+            d for d in devices if not isinstance(d.properties, DwaveDeviceCapabilities)
+        ]
         backends = []
-        for device in devices:
+        for device in supported_devices:
             backends.append(
-                AWSBraketDeviceBackend(
+                AWSBraketBackend(
                     device=device,
                     provider=self,
                     name=device.name,
