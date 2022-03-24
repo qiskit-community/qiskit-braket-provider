@@ -4,7 +4,6 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from braket.aws import AwsDeviceType
-
 from qiskit_braket_plugin.providers import AWSBraketProvider
 from qiskit_braket_plugin.providers.braket_backend import (
     BraketBackend,
