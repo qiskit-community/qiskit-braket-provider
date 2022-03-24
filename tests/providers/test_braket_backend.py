@@ -2,6 +2,7 @@
 
 
 from unittest import TestCase
+from unittest.mock import Mock
 
 from qiskit.transpiler import Target
 
@@ -13,7 +14,8 @@ class TestAWSBraketBackend(TestCase):
 
     def test_device_backend(self):
         """Tests device backend."""
-        backend = AWSBraketDeviceBackend()
+        device = Mock()
+        backend = AWSBraketDeviceBackend(device)
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
