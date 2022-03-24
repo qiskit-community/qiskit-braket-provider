@@ -71,7 +71,7 @@ class BraketLocalBackend(BraketBackend):
 
 
 class AWSBraketBackend(BraketBackend):
-    """BraketBackend."""
+    """AWSBraketBackend."""
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -83,7 +83,7 @@ class AWSBraketBackend(BraketBackend):
         backend_version: str = None,
         **fields,
     ):
-        """BraketBackend for execution circuits against AWS Braket devices.
+        """AWSBraketBackend for execution circuits against AWS Braket devices.
 
         Args:
             device: Braket device class
