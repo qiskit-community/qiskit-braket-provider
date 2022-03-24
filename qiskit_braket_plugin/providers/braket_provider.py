@@ -9,4 +9,4 @@ class AWSBraketProvider(ProviderV1):
 
     def backends(self, name=None, **kwargs):
         #TODO: Logic of what backend should be returned
-        return [AWSBraketLocalBackend(backend_name="default")]
+        return [AWSBraketLocalBackend(name="default")]

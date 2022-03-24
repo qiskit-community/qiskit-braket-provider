@@ -14,47 +14,12 @@ from typing import Iterable, List, Union
 
 import braket.circuits.gates as gates
 import numpy
-from braket.circuits import Instruction, Circuit, result_types, Gate
+from braket.circuits import Instruction, Circuit, result_types
 from qiskit import QuantumCircuit
-from qiskit.qobj import QasmQobj, QasmQobjExperiment, QasmQobjInstruction
 
 logger = logging.getLogger(__name__)
 
-# _qiskit_2_braket_conversion = {
-#     # "u1": U1Gate,
-#     # "u2": U2Gate,
-#     # "u3": U3Gate,
-#     "x": gates.X,
-#     "y": gates.Y,
-#     "z": gates.Z,
-#     "t": gates.T,
-#     "tdg": gates.Ti,
-#     "s": gates.S,
-#     "sdg": gates.Si,
-#     "sx": gates.V,
-#     "sxdg": gates.Vi,
-#     "swap": gates.Swap,
-#     "rx": gates.Rx,
-#     # "rxx": RXXGate,
-#     "ry": gates.Ry,
-#     "rz": gates.Rz,
-#     # "rzz": RZZGate,
-#     "id": gates.I,
-#     "h": gates.H,
-#     "cx": gates.CNot,
-#     "cy": gates.CY,
-#     "cz": gates.CZ,
-#     # "ch": CHGate,
-#     # "crx": CRXGate,
-#     # "cry": CRYGate,
-#     # "crz": CRZGate,
-#     # "cu1": CU1Gate,
-#     # "cu3": CU3Gate,
-#     "ccx": gates.CCNot,
-#     "cswap": gates.CSwap
-# }
-
-# TODO: look into a possibility to use device's native gates set (no the IBMQ natives!)
+# TODO: add Angled Gates
 # First element is executed first!
 _qiskit_2_braket_conversion = {
     "u1": lambda lam: [gates.Rz(lam)],
@@ -96,16 +61,11 @@ _qiskit_2_braket_conversion = {
 }
 
 
-def convert_experiment(circuit) -> Circuit:
+def convert_experiment(circuit: Union[QuantumCircuit, List[QuantumCircuit]]) -> Circuit:
     qc = Circuit()
-    print(circuit)
     for qiskitGates in circuit.data:
-        print("--N-")
-        print(qiskitGates[0].name)
         name = qiskitGates[0].name
         if name == 'measure':
-            print("--m--")
-            print([qiskitGates[1][0].index])
             qc.add_result_type(result_types.Probability([qiskitGates[1][0].index]))
         elif name == 'barrier':
             # This does not exist
@@ -113,24 +73,13 @@ def convert_experiment(circuit) -> Circuit:
         else:
             params = []
             if hasattr(qiskitGates[0], 'params'):
-                print("--P--")
-                print(qiskitGates[0].params)
                 params = qiskitGates[0].params
-            gates: List[Gate] = _qiskit_2_braket_conversion[name](*params)
-            for gate in gates:
-                print("operator")
-                print(gate)
-                print("qbit")
-                print([i.index for i in qiskitGates[1]])
+            for gate in _qiskit_2_braket_conversion[name](*params):
                 instruction = Instruction(operator=gate, target=[i.index for i in qiskitGates[1]])
                 qc += instruction
-        print()
-        print()
-        print()
-    print(qc)
     return qc
 
 
-def convert_circuit(circuit: Union[QuantumCircuit, List[QuantumCircuit]]) -> Iterable[Circuit]:
+def convert_circuit(circuit: List[QuantumCircuit]) -> Iterable[Circuit]:
     for experiment in circuit:
         yield convert_experiment(experiment)

@@ -5,15 +5,14 @@ import logging
 from abc import ABC
 
 from braket.devices import LocalSimulator
+from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
 
 from .braket_job import AWSBraketJob
 from typing import Iterable, Union, List
 
 from braket.circuits import Circuit
-from braket.aws import AwsDevice, AwsQuantumTask, AwsSession
 from qiskit.providers import BackendV2, QubitProperties
-from qiskit.qobj import QasmQobj
 from qiskit.transpiler import Target
 
 from .transpilation import convert_circuit
@@ -28,16 +27,20 @@ class AWSBraketBackend(BackendV2, ABC):
 class AWSBraketLocalBackend(AWSBraketBackend):
     """AWSBraketLocalBackend."""
 
-    def __init__(self, backend_name: str):
+    def __init__(
+            self,
+            name: str = None,
+            **fields
+            ):
         """AWSBraketLocalBackend for local execution of circuits.
 
         Args:
+            name: name of backend
             **fields:
         """
-        super().__init__(backend_name)
-        self.backend_name = backend_name
+        super().__init__(name)
+        self.backend_name = name
         self._target = Target()
-
         '''
         # device = LocalSimulator()                                                     #Local State Vector Simulator
         # device = LocalSimulator("default")                                            #Local State Vector Simulator
@@ -84,22 +87,18 @@ class AWSBraketLocalBackend(AWSBraketBackend):
     def control_channel(self, qubits: Iterable[int]):
         pass
 
-    def run(self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options):
-        # If we get here, then we can continue with running, else ValueError!
+    def run(self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options) -> AWSBraketJob:
 
-        circuits: List[Circuit] = list(convert_circuit([run_input]))
-
-        #TODO: change
-        shots = 1024
-
+        convert_input = [run_input] if type(run_input) is QuantumCircuit else [_input for _input in run_input]
+        circuits: List[Circuit] = list(convert_circuit(convert_input))
+        shots = options["shots"] if "shots" in options else 1024
         tasks = []
         try:
-
             for circuit in circuits:
-                task = self._aws_device.run(
-                    task_specification=circuit,
-                    shots=shots
-                )
+                task: Union[LocalQuantumTask] = self._aws_device.run(
+                                                    task_specification=circuit,
+                                                    shots=shots
+                                                )
                 tasks.append(task)
 
         except Exception as ex:
@@ -111,14 +110,12 @@ class AWSBraketLocalBackend(AWSBraketBackend):
                 logger.error(f'State of {task.id}: {task.state()}.')
             raise ex
 
-        job = AWSBraketJob(
-            # TODO: use correct job_id
-            job_id="TODO",
+        return AWSBraketJob(
+            job_id=tasks[0].id,  # TODO: if there is 2 circuits what job_id should be returned?
             tasks=tasks,
             backend=self._aws_device,
-            circuit=circuit
+            shots=shots
         )
-        return job
 
 
 class AWSBraketDeviceBackend(AWSBraketBackend):

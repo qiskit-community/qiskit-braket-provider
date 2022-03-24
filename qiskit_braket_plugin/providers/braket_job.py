@@ -2,106 +2,87 @@
 from datetime import datetime
 
 from braket.aws import AwsQuantumTask
+from braket.devices import LocalSimulator
 from braket.tasks import GateModelQuantumTaskResult
+from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import JobV1
 from qiskit.providers.models import BackendStatus
-from qiskit.qobj import QasmQobj, QasmQobjExperiment, QasmQobjInstruction
-from typing import List, Optional, Dict, Counter
+from typing import List, Optional, Union
 
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 
 
-def _reverse_and_map(bit_string: str, mapping: Dict[int, int]):
-    result_bit_string = len(mapping) * ['x']
-    for i, c in enumerate(bit_string):
-        if i in mapping:
-            result_bit_string[mapping[i]] = c
-    # qiskit is Little Endian, braket is Big Endian, so we don't do a re-reversed here
-    result = "".join(reversed(result_bit_string))
-    return result
-
-
-def map_measurements(counts: Counter, qasm_experiment: QasmQobjExperiment) -> Dict[str, int]:
-    # Need to get measure mapping
-    instructions: List[QasmQobjInstruction] = [i for i in qasm_experiment.instructions if i.name == 'measure']
-    mapping = dict([(q, m) for i in instructions for q, m in zip(i.qubits, i.memory)])
-    mapped_counts = [(_reverse_and_map(k, mapping), v) for k, v in counts.items()]
-    keys = set(k for k, _ in mapped_counts)
-    new_map = [(key, sum([v for k, v in mapped_counts if k == key])) for key in keys]
-    return dict(new_map)
-
-
 class AWSBraketJob(JobV1):
     """AWSBraketJob."""
 
-    _tasks: List[AwsQuantumTask]
-    _backend: 'awsbackend.AWSBackend'
+    def __init__(self,
+                 job_id: str,
+                 backend: LocalSimulator,
+                 tasks: Union[List[AwsQuantumTask], List[LocalQuantumTask]],
+                 **metadata: Optional[dict]):
+        """AWSBraketJob for local execution of circuits.
 
-    def __init__(self, job_id: str, backend, tasks: List[AwsQuantumTask], circuit,
-                 extra_data: Optional[dict] = None, s3_bucket: str = None) -> None:
-        super().__init__(backend, job_id)
-        self._aws_device = backend
-        self._circuit = circuit
-        self._tasks = tasks
-        self._extra_data = extra_data
-        self._date_of_creation = datetime.now()
+              Args:
+                  job_id: id of the job
+                  backend: Local simulator
+                  tasks: Executed tasks
+                  **metadata:
+              """
+        super().__init__(
+            backend=backend,
+            job_id=job_id,
+            metadata=metadata
+        )
         self._job_id = job_id
-        self._s3_bucket = s3_bucket
-        self.backend = backend
+        self._backend = backend
+        self._metadata = metadata
+        self._tasks = tasks
+        self._date_of_creation = datetime.now()
 
     @property
     def shots(self) -> int:
-        return 1024
+        return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
 
     def submit(self):
         pass
 
-    def result(self, **kwargs):
-        print(list(kwargs))
+    def result(self, **kwargs) -> Result:
 
         experiment_results: List[ExperimentResult] = []
         task: AwsQuantumTask
-        qasm_experiment: QasmQobjExperiment
-        result: GateModelQuantumTaskResult = self._tasks[0].result()
-        print("---RR----")
-        print(result.measurement_counts)
+
+        # For each task the results is get and filled into an ExperimentResult object
         for task in self._tasks:
             result: GateModelQuantumTaskResult = task.result()
-            print("---RR2----")
-            print(result.measurement_counts)
-            #counts: Dict[str, int] = map_measurements(result.measurement_counts, qasm_experiment)
             data = ExperimentResultData(
                 counts=dict(result.measurement_counts)
             )
             experiment_result = ExperimentResult(
                 shots=self.shots,
                 success=task.state() == 'COMPLETED',
-                header="header",
                 status=task.state(),
                 data=data
             )
             experiment_results.append(experiment_result)
-        qiskit_result = Result(
+
+        return Result(
             backend_name=self._backend,
-            # TODO fill
             backend_version=1,
-            qobj_id=1,
             job_id=self._job_id,
+            qobj_id=0,
             success=self.status(),
             results=experiment_results
         )
-        return qiskit_result
 
     def cancel(self):
         pass
 
     def status(self):
-        status: str = self._aws_device.status
+        status: str = self._backend.status
         backend_status: BackendStatus = BackendStatus(
-            backend_name=self._aws_device.name,
-            #TODO fill
-            backend_version=1,
+            backend_name=self._backend.name,
+            backend_version="",
             operational=False,
             pending_jobs=0,  # TODO
             status_msg=status
