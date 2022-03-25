@@ -42,6 +42,7 @@ class AWSBraketJob(JobV1):
 
     @property
     def shots(self) -> int:
+        # TODO: Shots can be retrieved from tasks metadata
         return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
 
     def submit(self):

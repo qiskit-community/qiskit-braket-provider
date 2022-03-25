@@ -12,7 +12,7 @@ from .braket_job import AWSBraketJob
 from typing import Iterable, Union, List
 
 from braket.circuits import Circuit
-from qiskit.providers import BackendV2, QubitProperties
+from qiskit.providers import BackendV2, QubitProperties, Options
 from qiskit.transpiler import Target
 
 from .transpilation import convert_circuit
@@ -31,14 +31,17 @@ class AWSBraketLocalBackend(AWSBraketBackend):
             self,
             name: str = None,
             **fields
-            ):
+    ):
         """AWSBraketLocalBackend for local execution of circuits.
 
         Args:
             name: name of backend
             **fields:
         """
-        super().__init__(name)
+        super().__init__(
+            name,
+            **fields
+        )
         self.backend_name = name
         self._target = Target()
         '''
@@ -49,6 +52,7 @@ class AWSBraketLocalBackend(AWSBraketBackend):
         # device = LocalSimulator(backend="braket_dm")                                  #Local Density Matrix Simulator
         '''
         self._aws_device = LocalSimulator(backend=self.backend_name)
+        self.status = self._aws_device.status
 
     @property
     def target(self):
@@ -56,36 +60,38 @@ class AWSBraketLocalBackend(AWSBraketBackend):
 
     @property
     def max_circuits(self):
-        pass
+        return None
 
     @classmethod
     def _default_options(cls):
-        pass
+        return Options()
 
     @property
     def dtm(self) -> float:
-        pass
+        raise NotImplementedError(
+            f"System time resolution of output signals is not supported by {self.name}."
+        )
 
     @property
     def meas_map(self) -> List[List[int]]:
-        pass
+        raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def qubit_properties(
             self, qubit: Union[int, List[int]]
     ) -> Union[QubitProperties, List[QubitProperties]]:
-        pass
+        raise NotImplementedError
 
     def drive_channel(self, qubit: int):
-        pass
+        raise NotImplementedError(f"Drive channel is not supported by {self.name}.")
 
     def measure_channel(self, qubit: int):
-        pass
+        raise NotImplementedError(f"Measure channel is not supported by {self.name}.")
 
     def acquire_channel(self, qubit: int):
-        pass
+        raise NotImplementedError(f"Acquire channel is not supported by {self.name}.")
 
     def control_channel(self, qubits: Iterable[int]):
-        pass
+        raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
     def run(self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options) -> AWSBraketJob:
 
@@ -96,9 +102,9 @@ class AWSBraketLocalBackend(AWSBraketBackend):
         try:
             for circuit in circuits:
                 task: Union[LocalQuantumTask] = self._aws_device.run(
-                                                    task_specification=circuit,
-                                                    shots=shots
-                                                )
+                    task_specification=circuit,
+                    shots=shots
+                )
                 tasks.append(task)
 
         except Exception as ex:
