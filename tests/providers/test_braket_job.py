@@ -11,12 +11,14 @@ class TestAWSBraketJob(TestCase):
 
     def test_job(self):
         """Tests job."""
+
         job = AWSBraketJob(
                 backend=AWSBraketLocalBackend(name="default"),
                 job_id="AwesomeId",
                 tasks=[MOCK_LOCAL_QUANTUM_TASK],
                 shots=100
                 )
+
         self.assertTrue(job)
 
         self.assertTrue(job.result().job_id, "AwesomeId")

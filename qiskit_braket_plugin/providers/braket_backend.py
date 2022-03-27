@@ -1,5 +1,6 @@
 """AWS Braket backends."""
 
+
 import logging
 
 from abc import ABC
@@ -20,12 +21,16 @@ from .transpilation import convert_circuit
 logger = logging.getLogger(__name__)
 
 
-class AWSBraketBackend(BackendV2, ABC):
-    """AWSBraketBackend."""
+class BraketBackend(BackendV2, ABC):
+    """BraketBackend."""
+
+    def __repr__(self):
+        return f"BraketBackend[{self.name}]"
 
 
-class AWSBraketLocalBackend(AWSBraketBackend):
-    """AWSBraketLocalBackend."""
+class BraketLocalBackend(BraketBackend):
+    """BraketLocalBackend."""
+
 
     def __init__(
             self,
@@ -93,6 +98,7 @@ class AWSBraketLocalBackend(AWSBraketBackend):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
+
     def run(self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options) -> AWSBraketJob:
 
         convert_input = [run_input] if type(run_input) is QuantumCircuit else [_input for _input in run_input]
@@ -124,17 +130,40 @@ class AWSBraketLocalBackend(AWSBraketBackend):
         )
 
 
-class AWSBraketDeviceBackend(AWSBraketBackend):
-    """AWSBraketBackend."""
+class AWSBraketBackend(BraketBackend):
+    """BraketBackend."""
 
-    def __init__(self, **fields):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        device: AwsDevice,
+        provider: Provider = None,
+        name: str = None,
+        description: str = None,
+        online_date: datetime.datetime = None,
+        backend_version: str = None,
+        **fields,
+    ):
         """AWSBraketBackend for execution circuits against AWS Braket devices.
 
         Args:
-            **fields:
+            device: Braket device class
+            provider: Qiskit provider for this backend
+            name: name of backend
+            description: description of backend
+            online_date: online date
+            backend_version: backend version
+            **fields: other arguments
         """
-        super().__init__(**fields)
-        self._target = Target()
+        super().__init__(
+            provider=provider,
+            name=name,
+            description=description,
+            online_date=online_date,
+            backend_version=backend_version,
+            **fields,
+        )
+        self._device = device
+        self._target = aws_device_to_target(device=device)
 
     @property
     def target(self):
@@ -142,19 +171,27 @@ class AWSBraketDeviceBackend(AWSBraketBackend):
 
     @property
     def max_circuits(self):
-        pass
+        return None
 
     @classmethod
     def _default_options(cls):
-        pass
+        return Options()
+
+    def qubit_properties(
+        self, qubit: Union[int, List[int]]
+    ) -> Union[QubitProperties, List[QubitProperties]]:
+        # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
+        raise NotImplementedError
 
     @property
     def dtm(self) -> float:
-        pass
+        raise NotImplementedError(
+            f"System time resolution of output signals is not supported by {self.name}."
+        )
 
     @property
     def meas_map(self) -> List[List[int]]:
-        pass
+        raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def qubit_properties(
             self, qubit: Union[int, List[int]]
@@ -162,16 +199,16 @@ class AWSBraketDeviceBackend(AWSBraketBackend):
         pass
 
     def drive_channel(self, qubit: int):
-        pass
+        raise NotImplementedError(f"Drive channel is not supported by {self.name}.")
 
     def measure_channel(self, qubit: int):
-        pass
+        raise NotImplementedError(f"Measure channel is not supported by {self.name}.")
 
     def acquire_channel(self, qubit: int):
-        pass
+        raise NotImplementedError(f"Acquire channel is not supported by {self.name}.")
 
     def control_channel(self, qubits: Iterable[int]):
-        pass
+        raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
     def run(self, run_input, **options):
         pass
