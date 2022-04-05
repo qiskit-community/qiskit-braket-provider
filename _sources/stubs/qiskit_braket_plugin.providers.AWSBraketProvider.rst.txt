@@ -1,0 +1,30 @@
+﻿qiskit\_braket\_plugin.providers.AWSBraketProvider
+==================================================
+
+.. currentmodule:: qiskit_braket_plugin.providers
+
+.. autoclass:: AWSBraketProvider
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AWSBraketProvider.__init__
+      ~AWSBraketProvider.backends
+      ~AWSBraketProvider.get_backend
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AWSBraketProvider.version
+   
+   

@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Quantum Prototype How-To &#8212; Qiskit-Braket plugin. 0.0.0
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Qiskit-Braket Plugin API References" href="../apidocs/index.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="Quantum-Prototype-How-To">
+<h1>Quantum Prototype How-To<a class="headerlink" href="#Quantum-Prototype-How-To" title="Permalink to this headline">¶</a></h1>
+<p>How-to guides take the user through the steps required to solve a real-world problem.</p>
+<p>They are recipes, directions to achieve a specific end.</p>
+<section id="How-to-write-good-how-to-guides">
+<h2>How to write good how-to guides<a class="headerlink" href="#How-to-write-good-how-to-guides" title="Permalink to this headline">¶</a></h2>
+<section id="Provide-a-series-of-steps">
+<h3>Provide a series of steps<a class="headerlink" href="#Provide-a-series-of-steps" title="Permalink to this headline">¶</a></h3>
+<p><strong>How-to guides must contain a list of steps, that need to be followed in order</strong> (just like tutorials to). You don’t have to start at the very beginning, just at a reasonable starting point. How-to guides should be reliable, but they don’t need to have the cast-iron repeatability of a tutorial.</p>
+</section>
+<section id="Focus-on-results">
+<h3>Focus on results<a class="headerlink" href="#Focus-on-results" title="Permalink to this headline">¶</a></h3>
+<p><strong>How-to guides must focus on achieving a practical goal.</strong> Anything else is a distraction. As in tutorials, detailed explanations are out of place here.</p>
+</section>
+<section id="Solve-a-particular-problem">
+<h3>Solve a particular problem<a class="headerlink" href="#Solve-a-particular-problem" title="Permalink to this headline">¶</a></h3>
+<p><strong>A how-to guide must address a specific question or problem:</strong> How do I …?</p>
+<p>This is one way in which how-to guides are distinct from tutorials: when it comes to a how-to guide, the reader can be assumed to know what they should achieve, but don’t yet know how - whereas in the tutorial, you are responsible for deciding what things the reader needs to know about.</p>
+</section>
+<section id="Don’t-explain-concepts">
+<h3>Don’t explain concepts<a class="headerlink" href="#Don’t-explain-concepts" title="Permalink to this headline">¶</a></h3>
+<p><strong>A how-to guide should not explain things.</strong> It’s not the place for discussions of that kind; they will simply get in the way of the action. If explanations are important, link to them.</p>
+</section>
+<section id="Allow-for-some-flexibility">
+<h3>Allow for some flexibility<a class="headerlink" href="#Allow-for-some-flexibility" title="Permalink to this headline">¶</a></h3>
+<p><strong>A how-to guide should allow for slightly different ways of doing the same thing.</strong> It needs just enough flexibility in it that the user can see how it will apply to slightly different examples from the one you describe, or understand how to adapt it to a slightly different system or configuration from the one you’re assuming. Don’t be so specific that the guide is useless for anything except the exact purpose you have in mind.</p>
+</section>
+<section id="Leave-things-out">
+<h3>Leave things out<a class="headerlink" href="#Leave-things-out" title="Permalink to this headline">¶</a></h3>
+<p><strong>Practical usability is more valuable than completeness.</strong> Tutorials need to be complete, end-to-end guides; how-to guides do not. They can start and end where it seems appropriate to you. They don’t need to mention everything that there is to mention either, just because it is related to the topic. A bloated how-to guide doesn’t help the user get speedily to their solution.</p>
+</section>
+<section id="Name-guides-well">
+<h3>Name guides well<a class="headerlink" href="#Name-guides-well" title="Permalink to this headline">¶</a></h3>
+<p><strong>The title of a how-to document should tell the user exactly what it does.</strong> How to create a class-based view is a good title. Creating a class-based view or worse, Class-based views, are not.</p>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Qiskit-Braket plugin.</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quantum Prototype How-To</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#How-to-write-good-how-to-guides">How to write good how-to guides</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">API References</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Next: <a href="../apidocs/index.html" title="next chapter">Qiskit-Braket Plugin API References</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/how_tos/example_how_to.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

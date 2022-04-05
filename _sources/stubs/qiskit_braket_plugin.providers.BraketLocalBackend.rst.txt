@@ -1,0 +1,49 @@
+﻿qiskit\_braket\_plugin.providers.BraketLocalBackend
+===================================================
+
+.. currentmodule:: qiskit_braket_plugin.providers
+
+.. autoclass:: BraketLocalBackend
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BraketLocalBackend.__init__
+      ~BraketLocalBackend.acquire_channel
+      ~BraketLocalBackend.control_channel
+      ~BraketLocalBackend.drive_channel
+      ~BraketLocalBackend.measure_channel
+      ~BraketLocalBackend.qubit_properties
+      ~BraketLocalBackend.run
+      ~BraketLocalBackend.set_options
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BraketLocalBackend.coupling_map
+      ~BraketLocalBackend.dt
+      ~BraketLocalBackend.dtm
+      ~BraketLocalBackend.instruction_durations
+      ~BraketLocalBackend.instruction_schedule_map
+      ~BraketLocalBackend.instructions
+      ~BraketLocalBackend.max_circuits
+      ~BraketLocalBackend.meas_map
+      ~BraketLocalBackend.num_qubits
+      ~BraketLocalBackend.operation_names
+      ~BraketLocalBackend.operations
+      ~BraketLocalBackend.options
+      ~BraketLocalBackend.provider
+      ~BraketLocalBackend.target
+      ~BraketLocalBackend.version
+   
+   
