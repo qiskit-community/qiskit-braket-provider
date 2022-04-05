@@ -71,7 +71,7 @@ class BraketLocalBackend(BraketBackend):
 
 
 class AWSBraketBackend(BraketBackend):
-    """BraketBackend."""
+    """AWSBraketBackend."""
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
