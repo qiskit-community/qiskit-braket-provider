@@ -125,7 +125,7 @@ class BraketLocalBackend(BraketBackend):
         return AWSBraketJob(
             job_id=tasks[0].id,  # TODO: if there is 2 circuits what job_id should be returned?
             tasks=tasks,
-            backend=self._aws_device,
+            backend=self,
             shots=shots
         )
 
