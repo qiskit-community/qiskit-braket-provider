@@ -16,7 +16,7 @@ class AWSBraketProvider(ProviderV1):
 
     def backends(self, name=None, **kwargs):
 
-        if(kwargs["local"]):
+        if kwargs.get("local"):
             return [AWSBraketLocalBackend(name="default")]
         names = [name] if name else None
         devices = AwsDevice.get_devices(names=names, **kwargs)
