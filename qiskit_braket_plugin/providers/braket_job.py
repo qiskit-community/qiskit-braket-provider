@@ -19,7 +19,7 @@ class AWSBraketJob(JobV1):
     def __init__(self,
                  job_id: str,
                  backend: LocalSimulator,
-                 tasks: Union[List[AwsQuantumTask], List[LocalQuantumTask]],
+                 tasks: Union[List[QuantumTask]],
                  **metadata: Optional[dict]):
         """AWSBraketJob for local execution of circuits.
 
