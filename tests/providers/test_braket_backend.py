@@ -33,7 +33,7 @@ class TestAWSBraketBackend(TestCase):
 
     def test_local_backend(self):
         """Tests local backend."""
-        backend = AWSBraketLocalBackend(name="default")
+        backend = BraketLocalBackend(name="default")
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
