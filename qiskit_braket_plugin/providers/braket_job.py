@@ -80,7 +80,7 @@ class AWSBraketJob(JobV1):
         pass
 
     def status(self):
-        status: str = self._backend.status
+        status: str = self._backend._aws_device.status
         backend_status: BackendStatus = BackendStatus(
             backend_name=self._backend.name,
             backend_version="",
