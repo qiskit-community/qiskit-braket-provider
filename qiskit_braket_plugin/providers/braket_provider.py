@@ -2,7 +2,7 @@
 
 
 from qiskit.providers import ProviderV1
-from .braket_backend import AWSBraketLocalBackend
+from .braket_backend import BraketLocalBackend
 
 from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
