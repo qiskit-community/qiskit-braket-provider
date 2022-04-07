@@ -2,9 +2,11 @@
 
 
 import logging
+import datetime
 
 from abc import ABC
 
+from braket.aws import AwsDevice
 from braket.devices import LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
@@ -13,10 +15,11 @@ from .braket_job import AWSBraketJob
 from typing import Iterable, Union, List
 
 from braket.circuits import Circuit
-from qiskit.providers import BackendV2, QubitProperties, Options
+from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 from qiskit.transpiler import Target
 
 from .transpilation import convert_circuit
+from .utils import aws_device_to_target
 
 logger = logging.getLogger(__name__)
 

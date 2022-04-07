@@ -2,7 +2,7 @@
 
 from unittest import TestCase
 
-from qiskit_braket_plugin.providers import AWSBraketJob, AWSBraketLocalBackend
+from qiskit_braket_plugin.providers import AWSBraketJob, BraketLocalBackend
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
 

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from braket.aws import AwsQuantumTask
 from braket.devices import LocalSimulator
-from braket.tasks import GateModelQuantumTaskResult
+from braket.tasks import GateModelQuantumTaskResult, QuantumTask
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import JobV1
 from qiskit.providers.models import BackendStatus
