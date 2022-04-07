@@ -13,7 +13,7 @@ class TestAWSBraketJob(TestCase):
         """Tests job."""
 
         job = AWSBraketJob(
-                backend=AWSBraketLocalBackend(name="default"),
+                backend=BraketLocalBackend(name="default"),
                 job_id="AwesomeId",
                 tasks=[MOCK_LOCAL_QUANTUM_TASK],
                 shots=100
