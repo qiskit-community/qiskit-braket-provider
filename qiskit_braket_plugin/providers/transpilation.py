@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 _qiskit_2_braket_conversion = {
     "u1": lambda lam: [gates.Rz(lam)],
     "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(numpy.pi / 2), gates.Rz(phi)],
-    "u3": lambda theta, phi, lam: [gates.Rz(lam),
-                                   gates.Rx(numpy.pi / 2),
-                                   gates.Rz(theta),
-                                   gates.Rx(-numpy.pi / 2),
-                                   gates.Rz(phi)],
+    "u3": lambda theta, phi, lam: [
+        gates.Rz(lam),
+        gates.Rx(numpy.pi / 2),
+        gates.Rz(theta),
+        gates.Rx(-numpy.pi / 2),
+        gates.Rz(phi),
+    ],
     "cx": lambda: [gates.CNot()],
     "x": lambda: [gates.X()],
     "y": lambda: [gates.Y()],
@@ -56,8 +58,7 @@ _qiskit_2_braket_conversion = {
     #     # "cu1": CU1Gate,
     #     # "cu3": CU3Gate,
     "ccx": lambda: [gates.CCNot()],
-    "cswap": lambda: [gates.CSwap()]
-
+    "cswap": lambda: [gates.CSwap()],
 }
 
 
@@ -65,17 +66,19 @@ def convert_experiment(circuit: Union[QuantumCircuit, List[QuantumCircuit]]) -> 
     qc = Circuit()
     for qiskitGates in circuit.data:
         name = qiskitGates[0].name
-        if name == 'measure':
+        if name == "measure":
             qc.add_result_type(result_types.Probability([qiskitGates[1][0].index]))
-        elif name == 'barrier':
+        elif name == "barrier":
             # This does not exist
             pass
         else:
             params = []
-            if hasattr(qiskitGates[0], 'params'):
+            if hasattr(qiskitGates[0], "params"):
                 params = qiskitGates[0].params
             for gate in _qiskit_2_braket_conversion[name](*params):
-                instruction = Instruction(operator=gate, target=[i.index for i in qiskitGates[1]])
+                instruction = Instruction(
+                    operator=gate, target=[i.index for i in qiskitGates[1]]
+                )
                 qc += instruction
     return qc
 

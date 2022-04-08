@@ -38,4 +38,3 @@ class AWSBraketProvider(ProviderV1):
                 )
             )
         return backends
-

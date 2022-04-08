@@ -4,4 +4,4 @@ qiskit-terra>=0.19.2
 amazon-braket-sdk>=1.18.0
 
 setuptools~=60.9.3
-numpy~=1.22.3
+numpy>=1.3

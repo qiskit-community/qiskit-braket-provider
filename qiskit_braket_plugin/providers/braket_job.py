@@ -16,24 +16,22 @@ from qiskit.result.models import ExperimentResult, ExperimentResultData
 class AWSBraketJob(JobV1):
     """AWSBraketJob."""
 
-    def __init__(self,
-                 job_id: str,
-                 backend: 'BraketBackend',
-                 tasks: Union[List[QuantumTask]],
-                 **metadata: Optional[dict]):
+    def __init__(
+        self,
+        job_id: str,
+        backend: "BraketBackend",
+        tasks: Union[List[QuantumTask]],
+        **metadata: Optional[dict]
+    ):
         """AWSBraketJob for local execution of circuits.
 
-              Args:
-                  job_id: id of the job
-                  backend: Local simulator
-                  tasks: Executed tasks
-                  **metadata:
-              """
-        super().__init__(
-            backend=backend,
-            job_id=job_id,
-            metadata=metadata
-        )
+        Args:
+            job_id: id of the job
+            backend: Local simulator
+            tasks: Executed tasks
+            **metadata:
+        """
+        super().__init__(backend=backend, job_id=job_id, metadata=metadata)
         self._job_id = job_id
         self._backend = backend
         self._metadata = metadata
@@ -43,7 +41,11 @@ class AWSBraketJob(JobV1):
     @property
     def shots(self) -> int:
         # TODO: Shots can be retrieved from tasks metadata
-        return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
+        return (
+            self.metadata["metadata"]["shots"]
+            if "shots" in self.metadata["metadata"]
+            else 0
+        )
 
     def submit(self):
         pass
@@ -56,14 +58,12 @@ class AWSBraketJob(JobV1):
         # For each task the results is get and filled into an ExperimentResult object
         for task in self._tasks:
             result: GateModelQuantumTaskResult = task.result()
-            data = ExperimentResultData(
-                counts=dict(result.measurement_counts)
-            )
+            data = ExperimentResultData(counts=dict(result.measurement_counts))
             experiment_result = ExperimentResult(
                 shots=self.shots,
-                success=task.state() == 'COMPLETED',
+                success=task.state() == "COMPLETED",
                 status=task.state(),
-                data=data
+                data=data,
             )
             experiment_results.append(experiment_result)
 
@@ -73,7 +73,7 @@ class AWSBraketJob(JobV1):
             job_id=self._job_id,
             qobj_id=0,
             success=self.status(),
-            results=experiment_results
+            results=experiment_results,
         )
 
     def cancel(self):
@@ -86,12 +86,11 @@ class AWSBraketJob(JobV1):
             backend_version="",
             operational=False,
             pending_jobs=0,  # TODO
-            status_msg=status
-
+            status_msg=status,
         )
-        if status == 'ONLINE' or status == 'AVAILABLE':
+        if status == "ONLINE" or status == "AVAILABLE":
             backend_status.operational = True
-        elif status == 'OFFLINE':
+        elif status == "OFFLINE":
             backend_status.operational = False
         else:
             backend_status.operational = False

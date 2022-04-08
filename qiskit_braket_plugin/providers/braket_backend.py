@@ -34,31 +34,23 @@ class BraketBackend(BackendV2, ABC):
 class BraketLocalBackend(BraketBackend):
     """BraketLocalBackend."""
 
-
-    def __init__(
-            self,
-            name: str = None,
-            **fields
-    ):
+    def __init__(self, name: str = None, **fields):
         """AWSBraketLocalBackend for local execution of circuits.
 
         Args:
             name: name of backend
             **fields:
         """
-        super().__init__(
-            name,
-            **fields
-        )
+        super().__init__(name, **fields)
         self.backend_name = name
         self._target = Target()
-        '''
+        """
         # device = LocalSimulator()                                                     #Local State Vector Simulator
         # device = LocalSimulator("default")                                            #Local State Vector Simulator
         # device = LocalSimulator(backend="default")                                    #Local State Vector Simulator
         # device = LocalSimulator(backend="braket_sv")                                  #Local State Vector Simulator
         # device = LocalSimulator(backend="braket_dm")                                  #Local Density Matrix Simulator
-        '''
+        """
         self._aws_device = LocalSimulator(backend=self.backend_name)
         self.status = self._aws_device.status
 
@@ -85,7 +77,7 @@ class BraketLocalBackend(BraketBackend):
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def qubit_properties(
-            self, qubit: Union[int, List[int]]
+        self, qubit: Union[int, List[int]]
     ) -> Union[QubitProperties, List[QubitProperties]]:
         raise NotImplementedError
 
@@ -101,35 +93,41 @@ class BraketLocalBackend(BraketBackend):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
+    def run(
+        self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
+    ) -> AWSBraketJob:
 
-    def run(self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options) -> AWSBraketJob:
-
-        convert_input = [run_input] if type(run_input) is QuantumCircuit else [_input for _input in run_input]
+        convert_input = (
+            [run_input]
+            if type(run_input) is QuantumCircuit
+            else [_input for _input in run_input]
+        )
         circuits: List[Circuit] = list(convert_circuit(convert_input))
         shots = options["shots"] if "shots" in options else 1024
         tasks = []
         try:
             for circuit in circuits:
                 task: Union[LocalQuantumTask] = self._aws_device.run(
-                    task_specification=circuit,
-                    shots=shots
+                    task_specification=circuit, shots=shots
                 )
                 tasks.append(task)
 
         except Exception as ex:
-            logger.error(f'During creation of tasks an error occurred: {ex}')
-            logger.error(f'Cancelling all tasks {len(tasks)}!')
+            logger.error(f"During creation of tasks an error occurred: {ex}")
+            logger.error(f"Cancelling all tasks {len(tasks)}!")
             for task in tasks:
-                logger.error(f'Attempt to cancel {task.id}...')
+                logger.error(f"Attempt to cancel {task.id}...")
                 task.cancel()
-                logger.error(f'State of {task.id}: {task.state()}.')
+                logger.error(f"State of {task.id}: {task.state()}.")
             raise ex
 
         return AWSBraketJob(
-            job_id=tasks[0].id,  # TODO: if there is 2 circuits what job_id should be returned?
+            job_id=tasks[
+                0
+            ].id,  # TODO: if there is 2 circuits what job_id should be returned?
             tasks=tasks,
             backend=self,
-            shots=shots
+            shots=shots,
         )
 
 
@@ -197,7 +195,7 @@ class AWSBraketBackend(BraketBackend):
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def qubit_properties(
-            self, qubit: Union[int, List[int]]
+        self, qubit: Union[int, List[int]]
     ) -> Union[QubitProperties, List[QubitProperties]]:
         pass
 

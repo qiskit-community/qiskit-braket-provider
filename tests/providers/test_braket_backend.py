@@ -69,7 +69,7 @@ class TestAWSBraketBackend(TestCase):
             results.append(backend.run(circuit).result())
 
         # Result 0
-        self.assertEqual(results[0].get_counts(), {'11': 1024})
+        self.assertEqual(results[0].get_counts(), {"11": 1024})
         # Result 1
         _00 = results[1].get_counts()["00"]
         _11 = results[1].get_counts()["11"]
@@ -89,4 +89,3 @@ class TestAWSBackendTarget(TestCase):
         self.assertEqual(len(target.operations), 1)
         self.assertEqual(len(target.instructions), 30)
         self.assertIn("Target for AWS Device", target.description)
-
