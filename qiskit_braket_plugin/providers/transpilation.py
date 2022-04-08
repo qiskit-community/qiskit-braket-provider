@@ -12,8 +12,9 @@
 import logging
 from typing import Iterable, List, Union
 
-import braket.circuits.gates as gates
 import numpy
+
+from braket.circuits import gates
 from braket.circuits import Instruction, Circuit, result_types
 from qiskit import QuantumCircuit
 
@@ -63,26 +64,42 @@ _qiskit_2_braket_conversion = {
 
 
 def convert_experiment(circuit: Union[QuantumCircuit, List[QuantumCircuit]]) -> Circuit:
-    qc = Circuit()
-    for qiskitGates in circuit.data:
-        name = qiskitGates[0].name
+    """Return a Braket quantum circuit from a Qiskit quantum circuit.
+     Args:
+            circuit (QuantumCircuit): Qiskit Quantum Cricuit
+
+    Returns:
+        Circuit: Braket circuit
+    """
+    quantum_circuit = Circuit()
+    for qiskit_gates in circuit.data:
+        name = qiskit_gates[0].name
         if name == "measure":
-            qc.add_result_type(result_types.Probability([qiskitGates[1][0].index]))
+            quantum_circuit.add_result_type(
+                result_types.Probability([qiskit_gates[1][0].index])
+            )
         elif name == "barrier":
             # This does not exist
             pass
         else:
             params = []
-            if hasattr(qiskitGates[0], "params"):
-                params = qiskitGates[0].params
+            if hasattr(qiskit_gates[0], "params"):
+                params = qiskit_gates[0].params
             for gate in _qiskit_2_braket_conversion[name](*params):
                 instruction = Instruction(
-                    operator=gate, target=[i.index for i in qiskitGates[1]]
+                    operator=gate, target=[i.index for i in qiskit_gates[1]]
                 )
-                qc += instruction
-    return qc
+                quantum_circuit += instruction
+    return quantum_circuit
 
 
 def convert_circuit(circuit: List[QuantumCircuit]) -> Iterable[Circuit]:
+    """Converts all Qiskit circuits to Braket circuits.
+     Args:
+            circuit (List(QuantumCircuit)): Qiskit Quantum Cricuit
+
+    Returns:
+        Circuit (Iterable[Circuit]): Braket circuit
+    """
     for experiment in circuit:
         yield convert_experiment(experiment)

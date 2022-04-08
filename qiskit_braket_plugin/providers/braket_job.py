@@ -1,14 +1,12 @@
 """AWS Braket job."""
 from datetime import datetime
 
-from braket.aws import AwsQuantumTask
-from braket.devices import LocalSimulator
-from braket.tasks import GateModelQuantumTaskResult, QuantumTask
-from braket.tasks.local_quantum_task import LocalQuantumTask
-from qiskit.providers import JobV1
-from qiskit.providers.models import BackendStatus
 from typing import List, Optional, Union
 
+from braket.aws import AwsQuantumTask
+from braket.tasks import GateModelQuantumTaskResult, QuantumTask
+from qiskit.providers import JobV1
+from qiskit.providers.models import BackendStatus
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 
@@ -40,6 +38,11 @@ class AWSBraketJob(JobV1):
 
     @property
     def shots(self) -> int:
+        """Return the number of shots.
+
+        Returns:
+            shots: int with the number of shots.
+        """
         # TODO: Shots can be retrieved from tasks metadata
         return (
             self.metadata["metadata"]["shots"]
@@ -50,7 +53,7 @@ class AWSBraketJob(JobV1):
     def submit(self):
         pass
 
-    def result(self, **kwargs) -> Result:
+    def result(self) -> Result:
 
         experiment_results: List[ExperimentResult] = []
         task: AwsQuantumTask
@@ -80,7 +83,7 @@ class AWSBraketJob(JobV1):
         pass
 
     def status(self):
-        status: str = self._backend._aws_device.status
+        status: str = self._backend.status
         backend_status: BackendStatus = BackendStatus(
             backend_name=self._backend.name,
             backend_version="",
@@ -88,7 +91,7 @@ class AWSBraketJob(JobV1):
             pending_jobs=0,  # TODO
             status_msg=status,
         )
-        if status == "ONLINE" or status == "AVAILABLE":
+        if status in ("ONLINE", "AVAILABLE"):
             backend_status.operational = True
         elif status == "OFFLINE":
             backend_status.operational = False

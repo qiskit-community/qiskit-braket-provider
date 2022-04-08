@@ -2,14 +2,13 @@
 
 from collections import Counter
 
-import uuid as uuid
+import uuid
 import numpy as np
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.task_result import TaskMetadata
 from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
-from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"

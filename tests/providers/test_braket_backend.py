@@ -53,16 +53,16 @@ class TestAWSBraketBackend(TestCase):
         circuits = []
 
         # Circuit 0
-        qc = QuantumCircuit(2)
-        qc.x(0)
-        qc.cx(0, 1)
-        circuits.append(qc)
+        q_c = QuantumCircuit(2)
+        q_c.x(0)
+        q_c.cx(0, 1)
+        circuits.append(q_c)
 
         # Circuit 1
-        qc = QuantumCircuit(2)
-        qc.h(0)
-        qc.cx(0, 1)
-        circuits.append(qc)
+        q_c = QuantumCircuit(2)
+        q_c.h(0)
+        q_c.cx(0, 1)
+        circuits.append(q_c)
 
         results = []
         for circuit in circuits:

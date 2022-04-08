@@ -1,14 +1,10 @@
 """AWS Braket provider."""
 
-
-from qiskit.providers import ProviderV1
-from .braket_backend import BraketLocalBackend
-
 from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from qiskit.providers import ProviderV1
 
-from .braket_backend import AWSBraketBackend
+from .braket_backend import AWSBraketBackend, BraketLocalBackend
 
 
 class AWSBraketProvider(ProviderV1):

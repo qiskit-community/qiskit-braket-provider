@@ -6,17 +6,16 @@ import datetime
 
 from abc import ABC
 
+from typing import Iterable, Union, List
 from braket.aws import AwsDevice
 from braket.devices import LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
-from qiskit import QuantumCircuit
-
-from .braket_job import AWSBraketJob
-from typing import Iterable, Union, List
-
 from braket.circuits import Circuit
+from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 from qiskit.transpiler import Target
+
+from .braket_job import AWSBraketJob
 
 from .transpilation import convert_circuit
 from .utils import aws_device_to_target
@@ -45,11 +44,11 @@ class BraketLocalBackend(BraketBackend):
         self.backend_name = name
         self._target = Target()
         """
-        # device = LocalSimulator()                                                     #Local State Vector Simulator
-        # device = LocalSimulator("default")                                            #Local State Vector Simulator
-        # device = LocalSimulator(backend="default")                                    #Local State Vector Simulator
-        # device = LocalSimulator(backend="braket_sv")                                  #Local State Vector Simulator
-        # device = LocalSimulator(backend="braket_dm")                                  #Local Density Matrix Simulator
+        # device = LocalSimulator()                         #Local State Vector Simulator
+        # device = LocalSimulator("default")                #Local State Vector Simulator
+        # device = LocalSimulator(backend="default")        #Local State Vector Simulator
+        # device = LocalSimulator(backend="braket_sv")      #Local State Vector Simulator
+        # device = LocalSimulator(backend="braket_dm")      #Local Density Matrix Simulator
         """
         self._aws_device = LocalSimulator(backend=self.backend_name)
         self.status = self._aws_device.status
@@ -98,9 +97,7 @@ class BraketLocalBackend(BraketBackend):
     ) -> AWSBraketJob:
 
         convert_input = (
-            [run_input]
-            if type(run_input) is QuantumCircuit
-            else [_input for _input in run_input]
+            [run_input] if type(run_input) is QuantumCircuit else list(run_input)
         )
         circuits: List[Circuit] = list(convert_circuit(convert_input))
         shots = options["shots"] if "shots" in options else 1024
@@ -113,12 +110,12 @@ class BraketLocalBackend(BraketBackend):
                 tasks.append(task)
 
         except Exception as ex:
-            logger.error(f"During creation of tasks an error occurred: {ex}")
-            logger.error(f"Cancelling all tasks {len(tasks)}!")
+            logger.error("During creation of tasks an error occurred: %s", ex)
+            logger.error("Cancelling all tasks %d!", len(tasks))
             for task in tasks:
-                logger.error(f"Attempt to cancel {task.id}...")
+                logger.error("Attempt to cancel %s...", task.id)
                 task.cancel()
-                logger.error(f"State of {task.id}: {task.state()}.")
+                logger.error("State of %s: %s.", task.id, task.state())
             raise ex
 
         return AWSBraketJob(
@@ -193,11 +190,6 @@ class AWSBraketBackend(BraketBackend):
     @property
     def meas_map(self) -> List[List[int]]:
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
-
-    def qubit_properties(
-        self, qubit: Union[int, List[int]]
-    ) -> Union[QubitProperties, List[QubitProperties]]:
-        pass
 
     def drive_channel(self, qubit: int):
         raise NotImplementedError(f"Drive channel is not supported by {self.name}.")
