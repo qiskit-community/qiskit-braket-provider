@@ -4,6 +4,7 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
+from qiskit import QuantumCircuit
 from qiskit.transpiler import Target
 
 from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
@@ -45,6 +46,34 @@ class TestAWSBraketBackend(TestCase):
             backend.measure_channel(0)
         with self.assertRaises(NotImplementedError):
             backend.control_channel([0, 1])
+
+    def test_local_backend_circuit(self):
+        """Tests local backend with circuit."""
+        backend = BraketLocalBackend(name="default")
+        circuits = []
+
+        # Circuit 0
+        qc = QuantumCircuit(2)
+        qc.x(0)
+        qc.cx(0, 1)
+        circuits.append(qc)
+
+        # Circuit 1
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.cx(0, 1)
+        circuits.append(qc)
+
+        results = []
+        for circuit in circuits:
+            results.append(backend.run(circuit).result())
+
+        # Result 0
+        self.assertEqual(results[0].get_counts(), {'11': 1024})
+        # Result 1
+        _00 = results[1].get_counts()["00"]
+        _11 = results[1].get_counts()["11"]
+        self.assertEqual(_00 + _11, 1024)
 
 
 class TestAWSBackendTarget(TestCase):
