@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 from braket.aws import AwsQuantumTask
 from braket.tasks import GateModelQuantumTaskResult, QuantumTask
-from qiskit.providers import JobV1
+from qiskit.providers import JobV1, BackendV2
 from qiskit.providers.models import BackendStatus
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
@@ -17,7 +17,7 @@ class AWSBraketJob(JobV1):
     def __init__(
         self,
         job_id: str,
-        backend: "BraketBackend",
+        backend: BackendV2,
         tasks: Union[List[QuantumTask]],
         **metadata: Optional[dict]
     ):
@@ -43,7 +43,7 @@ class AWSBraketJob(JobV1):
         Returns:
             shots: int with the number of shots.
         """
-        # TODO: Shots can be retrieved from tasks metadata
+        # TODO: Shots can be retrieved from tasks metadata  # pylint: disable=fixme
         return (
             self.metadata["metadata"]["shots"]
             if "shots" in self.metadata["metadata"]
@@ -88,7 +88,7 @@ class AWSBraketJob(JobV1):
             backend_name=self._backend.name,
             backend_version="",
             operational=False,
-            pending_jobs=0,  # TODO
+            pending_jobs=0,  # TODO  # pylint: disable=fixme
             status_msg=status,
         )
         if status in ("ONLINE", "AVAILABLE"):

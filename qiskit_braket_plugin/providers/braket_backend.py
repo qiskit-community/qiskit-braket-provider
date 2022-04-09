@@ -97,7 +97,7 @@ class BraketLocalBackend(BraketBackend):
     ) -> AWSBraketJob:
 
         convert_input = (
-            [run_input] if type(run_input) is QuantumCircuit else list(run_input)
+            [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         circuits: List[Circuit] = list(convert_circuit(convert_input))
         shots = options["shots"] if "shots" in options else 1024
@@ -119,9 +119,7 @@ class BraketLocalBackend(BraketBackend):
             raise ex
 
         return AWSBraketJob(
-            job_id=tasks[
-                0
-            ].id,  # TODO: if there is 2 circuits what job_id should be returned?
+            job_id=tasks[0].id,
             tasks=tasks,
             backend=self,
             shots=shots,

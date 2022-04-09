@@ -1,3 +1,4 @@
+"""Qiskit to Braket transpilation."""
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,7 +21,7 @@ from qiskit import QuantumCircuit
 
 logger = logging.getLogger(__name__)
 
-# TODO: add Angled Gates
+# TODO: add Angled Gates  # pylint: disable=fixme
 # First element is executed first!
 _qiskit_2_braket_conversion = {
     "u1": lambda lam: [gates.Rz(lam)],
