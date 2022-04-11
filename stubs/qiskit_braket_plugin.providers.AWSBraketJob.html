@@ -43,30 +43,30 @@
 <h1>qiskit_braket_plugin.providers.AWSBraketJob<a class="headerlink" href="#qiskit-braket-plugin-providers-awsbraketjob" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_braket_plugin.providers.AWSBraketJob">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AWSBraketJob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_plugin/providers/braket_job.html#AWSBraketJob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_plugin.providers.AWSBraketJob" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AWSBraketJob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_plugin/providers/braket_job.html#AWSBraketJob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_plugin.providers.AWSBraketJob" title="Permalink to this definition">¶</a></dt>
 <dd><p>AWSBraketJob.</p>
-<p>Initializes the asynchronous job.</p>
+<p>AWSBraketJob for local execution of circuits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Backend</span></code>) – the backend used to run the job.</p></li>
-<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – a unique id in the context of the backend used to run
-the job.</p></li>
-<li><p><strong>kwargs</strong> – Any key value metadata to associate with this job.</p></li>
+<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the job</p></li>
+<li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BackendV2</span></code>) – Local simulator</p></li>
+<li><p><strong>tasks</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumTask</span></code>]) – Executed tasks</p></li>
+<li><p><strong>**metadata</strong> – </p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_braket_plugin.providers.AWSBraketJob.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_id</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qiskit_braket_plugin.providers.AWSBraketJob.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initializes the asynchronous job.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_plugin/providers/braket_job.html#AWSBraketJob.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_plugin.providers.AWSBraketJob.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>AWSBraketJob for local execution of circuits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Backend</span></code>) – the backend used to run the job.</p></li>
-<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – a unique id in the context of the backend used to run
-the job.</p></li>
-<li><p><strong>kwargs</strong> – Any key value metadata to associate with this job.</p></li>
+<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the job</p></li>
+<li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BackendV2</span></code>) – Local simulator</p></li>
+<li><p><strong>tasks</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumTask</span></code>]) – Executed tasks</p></li>
+<li><p><strong>**metadata</strong> – </p></li>
 </ul>
 </dd>
 </dl>
@@ -79,8 +79,8 @@ the job.</p></li>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_plugin.providers.AWSBraketJob.__init__" title="qiskit_braket_plugin.providers.AWSBraketJob.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(backend, job_id, **kwargs)</p></td>
-<td><p>Initializes the asynchronous job.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_plugin.providers.AWSBraketJob.__init__" title="qiskit_braket_plugin.providers.AWSBraketJob.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(job_id, backend, tasks, **metadata)</p></td>
+<td><p>AWSBraketJob for local execution of circuits.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend</span></code>()</p></td>
 <td><p>Return the backend where this job was executed.</p></td>
@@ -124,7 +124,10 @@ the job.</p></li>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">shots</span></code></p></td>
+<td><p>Return the number of shots.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>

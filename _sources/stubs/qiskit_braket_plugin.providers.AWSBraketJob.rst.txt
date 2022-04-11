@@ -34,6 +34,7 @@
 
    .. autosummary::
    
+      ~AWSBraketJob.shots
       ~AWSBraketJob.version
    
    

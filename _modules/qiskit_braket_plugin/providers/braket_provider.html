@@ -44,13 +44,16 @@
 <span class="kn">from</span> <span class="nn">braket.device_schema.dwave</span> <span class="kn">import</span> <span class="n">DwaveDeviceCapabilities</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">ProviderV1</span>
 
-<span class="kn">from</span> <span class="nn">.braket_backend</span> <span class="kn">import</span> <span class="n">AWSBraketBackend</span>
+<span class="kn">from</span> <span class="nn">.braket_backend</span> <span class="kn">import</span> <span class="n">AWSBraketBackend</span><span class="p">,</span> <span class="n">BraketLocalBackend</span>
 
 
 <div class="viewcode-block" id="AWSBraketProvider"><a class="viewcode-back" href="../../../stubs/qiskit_braket_plugin.providers.AWSBraketProvider.html#qiskit_braket_plugin.providers.AWSBraketProvider">[docs]</a><span class="k">class</span> <span class="nc">AWSBraketProvider</span><span class="p">(</span><span class="n">ProviderV1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;AWSBraketProvider class for accessing AWS Braket backends.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">backends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">BraketLocalBackend</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)]</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">devices</span> <span class="o">=</span> <span class="n">AwsDevice</span><span class="o">.</span><span class="n">get_devices</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># filter by supported devices</span>
