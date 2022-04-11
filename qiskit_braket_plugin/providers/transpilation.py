@@ -11,19 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import Iterable, List, Union
+from typing import Iterable, List, Dict, Callable
 
 import numpy
-
-from braket.circuits import gates
 from braket.circuits import Instruction, Circuit, result_types
+from braket.circuits import gates
 from qiskit import QuantumCircuit
 
 logger = logging.getLogger(__name__)
 
 # TODO: add Angled Gates  # pylint: disable=fixme
 # First element is executed first!
-_qiskit_2_braket_conversion = {
+_qiskit_2_braket_conversion: Dict[str, Callable] = {
     "u1": lambda lam: [gates.Rz(lam)],
     "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(numpy.pi / 2), gates.Rz(phi)],
     "u3": lambda theta, phi, lam: [
@@ -64,7 +63,7 @@ _qiskit_2_braket_conversion = {
 }
 
 
-def convert_experiment(circuit: Union[QuantumCircuit, List[QuantumCircuit]]) -> Circuit:
+def convert_experiment(circuit: QuantumCircuit) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
             circuit (QuantumCircuit): Qiskit Quantum Cricuit
