@@ -4,13 +4,16 @@ from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from qiskit.providers import ProviderV1
 
-from .braket_backend import AWSBraketBackend
+from .braket_backend import AWSBraketBackend, BraketLocalBackend
 
 
 class AWSBraketProvider(ProviderV1):
     """AWSBraketProvider class for accessing AWS Braket backends."""
 
     def backends(self, name=None, **kwargs):
+
+        if kwargs.get("local"):
+            return [BraketLocalBackend(name="default")]
         names = [name] if name else None
         devices = AwsDevice.get_devices(names=names, **kwargs)
         # filter by supported devices

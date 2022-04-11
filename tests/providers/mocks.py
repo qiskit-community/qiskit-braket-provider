@@ -1,6 +1,15 @@
 """Mocks for testing."""
-from braket.device_schema.rigetti import RigettiDeviceCapabilities
+
+from collections import Counter
+
+import uuid
+import numpy as np
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
+from braket.task_result import TaskMetadata
+from braket.tasks import GateModelQuantumTaskResult
+from braket.tasks.local_quantum_task import LocalQuantumTask
+from braket.device_schema.rigetti import RigettiDeviceCapabilities
+
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
 SV1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
@@ -102,3 +111,17 @@ MOCK_GATE_MODEL_SIMULATOR_TN = {
     "deviceArn": TN1_ARN,
     "deviceCapabilities": MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES.json(),
 }
+
+MOCK_GATE_MODEL_QUANTUM_TASK_RESULT = GateModelQuantumTaskResult(
+    task_metadata=TaskMetadata(
+        **{"id": str(uuid.uuid4()), "deviceId": "default", "shots": 100}
+    ),
+    additional_metadata=None,
+    measurements=np.array([[0, 1], [1, 0]]),
+    measured_qubits=[0, 1],
+    result_types=None,
+    values=None,
+    measurement_counts=Counter({"00": 1}),
+)
+
+MOCK_LOCAL_QUANTUM_TASK = LocalQuantumTask(MOCK_GATE_MODEL_QUANTUM_TASK_RESULT)

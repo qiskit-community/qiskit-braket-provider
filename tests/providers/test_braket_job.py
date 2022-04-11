@@ -3,6 +3,7 @@
 from unittest import TestCase
 
 from qiskit_braket_plugin.providers import AWSBraketJob, BraketLocalBackend
+from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
 
 class TestAWSBraketJob(TestCase):
@@ -10,9 +11,19 @@ class TestAWSBraketJob(TestCase):
 
     def test_job(self):
         """Tests job."""
-        job = AWSBraketJob(BraketLocalBackend(), job_id="AwesomeId")
+
+        job = AWSBraketJob(
+            backend=BraketLocalBackend(name="default"),
+            job_id="AwesomeId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK],
+            shots=100,
+        )
+
         self.assertTrue(job)
-        self.assertIsNone(job.result())
-        self.assertIsNone(job.status())
-        self.assertIsNone(job.submit())
-        self.assertIsNone(job.cancel())
+
+        self.assertTrue(job.result().job_id, "AwesomeId")
+        self.assertTrue(job.result().results[0].data.counts, {"00": 1})
+        self.assertTrue(job.result().results[0].shots, 100)
+        self.assertTrue(job.result().results[0].status, "COMPLETED")
+
+        self.assertTrue(job.status().status_msg, "AVAILABLE")
