@@ -9,7 +9,7 @@ from qiskit.circuit.random import random_circuit
 from qiskit.transpiler import Target
 
 from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
-from qiskit_braket_plugin.providers.utils import aws_device_to_target
+from qiskit_braket_plugin.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
 

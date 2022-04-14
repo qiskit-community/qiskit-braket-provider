@@ -14,8 +14,11 @@ from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 
 from .braket_job import AWSBraketJob
-from .transpilation import convert_circuit
-from .utils import aws_device_to_target, local_simulator_to_target
+from .adapter import (
+    aws_device_to_target,
+    local_simulator_to_target,
+    convert_qiskit_to_braket_circuits,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +92,7 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        circuits: List[Circuit] = list(convert_circuit(convert_input))
+        circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
         shots = options["shots"] if "shots" in options else 1024
         tasks = []
         try:
