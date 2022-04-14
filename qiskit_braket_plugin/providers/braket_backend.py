@@ -36,6 +36,13 @@ class BraketLocalBackend(BraketBackend):
     def __init__(self, name: str = None, **fields):
         """AWSBraketLocalBackend for local execution of circuits.
 
+        Examples:
+            device = LocalSimulator()                         #Local State Vector Simulator
+            device = LocalSimulator("default")                #Local State Vector Simulator
+            device = LocalSimulator(backend="default")        #Local State Vector Simulator
+            device = LocalSimulator(backend="braket_sv")      #Local State Vector Simulator
+            device = LocalSimulator(backend="braket_dm")      #Local Density Matrix Simulator
+
         Args:
             name: name of backend
             **fields:

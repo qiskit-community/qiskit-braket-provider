@@ -78,12 +78,12 @@ class TestAWSBraketBackend(TestCase):
 
     def test_random_circuits(self):
         """Tests with random circuits."""
-        backend = BraketLocalBackend(name="default")
-        aer_backend = BasicAer.get_backend("qasm_simulator")
+        backend = BraketLocalBackend(name="braket_sv")
+        aer_backend = BasicAer.get_backend("statevector_simulator")
 
-        for i in range(10):
-            with self.subTest(f"Random circuit with {i + 1} qubits."):
-                circuit = random_circuit(i + 1, 5, seed=42)
+        for i in range(1, 10):
+            with self.subTest(f"Random circuit with {i} qubits."):
+                circuit = random_circuit(i, 5, seed=42)
                 braket_transpiled_circuit = transpile(
                     circuit, backend=backend, seed_transpiler=42
                 )
@@ -97,14 +97,14 @@ class TestAWSBraketBackend(TestCase):
                     circuit, backend=aer_backend, seed_transpiler=42
                 )
                 aer_result = (
-                    backend.run(transpiled_aer_circuit, shots=1000)
+                    aer_backend.run(transpiled_aer_circuit, shots=1000)
                     .result()
                     .get_counts()
                 )
 
                 self.assertEqual(
                     sorted([k for k, v in braket_result.items() if v > 50]),
-                    sorted([k for k, v in aer_result.items() if v > 50]),
+                    sorted([k for k, v in aer_result.items() if v > 0.05]),
                 )
                 self.assertIsInstance(braket_result, dict)
 
