@@ -84,15 +84,27 @@ class TestAWSBraketBackend(TestCase):
         for i in range(10):
             with self.subTest(f"Random circuit with {i + 1} qubits."):
                 circuit = random_circuit(i + 1, 5, seed=42)
-                braket_transpiled_circuit = transpile(circuit, backend=backend, seed_transpiler=42)
-                braket_result = backend.run(braket_transpiled_circuit, shots=1000).result().get_counts()
+                braket_transpiled_circuit = transpile(
+                    circuit, backend=backend, seed_transpiler=42
+                )
+                braket_result = (
+                    backend.run(braket_transpiled_circuit, shots=1000)
+                    .result()
+                    .get_counts()
+                )
 
-                transpiled_aer_circuit = transpile(circuit, backend=aer_backend, seed_transpiler=42)
-                aer_result = backend.run(transpiled_aer_circuit, shots=1000).result().get_counts()
+                transpiled_aer_circuit = transpile(
+                    circuit, backend=aer_backend, seed_transpiler=42
+                )
+                aer_result = (
+                    backend.run(transpiled_aer_circuit, shots=1000)
+                    .result()
+                    .get_counts()
+                )
 
                 self.assertEqual(
                     sorted([k for k, v in braket_result.items() if v > 50]),
-                    sorted([k for k, v in aer_result.items() if v > 50])
+                    sorted([k for k, v in aer_result.items() if v > 50]),
                 )
                 self.assertIsInstance(braket_result, dict)
 
