@@ -4,7 +4,8 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
+from qiskit.circuit.random import random_circuit
 from qiskit.transpiler import Target
 
 from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
@@ -74,6 +75,16 @@ class TestAWSBraketBackend(TestCase):
         _00 = results[1].get_counts()["00"]
         _11 = results[1].get_counts()["11"]
         self.assertEqual(_00 + _11, 1024)
+
+    def test_random_circuits(self):
+        """Tests with random circuits."""
+        backend = BraketLocalBackend(name="default")
+
+        for i in range(10):
+            circuit = random_circuit(i + 1, 5, seed=42)
+            transpiled_circuit = transpile(circuit, backend=backend)
+            result = backend.run(transpiled_circuit).result().get_counts()
+            self.assertIsInstance(result, dict)
 
 
 class TestAWSBackendTarget(TestCase):

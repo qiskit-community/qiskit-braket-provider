@@ -17,6 +17,7 @@ from braket.device_schema.simulators import (
     GateModelSimulatorDeviceCapabilities,
     GateModelSimulatorParadigmProperties,
 )
+from braket.devices import LocalSimulator
 from qiskit.circuit import Instruction, Parameter
 from qiskit.circuit.library import (
     HGate,
@@ -49,6 +50,45 @@ from qiskit.transpiler import Target, InstructionProperties
 from qiskit_braket_plugin.exception import QiskitBraketException
 
 
+# TODO: switch to converter  # pylint: disable=fixme
+op_to_gate_mapping: Dict[str, Optional[Instruction]] = {
+    "h": HGate(),
+    "ccnot": None,
+    "cnot": CXGate(),
+    "cphaseshift": CPhaseGate(Parameter("theta")),
+    "cphaseshift00": None,
+    "cphaseshift01": None,
+    "cphaseshift10": None,
+    "cswap": CSwapGate(),
+    "cy": CYGate(),
+    "cz": CZGate(),
+    "i": IGate(),
+    "iswap": None,
+    "pswap": None,
+    "phaseshift": PhaseGate(Parameter("theta")),
+    "rx": RXGate(Parameter("theta")),
+    "ry": RYGate(Parameter("theta")),
+    "rz": RZGate(Parameter("phi")),
+    "s": SGate(),
+    "si": SdgGate(),
+    "swap": SwapGate(),
+    "t": TGate(),
+    "ti": TdgGate(),
+    "unitary": None,
+    "v": SXGate(),
+    "vi": SXdgGate(),
+    "x": XGate(),
+    "xx": RXXGate(Parameter("theta")),
+    "xy": None,
+    "y": YGate(),
+    "yy": RYYGate(Parameter("theta")),
+    "z": ZGate(),
+    "zz": RZZGate(Parameter("theta")),
+    "start_verbatim_box": None,
+    "end_verbatim_box": None,
+}
+
+
 def _op_to_instruction(operation: str) -> Optional[Instruction]:
     """Converts Braket operation to Qiskit Instruction.
 
@@ -58,45 +98,35 @@ def _op_to_instruction(operation: str) -> Optional[Instruction]:
     Returns:
         Circuit Instruction
     """
-    # TODO: switch to converter  # pylint: disable=fixme
-    op_to_gate_mapping: Dict[str, Optional[Instruction]] = {
-        "h": HGate(),
-        "ccnot": None,
-        "cnot": CXGate(),
-        "cphaseshift": CPhaseGate(Parameter("theta")),
-        "cphaseshift00": None,
-        "cphaseshift01": None,
-        "cphaseshift10": None,
-        "cswap": CSwapGate(),
-        "cy": CYGate(),
-        "cz": CZGate(),
-        "i": IGate(),
-        "iswap": None,
-        "pswap": None,
-        "phaseshift": PhaseGate(Parameter("theta")),
-        "rx": RXGate(Parameter("theta")),
-        "ry": RYGate(Parameter("theta")),
-        "rz": RZGate(Parameter("phi")),
-        "s": SGate(),
-        "si": SdgGate(),
-        "swap": SwapGate(),
-        "t": TGate(),
-        "ti": TdgGate(),
-        "unitary": None,
-        "v": SXGate(),
-        "vi": SXdgGate(),
-        "x": XGate(),
-        "xx": RXXGate(Parameter("theta")),
-        "xy": None,
-        "y": YGate(),
-        "yy": RYYGate(Parameter("theta")),
-        "z": ZGate(),
-        "zz": RZZGate(Parameter("theta")),
-        "start_verbatim_box": None,
-        "end_verbatim_box": None,
-    }
     operation = operation.lower()
     return op_to_gate_mapping.get(operation, None)
+
+
+def local_simulator_to_target(simulator: LocalSimulator) -> Target:
+    """Converts properties of LocalSimulator into Qiskit Target object.
+
+    Args:
+        simulator: AWS LocalSimulator
+
+    Returns:
+        target for Qiskit backend
+    """
+    target = Target()
+    instructions = [inst for inst in op_to_gate_mapping.values() if inst is not None]
+    properties = simulator.properties
+    paradigm: GateModelSimulatorParadigmProperties = properties.paradigm
+    for instruction in instructions:
+        instruction_props: Optional[
+            Dict[Union[Tuple[int], Tuple[int, int]], Optional[InstructionProperties]]
+        ] = {}
+
+        for src in range(paradigm.qubitCount):
+            for dst in range(paradigm.qubitCount):
+                if src != dst:
+                    instruction_props[(src, dst)] = None
+                    instruction_props[(dst, src)] = None
+        target.add_instruction(instruction, instruction_props)
+    return target
 
 
 def aws_device_to_target(device: AwsDevice) -> Target:

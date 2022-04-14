@@ -32,6 +32,7 @@ _qiskit_2_braket_conversion: Dict[str, Callable] = {
         gates.Rx(-numpy.pi / 2),
         gates.Rz(phi),
     ],
+    "p": lambda angle: [gates.PhaseShift(angle)],
     "cx": lambda: [gates.CNot()],
     "x": lambda: [gates.X()],
     "y": lambda: [gates.Y()],
@@ -43,11 +44,11 @@ _qiskit_2_braket_conversion: Dict[str, Callable] = {
     "sx": lambda: [gates.V()],
     "sxdg": lambda: [gates.Vi()],
     "swap": lambda: [gates.Swap()],
-    # "rx": lambda: [gates.Rx()],
+    "rx": lambda angle: [gates.Rx(angle)],
     #     # "rxx": RXXGate,
-    # "ry": lambda: [gates.Ry()],
-    # "rz": lambda: [gates.Rz()],
-    #     # "rzz": RZZGate,
+    "ry": lambda angle: [gates.Ry(angle)],
+    "rz": lambda angle: [gates.Rz(angle)],
+    "rzz": lambda angle: [gates.ZZ(angle)],
     "id": lambda: [gates.I()],
     "h": lambda: [gates.H()],
     "cy": lambda: [gates.CY()],
@@ -57,7 +58,7 @@ _qiskit_2_braket_conversion: Dict[str, Callable] = {
     #     # "cry": CRYGate,
     #     # "crz": CRZGate,
     #     # "cu1": CU1Gate,
-    #     # "cu3": CU3Gate,
+    # "cu3": CU3Gate,
     "ccx": lambda: [gates.CCNot()],
     "cswap": lambda: [gates.CSwap()],
 }
@@ -85,6 +86,7 @@ def convert_experiment(circuit: QuantumCircuit) -> Circuit:
             params = []
             if hasattr(qiskit_gates[0], "params"):
                 params = qiskit_gates[0].params
+
             for gate in _qiskit_2_braket_conversion[name](*params):
                 instruction = Instruction(
                     operator=gate, target=[i.index for i in qiskit_gates[1]]
