@@ -4,7 +4,7 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile, BasicAer
 from qiskit.circuit.random import random_circuit
 from qiskit.transpiler import Target
 
@@ -79,12 +79,22 @@ class TestAWSBraketBackend(TestCase):
     def test_random_circuits(self):
         """Tests with random circuits."""
         backend = BraketLocalBackend(name="default")
+        aer_backend = BasicAer.get_backend("qasm_simulator")
 
         for i in range(10):
-            circuit = random_circuit(i + 1, 5, seed=42)
-            transpiled_circuit = transpile(circuit, backend=backend)
-            result = backend.run(transpiled_circuit).result().get_counts()
-            self.assertIsInstance(result, dict)
+            with self.subTest(f"Random circuit with {i + 1} qubits."):
+                circuit = random_circuit(i + 1, 5, seed=42)
+                braket_transpiled_circuit = transpile(circuit, backend=backend, seed_transpiler=42)
+                braket_result = backend.run(braket_transpiled_circuit, shots=1000).result().get_counts()
+
+                transpiled_aer_circuit = transpile(circuit, backend=aer_backend, seed_transpiler=42)
+                aer_result = backend.run(transpiled_aer_circuit, shots=1000).result().get_counts()
+
+                self.assertEqual(
+                    sorted([k for k, v in braket_result.items() if v > 50]),
+                    sorted([k for k, v in aer_result.items() if v > 50])
+                )
+                self.assertIsInstance(braket_result, dict)
 
 
 class TestAWSBackendTarget(TestCase):
