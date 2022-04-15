@@ -6,7 +6,7 @@ import logging
 from abc import ABC
 from typing import Iterable, Union, List
 
-from braket.aws import AwsDevice
+from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
 from braket.circuits import Circuit
 from braket.devices import LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
@@ -19,6 +19,7 @@ from .adapter import (
     local_simulator_to_target,
     convert_qiskit_to_braket_circuits,
 )
+from ..exception import QiskitBraketException
 
 logger = logging.getLogger(__name__)
 
@@ -202,4 +203,20 @@ class AWSBraketBackend(BraketBackend):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
     def run(self, run_input, **options):
-        pass
+        if isinstance(run_input, QuantumCircuit):
+            circuits = [run_input]
+        elif isinstance(run_input, list):
+            circuits = run_input
+        else:
+            raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
+
+        braket_circuits = list(convert_qiskit_to_braket_circuits(circuits))
+        batch_task: AwsQuantumTaskBatch = self._device.run_batch(
+            braket_circuits, **options
+        )
+        tasks: List[AwsQuantumTask] = batch_task.tasks
+        job_id = ";".join(task.id for task in tasks)
+
+        return AWSBraketJob(
+            job_id=job_id, tasks=tasks, backend=self, shots=options.get("shots")
+        )

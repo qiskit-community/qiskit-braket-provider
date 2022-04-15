@@ -160,7 +160,7 @@ qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] 
 }
 
 
-def _op_to_instruction(operation: str) -> Optional[Instruction]:
+def _op_to_instruction(operation: str) -> Optional[QiskitInstruction]:
     """Converts Braket operation to Qiskit Instruction.
 
     Args:
@@ -226,11 +226,13 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         )
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
         connectivity = paradigm.connectivity
-        instructions = []
+        instructions: List[QiskitInstruction] = []
         for operation in action_properties.supportedOperations:
             instruction = _op_to_instruction(operation)
             if instruction is not None:
-                instructions.append(instruction)
+                # TODO: remove when target will be supporting > 2 qubit gates  # pylint:disable=fixme
+                if instruction.num_qubits <= 2:
+                    instructions.append(instruction)
 
         for instruction in instructions:
             instruction_props: Optional[
@@ -259,6 +261,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
             # for more than 2 qubits
             else:
                 instruction_props = None
+
             target.add_instruction(instruction, instruction_props)
 
     # gate model simulators
@@ -271,7 +274,9 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         for operation in simulator_action_properties.supportedOperations:
             instruction = _op_to_instruction(operation)
             if instruction is not None:
-                instructions.append(instruction)
+                # TODO: remove when target will be supporting > 2 qubit gates  # pylint:disable=fixme
+                if instruction.num_qubits <= 2:
+                    instructions.append(instruction)
         for instruction in instructions:
             simulator_instruction_props: Optional[
                 Dict[

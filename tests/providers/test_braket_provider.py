@@ -4,6 +4,9 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from braket.aws import AwsDeviceType
+from qiskit import transpile
+from qiskit.circuit.random import random_circuit
+
 from qiskit_braket_plugin.providers import AWSBraketProvider
 from qiskit_braket_plugin.providers.braket_backend import (
     BraketBackend,
@@ -54,3 +57,16 @@ class TestAWSBraketProvider(TestCase):
         for backend in online_simulators_backends:
             with self.subTest(f"{backend.name}"):
                 self.assertIsInstance(backend, AWSBraketBackend)
+
+    @unittest.skip("Call to external service")
+    def test_real_device_circuit_execution(self):
+        """Tests circuit execution on real device."""
+        provider = AWSBraketProvider()
+        state_vector_backend = provider.get_backend("SV1")
+        circuit = random_circuit(3, 5, seed=42)
+        transpiled_circuit = transpile(
+            circuit, backend=state_vector_backend, seed_transpiler=42
+        )
+
+        result = state_vector_backend.run(transpiled_circuit, shots=1000)
+        self.assertTrue(result)
