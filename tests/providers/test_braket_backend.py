@@ -4,11 +4,12 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile, BasicAer
+from qiskit.circuit.random import random_circuit
 from qiskit.transpiler import Target
 
 from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
-from qiskit_braket_plugin.providers.utils import aws_device_to_target
+from qiskit_braket_plugin.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
 
@@ -74,6 +75,38 @@ class TestAWSBraketBackend(TestCase):
         _00 = results[1].get_counts()["00"]
         _11 = results[1].get_counts()["11"]
         self.assertEqual(_00 + _11, 1024)
+
+    def test_random_circuits(self):
+        """Tests with random circuits."""
+        backend = BraketLocalBackend(name="braket_sv")
+        aer_backend = BasicAer.get_backend("statevector_simulator")
+
+        for i in range(1, 10):
+            with self.subTest(f"Random circuit with {i} qubits."):
+                circuit = random_circuit(i, 5, seed=42)
+                braket_transpiled_circuit = transpile(
+                    circuit, backend=backend, seed_transpiler=42
+                )
+                braket_result = (
+                    backend.run(braket_transpiled_circuit, shots=1000)
+                    .result()
+                    .get_counts()
+                )
+
+                transpiled_aer_circuit = transpile(
+                    circuit, backend=aer_backend, seed_transpiler=42
+                )
+                aer_result = (
+                    aer_backend.run(transpiled_aer_circuit, shots=1000)
+                    .result()
+                    .get_counts()
+                )
+
+                self.assertEqual(
+                    sorted([k for k, v in braket_result.items() if v > 50]),
+                    sorted([k for k, v in aer_result.items() if v > 0.05]),
+                )
+                self.assertIsInstance(braket_result, dict)
 
 
 class TestAWSBackendTarget(TestCase):

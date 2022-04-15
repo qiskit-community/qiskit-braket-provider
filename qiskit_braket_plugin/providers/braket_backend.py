@@ -1,24 +1,24 @@
 """AWS Braket backends."""
 
 
-import logging
 import datetime
-
+import logging
 from abc import ABC
-
 from typing import Iterable, Union, List
+
 from braket.aws import AwsDevice
+from braket.circuits import Circuit
 from braket.devices import LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
-from braket.circuits import Circuit
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
-from qiskit.transpiler import Target
 
 from .braket_job import AWSBraketJob
-
-from .transpilation import convert_circuit
-from .utils import aws_device_to_target
+from .adapter import (
+    aws_device_to_target,
+    local_simulator_to_target,
+    convert_qiskit_to_braket_circuits,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,21 +36,21 @@ class BraketLocalBackend(BraketBackend):
     def __init__(self, name: str = None, **fields):
         """AWSBraketLocalBackend for local execution of circuits.
 
+        Examples:
+            device = LocalSimulator()                         #Local State Vector Simulator
+            device = LocalSimulator("default")                #Local State Vector Simulator
+            device = LocalSimulator(backend="default")        #Local State Vector Simulator
+            device = LocalSimulator(backend="braket_sv")      #Local State Vector Simulator
+            device = LocalSimulator(backend="braket_dm")      #Local Density Matrix Simulator
+
         Args:
             name: name of backend
             **fields:
         """
         super().__init__(name, **fields)
         self.backend_name = name
-        self._target = Target()
-        """
-        # device = LocalSimulator()                         #Local State Vector Simulator
-        # device = LocalSimulator("default")                #Local State Vector Simulator
-        # device = LocalSimulator(backend="default")        #Local State Vector Simulator
-        # device = LocalSimulator(backend="braket_sv")      #Local State Vector Simulator
-        # device = LocalSimulator(backend="braket_dm")      #Local Density Matrix Simulator
-        """
         self._aws_device = LocalSimulator(backend=self.backend_name)
+        self._target = local_simulator_to_target(self._aws_device)
         self.status = self._aws_device.status
 
     @property
@@ -99,7 +99,7 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        circuits: List[Circuit] = list(convert_circuit(convert_input))
+        circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
         shots = options["shots"] if "shots" in options else 1024
         tasks = []
         try:
