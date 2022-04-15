@@ -57,11 +57,15 @@ class AWSBraketJob(JobV1):
 
         # For each task the results is get and filled into an ExperimentResult object
         for task in self._tasks:
-            result: GateModelQuantumTaskResult = task.result()
-            counts = {
-                k[::-1]: v for k, v in dict(result.measurement_counts).items()
-            }  # convert to little-endian
-            data = ExperimentResultData(counts=counts)
+            if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
+                result: GateModelQuantumTaskResult = task.result()
+                counts = {
+                    k[::-1]: v for k, v in dict(result.measurement_counts).items()
+                }  # convert to little-endian
+                data = ExperimentResultData(counts=counts)
+            else:
+                data = ExperimentResultData()
+
             experiment_result = ExperimentResult(
                 shots=self.shots,
                 success=task.state() == "COMPLETED",
@@ -72,7 +76,7 @@ class AWSBraketJob(JobV1):
 
         return Result(
             backend_name=self._backend,
-            backend_version=1,
+            backend_version=self._backend.version,
             job_id=self._job_id,
             qobj_id=0,
             success=self.status(),

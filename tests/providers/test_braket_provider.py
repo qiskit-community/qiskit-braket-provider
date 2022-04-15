@@ -67,6 +67,5 @@ class TestAWSBraketProvider(TestCase):
         transpiled_circuit = transpile(
             circuit, backend=state_vector_backend, seed_transpiler=42
         )
-
-        result = state_vector_backend.run(transpiled_circuit, shots=1000)
+        result = state_vector_backend.run(transpiled_circuit, shots=10)
         self.assertTrue(result)
