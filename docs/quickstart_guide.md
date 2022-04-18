@@ -4,8 +4,10 @@ The quickstart guide is similar to the beginner's guide. The key difference is t
 
 ## Installation
 
-Explain to the user how to install dependencies and the quantum prototype. It is likely best to just link to the installation guide here.
+Refer to [installation guide](./installation_guide.md).
 
 ## Usage
 
-Demonstrate the API usage here. Since the user is assumed to have some background on the software capabilities, more detailed/advanced usage can be provided here than in the beginner's guide.
+```python
+
+```
