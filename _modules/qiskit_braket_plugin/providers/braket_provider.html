@@ -48,7 +48,23 @@
 
 
 <div class="viewcode-block" id="AWSBraketProvider"><a class="viewcode-back" href="../../../stubs/qiskit_braket_plugin.providers.AWSBraketProvider.html#qiskit_braket_plugin.providers.AWSBraketProvider">[docs]</a><span class="k">class</span> <span class="nc">AWSBraketProvider</span><span class="p">(</span><span class="n">ProviderV1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;AWSBraketProvider class for accessing AWS Braket backends.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;AWSBraketProvider class for accessing AWS Braket backends.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; provider = AWSBraketProvider()</span>
+<span class="sd">        &gt;&gt;&gt; backends = provider.backends()</span>
+<span class="sd">        &gt;&gt;&gt; backends</span>
+<span class="sd">        [BraketBackend[Aspen-10],</span>
+<span class="sd">         BraketBackend[Aspen-11],</span>
+<span class="sd">         BraketBackend[Aspen-8],</span>
+<span class="sd">         BraketBackend[Aspen-9],</span>
+<span class="sd">         BraketBackend[Aspen-M-1],</span>
+<span class="sd">         BraketBackend[IonQ Device],</span>
+<span class="sd">         BraketBackend[Lucy],</span>
+<span class="sd">         BraketBackend[SV1],</span>
+<span class="sd">         BraketBackend[TN1],</span>
+<span class="sd">         BraketBackend[dm1]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">backends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 
@@ -97,6 +113,8 @@
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/example_how_to.html">Quantum Prototype How-To</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">API References</a></li>
 </ul>

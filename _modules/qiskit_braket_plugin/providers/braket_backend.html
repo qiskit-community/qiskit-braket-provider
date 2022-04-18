@@ -77,16 +77,16 @@
 <div class="viewcode-block" id="BraketLocalBackend.__init__"><a class="viewcode-back" href="../../../stubs/qiskit_braket_plugin.providers.BraketLocalBackend.html#qiskit_braket_plugin.providers.BraketLocalBackend.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;AWSBraketLocalBackend for local execution of circuits.</span>
 
-<span class="sd">        Examples:</span>
-<span class="sd">            device = LocalSimulator()                         #Local State Vector Simulator</span>
-<span class="sd">            device = LocalSimulator(&quot;default&quot;)                #Local State Vector Simulator</span>
-<span class="sd">            device = LocalSimulator(backend=&quot;default&quot;)        #Local State Vector Simulator</span>
-<span class="sd">            device = LocalSimulator(backend=&quot;braket_sv&quot;)      #Local State Vector Simulator</span>
-<span class="sd">            device = LocalSimulator(backend=&quot;braket_dm&quot;)      #Local Density Matrix Simulator</span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator()                         #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(&quot;default&quot;)                #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(backend=&quot;default&quot;)        #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(backend=&quot;braket_sv&quot;)      #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(backend=&quot;braket_dm&quot;)      #Local Density Matrix Simulator</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name: name of backend</span>
-<span class="sd">            **fields:</span>
+<span class="sd">            **fields: extra fields</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend_name</span> <span class="o">=</span> <span class="n">name</span>
@@ -181,6 +181,13 @@
         <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;AWSBraketBackend for execution circuits against AWS Braket devices.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; provider = AWSBraketProvider()</span>
+<span class="sd">            &gt;&gt;&gt; backend = provider.get_backend(&quot;SV1&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; transpiled_circuit = transpile(circuit, backend=backend)</span>
+<span class="sd">            &gt;&gt;&gt; backend.run(transpiled_circuit, shots=10).result().get_counts()</span>
+<span class="sd">            {&quot;100&quot;: 10, &quot;001&quot;: 10}</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            device: Braket device class</span>
@@ -283,6 +290,8 @@
 <h3>Navigation</h3>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/example_how_to.html">Quantum Prototype How-To</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">API References</a></li>
 </ul>

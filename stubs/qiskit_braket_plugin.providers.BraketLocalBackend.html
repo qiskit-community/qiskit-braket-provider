@@ -47,17 +47,19 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BraketLocalBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_plugin/providers/braket_backend.html#BraketLocalBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_plugin.providers.BraketLocalBackend" title="Permalink to this definition">¶</a></dt>
 <dd><p>BraketLocalBackend.</p>
 <p>AWSBraketLocalBackend for local execution of circuits.</p>
-<p class="rubric">Examples</p>
-<p>device = LocalSimulator()                         #Local State Vector Simulator
-device = LocalSimulator(“default”)                #Local State Vector Simulator
-device = LocalSimulator(backend=”default”)        #Local State Vector Simulator
-device = LocalSimulator(backend=”braket_sv”)      #Local State Vector Simulator
-device = LocalSimulator(backend=”braket_dm”)      #Local Density Matrix Simulator</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">()</span>                         <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>                <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>        <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;braket_sv&quot;</span><span class="p">)</span>      <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;braket_dm&quot;</span><span class="p">)</span>      <span class="c1">#Local Density Matrix Simulator</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – name of backend</p></li>
-<li><p><strong>**fields</strong> – </p></li>
+<li><p><strong>**fields</strong> – extra fields</p></li>
 </ul>
 </dd>
 </dl>
@@ -65,17 +67,19 @@ device = LocalSimulator(backend=”braket_dm”)      #Local Density Matrix Simu
 <dt class="sig sig-object py" id="qiskit_braket_plugin.providers.BraketLocalBackend.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_plugin/providers/braket_backend.html#BraketLocalBackend.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_plugin.providers.BraketLocalBackend.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>AWSBraketLocalBackend for local execution of circuits.</p>
-<p class="rubric">Examples</p>
-<p>device = LocalSimulator()                         #Local State Vector Simulator
-device = LocalSimulator(“default”)                #Local State Vector Simulator
-device = LocalSimulator(backend=”default”)        #Local State Vector Simulator
-device = LocalSimulator(backend=”braket_sv”)      #Local State Vector Simulator
-device = LocalSimulator(backend=”braket_dm”)      #Local Density Matrix Simulator</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">()</span>                         <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>                <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>        <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;braket_sv&quot;</span><span class="p">)</span>      <span class="c1">#Local State Vector Simulator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;braket_dm&quot;</span><span class="p">)</span>      <span class="c1">#Local Density Matrix Simulator</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – name of backend</p></li>
-<li><p><strong>**fields</strong> – </p></li>
+<li><p><strong>**fields</strong> – extra fields</p></li>
 </ul>
 </dd>
 </dl>
@@ -194,6 +198,8 @@ device = LocalSimulator(backend=”braket_dm”)      #Local Density Matrix Simu
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/example_how_to.html">Quantum Prototype How-To</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../apidocs/index.html">API References</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../apidocs/providers.html">Provider module (<code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_plugin.providers</span></code>)</a></li>

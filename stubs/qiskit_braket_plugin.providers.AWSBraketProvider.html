@@ -46,6 +46,22 @@
 <dt class="sig sig-object py" id="qiskit_braket_plugin.providers.AWSBraketProvider">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AWSBraketProvider</span></span><a class="reference internal" href="../_modules/qiskit_braket_plugin/providers/braket_provider.html#AWSBraketProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_plugin.providers.AWSBraketProvider" title="Permalink to this definition">¶</a></dt>
 <dd><p>AWSBraketProvider class for accessing AWS Braket backends.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backends</span>
+<span class="go">[BraketBackend[Aspen-10],</span>
+<span class="go"> BraketBackend[Aspen-11],</span>
+<span class="go"> BraketBackend[Aspen-8],</span>
+<span class="go"> BraketBackend[Aspen-9],</span>
+<span class="go"> BraketBackend[Aspen-M-1],</span>
+<span class="go"> BraketBackend[IonQ Device],</span>
+<span class="go"> BraketBackend[Lucy],</span>
+<span class="go"> BraketBackend[SV1],</span>
+<span class="go"> BraketBackend[TN1],</span>
+<span class="go"> BraketBackend[dm1]]</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_braket_plugin.providers.AWSBraketProvider.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qiskit_braket_plugin.providers.AWSBraketProvider.__init__" title="Permalink to this definition">¶</a></dt>
@@ -107,6 +123,8 @@
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/example_how_to.html">Quantum Prototype How-To</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../apidocs/index.html">API References</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../apidocs/providers.html">Provider module (<code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_plugin.providers</span></code>)</a></li>

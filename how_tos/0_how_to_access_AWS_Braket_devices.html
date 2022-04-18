@@ -1,0 +1,665 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>How-to: access AWS Braket devices &#8212; Qiskit-Braket plugin. 0.0.0
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How-to: run circuit on Braket devices" href="1_how_to_run_circuits_on_Braket_devices.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="How-to:-access-AWS-Braket-devices">
+<h1>How-to: access AWS Braket devices<a class="headerlink" href="#How-to:-access-AWS-Braket-devices" title="Permalink to this headline">¶</a></h1>
+<div class="line-block">
+<div class="line">In order to get access to AWS Braket devices through Qiskit you need to import <code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> provider.</div>
+<div class="line">Provider gives you access to Braket backends.</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+
+<span class="kn">from</span> <span class="nn">qiskit_braket_plugin</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<section id="Exploring-all-backends-by-Braket-provider">
+<h2>Exploring all backends by Braket provider<a class="headerlink" href="#Exploring-all-backends-by-Braket-provider" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">()</span>
+<span class="n">backends</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[BraketBackend[Aspen-10],
+ BraketBackend[Aspen-11],
+ BraketBackend[Aspen-8],
+ BraketBackend[Aspen-9],
+ BraketBackend[Aspen-M-1],
+ BraketBackend[IonQ Device],
+ BraketBackend[Lucy],
+ BraketBackend[SV1],
+ BraketBackend[TN1],
+ BraketBackend[dm1]]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">backend</span> <span class="ow">in</span> <span class="n">backends</span><span class="p">:</span>
+    <span class="n">pprint</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+            <span class="s2">&quot;online date&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="o">.</span><span class="n">online_date</span><span class="p">,</span>
+            <span class="s2">&quot;number of qubits&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span>
+            <span class="s2">&quot;operations&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="o">.</span><span class="n">operations</span><span class="p">[:</span><span class="mi">5</span><span class="p">],</span>
+            <span class="s2">&quot;backend version&quot;</span><span class="p">:</span> <span class="n">backend</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-10.&#39;,
+ &#39;name&#39;: &#39;Aspen-10&#39;,
+ &#39;number of qubits&#39;: 38,
+ &#39;online date&#39;: datetime.datetime(2021, 12, 15, 19, 48, 30, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;id&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-11.&#39;,
+ &#39;name&#39;: &#39;Aspen-11&#39;,
+ &#39;number of qubits&#39;: 48,
+ &#39;online date&#39;: datetime.datetime(2022, 3, 4, 20, 18, 30, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;id&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-8.&#39;,
+ &#39;name&#39;: &#39;Aspen-8&#39;,
+ &#39;number of qubits&#39;: 38,
+ &#39;online date&#39;: None,
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;id&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-9.&#39;,
+ &#39;name&#39;: &#39;Aspen-9&#39;,
+ &#39;number of qubits&#39;: 38,
+ &#39;online date&#39;: datetime.datetime(2021, 11, 18, 16, 13, 30, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;id&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-M-1.&#39;,
+ &#39;name&#39;: &#39;Aspen-M-1&#39;,
+ &#39;number of qubits&#39;: 148,
+ &#39;online date&#39;: datetime.datetime(2022, 4, 18, 17, 3, 38, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;id&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: IonQ IonQ Device.&#39;,
+ &#39;name&#39;: &#39;IonQ Device&#39;,
+ &#39;number of qubits&#39;: 11,
+ &#39;online date&#39;: datetime.datetime(2022, 4, 13, 18, 51, 48, 328000, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;x&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;y&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;z&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;rx&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;ry&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta)])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Oxford Lucy.&#39;,
+ &#39;name&#39;: &#39;Lucy&#39;,
+ &#39;number of qubits&#39;: 8,
+ &#39;online date&#39;: datetime.datetime(2022, 4, 18, 17, 0, 8, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Amazon Braket SV1.&#39;,
+ &#39;name&#39;: &#39;SV1&#39;,
+ &#39;number of qubits&#39;: 34,
+ &#39;online date&#39;: datetime.datetime(2022, 1, 28, 17, 18, 44, 525122),
+ &#39;operations&#39;: [Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Amazon Braket TN1.&#39;,
+ &#39;name&#39;: &#39;TN1&#39;,
+ &#39;number of qubits&#39;: 50,
+ &#39;online date&#39;: datetime.datetime(2022, 1, 28, 17, 19, 33, 143757),
+ &#39;operations&#39;: [Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Amazon Braket dm1.&#39;,
+ &#39;name&#39;: &#39;dm1&#39;,
+ &#39;number of qubits&#39;: 17,
+ &#39;online date&#39;: datetime.datetime(2022, 3, 1, 22, 53, 1, 476669),
+ &#39;operations&#39;: [Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+</pre></div></div>
+</div>
+</section>
+<section id="Quering-for-specific-backend">
+<h2>Quering for specific backend<a class="headerlink" href="#Quering-for-specific-backend" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># state vector simulator</span>
+<span class="n">state_vector_simulator_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
+<span class="n">state_vector_simulator_backend</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[SV1]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># IonQ device</span>
+<span class="n">ionq_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IonQ Device&quot;</span><span class="p">)</span>
+<span class="n">ionq_backend</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[IonQ Device]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Rigetti device</span>
+<span class="n">rigetti_aspen_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-11&quot;</span><span class="p">)</span>
+<span class="n">rigetti_aspen_backend</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[Aspen-11]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># OQC Lucy device</span>
+<span class="n">lucy_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Lucy&quot;</span><span class="p">)</span>
+<span class="n">lucy_backend</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[47]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[Lucy]
+</pre></div></div>
+</div>
+</section>
+<section id="Query-options">
+<h2>Query options<a class="headerlink" href="#Query-options" title="Permalink to this headline">¶</a></h2>
+<p>To get a full list of possible query options refer to <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/latest/_apidoc/braket.aws.aws_device.html?highlight=get_devices#braket.aws.aws_device.AwsDevice.get_devices">Braket SDK get_device documentation</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
+<span class="n">online_simulators_backends</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[BraketBackend[SV1], BraketBackend[TN1], BraketBackend[dm1]]
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Qiskit-Braket plugin.</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How-to: access AWS Braket devices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Exploring-all-backends-by-Braket-provider">Exploring all backends by Braket provider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Quering-for-specific-backend">Quering for specific backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Query-options">Query options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_how_to.html">Quantum Prototype How-To</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">API References</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Next: <a href="1_how_to_run_circuits_on_Braket_devices.html" title="next chapter">How-to: run circuit on Braket devices</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/how_tos/0_how_to_access_AWS_Braket_devices.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
