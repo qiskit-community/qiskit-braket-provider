@@ -7,21 +7,18 @@ Qiskit-Braket plugin to execute Qiskit programs on AWS quantum computing hardwar
 ##### For Users
 
 1.  [About the Project](docs/project_overview.md)
-2.  [Beginner's Guide](docs/beginners_guide.md)
-3.  [Installation](docs/installation_guide.md)
-4.  [Quickstart Guide](docs/quickstart_guide.md)
-5.  [Tutorials](docs/tutorials/example_tutorial.ipynb)
-6.  [How-Tos](docs/how_tos/example_how_to.ipynb)
-7.  [Prototype Template File Glossary](docs/file-map-and-description.md)
-8.  [How to Give Feedback](#how-to-give-feedback)
-9.  [Contribution Guidelines](#contribution-guidelines)
-10. [References and Acknowledgements](#references-and-acknowledgements)
-11. [License](#license)
+2.  [Installation](docs/installation_guide.md)
+3.  [Quickstart Guide](docs/quickstart_guide.md)
+4.  [Tutorials](docs/tutorials/)
+5.  [How-Tos](docs/how_tos/)
+6.  [How to Give Feedback](#how-to-give-feedback)
+7.  [Contribution Guidelines](#contribution-guidelines)
+8.  [References and Acknowledgements](#references-and-acknowledgements)
+9.  [License](#license)
 
 ##### For Developers/Contributors
 
 1. [Contribution Guide](CONTRIBUTING.md)
-2. [Technical Docs](docs/technical_docs.md)
 
 
 ----------------------------------------------------------------------------------------------------
@@ -29,7 +26,7 @@ Qiskit-Braket plugin to execute Qiskit programs on AWS quantum computing hardwar
 ### How to Give Feedback
 
 We encourage your feedback! You can share your thoughts with us by:
-- [Opening an issue](https://github.com/IBM-Quantum-Prototypes/quantum-prototype-template/issues) in the repository
+- [Opening an issue](https://github.com/qiskit-community/qiskit-braket-plugin/issues) in the repository
 
 
 ----------------------------------------------------------------------------------------------------
@@ -42,8 +39,9 @@ For information on how to contribute to this project, please take a look at our 
 ----------------------------------------------------------------------------------------------------
 
 ## References and Acknowledgements
-[1] Diátaxis Technical Documentation Framework \
-    https://diataxis.fr/
+[1] Qiskit https://qiskit.org/ \
+[2] Qiskit-terra https://github.com/Qiskit/qiskit-terra \
+[3] Amazon Braket Python SDK https://github.com/aws/amazon-braket-sdk-python
 
 
 ----------------------------------------------------------------------------------------------------
