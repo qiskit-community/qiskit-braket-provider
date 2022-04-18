@@ -8,7 +8,23 @@ from .braket_backend import AWSBraketBackend, BraketLocalBackend
 
 
 class AWSBraketProvider(ProviderV1):
-    """AWSBraketProvider class for accessing AWS Braket backends."""
+    """AWSBraketProvider class for accessing AWS Braket backends.
+
+    Example:
+        >>> provider = AWSBraketProvider()
+        >>> backends = provider.backends()
+        >>> backends
+        [BraketBackend[Aspen-10],
+         BraketBackend[Aspen-11],
+         BraketBackend[Aspen-8],
+         BraketBackend[Aspen-9],
+         BraketBackend[Aspen-M-1],
+         BraketBackend[IonQ Device],
+         BraketBackend[Lucy],
+         BraketBackend[SV1],
+         BraketBackend[TN1],
+         BraketBackend[dm1]]
+    """
 
     def backends(self, name=None, **kwargs):
 
