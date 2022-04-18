@@ -19,7 +19,6 @@ Qiskit-Braket plugin to execute Qiskit programs on AWS quantum computing hardwar
 ##### For Developers/Contributors
 
 1. [Contribution Guide](CONTRIBUTING.md)
-2. [Technical Docs](docs/technical_docs.md)
 
 
 ----------------------------------------------------------------------------------------------------
