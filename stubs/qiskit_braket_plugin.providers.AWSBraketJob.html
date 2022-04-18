@@ -51,7 +51,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the job</p></li>
 <li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BackendV2</span></code>) – Local simulator</p></li>
-<li><p><strong>tasks</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumTask</span></code>]) – Executed tasks</p></li>
+<li><p><strong>tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">LocalQuantumTask</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">AwsQuantumTask</span></code>]]) – Executed tasks</p></li>
 <li><p><strong>**metadata</strong> – </p></li>
 </ul>
 </dd>
@@ -65,7 +65,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the job</p></li>
 <li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BackendV2</span></code>) – Local simulator</p></li>
-<li><p><strong>tasks</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumTask</span></code>]) – Executed tasks</p></li>
+<li><p><strong>tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">LocalQuantumTask</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">AwsQuantumTask</span></code>]]) – Executed tasks</p></li>
 <li><p><strong>**metadata</strong> – </p></li>
 </ul>
 </dd>
