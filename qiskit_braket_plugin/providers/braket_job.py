@@ -4,9 +4,9 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 from braket.aws import AwsQuantumTask
-from braket.tasks import GateModelQuantumTaskResult, QuantumTask
-from qiskit.providers import JobV1, BackendV2
-from qiskit.providers.models import BackendStatus
+from braket.tasks import GateModelQuantumTaskResult
+from braket.tasks.local_quantum_task import LocalQuantumTask
+from qiskit.providers import JobV1, BackendV2, JobStatus
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 
@@ -18,7 +18,7 @@ class AWSBraketJob(JobV1):
         self,
         job_id: str,
         backend: BackendV2,
-        tasks: Union[List[QuantumTask]],
+        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
         **metadata: Optional[dict]
     ):
         """AWSBraketJob for local execution of circuits.
@@ -43,7 +43,6 @@ class AWSBraketJob(JobV1):
         Returns:
             shots: int with the number of shots.
         """
-        # TODO: Shots can be retrieved from tasks metadata  # pylint: disable=fixme
         return (
             self.metadata["metadata"]["shots"]
             if "shots" in self.metadata["metadata"]
@@ -51,20 +50,22 @@ class AWSBraketJob(JobV1):
         )
 
     def submit(self):
-        pass
+        return
 
     def result(self) -> Result:
-
         experiment_results: List[ExperimentResult] = []
-        task: AwsQuantumTask
 
         # For each task the results is get and filled into an ExperimentResult object
         for task in self._tasks:
-            result: GateModelQuantumTaskResult = task.result()
-            counts = {
-                k[::-1]: v for k, v in dict(result.measurement_counts).items()
-            }  # convert to little-endian
-            data = ExperimentResultData(counts=counts)
+            if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
+                result: GateModelQuantumTaskResult = task.result()
+                counts = {
+                    k[::-1]: v for k, v in dict(result.measurement_counts).items()
+                }  # convert to little-endian
+                data = ExperimentResultData(counts=counts)
+            else:
+                data = ExperimentResultData()
+
             experiment_result = ExperimentResult(
                 shots=self.shots,
                 success=task.state() == "COMPLETED",
@@ -75,7 +76,7 @@ class AWSBraketJob(JobV1):
 
         return Result(
             backend_name=self._backend,
-            backend_version=1,
+            backend_version=self._backend.version,
             job_id=self._job_id,
             qobj_id=0,
             success=self.status(),
@@ -83,21 +84,19 @@ class AWSBraketJob(JobV1):
         )
 
     def cancel(self):
-        pass
+        for task in self._tasks:
+            task.cancel()
 
     def status(self):
-        status: str = self._backend.status
-        backend_status: BackendStatus = BackendStatus(
-            backend_name=self._backend.name,
-            backend_version="",
-            operational=False,
-            pending_jobs=0,  # TODO  # pylint: disable=fixme
-            status_msg=status,
-        )
-        if status in ("ONLINE", "AVAILABLE"):
-            backend_status.operational = True
-        elif status == "OFFLINE":
-            backend_status.operational = False
+        braket_tasks_states = [task.state() for task in self._tasks]
+
+        if "FAILED" in braket_tasks_states:
+            status = JobStatus.ERROR
+        elif "CANCELLED" in braket_tasks_states:
+            status = JobStatus.CANCELLED
+        elif all(state == "COMPLETED" for state in braket_tasks_states):
+            status = JobStatus.DONE
         else:
-            backend_status.operational = False
-        return backend_status
+            status = JobStatus.RUNNING
+
+        return status
