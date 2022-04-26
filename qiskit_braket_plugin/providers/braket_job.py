@@ -1,4 +1,5 @@
 """AWS Braket job."""
+import os
 from datetime import datetime
 
 from typing import List, Optional, Union
@@ -9,6 +10,54 @@ from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import JobV1, BackendV2, JobStatus
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
+from retrying import retry
+
+
+def retry_if_result_none(result):
+    """Retry on result function."""
+    return result is None
+
+
+@retry(
+    retry_on_result=retry_if_result_none,
+    stop_max_delay=os.environ.get("QISKIT_BRAKET_PROVIDER_MAX_DELAY", 60000),
+    wait_fixed=os.environ.get("QISKIT_BRAKET_PROVIDER_WAIT_TIME", 2000),
+    wrap_exception=True,
+)
+def _get_result_from_aws_tasks(
+    tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]], shots: int
+) -> Optional[List[ExperimentResult]]:
+    """Returns experiment results of AWS tasks.
+
+    Args:
+        tasks: AWS Quantum tasks
+        shots: number of shots
+
+    Returns:
+        List of experiment results.
+    """
+    experiment_results: List[ExperimentResult] = []
+
+    # For each task the results is get and filled into an ExperimentResult object
+    for task in tasks:
+        if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
+            result: GateModelQuantumTaskResult = task.result()
+            counts = {
+                k[::-1]: v for k, v in dict(result.measurement_counts).items()
+            }  # convert to little-endian
+            data = ExperimentResultData(counts=counts, memory=list(result.measurements))
+        else:
+            return None
+
+        experiment_result = ExperimentResult(
+            shots=shots,
+            success=True,
+            status=task.state(),
+            data=data,
+        )
+        experiment_results.append(experiment_result)
+
+    return experiment_results
 
 
 class AWSBraketJob(JobV1):
@@ -53,33 +102,15 @@ class AWSBraketJob(JobV1):
         return
 
     def result(self) -> Result:
-        experiment_results: List[ExperimentResult] = []
-
-        # For each task the results is get and filled into an ExperimentResult object
-        for task in self._tasks:
-            if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
-                result: GateModelQuantumTaskResult = task.result()
-                counts = {
-                    k[::-1]: v for k, v in dict(result.measurement_counts).items()
-                }  # convert to little-endian
-                data = ExperimentResultData(counts=counts)
-            else:
-                data = ExperimentResultData()
-
-            experiment_result = ExperimentResult(
-                shots=self.shots,
-                success=task.state() == "COMPLETED",
-                status=task.state(),
-                data=data,
-            )
-            experiment_results.append(experiment_result)
-
+        experiment_results = _get_result_from_aws_tasks(
+            tasks=self._tasks, shots=self.shots
+        )
         return Result(
             backend_name=self._backend,
             backend_version=self._backend.version,
             job_id=self._job_id,
             qobj_id=0,
-            success=self.status(),
+            success=self.status() not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
             results=experiment_results,
         )
 

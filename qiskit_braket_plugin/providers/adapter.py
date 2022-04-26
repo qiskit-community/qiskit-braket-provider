@@ -23,7 +23,7 @@ from braket.device_schema.simulators import (
 from braket.devices import LocalSimulator
 from numpy import pi
 from qiskit import QuantumCircuit
-from qiskit.circuit import Instruction as QiskitInstruction, Parameter
+from qiskit.circuit import Instruction as QiskitInstruction, Parameter, Measure
 from qiskit.circuit.library import (
     HGate,
     CXGate,
@@ -183,6 +183,8 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
         target for Qiskit backend
     """
     target = Target()
+    target.add_instruction(Measure())
+
     instructions = [
         inst
         for inst in qiskit_gate_name_to_braket_gate_mapping.values()
@@ -201,6 +203,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
                     instruction_props[(src, dst)] = None
                     instruction_props[(dst, src)] = None
         target.add_instruction(instruction, instruction_props)
+
     return target
 
 
@@ -215,6 +218,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     """
     # building target
     target = Target(description=f"Target for AWS Device: {device.name}")
+    target.add_instruction(Measure())
+
     properties = device.properties
     # gate model devices
     if isinstance(
