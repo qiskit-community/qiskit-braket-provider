@@ -81,6 +81,7 @@ class AWSBraketJob(JobV1):
             qobj_id=0,
             success=self.status(),
             results=experiment_results,
+            status=self.status(),
         )
 
     def cancel(self):
