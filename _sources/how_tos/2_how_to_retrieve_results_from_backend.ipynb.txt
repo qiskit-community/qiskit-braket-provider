@@ -1,0 +1,277 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "c74932e2",
+   "metadata": {},
+   "source": [
+    "# How-to: retrieve results from backend"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "f543c651",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from qiskit import transpile\n",
+    "from qiskit.circuit.random import random_circuit\n",
+    "\n",
+    "from qiskit_braket_plugin import AWSBraketProvider"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e306df72",
+   "metadata": {},
+   "source": [
+    "Let's create random circuit"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "ddc70eea",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<pre style=\"word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace\">                                                   ┌───┐\n",
+       "q_0: ─────X────────────■───────────────────────────┤ X ├\n",
+       "          │            │      ┌─────┐┌────────────┐└─┬─┘\n",
+       "q_1: ─────X────────────┼──────┤ Sdg ├┤ Rx(3.9689) ├──┼──\n",
+       "     ┌──────────┐      │      └─────┘└────────────┘  │  \n",
+       "q_2: ┤ U1(6.13) ├──────┼─────────X───────────────────■──\n",
+       "     └──┬───┬───┘┌─────┴─────┐   │       ┌───┐       │  \n",
+       "q_3: ───┤ T ├────┤ Rz(5.823) ├───┼───────┤ S ├───────┼──\n",
+       "       ┌┴───┴┐   └───────────┘   │       └───┘       │  \n",
+       "q_4: ──┤ Tdg ├───────────────────X───────────────────■──\n",
+       "       └─────┘                                          </pre>"
+      ],
+      "text/plain": [
+       "                                                   ┌───┐\n",
+       "q_0: ─────X────────────■───────────────────────────┤ X ├\n",
+       "          │            │      ┌─────┐┌────────────┐└─┬─┘\n",
+       "q_1: ─────X────────────┼──────┤ Sdg ├┤ Rx(3.9689) ├──┼──\n",
+       "     ┌──────────┐      │      └─────┘└────────────┘  │  \n",
+       "q_2: ┤ U1(6.13) ├──────┼─────────X───────────────────■──\n",
+       "     └──┬───┬───┘┌─────┴─────┐   │       ┌───┐       │  \n",
+       "q_3: ───┤ T ├────┤ Rz(5.823) ├───┼───────┤ S ├───────┼──\n",
+       "       ┌┴───┴┐   └───────────┘   │       └───┘       │  \n",
+       "q_4: ──┤ Tdg ├───────────────────X───────────────────■──\n",
+       "       └─────┘                                          "
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "circuit = random_circuit(5, 3, seed=42)\n",
+    "circuit.draw()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d96fb4ef",
+   "metadata": {},
+   "source": [
+    "Get backend"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "50522a02",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "BraketBackend[SV1]"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "provider = AWSBraketProvider()\n",
+    "backend = provider.get_backend(\"SV1\")\n",
+    "backend"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a9963aac",
+   "metadata": {},
+   "source": [
+    "Transpile circuit against given backend"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "efd93336",
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<pre style=\"word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace\">global phase: 4.8274\n",
+       "                                                                          ┌───┐┌───┐┌─────┐┌───┐┌───┐┌───┐┌─────┐┌───┐┌───┐ ┌───┐      \n",
+       "q_0 -> 0 ───────────X────────────────────■─────────────────────────────■──┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├──────\n",
+       "                    │           ┌─────┐  │        ┌────────────┐       │  └───┘└─┬─┘└─────┘└─┬─┘└───┘└─┬─┘└─────┘└─┬─┘└───┘ └───┘      \n",
+       "q_1 -> 1 ───────────X───────────┤ Sdg ├──┼────────┤ Rx(3.9689) ├───────┼─────────┼───────────┼─────────┼───────────┼───────────────────\n",
+       "         ┌─────────────────────┐└─────┘  │        └────────────┘       │         │           │         │           │        ┌───┐      \n",
+       "q_2 -> 2 ┤ P(6.13001602516006) ├───X─────┼─────────────────────────────┼─────────┼───────────■─────────┼───────────■────■───┤ T ├───■──\n",
+       "         └────┬────────────┬───┘   │   ┌─┴─┐┌───────────────────────┐┌─┴─┐┌───┐  │                     │                │   └───┘   │  \n",
+       "q_3 -> 3 ─────┤ P(-2.5863) ├───────┼───┤ X ├┤ Rz(-2.91151808057099) ├┤ X ├┤ S ├──┼─────────────────────┼────────────────┼───────────┼──\n",
+       "              └──┬─────┬───┘       │   └───┘└───────────────────────┘└───┘└───┘  │                     │   ┌───┐      ┌─┴─┐┌─────┐┌─┴─┐\n",
+       "q_4 -> 4 ────────┤ Tdg ├───────────X─────────────────────────────────────────────■─────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├\n",
+       "                 └─────┘                                                                                   └───┘      └───┘└─────┘└───┘</pre>"
+      ],
+      "text/plain": [
+       "global phase: 4.8274\n",
+       "                                                                          ┌───┐┌───┐┌─────┐┌───┐┌───┐┌───┐┌─────┐┌───┐┌───┐ ┌───┐      \n",
+       "q_0 -> 0 ───────────X────────────────────■─────────────────────────────■──┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├──────\n",
+       "                    │           ┌─────┐  │        ┌────────────┐       │  └───┘└─┬─┘└─────┘└─┬─┘└───┘└─┬─┘└─────┘└─┬─┘└───┘ └───┘      \n",
+       "q_1 -> 1 ───────────X───────────┤ Sdg ├──┼────────┤ Rx(3.9689) ├───────┼─────────┼───────────┼─────────┼───────────┼───────────────────\n",
+       "         ┌─────────────────────┐└─────┘  │        └────────────┘       │         │           │         │           │        ┌───┐      \n",
+       "q_2 -> 2 ┤ P(6.13001602516006) ├───X─────┼─────────────────────────────┼─────────┼───────────■─────────┼───────────■────■───┤ T ├───■──\n",
+       "         └────┬────────────┬───┘   │   ┌─┴─┐┌───────────────────────┐┌─┴─┐┌───┐  │                     │                │   └───┘   │  \n",
+       "q_3 -> 3 ─────┤ P(-2.5863) ├───────┼───┤ X ├┤ Rz(-2.91151808057099) ├┤ X ├┤ S ├──┼─────────────────────┼────────────────┼───────────┼──\n",
+       "              └──┬─────┬───┘       │   └───┘└───────────────────────┘└───┘└───┘  │                     │   ┌───┐      ┌─┴─┐┌─────┐┌─┴─┐\n",
+       "q_4 -> 4 ────────┤ Tdg ├───────────X─────────────────────────────────────────────■─────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├\n",
+       "                 └─────┘                                                                                   └───┘      └───┘└─────┘└───┘"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "transpiled_circuit = transpile(circuit, backend=backend, seed_transpiler=42)\n",
+    "transpiled_circuit.draw(idle_wires=False, fold=-1)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fa7d65c1",
+   "metadata": {},
+   "source": [
+    "Run circuit"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "fc6aa158",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "job = backend.run(transpiled_circuit, shots=10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "a4ea3a45",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'Task id 3e6b6feb-fdc9-42c3-a7ba-0c4cd94089e2'"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "f\"Task id {job.job_id().split('/')[-1]}\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "83222235",
+   "metadata": {},
+   "source": [
+    "Retrieve job by id from backend"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "f65cd41c",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<qiskit_braket_plugin.providers.braket_job.AWSBraketJob at 0x7f8821bc6220>"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "retrieved_job = backend.retrieve_job(job_id=job.job_id())\n",
+    "retrieved_job"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "652bf407",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{'00010': 7, '00000': 3}"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "retrieved_job.result().get_counts()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

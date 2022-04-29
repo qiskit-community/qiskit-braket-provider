@@ -19,6 +19,7 @@
       ~AWSBraketBackend.drive_channel
       ~AWSBraketBackend.measure_channel
       ~AWSBraketBackend.qubit_properties
+      ~AWSBraketBackend.retrieve_job
       ~AWSBraketBackend.run
       ~AWSBraketBackend.set_options
    
