@@ -1,6 +1,5 @@
 """Tests for AWS Braket backends."""
-
-
+import unittest
 from unittest import TestCase
 from unittest.mock import Mock
 
@@ -16,9 +15,11 @@ from qiskit.opflow import (
     X,
     Z,
 )
+from qiskit.result import Result
 from qiskit.transpiler import Target
 from qiskit.utils import QuantumInstance
 
+from qiskit_braket_plugin import AWSBraketProvider
 from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_plugin.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
@@ -143,6 +144,30 @@ class TestAWSBraketBackend(TestCase):
                     sorted([k for k, v in aer_result.items() if v > 0.05]),
                 )
                 self.assertIsInstance(braket_result, dict)
+
+    @unittest.skip("Call to external resources.")
+    def test_retrieve_job(self):
+        """Tests retrieve job by id."""
+        backend = AWSBraketProvider().get_backend("SV1")
+        circuits = [
+            transpile(
+                random_circuit(3, 2, seed=seed), backend=backend, seed_transpiler=42
+            )
+            for seed in range(3)
+        ]
+        job = backend.run(circuits, shots=10)
+        job_id = job.job_id()
+        retrieved_job = backend.retrieve_job(job_id)
+
+        job_result: Result = job.result()
+        retrieved_job_result: Result = retrieved_job.result()
+
+        self.assertEqual(job_result.job_id, retrieved_job_result.job_id)
+        self.assertEqual(job_result.status, retrieved_job_result.status)
+        self.assertEqual(
+            job_result.backend_version, retrieved_job_result.backend_version
+        )
+        self.assertEqual(job_result.backend_name, retrieved_job_result.backend_name)
 
 
 class TestAWSBackendTarget(TestCase):

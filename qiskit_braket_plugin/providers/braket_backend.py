@@ -13,15 +13,18 @@ from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 
-from .braket_job import AWSBraketJob
 from .adapter import (
     aws_device_to_target,
     local_simulator_to_target,
     convert_qiskit_to_braket_circuits,
 )
+from .braket_job import AWSBraketJob
 from ..exception import QiskitBraketException
 
 logger = logging.getLogger(__name__)
+
+
+TASK_ID_DIVIDER = ";"
 
 
 class BraketBackend(BackendV2, ABC):
@@ -119,8 +122,10 @@ class BraketLocalBackend(BraketBackend):
                 logger.error("State of %s: %s.", task.id, task.state())
             raise ex
 
+        job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+
         return AWSBraketJob(
-            job_id=tasks[0].id,
+            job_id=job_id,
             tasks=tasks,
             backend=self,
             shots=shots,
@@ -168,6 +173,23 @@ class AWSBraketBackend(BraketBackend):
         )
         self._device = device
         self._target = aws_device_to_target(device=device)
+
+    def retrieve_job(self, job_id: str) -> AWSBraketJob:
+        """Return a single job submitted to AWS backend.
+
+        Args:
+            job_id: ID of the job to retrieve.
+
+        Returns:
+            The job with the given ID.
+        """
+        task_ids = job_id.split(TASK_ID_DIVIDER)
+
+        return AWSBraketJob(
+            job_id=job_id,
+            backend=self,
+            tasks=[AwsQuantumTask(arn=task_id) for task_id in task_ids],
+        )
 
     @property
     def target(self):
@@ -222,7 +244,7 @@ class AWSBraketBackend(BraketBackend):
             braket_circuits, shots=options.get("shots")
         )
         tasks: List[AwsQuantumTask] = batch_task.tasks
-        job_id = ";".join(task.id for task in tasks)
+        job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AWSBraketJob(
             job_id=job_id, tasks=tasks, backend=self, shots=options.get("shots")

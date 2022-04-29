@@ -112,6 +112,7 @@ class AWSBraketJob(JobV1):
             qobj_id=0,
             success=self.status() not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
             results=experiment_results,
+            status=self.status(),
         )
 
     def cancel(self):
