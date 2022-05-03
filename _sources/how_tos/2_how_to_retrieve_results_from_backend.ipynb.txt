@@ -18,7 +18,7 @@
     "from qiskit import transpile\n",
     "from qiskit.circuit.random import random_circuit\n",
     "\n",
-    "from qiskit_braket_plugin import AWSBraketProvider"
+    "from qiskit_braket_provider import AWSBraketProvider"
    ]
   },
   {

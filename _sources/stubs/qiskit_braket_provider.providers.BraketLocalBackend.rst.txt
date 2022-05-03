@@ -1,7 +1,7 @@
-﻿qiskit\_braket\_plugin.providers.BraketLocalBackend
-===================================================
+﻿qiskit\_braket\_provider.providers.BraketLocalBackend
+=====================================================
 
-.. currentmodule:: qiskit_braket_plugin.providers
+.. currentmodule:: qiskit_braket_provider.providers
 
 .. autoclass:: BraketLocalBackend
 

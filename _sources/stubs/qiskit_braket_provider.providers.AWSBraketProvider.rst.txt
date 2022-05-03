@@ -1,7 +1,7 @@
-﻿qiskit\_braket\_plugin.providers.AWSBraketProvider
-==================================================
+﻿qiskit\_braket\_provider.providers.AWSBraketProvider
+====================================================
 
-.. currentmodule:: qiskit_braket_plugin.providers
+.. currentmodule:: qiskit_braket_provider.providers
 
 .. autoclass:: AWSBraketProvider
 

@@ -20,7 +20,7 @@
    "source": [
     "from pprint import pprint\n",
     "\n",
-    "from qiskit_braket_plugin import AWSBraketProvider"
+    "from qiskit_braket_provider import AWSBraketProvider"
    ]
   },
   {

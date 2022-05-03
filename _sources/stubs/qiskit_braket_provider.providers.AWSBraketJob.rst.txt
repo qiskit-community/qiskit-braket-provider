@@ -1,7 +1,7 @@
-﻿qiskit\_braket\_plugin.providers.AWSBraketJob
-=============================================
+﻿qiskit\_braket\_provider.providers.AWSBraketJob
+===============================================
 
-.. currentmodule:: qiskit_braket_plugin.providers
+.. currentmodule:: qiskit_braket_provider.providers
 
 .. autoclass:: AWSBraketJob
 
