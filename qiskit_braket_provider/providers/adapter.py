@@ -56,7 +56,7 @@ from qiskit.circuit.library import (
 )
 from qiskit.transpiler import Target, InstructionProperties
 
-from qiskit_braket_plugin.exception import QiskitBraketException
+from qiskit_braket_provider.exception import QiskitBraketException
 
 qiskit_to_braket_gate_names_mapping = {
     "u1": "u1",

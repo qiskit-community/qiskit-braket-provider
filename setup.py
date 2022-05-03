@@ -1,4 +1,4 @@
-"""Setup file for Qiskit-Braket plugin."""
+"""Setup file for Qiskit-Braket provider."""
 
 import setuptools
 
@@ -9,8 +9,8 @@ with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
 
 setuptools.setup(
-    name="qiskit_braket_plugin",
-    description="Qiskit-Braket plugin to execute Qiskit "
+    name="qiskit_braket_provider",
+    description="Qiskit-Braket provider to execute Qiskit "
     "programs on AWS quantum computing "
     "hardware devices through Amazon Braket.",
     long_description=long_description,

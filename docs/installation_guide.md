@@ -11,7 +11,7 @@ pip install -r requirements.txt
 ```shell
 pip install -r requirements-dev.txt
 ```
-## Installing Qiskit-Braket plugin
+## Installing Qiskit-Braket provider
 
 ```shell
 pip install .
