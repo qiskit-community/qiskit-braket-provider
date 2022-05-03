@@ -39,6 +39,7 @@
             
   <h1>Source code for qiskit_braket_plugin.providers.braket_job</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;AWS Braket job.&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
@@ -49,6 +50,54 @@
 <span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">JobV1</span><span class="p">,</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">JobStatus</span>
 <span class="kn">from</span> <span class="nn">qiskit.result</span> <span class="kn">import</span> <span class="n">Result</span>
 <span class="kn">from</span> <span class="nn">qiskit.result.models</span> <span class="kn">import</span> <span class="n">ExperimentResult</span><span class="p">,</span> <span class="n">ExperimentResultData</span>
+<span class="kn">from</span> <span class="nn">retrying</span> <span class="kn">import</span> <span class="n">retry</span>
+
+
+<span class="k">def</span> <span class="nf">retry_if_result_none</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retry on result function.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span>
+
+
+<span class="nd">@retry</span><span class="p">(</span>
+    <span class="n">retry_on_result</span><span class="o">=</span><span class="n">retry_if_result_none</span><span class="p">,</span>
+    <span class="n">stop_max_delay</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QISKIT_BRAKET_PROVIDER_MAX_DELAY&quot;</span><span class="p">,</span> <span class="mi">60000</span><span class="p">),</span>
+    <span class="n">wait_fixed</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QISKIT_BRAKET_PROVIDER_WAIT_TIME&quot;</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span>
+    <span class="n">wrap_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">_get_result_from_aws_tasks</span><span class="p">(</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">LocalQuantumTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]],</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ExperimentResult</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;Returns experiment results of AWS tasks.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tasks: AWS Quantum tasks</span>
+<span class="sd">        shots: number of shots</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of experiment results.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">experiment_results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExperimentResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># For each task the results is get and filled into an ExperimentResult object</span>
+    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">()</span> <span class="ow">in</span> <span class="n">AwsQuantumTask</span><span class="o">.</span><span class="n">RESULTS_READY_STATES</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">:</span> <span class="n">GateModelQuantumTaskResult</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurement_counts</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>  <span class="c1"># convert to little-endian</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span><span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">memory</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurements</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">experiment_result</span> <span class="o">=</span> <span class="n">ExperimentResult</span><span class="p">(</span>
+            <span class="n">shots</span><span class="o">=</span><span class="n">shots</span><span class="p">,</span>
+            <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">(),</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">experiment_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">experiment_result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">experiment_results</span>
 
 
 <div class="viewcode-block" id="AWSBraketJob"><a class="viewcode-back" href="../../../stubs/qiskit_braket_plugin.providers.AWSBraketJob.html#qiskit_braket_plugin.providers.AWSBraketJob">[docs]</a><span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">JobV1</span><span class="p">):</span>
@@ -93,33 +142,15 @@
         <span class="k">return</span>
 
     <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
-        <span class="n">experiment_results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExperimentResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="c1"># For each task the results is get and filled into an ExperimentResult object</span>
-        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">()</span> <span class="ow">in</span> <span class="n">AwsQuantumTask</span><span class="o">.</span><span class="n">RESULTS_READY_STATES</span><span class="p">:</span>
-                <span class="n">result</span><span class="p">:</span> <span class="n">GateModelQuantumTaskResult</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-                <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="n">k</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurement_counts</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="p">}</span>  <span class="c1"># convert to little-endian</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span><span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">()</span>
-
-            <span class="n">experiment_result</span> <span class="o">=</span> <span class="n">ExperimentResult</span><span class="p">(</span>
-                <span class="n">shots</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shots</span><span class="p">,</span>
-                <span class="n">success</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;COMPLETED&quot;</span><span class="p">,</span>
-                <span class="n">status</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">(),</span>
-                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">experiment_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">experiment_result</span><span class="p">)</span>
-
+        <span class="n">experiment_results</span> <span class="o">=</span> <span class="n">_get_result_from_aws_tasks</span><span class="p">(</span>
+            <span class="n">tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shots</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">Result</span><span class="p">(</span>
             <span class="n">backend_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="p">,</span>
             <span class="n">backend_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
             <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_job_id</span><span class="p">,</span>
             <span class="n">qobj_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">success</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">(),</span>
+            <span class="n">success</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AwsQuantumTask</span><span class="o">.</span><span class="n">NO_RESULT_TERMINAL_STATES</span><span class="p">,</span>
             <span class="n">results</span><span class="o">=</span><span class="n">experiment_results</span><span class="p">,</span>
             <span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">(),</span>
         <span class="p">)</span>
@@ -163,11 +194,10 @@
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/example_tutorial.html">Quantum Prototype Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/1_vqe.html">Tutorial: Runing VQE on Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/example_how_to.html">Quantum Prototype How-To</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">API References</a></li>
 </ul>
 
