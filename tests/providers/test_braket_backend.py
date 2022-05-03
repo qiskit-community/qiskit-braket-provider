@@ -4,9 +4,20 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from qiskit import QuantumCircuit, transpile, BasicAer
+from qiskit.algorithms import VQE, VQEResult
+from qiskit.algorithms.optimizers import (
+    SLSQP,
+)
+from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
+from qiskit.opflow import (
+    I,
+    X,
+    Z,
+)
 from qiskit.result import Result
 from qiskit.transpiler import Target
+from qiskit.utils import QuantumInstance
 
 from qiskit_braket_plugin import AWSBraketProvider
 from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
@@ -77,6 +88,31 @@ class TestAWSBraketBackend(TestCase):
         _11 = results[1].get_counts()["11"]
         self.assertEqual(_00 + _11, 1024)
 
+    def test_vqe(self):
+        """Tests VQE."""
+        local_simulator = BraketLocalBackend(name="default")
+
+        h2_op = (
+            (-1.052373245772859 * I ^ I)
+            + (0.39793742484318045 * I ^ Z)
+            + (-0.39793742484318045 * Z ^ I)
+            + (-0.01128010425623538 * Z ^ Z)
+            + (0.18093119978423156 * X ^ X)
+        )
+
+        quantum_instance = QuantumInstance(
+            local_simulator, seed_transpiler=42, seed_simulator=42
+        )
+        ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
+        slsqp = SLSQP(maxiter=1)
+
+        vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=quantum_instance)
+
+        result = vqe.compute_minimum_eigenvalue(h2_op)
+        self.assertIsInstance(result, VQEResult)
+        self.assertEqual(len(result.optimal_parameters), 8)
+        self.assertEqual(len(list(result.optimal_point)), 8)
+
     def test_random_circuits(self):
         """Tests with random circuits."""
         backend = BraketLocalBackend(name="braket_sv")
@@ -144,6 +180,6 @@ class TestAWSBackendTarget(TestCase):
 
         target = aws_device_to_target(mock_device)
         self.assertEqual(target.num_qubits, 30)
-        self.assertEqual(len(target.operations), 1)
-        self.assertEqual(len(target.instructions), 30)
+        self.assertEqual(len(target.operations), 2)
+        self.assertEqual(len(target.instructions), 31)
         self.assertIn("Target for AWS Device", target.description)

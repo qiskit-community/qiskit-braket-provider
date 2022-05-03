@@ -37,21 +37,21 @@ class BraketBackend(BackendV2, ABC):
 class BraketLocalBackend(BraketBackend):
     """BraketLocalBackend."""
 
-    def __init__(self, name: str = None, **fields):
+    def __init__(self, name: str = "default", **fields):
         """AWSBraketLocalBackend for local execution of circuits.
 
         Example:
             >>> device = LocalSimulator()                         #Local State Vector Simulator
             >>> device = LocalSimulator("default")                #Local State Vector Simulator
-            >>> device = LocalSimulator(backend="default")        #Local State Vector Simulator
-            >>> device = LocalSimulator(backend="braket_sv")      #Local State Vector Simulator
-            >>> device = LocalSimulator(backend="braket_dm")      #Local Density Matrix Simulator
+            >>> device = LocalSimulator(name="default")        #Local State Vector Simulator
+            >>> device = LocalSimulator(name="braket_sv")      #Local State Vector Simulator
+            >>> device = LocalSimulator(name="braket_dm")      #Local Density Matrix Simulator
 
         Args:
             name: name of backend
             **fields: extra fields
         """
-        super().__init__(name, **fields)
+        super().__init__(name="sv_simulator", **fields)
         self.backend_name = name
         self._aws_device = LocalSimulator(backend=self.backend_name)
         self._target = local_simulator_to_target(self._aws_device)
@@ -241,7 +241,7 @@ class AWSBraketBackend(BraketBackend):
 
         braket_circuits = list(convert_qiskit_to_braket_circuits(circuits))
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
-            braket_circuits, **options
+            braket_circuits, shots=options.get("shots")
         )
         tasks: List[AwsQuantumTask] = batch_task.tasks
         job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
