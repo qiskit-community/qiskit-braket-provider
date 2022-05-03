@@ -7,8 +7,8 @@ from braket.aws import AwsDeviceType
 from qiskit import transpile
 from qiskit.circuit.random import random_circuit
 
-from qiskit_braket_plugin.providers import AWSBraketProvider
-from qiskit_braket_plugin.providers.braket_backend import (
+from qiskit_braket_provider.providers import AWSBraketProvider
+from qiskit_braket_provider.providers.braket_backend import (
     BraketBackend,
     AWSBraketBackend,
 )

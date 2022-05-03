@@ -19,9 +19,9 @@ from qiskit.result import Result
 from qiskit.transpiler import Target
 from qiskit.utils import QuantumInstance
 
-from qiskit_braket_plugin import AWSBraketProvider
-from qiskit_braket_plugin.providers import AWSBraketBackend, BraketLocalBackend
-from qiskit_braket_plugin.providers.adapter import aws_device_to_target
+from qiskit_braket_provider import AWSBraketProvider
+from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
+from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
 

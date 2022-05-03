@@ -1,9 +1,9 @@
 """
-=======================================================
-Provider module (:mod:`qiskit_braket_plugin.providers`)
-=======================================================
+=========================================================
+Provider module (:mod:`qiskit_braket_provider.providers`)
+=========================================================
 
-.. currentmodule:: qiskit_braket_plugin.providers
+.. currentmodule:: qiskit_braket_provider.providers
 
 Provider module contains classes and functions to connect
 AWS Braket abstraction to Qiskit architecture.

@@ -1,6 +1,6 @@
-# Qiskit-Braket plugin
+# Qiskit-Braket provider
 
-Qiskit-Braket plugin to execute Qiskit programs on AWS quantum computing hardware devices through Amazon Braket.
+Qiskit-Braket provider to execute Qiskit programs on AWS quantum computing hardware devices through Amazon Braket.
 
 ### Table of Contents
 

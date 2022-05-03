@@ -1,4 +1,4 @@
-"""Qiskit-Braket plugin."""
+"""Qiskit-Braket provider."""
 
 from .providers import (
     AWSBraketProvider,

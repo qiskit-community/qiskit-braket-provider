@@ -1,7 +1,7 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
 
-from qiskit_braket_plugin.providers.adapter import (
+from qiskit_braket_provider.providers.adapter import (
     qiskit_to_braket_gate_names_mapping,
     qiskit_gate_names_to_braket_gates,
     qiskit_gate_name_to_braket_gate_mapping,

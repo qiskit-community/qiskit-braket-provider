@@ -19,16 +19,16 @@ Sphinx documentation builder
 # General options:
 import os
 
-project = "Qiskit-Braket plugin."
+project = "Qiskit-Braket provider"
 copyright = "2022"  # pylint: disable=redefined-builtin
-author = ""
+author = "Qiskit team"
 
 # The full version, including alpha/beta/rc tags
 with open(
     os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "..",
-        "qiskit_braket_plugin",
+        "qiskit_braket_provider",
         "VERSION.txt",
     ),
     "r",
@@ -55,7 +55,7 @@ numfig_format = {"table": "Table %s"}
 language = None
 pygments_style = "colorful"
 add_module_names = False
-modindex_common_prefix = ["qiskit_braket_plugin."]
+modindex_common_prefix = ["qiskit_braket_provider."]
 
 # html theme options
 html_static_path = ["_static"]
@@ -71,3 +71,11 @@ nbsphinx_timeout = 180
 nbsphinx_execute = "never"
 nbsphinx_widgets_path = ""
 exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+
+html_theme_options = {
+    "github_user": "qiskit-community",
+    "github_repo": "qiskit-braket-provider",
+    "github_button": True,
+    "github_type": "star",
+    "github_count": False,
+}
