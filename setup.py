@@ -1,5 +1,5 @@
 """Setup file for Qiskit-Braket provider."""
-
+import os
 import setuptools
 
 with open("README.md", encoding="utf-8") as f:
@@ -7,6 +7,13 @@ with open("README.md", encoding="utf-8") as f:
 
 with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
+
+version_path = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "VERSION.txt")
+)
+
+with open(version_path, "r") as fd:
+    version = fd.read().rstrip()
 
 setuptools.setup(
     name="qiskit_braket_provider",
@@ -18,5 +25,5 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     python_requires=">=3.7",
-    version="0.0.1",
+    version=version,
 )
