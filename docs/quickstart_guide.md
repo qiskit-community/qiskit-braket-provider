@@ -8,6 +8,4 @@ Refer to [installation guide](./installation_guide.md).
 
 ## Usage
 
-```python
-
-```
+Refer to [how-to-guidelines](./how_tos) or [tutorials](./tutorials).
