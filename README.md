@@ -6,19 +6,18 @@ Qiskit-Braket provider to execute Qiskit programs on AWS quantum computing hardw
 
 ##### For Users
 
-1.  [About the Project](docs/project_overview.md)
-2.  [Installation](docs/installation_guide.md)
-3.  [Quickstart Guide](docs/quickstart_guide.md)
-4.  [Tutorials](docs/tutorials/)
-5.  [How-Tos](docs/how_tos/)
-6.  [How to Give Feedback](#how-to-give-feedback)
-7.  [Contribution Guidelines](#contribution-guidelines)
-8.  [References and Acknowledgements](#references-and-acknowledgements)
-9.  [License](#license)
+1.  [Installation](https://github.com/qiskit-community/qiskit-braket-provider/blob/main/docs/installation_guide.md)
+2.  [Quickstart Guide](https://github.com/qiskit-community/qiskit-braket-provider/blob/main/docs/quickstart_guide.md)
+3.  [Tutorials](https://github.com/qiskit-community/qiskit-braket-provider/blob/main/docs/tutorials/)
+4.  [How-Tos](https://github.com/qiskit-community/qiskit-braket-provider/blob/main/docs/how_tos/)
+5.  [How to Give Feedback](#how-to-give-feedback)
+6.  [Contribution Guidelines](#contribution-guidelines)
+7.  [References and Acknowledgements](#references-and-acknowledgements)
+8.  [License](#license)
 
 ##### For Developers/Contributors
 
-1. [Contribution Guide](CONTRIBUTING.md)
+1. [Contribution Guide](https://github.com/qiskit-community/qiskit-braket-provider/blob/main/CONTRIBUTING.md)
 
 
 ----------------------------------------------------------------------------------------------------

@@ -1,23 +1,32 @@
 # Qiskit-Braket Installation Guide
 
-## Installing Depencencies
+## PyPi
+
+```shell
+pip install qiskit_braket_provider
+```
+
+## Local installation
+
+1. Clone repo
+2. Installing Depencencies
 
 ```shell
 pip install -r requirements.txt
 ```
 
-## Installing Optional Dependencies
+3. Installing Optional Dependencies
 
 ```shell
 pip install -r requirements-dev.txt
 ```
-## Installing Qiskit-Braket provider
+4. Installing Qiskit-Braket provider
 
 ```shell
 pip install .
 ```
 
-## Testing the Installation
+5. Testing the Installation
 
 ```shell
 tox -epy39

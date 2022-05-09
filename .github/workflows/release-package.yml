@@ -27,6 +27,6 @@ jobs:
           path: ./dist/qiskit*
       - name: Publish to PyPi
         env:
-          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
-          TWINE_USERNAME: qiskit
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         run: twine upload dist/qiskit*
