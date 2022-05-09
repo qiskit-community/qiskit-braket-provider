@@ -109,6 +109,7 @@ class TestAWSBraketBackend(TestCase):
         vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=quantum_instance)
 
         result = vqe.compute_minimum_eigenvalue(h2_op)
+
         self.assertIsInstance(result, VQEResult)
         self.assertEqual(len(result.optimal_parameters), 8)
         self.assertEqual(len(list(result.optimal_point)), 8)
