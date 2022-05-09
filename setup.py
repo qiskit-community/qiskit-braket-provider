@@ -22,7 +22,7 @@ setuptools.setup(
     "hardware devices through Amazon Braket.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords='qiskit braket sdk quantum',
+    keywords="qiskit braket sdk quantum",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     python_requires=">=3.7",
