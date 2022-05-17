@@ -1,0 +1,809 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Tutorial: Qiskit-Braket provider overview &#8212; Qiskit-Braket provider 0.0.1
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorial: Runing VQE on Braket backend" href="1_tutorial_vqe.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Tutorial:-Qiskit-Braket-provider-overview">
+<h1>Tutorial: Qiskit-Braket provider overview<a class="headerlink" href="#Tutorial:-Qiskit-Braket-provider-overview" title="Permalink to this headline">¶</a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">VQE</span>
+<span class="kn">from</span> <span class="nn">qiskit.opflow</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">I</span><span class="p">,</span>
+    <span class="n">X</span><span class="p">,</span>
+    <span class="n">Z</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">transpile</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.random</span> <span class="kn">import</span> <span class="n">random_circuit</span>
+<span class="kn">from</span> <span class="nn">qiskit.visualization</span> <span class="kn">import</span> <span class="n">plot_histogram</span>
+<span class="kn">from</span> <span class="nn">qiskit.algorithms.optimizers</span> <span class="kn">import</span> <span class="n">SLSQP</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">TwoLocal</span>
+<span class="kn">from</span> <span class="nn">qiskit.utils</span> <span class="kn">import</span> <span class="n">QuantumInstance</span>
+
+<span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumJob</span>
+
+<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span><span class="p">,</span> <span class="n">BraketLocalBackend</span>
+</pre></div>
+</div>
+</div>
+<section id="Qiskit-to-Braket-mapping">
+<h2>Qiskit to Braket mapping<a class="headerlink" href="#Qiskit-to-Braket-mapping" title="Permalink to this headline">¶</a></h2>
+<p><img alt="qiskit-to-braket-diagram" src="../_images/qiskit-to-braket-diagram.png" /></p>
+</section>
+<section id="Access-Braket-devices-from-Qiskit">
+<h2>Access Braket devices from Qiskit<a class="headerlink" href="#Access-Braket-devices-from-Qiskit" title="Permalink to this headline">¶</a></h2>
+<p>Provider class to access AWS devices. Local simulator to use Braket SDK local simulator.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<span class="n">backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">()</span>
+<span class="n">backends</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[BraketBackend[Aspen-10],
+ BraketBackend[Aspen-11],
+ BraketBackend[Aspen-8],
+ BraketBackend[Aspen-9],
+ BraketBackend[Aspen-M-1],
+ BraketBackend[IonQ Device],
+ BraketBackend[Lucy],
+ BraketBackend[SV1],
+ BraketBackend[TN1],
+ BraketBackend[dm1]]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># local simulator</span>
+<span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
+
+<span class="c1"># remote simulator</span>
+<span class="n">aws_statevector_simulator</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
+
+<span class="c1"># devices</span>
+<span class="n">ionq_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IonQ Device&quot;</span><span class="p">)</span>
+<span class="n">rigetti_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-1&quot;</span><span class="p">)</span>
+
+<span class="c1"># queries</span>
+<span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
+<span class="n">online_simulators_backends</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[BraketBackend[SV1], BraketBackend[TN1], BraketBackend[dm1]]
+</pre></div></div>
+</div>
+</section>
+<section id="Running-circuits-on-AWS-devices">
+<h2>Running circuits on AWS devices<a class="headerlink" href="#Running-circuits-on-AWS-devices" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># generate random circuit</span>
+<span class="n">circuit</span> <span class="o">=</span> <span class="n">random_circuit</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">fold</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">        ┌───┐        ┌───┐                                          ┌──────────────────────────┐┌──────────────┐                                                                                                   ┌─────────────┐    ┌───┐                                                                                           ┌───────────────────┐┌────────────┐┌────────────┐
+q_0: ───┤ T ├────────┤ S ├───────────────────X───■───────────■──────┤ U3(4.2086,2.7467,5.2319) ├┤ Rx(0.046259) ├──────────────────────────────────■────────────────────────────────────────X───────────■───────────┤ Ry(0.95701) ├────┤ Y ├───────■─────────■─────────────────────────────────────────■───────────────────────■───────┤ U2(3.0304,4.9181) ├┤ Rz(1.6775) ├┤ U1(4.2238) ├────────────────────────────────────────────────────────■────────────
+     ┌──┴───┴───┐    └───┘                   │ ┌─┴─┐         │      └──────────────────────────┘└──────────────┘┌─────┐┌────────────────────────┐ │           ┌──────────────────────────┐ │           │           └┬────────────┤    └───┘       │         │             ┌───┐                       │                       │       └───────────────────┘└─────┬──────┘└────────────┘┌─────┐                             ┌────────────┐      │
+q_1: ┤ U1(6.13) ├────────────────────X───────X─┤ X ├─────────┼───────────────────X─────────────────────X────────┤ Tdg ├┤ U3(2.96,3.5515,4.8066) ├─┼───────────┤ U3(0.36633,1.768,1.8447) ├─┼───────────■────────────┤ Rz(2.8033) ├─■──────────────┼────■────┼─────────────┤ T ├───────────────────■───┼───────────────────────■─────────────────■────────────────┼─────────────■───────┤ Sdg ├─────────────────────────────┤ Rz(5.2137) ├──────┼────────────
+     └──────────┘┌────────────┐      │       │ └─┬─┘         │                   │                     │        ├─────┤└───────────┬────────────┘ │U1(3.4782) └──────────┬───┬───────────┘ │         ┌─┴─┐          └─────┬──────┘ │ZZ(0.74145)   │    │    │  ┌──────────┴───┴───────────┐┌───┐  │   │                       │                 │                │           ┌─┴─┐     └┬───┬┘                             └─────┬──────┘      │
+q_2: ─────X──────┤ Ry(4.0455) ├──────┼───■───┼───┼───■───────┼───────────────────X─────────────────────X────────┤ Sdg ├────────────┼──────────────■──────────────────────┤ Z ├─────────────┼─────────┤ X ├────────────────■────────■──────────────┼────■────┼──┤ U3(1.9224,3.6393,1.1107) ├┤ Y ├──┼───┼─────────────■─────────┼─────────────────■────────────────┼───────────┤ X ├──────┤ X ├────────────────────────────────────┼─────────────┼─────────■──
+          │      └───┬───┬────┘      │   │   │   │   │       │                   │                   ┌───┐      ├─────┤            │                 ┌───┐               └───┘             │         ├───┤              ┌───┐                     │  ┌─┴─┐  │  └──────────────────────────┘└─┬─┘  │   │           ┌─┴─┐       │                                  │           └─┬─┘      └───┘ ┌───────────────────────────┐      │             │       ┌─┴─┐
+q_3: ─────┼──────────┤ T ├───────■───┼───┼───■───┼───X───────┼───────────────────■───────────────────┤ X ├──────┤ Tdg ├────────────■─────────────────┤ Z ├─────────────────────────────────┼─────────┤ H ├──────────────┤ X ├───────────■─────────┼──┤ X ├──■────────────────────────────────■────┼───┼───────────┤ Y ├───────┼─────────────────■────────────────■─────────────┼──────────────┤ U3(4.8296,0.67696,5.7555) ├──────┼─────────────┼───────┤ Y ├
+          │          └───┘       │   │ ┌─┴─┐     │   │     ┌─┴─┐               ┌───┐                 └───┘      ├─────┤                              └───┘                                 │         └─┬─┘              └─┬─┘           │       ┌─┴─┐└───┘┌─┴─┐                                 ┌─┴─┐ │           └───┘     ┌─┴─┐         ┌─────┴──────┐       ┌───┐           │        ┌───┐ └─────────────┬─────────────┘      │       ┌─────┴──────┐└───┘
+q_4: ─────■──────────────────────┼───X─┤ X ├─────■───┼─────┤ Y ├───────────────┤ T ├──────────────■─────────────┤ Tdg ├────────────────────────────────────────────────────────────────────■───────────■──────────────────■─────────────■───────┤ X ├─────┤ X ├─────────────────────────────────┤ X ├─┼─────────────────────┤ X ├─────────┤ Rz(3.7128) ├───────┤ S ├───────────┼────────┤ S ├───────────────┼────────────────────┼───────┤ Rz(1.9926) ├─────
+          │                    ┌─┴─┐   └─┬─┘         │ ┌───┴───┴───┐           ├───┤              │ZZ(4.2882)   └┬───┬┘                                                                    │ ┌────────────────────┐       │           ┌─┴─┐     └─┬─┘┌───┐└───┘                                 └───┘ │U1(2.6126) ┌───┐┌────┴───┴────┐    └────────────┘       └───┘           │        └───┘               │                    │       └────────────┘
+q_5: ─────X────────────────────┤ H ├─────■───────────X─┤ Ry(6.079) ├───────────┤ Z ├──────────────■──────────────┤ S ├─────────────────────────────────────────────────────────────────────X─┤ U2(0.1427,0.56579) ├───────■───────────┤ X ├───────■──┤ Z ├────────────────────────────────────────────■───────────┤ X ├┤ Rz(0.51981) ├─────────────────────────────────────────■────────────────────────────■────────────────────■──────────────────────────
+                               └───┘                   └───────────┘           └───┘                             └───┘                                                                       └────────────────────┘                   └───┘          └───┘                                                        └───┘└─────────────┘                                                                                                                      </pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># transpile circuit</span>
+<span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">ionq_device</span><span class="p">,</span> <span class="n">seed_transpiler</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">idle_wires</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fold</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 0.90525
+       ┌──────────┐                                                                                                   ┌───┐   ┌───┐     ┌─────┐  ┌───┐ ┌───┐ ┌───┐┌─────┐┌───┐ ┌───┐  ┌───┐                                                        ┌───┐            ┌───┐ ┌─────┐┌───┐                 ┌────────────┐┌────────────┐┌────────────┐                                                                                                                                                                            ┌───┐                                                                   ┌───┐      ┌───┐┌─────┐┌───┐     ┌───┐                                                             ┌───┐          ┌─────────────┐                                                                                                                                                                                            ┌───┐                                                                     ┌───┐      ┌───┐┌─────┐┌───┐┌────────────┐                                                                                              ┌───┐                         ┌─────────────┐       ┌─────────┐       ┌─────────────┐               ┌───┐┌────────────────────────┐┌───┐┌─────────────┐
+q_0: ──┤ Rz(3π/4) ├───────────────────────────────────────────────────────────────────────────────────────────■───────┤ H ├───┤ X ├─────┤ Tdg ├──┤ X ├─┤ T ├─┤ X ├┤ Tdg ├┤ X ├─┤ T ├──┤ H ├────────■─────────■────────────────────────────────■────┤ T ├────────────┤ X ├─┤ Tdg ├┤ X ├──────────────■──┤ Rz(2.1395) ├┤ Ry(2.0919) ├┤ Rz(1.3684) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────────────────────■─────────────────────┤ X ├───────────────────────────────■───────────────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├─────┤ X ├───────■───────────────────────────────────────────■─────■───┤ T ├───■──────┤ Ry(-2.1846) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■──────────────────────────■───────────────■───┤ T ├────────■──────────────────■─────────────────────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├┤ Rz(1.3063) ├───────────────────■────────────────────────■─────────■──────────────────────────────■────■───┤ T ├────────────■────────────┤ Rz(-1.3651) ├───────┤ Ry(π/2) ├───────┤ Rz(-2.4141) ├───────────────┤ X ├┤ Rz(-0.838728781856755) ├┤ X ├┤ Rz(-2.0594) ├────────────────■─────────────────────────────────────■──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+     ┌─┴──────────┴─┐                                                                                       ┌─┴─┐     └───┘   └─┬─┘     └─────┘  └─┬─┘ └───┘ └─┬─┘└┬───┬┘└─┬─┘ ├───┤ ┌┴───┴┐┌───┐┌─┴─┐┌───┐┌─┴─┐┌─────┐          ┌───┐┌───┐ ┌─┴─┐ ┌┴───┴┐┌───┐┌───┐ └─┬─┘ └┬───┬┘└─┬─┘              │  └────────────┘└────────────┘└───┬───┬────┘                                                 ┌───┐           ┌───┐┌─────┐┌───┐     ┌───┐               ┌──────────────┐  │  ┌───┐ ┌────────────┐  │  ┌───────────┐ ┌───┐└─┬─┘┌──────────────┐┌───────────┐  │  ┌─────────────┐              │   └───┘      └─┬─┘└─────┘└─┬─┘     └─┬─┘       │                                  ┌───┐    │   ┌─┴─┐┌┴───┴┐┌─┴─┐┌───┴─────────────┴────┐┌───┐┌───────────────────────┐ ┌───┐                                                                                                    │                          │               │   ├───┤        │      ┌───┐       │                                     │   └───┘      └─┬─┘└─────┘└─┬─┘└────────────┘                   │                        │         │                      ┌───┐   │  ┌─┴─┐┌┴───┴┐         ┌─┴─┐          └────┬───┬────┘       └──┬───┬──┘       └────┬───┬────┘               └─┬─┘└────────────────────────┘└─┬─┘└─────────────┘                │                             ┌───┐   │                  ┌───┐  ┌─────┐  ┌───┐┌────────────┐                                                    ┌───┐┌───────────────────────┐     ┌───┐
+q_1: ┤ Rz(-0.15317) ├────────────────────────────────────────────────────────────────────────────X──────────┤ X ├───────────────■──────────────────┼───────────■───┤ T ├───┼───┤ X ├─┤ Tdg ├┤ X ├┤ X ├┤ H ├┤ X ├┤ Tdg ├──────────┤ X ├┤ T ├─┤ X ├─┤ Tdg ├┤ X ├┤ T ├───┼────┤ H ├───┼────────────────┼──────────────────────────────────┤ X ├────────────────────■─────────────────────────────■───┤ T ├───────────┤ X ├┤ Tdg ├┤ X ├─────┤ X ├──────────X────┤ Rz(-0.15782) ├──┼──┤ X ├─┤ Rz(2.1041) ├──┼──┤ Ry(-1.48) ├─┤ X ├──┼──┤ Rz(-0.28426) ├┤ Ry(1.712) ├──┼──┤ Rz(0.87374) ├──■───────────┼────────────────┼───────────┼─────────┼─────────┼─────────────────────────■────────┤ T ├────┼───┤ X ├┤ Tdg ├┤ X ├┤ Rz(1.40164127769636) ├┤ X ├┤ Rz(-1.40164127769636) ├─┤ X ├──■────────────────────────────────────────────────────────────────────────────────────────────■────┼─────────────────────■────┼───────■───────┼───┤ T ├───■────┼──────┤ T ├───────┼─────────────────────────────────────┼────────────────┼───────────┼────────■─────────────────────■────┼────────────────────────┼─────────┼──────────────────■───┤ T ├───┼──┤ X ├┤ Tdg ├─────────┤ X ├───────────────┤ H ├───────────────┤ X ├───────────────┤ H ├────────────■─────────┼──────────────────────────────┼─────────────────────────────────┼──────────────■──────────────┤ T ├───┼──────────────────┤ X ├──┤ Tdg ├──┤ X ├┤ Rz(1.0361) ├────────────────────────────────────────────────────┤ X ├┤ Rz(-2.60686136104895) ├─────┤ X ├─────
+     └──────────────┘     ┌───┐┌───┐┌─────┐┌───┐┌───┐┌───┐┌─────┐┌───┐┌───┐ ┌───┐                │      ┌───┴───┴────┐                             │               └───┘   │   └─┬─┘ └─────┘└─┬─┘└───┘└───┘└───┘└┬───┬┘          └─┬─┘└───┘ └───┘ └─────┘└─┬─┘└───┘   │    └───┘   │                │      ┌───┐                       └─┬─┘         ┌───┐    ┌─┴─┐   ┌─────┐    ┌───┐ ┌───┐┌─┴─┐┌┴───┴┐┌───┐┌───┐└─┬─┘└┬───┬┘└─┬─┘     └─┬─┘          │    └───┬─────┬────┘┌─┴─┐└─┬─┘┌┴────────────┤┌─┴─┐├───────────┴┐└─┬─┘  │  └─┬─────────┬──┘└───────────┘  │  └─────────────┘┌─┴─┐┌─────┐  │                │           │         │       ┌─┴─┐        ┌───┐        ┌─┴─┐     ┌┴───┴┐ ┌─┴─┐ ├───┤└┬───┬┘└───┘└──────────────────────┘└─┬─┘└───────────────────────┘ └─┬─┘  │ZZ(0.74145)                                                                                 │    │             ┌───┐   │    │     ┌─┴─┐     │  ┌┴───┴┐┌─┴─┐  │  ┌───┴───┴────┐  │  ┌────────────┐┌────────────┐       │                │           │        │       ┌───┐ ┌───┐   │    │                        │         │                  │   └───┘   │  └───┘└─────┘         └───┘               └───┘               └─┬─┘               ├───┤          ┌─┴─┐       │           ┌─────┐            │       ┌───┐         ┌───┐       │            ┌─┴─┐           ┌┴───┴┐  │  ┌───┐┌─────────┐└─┬─┘┌─┴─────┴─┐└─┬─┘└────────────┘                                                    └─┬─┘└───────────────────────┘     └─┬─┘
+q_2: ──────────────────■──┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├────────■───────┼──────┤ Ry(4.0455) ├─────────────────────────────┼───────────■───────────┼─────┼────────────┼────■─────────■───┤ T ├───■─────────┼─────────────────■─────┼──────────┼────────────┼────■─────■─────┼──────┤ T ├───────────■─────────────■───────────┤ H ├────┤ X ├───┤ Tdg ├────┤ X ├─┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├──┼───┤ H ├───┼─────────■────────────X────────┤ Sdg ├─────┤ X ├──┼──┤ Rz(-1.7391) ├┤ X ├┤ Rz(1.7391) ├──┼────┼────┤ Ry(π/2) ├──────────────────┼─────────────────┤ X ├┤ Tdg ├──┼────────────────┼───────────┼─────────┼───────┤ X ├────────┤ T ├────────┤ X ├─────┤ Tdg ├─┤ X ├─┤ T ├─┤ H ├────────────────────────────────■──────────────────────────────■────■────────────────────────────────────────────────────────────────────────────────■───────────┼────┼─────────■───┤ T ├───┼────┼─────┤ X ├─────┼──┤ Tdg ├┤ X ├──┼──┤ Rz(1.1107) ├──┼──┤ Ry(1.9224) ├┤ Rz(2.0685) ├───────┼────────────────┼───────────┼────────┼───────┤ X ├─┤ S ├───┼────┼─────────■──────────────┼─────────┼──────────────────┼───────────┼─────────────────────────────────────────────────────────────────■─────────────────┤ H ├──────────┤ X ├───────┼───────────┤ Tdg ├────────────┼───────┤ X ├─────────┤ T ├───────┼────────────┤ X ├───────────┤ Tdg ├──┼──┤ X ├┤ Rz(π/4) ├──┼──┤ Ry(π/2) ├──┼──────────────────────────────────────────────────────────────────────┼─────────────────────────────■────┼───────
+          ┌───┐        │  └───┘└─┬─┘└─────┘└─┬─┘└───┘└─┬─┘└─────┘└─┬─┘└───┘ └───┘        │       │      └────────────┘                             │           │           │     │    ┌───┐   │    │         │   └───┘   │  ┌───┐  │                 │     │          │    ┌───┐   │    │   ┌─┴─┐   │     ┌┴───┴┐        ┌─┴─┐         ┌───┐         └───┘    └───┘   └─────┘    └─┬─┘ └───┘└───┘└─────┘└─┬─┘└───┘  │   ├───┤   │  ┌──────────────┐┌───────┐    └─────┘     └───┘  │  └─────────────┘└───┘└────────────┘  │    │    ├─────────┤    ┌──────────┐  │                 └───┘└─────┘  │                │           │  ┌───┐  │    ┌──┴───┴───┐ ┌──┴───┴───┐    └───┘     └┬───┬┘┌┴───┴┐├───┤ ├───┤ ┌───┐        ┌─────┐         ┌───┐          ┌───┐           ┌───┐                                                                 ┌───┐      ┌───┐┌─┴─┐┌─────┐┌─┴─┐  │  ┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐  │     ├───┤     │  └┬───┬┘└───┘  │  └────────────┘  │  └────────────┘└────────────┘       │                │   ┌───┐   │        │       └─┬─┘┌┴───┴┐  │    │       ┌─┴─┐     ┌───┐  │         │                  │           │                                                                                   └───┘          └───┘       │           └─────┘            │       └─┬─┘     ┌───┴───┴────┐  │            └───┘           └─────┘  │  └─┬─┘└─────────┘  │  └─────────┘  │                ┌───┐┌───────────┐┌─────────────┐┌───┐┌────────────┐  │       ┌──────────────┐    ┌─┴─┐  │  ┌───┐
+q_3: ─────┤ T ├────────┼─────────┼───────────┼─────────┼───────────┼─────────────────────┼───────┼──────────────────────■──────────────────────────■───────────┼───────────■─────■────┤ T ├───■────┼─────────┼───────────┼──┤ X ├──┼────■────────────┼─────┼────■─────┼────┤ T ├───┼────┼───┤ X ├───┼─────┤ Tdg ├────────┤ X ├─────────┤ X ├───────────────────────────────────────■──────────────────────■─────────■───┤ T ├───■──┤ Rz(-0.25207) ├┤ Ry(π) ├───────────────────────■──────────────────────────────────────■────┼────┤ Rx(π/2) ├────┤ Rz(3π/4) ├──┼───────────────────────────────┼────────────────┼───────────┼──┤ X ├──┼────┤ Rz(-π/4) ├─┤ Rx(-π/2) ├───────────────┤ X ├─┤ Tdg ├┤ X ├─┤ T ├─┤ X ├────────┤ Tdg ├─────────┤ X ├──────────┤ T ├───────────┤ H ├──────────────────────────────────■─────────────────────■────■───┤ T ├───■──┤ H ├┤ X ├┤ Tdg ├┤ X ├──┼──┤ T ├┤ X ├┤ Tdg ├┤ X ├──┼─────┤ T ├─────┼───┤ H ├────────┼──────────────────┼──────────────────────■──────────────┼───────────■────■───┤ T ├───■────────┼─────────■──┤ Sdg ├──┼────┼───────┤ X ├─────┤ S ├──┼─────────┼──────────────────┼───────────┼─────────────────────────────────────────────■───────────────────────────────────────■────────────────────────■──────────────────────────────■─────────┼───────┤ Rz(2.5393) ├──┼─────────────────────────────────────┼────┼───────────────┼───────────────┼────────────────┤ X ├┤ Rz(3.067) ├┤ Ry(-2.4148) ├┤ X ├┤ Ry(2.4148) ├──┼───────┤ Rz(-0.89384) ├────┤ X ├──┼──┤ S ├
+          └───┘        │         │           │         │           │        ┌───┐        │       │          ┌───┐       │                        ┌───┐┌─────┐┌─┴─┐ ┌───┐ ┌───┐┌─────┐ └───┘      ┌─┴─┐┌───┐  │   ┌───┐   │  └─┬─┘  │    │            │     │    │     │    ├───┤   │    │  ┌┴───┴┐┌─┴─┐ ┌─┴─────┴──┐     └───┘         └─┬─┘                                    ┌─────┐                                 └───┘      └──────────────┘└───────┘                                                                   │    └─────────┘    └──────────┘  │                               │                │   ┌───┐   │  └─┬─┘  │    └──────────┘ └──────────┘               └─┬─┘ └─────┘└─┬─┘ └───┘ └─┬─┘        └─────┘         └─┬─┘          └───┘           ├───┤                                  │             ┌───┐   │  ┌─┴─┐┌┴───┴┐┌─┴─┐├───┤├───┤├─────┤└───┘┌─┴─┐├───┤├───┤├─────┤└───┘┌─┴─┐┌──┴───┴──┐  │   └───┘        │                ┌─┴─┐   ┌─────┐        ┌─┴─┐     ┌───┐┌─┴─┐┌─────┐┌─┴─┐┌───┐ ├───┤          ┌─┴─┐     ┌───┐└─────┘┌─┴─┐  │      ┌┴───┴┐    └───┘  │       ┌─┴─┐       ┌───┐  ┌─┴─┐┌─────┐┌─┴─┐┌───┐ ┌───┐ ┌──────────────────────┐     ┌─┴─┐     ┌───────────────────────┐     ┌─┴─┐     ┌─────────────┐                                           │       └────────────┘┌─┴─┐┌────────────────────────┐       ┌─┴─┐  │               │               │                └─┬─┘└───────────┘└─────────────┘└─┬─┘└────────────┘  │       └──────────────┘    └───┘  │  └───┘
+q_4: ──────────────────┼─────────┼───────────■─────────┼───────────■────■───┤ T ├───■────┼───────X──────────┤ H ├───────┼────────────────────────┤ X ├┤ Tdg ├┤ X ├─┤ T ├─┤ X ├┤ Tdg ├────────────┤ X ├┤ T ├──┼───┤ H ├───┼────┼────■────┼────────────┼─────■────┼─────■────┤ T ├───■────┼──┤ Sdg ├┤ X ├─┤ Rz(3π/4) ├─────────────────────┼──────────────────────────■───────────┤ Tdg ├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────┼───────────────────■───────────┼───────────■────■───┤ T ├───■────■────┼──────────────────────────────────────────────┼────────────■───────────┼────────────────────────────■──────────────■─────────────┤ T ├───────■──────────────■───────────┼─────────■───┤ T ├───┼──┤ X ├┤ Tdg ├┤ X ├┤ H ├┤ X ├┤ Tdg ├─────┤ X ├┤ T ├┤ X ├┤ Tdg ├─────┤ X ├┤ Rz(π/4) ├──┼────────────────┼────────────────┤ X ├───┤ Tdg ├────────┤ X ├─────┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├──────────┤ X ├─────┤ H ├───────┤ X ├──┼──────┤ Tdg ├───────────┼───────┤ X ├───────┤ T ├──┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─┤ Rz(1.85641576693042) ├─────┤ X ├─────┤ Rz(-1.85641576693042) ├─────┤ X ├─────┤ Rz(-2.1453) ├───────────────────────────────────────────┼─────────────────────┤ X ├┤ Rz(-0.996321215859445) ├───────┤ X ├──┼───────────────┼───────────────┼──────────────────┼────────────────────────────────┼──────────────────┼──────────────────────────────────┼───────
+                     ┌─┴─┐       │                     │   ┌───┐      ┌─┴─┐┌┴───┴┐┌─┴─┐┌─┴─┐┌──────────┐ ┌──┴───┴───┐ ┌─┴─┐┌─────────┐┌─────────┐└─┬─┘└─────┘└───┘ └───┘ └─┬─┘└┬───┬┘            └───┘└───┘┌─┴─┐┌┴───┴┐┌─┴─┐  │  ┌───┐┌─┴─┐┌─────┐ ┌─┴─┐ ┌───┐┌─┴─┐┌─────┐ └───┘      ┌─┴─┐└┬───┬┘├───┤ └──────────┘                     │       ┌───────────┐┌───┐ │ZZ(4.2882) └┬───┬┘                                                                                                                                        │       ┌───┐                   ┌─┴─┐    ┌─────┐    ┌─┴─┐ ┌───┐ ┌─┴─┐┌─────┐┌─┴─┐┌───┐ ├───┤             │  ┌─────────────┐┌─────────┐ ┌────────────┐   │                        │           ┌───┐                         ┌─┴─┐          ┌┴───┴┐    ┌─┴─┐     ┌───┐┌─┴─┐┌─────┐┌─┴─┐┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐├───┤└┬───┬┘└───┘└───┘└─┬─┘└─────┘     └───┘└───┘└─┬─┘└┬───┬┘     └───┘└─────────┘┌─┴─┐┌─────┐     ┌─┴─┐    ┌───┐     └───┘   └─────┘        └───┘     └───┘└───┘└─────┘└───┘└───┘ └───┘          └───┘     └───┘       └───┘┌─┴─┐┌───┴─────┴───┐     ┌─┴─┐┌────┴───┴────┐┌─┴───┴─┐└───┘└─────┘└───┘└───┘ └───┘ └──────────────────────┘     └───┘     └───────────────────────┘     └───┘     └─────────────┘                                           │                     └───┘└────────────────────────┘       └───┘  │               │     ┌───┐     │  ┌────────────┐  │                                │                  │                                  │
+q_5: ────────────────┤ X ├───────■─────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├┤ X ├┤ Rx(-π/2) ├─┤ Rz(-π/4) ├─┤ X ├┤ Rz(π/4) ├┤ Rx(π/2) ├──■───────────────────────■───┤ T ├───────────────────────┤ X ├┤ Tdg ├┤ X ├──■──┤ H ├┤ X ├┤ Tdg ├─┤ X ├─┤ T ├┤ X ├┤ Tdg ├────────────┤ X ├─┤ T ├─┤ H ├──────────────────────────────────■───────┤ Ry(6.079) ├┤ Z ├─■────────────┤ S ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────┤ H ├───────────────────┤ X ├────┤ Tdg ├────┤ X ├─┤ T ├─┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─────────────■──┤ Rz(0.56579) ├┤ Ry(π/2) ├─┤ Rz(0.1427) ├───■────────────────────────■───────────┤ T ├─────────────────────────┤ X ├──────────┤ Tdg ├────┤ X ├─────┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─────────────■──────────────────────────■───┤ T ├──────────────────────┤ X ├┤ Tdg ├─────┤ X ├────┤ Z ├────────────────────────────────────────────────────────────────────────────────────────────────────────────┤ X ├┤ Rz(-1.3063) ├─────┤ X ├┤ Rz(-2.3551) ├┤ Ry(π) ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■──────────────────────────────────────────────────────────────────■───────────────■─────┤ T ├─────■──┤ Rz(-3.067) ├──■────────────────────────────────■──────────────────■──────────────────────────────────■───────
+                     └───┘                                 └───┘      └───┘└─────┘└───┘└───┘└──────────┘ └──────────┘ └───┘└─────────┘└─────────┘                              └───┘                       └───┘└─────┘└───┘     └───┘└───┘└─────┘ └───┘ └───┘└───┘└─────┘            └───┘ └───┘ └───┘                                          └───────────┘└───┘              └───┘                                                                                                                                                 └───┘                   └───┘    └─────┘    └───┘ └───┘ └───┘└─────┘└───┘└───┘ └───┘                └─────────────┘└─────────┘ └────────────┘                                        └───┘                         └───┘          └─────┘    └───┘     └───┘└───┘└─────┘└───┘└───┘└───┘└─────┘└───┘└───┘ └───┘                                            └───┘                      └───┘└─────┘     └───┘    └───┘                                                                                                            └───┘└─────────────┘     └───┘└─────────────┘└───────┘                                                                                                                                                                                                                                                               └───┘        └────────────┘                                                                                                 </pre></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># run circuit</span>
+<span class="n">ionq_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_job</span><span class="o">.</span><span class="n">job_id</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;arn:aws:braket:us-east-1:722650277903:quantum-task/48e87a54-9579-4d5a-83aa-e87e7edc6120&#39;
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[75]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># get job by job_id</span>
+<span class="n">retrieved_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">retrieve_job</span><span class="p">(</span><span class="n">job_id</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_IONQ_SAVED_TASK_ARN&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[76]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[76]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;JobStatus.DONE: &#39;job has successfully run&#39;&gt;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[77]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[77]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_14_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_14_0.png" />
+</div>
+</div>
+</section>
+<section id="Running-algorithms">
+<h2>Running algorithms<a class="headerlink" href="#Running-algorithms" title="Permalink to this headline">¶</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">H2_op</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.052373245772859</span> <span class="o">*</span> <span class="n">I</span> <span class="o">^</span> <span class="n">I</span><span class="p">)</span>
+    <span class="o">+</span> <span class="p">(</span><span class="mf">0.39793742484318045</span> <span class="o">*</span> <span class="n">I</span> <span class="o">^</span> <span class="n">Z</span><span class="p">)</span>
+    <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.39793742484318045</span> <span class="o">*</span> <span class="n">Z</span> <span class="o">^</span> <span class="n">I</span><span class="p">)</span>
+    <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.01128010425623538</span> <span class="o">*</span> <span class="n">Z</span> <span class="o">^</span> <span class="n">Z</span><span class="p">)</span>
+    <span class="o">+</span> <span class="p">(</span><span class="mf">0.18093119978423156</span> <span class="o">*</span> <span class="n">X</span> <span class="o">^</span> <span class="n">X</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">qi</span> <span class="o">=</span> <span class="n">QuantumInstance</span><span class="p">(</span><span class="n">local_simulator</span><span class="p">,</span> <span class="n">seed_transpiler</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">seed_simulator</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">ansatz</span> <span class="o">=</span> <span class="n">TwoLocal</span><span class="p">(</span><span class="n">rotation_blocks</span><span class="o">=</span><span class="s2">&quot;ry&quot;</span><span class="p">,</span> <span class="n">entanglement_blocks</span><span class="o">=</span><span class="s2">&quot;cz&quot;</span><span class="p">)</span>
+<span class="n">slsqp</span> <span class="o">=</span> <span class="n">SLSQP</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span><span class="n">ansatz</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">slsqp</span><span class="p">,</span> <span class="n">quantum_instance</span><span class="o">=</span><span class="n">qi</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">H2_op</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{   &#39;aux_operator_eigenvalues&#39;: None,
+    &#39;cost_function_evals&#39;: 9,
+    &#39;eigenstate&#39;: {   &#39;00&#39;: 0.8454843286542927,
+                      &#39;01&#39;: 0.28125,
+                      &#39;10&#39;: 0.14986973510352247,
+                      &#39;11&#39;: 0.42847841252506524},
+    &#39;eigenvalue&#39;: (-0.9640051666453908+0j),
+    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[0]): -2.3927748649949567,
+                              ParameterVectorElement(θ[1]): 2.4697879986238824,
+                              ParameterVectorElement(θ[2]): -1.9005130390534406,
+                              ParameterVectorElement(θ[3]): -2.5168166820743014,
+                              ParameterVectorElement(θ[4]): -6.256884315134194,
+                              ParameterVectorElement(θ[5]): -0.7574239815126385,
+                              ParameterVectorElement(θ[6]): 0.7930414888274298,
+                              ParameterVectorElement(θ[7]): -5.903305877757919},
+    &#39;optimal_point&#39;: array([-2.39277486,  2.469788  , -1.90051304, -2.51681668, -6.25688432,
+       -0.75742398,  0.79304149, -5.90330588]),
+    &#39;optimal_value&#39;: -0.9640051666453908,
+    &#39;optimizer_evals&#39;: None,
+    &#39;optimizer_time&#39;: 0.17025303840637207}
+</pre></div></div>
+</div>
+</section>
+<section id="Running-Hybrid-Jobs">
+<h2>Running Hybrid Jobs<a class="headerlink" href="#Running-Hybrid-Jobs" title="Permalink to this headline">¶</a></h2>
+<p>Prepare script</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span> cat ./data/2_hybrid_jobs/job_script.py
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#34;&#34;&#34;Example of Hybrid Job payload with VQE.&#34;&#34;&#34;
+from braket.jobs import save_job_result
+from qiskit.opflow import (
+    I,
+    X,
+    Z,
+)
+from qiskit.algorithms import VQE
+from qiskit.algorithms.optimizers import SLSQP
+from qiskit.circuit.library import TwoLocal
+from qiskit.utils import QuantumInstance
+
+from qiskit_braket_provider import AWSBraketProvider
+
+
+def main():
+    backend = AWSBraketProvider().get_backend(&#34;SV1&#34;)
+
+    h2_op = (
+        (-1.052373245772859 * I ^ I)
+        + (0.39793742484318045 * I ^ Z)
+        + (-0.39793742484318045 * Z ^ I)
+        + (-0.01128010425623538 * Z ^ Z)
+        + (0.18093119978423156 * X ^ X)
+    )
+
+    quantum_instance = QuantumInstance(
+        backend, seed_transpiler=42, seed_simulator=42, shots=10
+    )
+    ansatz = TwoLocal(rotation_blocks=&#34;ry&#34;, entanglement_blocks=&#34;cz&#34;)
+    slsqp = SLSQP(maxiter=1)
+
+    vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=quantum_instance)
+
+    vqe_result = vqe.compute_minimum_eigenvalue(h2_op)
+
+    save_job_result(
+        {
+            &#34;VQE&#34;: {
+                &#34;eigenstate&#34;: vqe_result.eigenstate,
+                &#34;eigenvalue&#34;: vqe_result.eigenvalue.real,
+                &#34;optimal_parameters&#34;: list(vqe_result.optimal_parameters.values()),
+                &#34;optimal_point&#34;: vqe_result.optimal_point.tolist(),
+                &#34;optimal_value&#34;: vqe_result.optimal_value.real,
+            }
+        }
+    )
+</pre></div></div>
+</div>
+<p>Prepare image</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span> cat ./data/2_hybrid_jobs/Dockerfile
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+FROM 292282985366.dkr.ecr.us-west-2.amazonaws.com/amazon-braket-base-jobs:1.0-cpu-py37-ubuntu18.04
+
+RUN python3 -m pip install --upgrade pip
+
+RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-community/qiskit-braket-provider
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">image_uri</span> <span class="o">=</span> <span class="s2">&quot;&lt;ACCOUNT_ID&gt;.dkr.ecr.&lt;AWS_REGION&gt;.amazonaws.com/amazon-braket-qiskit-provider:latest&quot;</span>
+
+<span class="n">job</span> <span class="o">=</span> <span class="n">AwsQuantumJob</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;arn:aws:braket:::device/quantum-simulator/amazon/sv1&quot;</span><span class="p">,</span>
+    <span class="n">source_module</span><span class="o">=</span><span class="s2">&quot;data/2_hybrid_jobs/job_script.py&quot;</span><span class="p">,</span>
+    <span class="n">entry_point</span><span class="o">=</span><span class="s2">&quot;job_script:main&quot;</span><span class="p">,</span>
+    <span class="n">wait_until_complete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">job_name</span><span class="o">=</span><span class="s2">&quot;qiskit-braket-vqe-6&quot;</span><span class="p">,</span>
+    <span class="n">image_uri</span><span class="o">=</span><span class="n">image_uri</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[66]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print(job.result())</span>
+<span class="n">AwsQuantumJob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_IONQ_SAVED_HYBRID_JOB_ARN&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[66]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;VQE&#39;: {&#39;eigenstate&#39;: {&#39;01&#39;: 0.8366600265340756, &#39;11&#39;: 0.5477225575051661},
+  &#39;eigenvalue&#39;: -1.6823050629682066,
+  &#39;optimal_parameters&#39;: [2.965910707685307,
+   -4.658133055892289,
+   -4.3956015975227265,
+   -3.682189424847994,
+   0.3499389384822065,
+   -2.55160387237748,
+   2.0897918250881915,
+   1.0061448749802206],
+  &#39;optimal_point&#39;: [2.965910707685307,
+   -4.658133055892289,
+   -4.3956015975227265,
+   -3.682189424847994,
+   0.3499389384822065,
+   -2.55160387237748,
+   2.0897918250881915,
+   1.0061448749802206],
+  &#39;optimal_value&#39;: -1.6823050629682066}}
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Qiskit-Braket provider</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=qiskit-community&repo=qiskit-braket-provider&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">API References</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial: Qiskit-Braket provider overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Qiskit-to-Braket-mapping">Qiskit to Braket mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Access-Braket-devices-from-Qiskit">Access Braket devices from Qiskit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Running-circuits-on-AWS-devices">Running circuits on AWS devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Running-algorithms">Running algorithms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Running-Hybrid-Jobs">Running Hybrid Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Tutorial: Runing VQE on Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs_byoc.html">Tutorial: Variational algorithms on Hybrid jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Tutorial: Minimum Eigen Optimizer</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Next: <a href="1_tutorial_vqe.html" title="next chapter">Tutorial: Runing VQE on Braket backend</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/tutorials/0_tutorial_qiskit-braket-provider_overview.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
