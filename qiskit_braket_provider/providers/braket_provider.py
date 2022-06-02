@@ -36,7 +36,12 @@ class AWSBraketProvider(ProviderV1):
         # filter by supported devices
         # gate models are only supported
         supported_devices = [
-            d for d in devices if not (isinstance(d.properties, DwaveDeviceCapabilities) or isinstance(d.properties,XanaduDeviceCapabilities))
+            d
+            for d in devices
+            if not (
+                isinstance(d.properties, DwaveDeviceCapabilities)
+                or isinstance(d.properties, XanaduDeviceCapabilities)
+            )
         ]
         backends = []
         for device in supported_devices:
