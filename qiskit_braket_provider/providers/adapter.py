@@ -16,6 +16,7 @@ from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import (
     RigettiDeviceCapabilities,
 )
+from braket.device_schema.xanadu import XanaduDeviceCapabilities
 from braket.device_schema.simulators import (
     GateModelSimulatorDeviceCapabilities,
     GateModelSimulatorParadigmProperties,
