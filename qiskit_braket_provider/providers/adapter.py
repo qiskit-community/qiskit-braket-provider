@@ -10,7 +10,6 @@ from braket.device_schema import (
     GateModelQpuParadigmProperties,
     DeviceActionType,
 )
-from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import (
@@ -302,9 +301,6 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                             simulator_instruction_props[(dst, src)] = None
             target.add_instruction(instruction, simulator_instruction_props)
 
-    # annealing devices
-    elif isinstance(properties, DwaveDeviceCapabilities):
-        raise NotImplementedError("Dwave devices are not supported yet.")
     else:
         raise QiskitBraketException(
             f"Cannot convert to target. "
