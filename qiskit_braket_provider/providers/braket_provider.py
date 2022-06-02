@@ -38,9 +38,8 @@ class AWSBraketProvider(ProviderV1):
         supported_devices = [
             d
             for d in devices
-            if not (
-                isinstance(d.properties, DwaveDeviceCapabilities)
-                or isinstance(d.properties, XanaduDeviceCapabilities)
+            if not isinstance(
+                d.properties, (DwaveDeviceCapabilities, XanaduDeviceCapabilities)
             )
         ]
         backends = []
