@@ -301,19 +301,30 @@ div.rendered_html tbody tr:hover {
 </style>
 <section id="Tutorial:-Qiskit-Braket-provider-overview">
 <h1>Tutorial: Qiskit-Braket provider overview<a class="headerlink" href="#Tutorial:-Qiskit-Braket-provider-overview" title="Permalink to this heading">¶</a></h1>
+<section id="Qiskit-to-Braket-mapping">
+<h2>Qiskit to Braket mapping<a class="headerlink" href="#Qiskit-to-Braket-mapping" title="Permalink to this heading">¶</a></h2>
+<p><img alt="qiskit-to-braket-diagram" src="../_images/qiskit-braket-mapping.png" /></p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[64]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
-
-<span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">VQE</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># pip install qiskit_braket_provider</span>
+</pre></div>
+</div>
+</div>
+<hr class="docutils" />
+<p>Import all required classes and functions for this overview</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">VQE</span>
 <span class="kn">from</span> <span class="nn">qiskit.opflow</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">I</span><span class="p">,</span>
     <span class="n">X</span><span class="p">,</span>
     <span class="n">Z</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">transpile</span>
+<span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">transpile</span><span class="p">,</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.random</span> <span class="kn">import</span> <span class="n">random_circuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.visualization</span> <span class="kn">import</span> <span class="n">plot_histogram</span>
 <span class="kn">from</span> <span class="nn">qiskit.algorithms.optimizers</span> <span class="kn">import</span> <span class="n">SLSQP</span>
@@ -326,15 +337,13 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
-<section id="Qiskit-to-Braket-mapping">
-<h2>Qiskit to Braket mapping<a class="headerlink" href="#Qiskit-to-Braket-mapping" title="Permalink to this heading">¶</a></h2>
-<p><img alt="qiskit-to-braket-diagram" src="../_images/qiskit-to-braket-diagram.png" /></p>
 </section>
 <section id="Access-Braket-devices-from-Qiskit">
 <h2>Access Braket devices from Qiskit<a class="headerlink" href="#Access-Braket-devices-from-Qiskit" title="Permalink to this heading">¶</a></h2>
-<p>Provider class to access AWS devices. Local simulator to use Braket SDK local simulator.</p>
+<p><code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through Braket SDK.</p>
+<p>Let’s get available devices to use by Qiskit</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
@@ -344,7 +353,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -361,28 +370,77 @@ div.rendered_html tbody tr:hover {
  BraketBackend[dm1]]
 </pre></div></div>
 </div>
+<p>For prototyping it is usually a good practice to use simulators to set up workflow of your program and then change it to real device. We can access local simulator by creating instance of class <code class="docutils literal notranslate"><span class="pre">BraketLocalBackend</span></code></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># local simulator</span>
-<span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
-
-<span class="c1"># remote simulator</span>
-<span class="n">aws_statevector_simulator</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
-
-<span class="c1"># devices</span>
-<span class="n">ionq_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IonQ Device&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
+<span class="n">local_simulator</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[sv_simulator]
+</pre></div></div>
+</div>
+<p>We also get get cloud state vector simulator by using method <code class="docutils literal notranslate"><span class="pre">get_backend</span></code> for provider.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aws_statevector_simulator</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
+<span class="n">aws_statevector_simulator</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[SV1]
+</pre></div></div>
+</div>
+<p>Of course we can query for specific real devices</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IonQ Device&quot;</span><span class="p">)</span>
 <span class="n">rigetti_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-1&quot;</span><span class="p">)</span>
 
-<span class="c1"># queries</span>
-<span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
+<span class="n">ionq_device</span><span class="p">,</span> <span class="n">rigetti_device</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(BraketBackend[IonQ Device], BraketBackend[Aspen-M-1])
+</pre></div></div>
+</div>
+<p>And if you want to explore what is available by specific contraints, you can specify query arguments to <code class="docutils literal notranslate"><span class="pre">backends</span></code> method of provider. Arguments are fully compatible with Braket’s <code class="docutils literal notranslate"><span class="pre">get_device</span></code> method. See full doc <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/stable/_apidoc/braket.aws.aws_device.html#braket.aws.aws_device.AwsDevice.get_devices">here</a>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
 <span class="n">online_simulators_backends</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -393,18 +451,78 @@ div.rendered_html tbody tr:hover {
 </section>
 <section id="Running-circuits-on-AWS-devices">
 <h2>Running circuits on AWS devices<a class="headerlink" href="#Running-circuits-on-AWS-devices" title="Permalink to this heading">¶</a></h2>
+<p>Let’s create circuit first. We will start with “Hello World” example :)</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># generate random circuit</span>
-<span class="n">circuit</span> <span class="o">=</span> <span class="n">random_circuit</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">qc</span><span class="o">.</span><span class="n">h</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">qc</span><span class="o">.</span><span class="n">cx</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">qc</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">     ┌───┐
+q_0: ┤ H ├──■──
+     └───┘┌─┴─┐
+q_1: ─────┤ X ├
+          └───┘</pre></div>
+</div>
+<p>Run job agains selected device</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">job</span> <span class="o">=</span> <span class="n">aws_statevector_simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">qc</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">job</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;qiskit_braket_provider.providers.braket_job.AWSBraketJob at 0x7f9c181ccdd0&gt;
+</pre></div></div>
+</div>
+<p>Plot histogram</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_23_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_23_0.png" />
+</div>
+</div>
+<p>Now it’s time to run more complex circuits on devices we got in previous paragraphs.</p>
+<p>We will start with generating random circuit and printing it out.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">circuit</span> <span class="o">=</span> <span class="n">random_circuit</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">fold</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -422,73 +540,70 @@ q_4: ─────■───────────────────
 q_5: ─────X────────────────────┤ H ├─────■───────────X─┤ Ry(6.079) ├───────────┤ Z ├──────────────■──────────────┤ S ├─────────────────────────────────────────────────────────────────────X─┤ U2(0.1427,0.56579) ├───────■───────────┤ X ├───────■──┤ Z ├────────────────────────────────────────────■───────────┤ X ├┤ Rz(0.51981) ├─────────────────────────────────────────■────────────────────────────■────────────────────■──────────────────────────
                                └───┘                   └───────────┘           └───┘                             └───┘                                                                       └────────────────────┘                   └───┘          └───┘                                                        └───┘└─────────────┘                                                                                                                      </pre></div>
 </div>
+<p>Here is a good point to talk about circuit transpilation.</p>
+<p>Transpilation is the process of rewriting a given input circuit to match the topology of a specific quantum device, and/or to optimize the circuit for execution on present day noisy quantum systems.</p>
+<p>Let’s transpile our generated circuit agains selected device.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># transpile circuit</span>
-<span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">ionq_device</span><span class="p">,</span> <span class="n">seed_transpiler</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">ionq_device</span><span class="p">,</span> <span class="n">seed_transpiler</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
 <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">idle_wires</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fold</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
-<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 0.90525
-       ┌──────────┐                                                                                                   ┌───┐   ┌───┐     ┌─────┐  ┌───┐ ┌───┐ ┌───┐┌─────┐┌───┐ ┌───┐  ┌───┐                                                        ┌───┐            ┌───┐ ┌─────┐┌───┐                 ┌────────────┐┌────────────┐┌────────────┐                                                                                                                                                                            ┌───┐                                                                   ┌───┐      ┌───┐┌─────┐┌───┐     ┌───┐                                                             ┌───┐          ┌─────────────┐                                                                                                                                                                                            ┌───┐                                                                     ┌───┐      ┌───┐┌─────┐┌───┐┌────────────┐                                                                                              ┌───┐                         ┌─────────────┐       ┌─────────┐       ┌─────────────┐               ┌───┐┌────────────────────────┐┌───┐┌─────────────┐
-q_0: ──┤ Rz(3π/4) ├───────────────────────────────────────────────────────────────────────────────────────────■───────┤ H ├───┤ X ├─────┤ Tdg ├──┤ X ├─┤ T ├─┤ X ├┤ Tdg ├┤ X ├─┤ T ├──┤ H ├────────■─────────■────────────────────────────────■────┤ T ├────────────┤ X ├─┤ Tdg ├┤ X ├──────────────■──┤ Rz(2.1395) ├┤ Ry(2.0919) ├┤ Rz(1.3684) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■────────────────────────■─────────────────────┤ X ├───────────────────────────────■───────────────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├─────┤ X ├───────■───────────────────────────────────────────■─────■───┤ T ├───■──────┤ Ry(-2.1846) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■──────────────────────────■───────────────■───┤ T ├────────■──────────────────■─────────────────────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├┤ Rz(1.3063) ├───────────────────■────────────────────────■─────────■──────────────────────────────■────■───┤ T ├────────────■────────────┤ Rz(-1.3651) ├───────┤ Ry(π/2) ├───────┤ Rz(-2.4141) ├───────────────┤ X ├┤ Rz(-0.838728781856755) ├┤ X ├┤ Rz(-2.0594) ├────────────────■─────────────────────────────────────■──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-     ┌─┴──────────┴─┐                                                                                       ┌─┴─┐     └───┘   └─┬─┘     └─────┘  └─┬─┘ └───┘ └─┬─┘└┬───┬┘└─┬─┘ ├───┤ ┌┴───┴┐┌───┐┌─┴─┐┌───┐┌─┴─┐┌─────┐          ┌───┐┌───┐ ┌─┴─┐ ┌┴───┴┐┌───┐┌───┐ └─┬─┘ └┬───┬┘└─┬─┘              │  └────────────┘└────────────┘└───┬───┬────┘                                                 ┌───┐           ┌───┐┌─────┐┌───┐     ┌───┐               ┌──────────────┐  │  ┌───┐ ┌────────────┐  │  ┌───────────┐ ┌───┐└─┬─┘┌──────────────┐┌───────────┐  │  ┌─────────────┐              │   └───┘      └─┬─┘└─────┘└─┬─┘     └─┬─┘       │                                  ┌───┐    │   ┌─┴─┐┌┴───┴┐┌─┴─┐┌───┴─────────────┴────┐┌───┐┌───────────────────────┐ ┌───┐                                                                                                    │                          │               │   ├───┤        │      ┌───┐       │                                     │   └───┘      └─┬─┘└─────┘└─┬─┘└────────────┘                   │                        │         │                      ┌───┐   │  ┌─┴─┐┌┴───┴┐         ┌─┴─┐          └────┬───┬────┘       └──┬───┬──┘       └────┬───┬────┘               └─┬─┘└────────────────────────┘└─┬─┘└─────────────┘                │                             ┌───┐   │                  ┌───┐  ┌─────┐  ┌───┐┌────────────┐                                                    ┌───┐┌───────────────────────┐     ┌───┐
-q_1: ┤ Rz(-0.15317) ├────────────────────────────────────────────────────────────────────────────X──────────┤ X ├───────────────■──────────────────┼───────────■───┤ T ├───┼───┤ X ├─┤ Tdg ├┤ X ├┤ X ├┤ H ├┤ X ├┤ Tdg ├──────────┤ X ├┤ T ├─┤ X ├─┤ Tdg ├┤ X ├┤ T ├───┼────┤ H ├───┼────────────────┼──────────────────────────────────┤ X ├────────────────────■─────────────────────────────■───┤ T ├───────────┤ X ├┤ Tdg ├┤ X ├─────┤ X ├──────────X────┤ Rz(-0.15782) ├──┼──┤ X ├─┤ Rz(2.1041) ├──┼──┤ Ry(-1.48) ├─┤ X ├──┼──┤ Rz(-0.28426) ├┤ Ry(1.712) ├──┼──┤ Rz(0.87374) ├──■───────────┼────────────────┼───────────┼─────────┼─────────┼─────────────────────────■────────┤ T ├────┼───┤ X ├┤ Tdg ├┤ X ├┤ Rz(1.40164127769636) ├┤ X ├┤ Rz(-1.40164127769636) ├─┤ X ├──■────────────────────────────────────────────────────────────────────────────────────────────■────┼─────────────────────■────┼───────■───────┼───┤ T ├───■────┼──────┤ T ├───────┼─────────────────────────────────────┼────────────────┼───────────┼────────■─────────────────────■────┼────────────────────────┼─────────┼──────────────────■───┤ T ├───┼──┤ X ├┤ Tdg ├─────────┤ X ├───────────────┤ H ├───────────────┤ X ├───────────────┤ H ├────────────■─────────┼──────────────────────────────┼─────────────────────────────────┼──────────────■──────────────┤ T ├───┼──────────────────┤ X ├──┤ Tdg ├──┤ X ├┤ Rz(1.0361) ├────────────────────────────────────────────────────┤ X ├┤ Rz(-2.60686136104895) ├─────┤ X ├─────
-     └──────────────┘     ┌───┐┌───┐┌─────┐┌───┐┌───┐┌───┐┌─────┐┌───┐┌───┐ ┌───┐                │      ┌───┴───┴────┐                             │               └───┘   │   └─┬─┘ └─────┘└─┬─┘└───┘└───┘└───┘└┬───┬┘          └─┬─┘└───┘ └───┘ └─────┘└─┬─┘└───┘   │    └───┘   │                │      ┌───┐                       └─┬─┘         ┌───┐    ┌─┴─┐   ┌─────┐    ┌───┐ ┌───┐┌─┴─┐┌┴───┴┐┌───┐┌───┐└─┬─┘└┬───┬┘└─┬─┘     └─┬─┘          │    └───┬─────┬────┘┌─┴─┐└─┬─┘┌┴────────────┤┌─┴─┐├───────────┴┐└─┬─┘  │  └─┬─────────┬──┘└───────────┘  │  └─────────────┘┌─┴─┐┌─────┐  │                │           │         │       ┌─┴─┐        ┌───┐        ┌─┴─┐     ┌┴───┴┐ ┌─┴─┐ ├───┤└┬───┬┘└───┘└──────────────────────┘└─┬─┘└───────────────────────┘ └─┬─┘  │ZZ(0.74145)                                                                                 │    │             ┌───┐   │    │     ┌─┴─┐     │  ┌┴───┴┐┌─┴─┐  │  ┌───┴───┴────┐  │  ┌────────────┐┌────────────┐       │                │           │        │       ┌───┐ ┌───┐   │    │                        │         │                  │   └───┘   │  └───┘└─────┘         └───┘               └───┘               └─┬─┘               ├───┤          ┌─┴─┐       │           ┌─────┐            │       ┌───┐         ┌───┐       │            ┌─┴─┐           ┌┴───┴┐  │  ┌───┐┌─────────┐└─┬─┘┌─┴─────┴─┐└─┬─┘└────────────┘                                                    └─┬─┘└───────────────────────┘     └─┬─┘
-q_2: ──────────────────■──┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├────────■───────┼──────┤ Ry(4.0455) ├─────────────────────────────┼───────────■───────────┼─────┼────────────┼────■─────────■───┤ T ├───■─────────┼─────────────────■─────┼──────────┼────────────┼────■─────■─────┼──────┤ T ├───────────■─────────────■───────────┤ H ├────┤ X ├───┤ Tdg ├────┤ X ├─┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├──┼───┤ H ├───┼─────────■────────────X────────┤ Sdg ├─────┤ X ├──┼──┤ Rz(-1.7391) ├┤ X ├┤ Rz(1.7391) ├──┼────┼────┤ Ry(π/2) ├──────────────────┼─────────────────┤ X ├┤ Tdg ├──┼────────────────┼───────────┼─────────┼───────┤ X ├────────┤ T ├────────┤ X ├─────┤ Tdg ├─┤ X ├─┤ T ├─┤ H ├────────────────────────────────■──────────────────────────────■────■────────────────────────────────────────────────────────────────────────────────■───────────┼────┼─────────■───┤ T ├───┼────┼─────┤ X ├─────┼──┤ Tdg ├┤ X ├──┼──┤ Rz(1.1107) ├──┼──┤ Ry(1.9224) ├┤ Rz(2.0685) ├───────┼────────────────┼───────────┼────────┼───────┤ X ├─┤ S ├───┼────┼─────────■──────────────┼─────────┼──────────────────┼───────────┼─────────────────────────────────────────────────────────────────■─────────────────┤ H ├──────────┤ X ├───────┼───────────┤ Tdg ├────────────┼───────┤ X ├─────────┤ T ├───────┼────────────┤ X ├───────────┤ Tdg ├──┼──┤ X ├┤ Rz(π/4) ├──┼──┤ Ry(π/2) ├──┼──────────────────────────────────────────────────────────────────────┼─────────────────────────────■────┼───────
-          ┌───┐        │  └───┘└─┬─┘└─────┘└─┬─┘└───┘└─┬─┘└─────┘└─┬─┘└───┘ └───┘        │       │      └────────────┘                             │           │           │     │    ┌───┐   │    │         │   └───┘   │  ┌───┐  │                 │     │          │    ┌───┐   │    │   ┌─┴─┐   │     ┌┴───┴┐        ┌─┴─┐         ┌───┐         └───┘    └───┘   └─────┘    └─┬─┘ └───┘└───┘└─────┘└─┬─┘└───┘  │   ├───┤   │  ┌──────────────┐┌───────┐    └─────┘     └───┘  │  └─────────────┘└───┘└────────────┘  │    │    ├─────────┤    ┌──────────┐  │                 └───┘└─────┘  │                │           │  ┌───┐  │    ┌──┴───┴───┐ ┌──┴───┴───┐    └───┘     └┬───┬┘┌┴───┴┐├───┤ ├───┤ ┌───┐        ┌─────┐         ┌───┐          ┌───┐           ┌───┐                                                                 ┌───┐      ┌───┐┌─┴─┐┌─────┐┌─┴─┐  │  ┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐  │     ├───┤     │  └┬───┬┘└───┘  │  └────────────┘  │  └────────────┘└────────────┘       │                │   ┌───┐   │        │       └─┬─┘┌┴───┴┐  │    │       ┌─┴─┐     ┌───┐  │         │                  │           │                                                                                   └───┘          └───┘       │           └─────┘            │       └─┬─┘     ┌───┴───┴────┐  │            └───┘           └─────┘  │  └─┬─┘└─────────┘  │  └─────────┘  │                ┌───┐┌───────────┐┌─────────────┐┌───┐┌────────────┐  │       ┌──────────────┐    ┌─┴─┐  │  ┌───┐
-q_3: ─────┤ T ├────────┼─────────┼───────────┼─────────┼───────────┼─────────────────────┼───────┼──────────────────────■──────────────────────────■───────────┼───────────■─────■────┤ T ├───■────┼─────────┼───────────┼──┤ X ├──┼────■────────────┼─────┼────■─────┼────┤ T ├───┼────┼───┤ X ├───┼─────┤ Tdg ├────────┤ X ├─────────┤ X ├───────────────────────────────────────■──────────────────────■─────────■───┤ T ├───■──┤ Rz(-0.25207) ├┤ Ry(π) ├───────────────────────■──────────────────────────────────────■────┼────┤ Rx(π/2) ├────┤ Rz(3π/4) ├──┼───────────────────────────────┼────────────────┼───────────┼──┤ X ├──┼────┤ Rz(-π/4) ├─┤ Rx(-π/2) ├───────────────┤ X ├─┤ Tdg ├┤ X ├─┤ T ├─┤ X ├────────┤ Tdg ├─────────┤ X ├──────────┤ T ├───────────┤ H ├──────────────────────────────────■─────────────────────■────■───┤ T ├───■──┤ H ├┤ X ├┤ Tdg ├┤ X ├──┼──┤ T ├┤ X ├┤ Tdg ├┤ X ├──┼─────┤ T ├─────┼───┤ H ├────────┼──────────────────┼──────────────────────■──────────────┼───────────■────■───┤ T ├───■────────┼─────────■──┤ Sdg ├──┼────┼───────┤ X ├─────┤ S ├──┼─────────┼──────────────────┼───────────┼─────────────────────────────────────────────■───────────────────────────────────────■────────────────────────■──────────────────────────────■─────────┼───────┤ Rz(2.5393) ├──┼─────────────────────────────────────┼────┼───────────────┼───────────────┼────────────────┤ X ├┤ Rz(3.067) ├┤ Ry(-2.4148) ├┤ X ├┤ Ry(2.4148) ├──┼───────┤ Rz(-0.89384) ├────┤ X ├──┼──┤ S ├
-          └───┘        │         │           │         │           │        ┌───┐        │       │          ┌───┐       │                        ┌───┐┌─────┐┌─┴─┐ ┌───┐ ┌───┐┌─────┐ └───┘      ┌─┴─┐┌───┐  │   ┌───┐   │  └─┬─┘  │    │            │     │    │     │    ├───┤   │    │  ┌┴───┴┐┌─┴─┐ ┌─┴─────┴──┐     └───┘         └─┬─┘                                    ┌─────┐                                 └───┘      └──────────────┘└───────┘                                                                   │    └─────────┘    └──────────┘  │                               │                │   ┌───┐   │  └─┬─┘  │    └──────────┘ └──────────┘               └─┬─┘ └─────┘└─┬─┘ └───┘ └─┬─┘        └─────┘         └─┬─┘          └───┘           ├───┤                                  │             ┌───┐   │  ┌─┴─┐┌┴───┴┐┌─┴─┐├───┤├───┤├─────┤└───┘┌─┴─┐├───┤├───┤├─────┤└───┘┌─┴─┐┌──┴───┴──┐  │   └───┘        │                ┌─┴─┐   ┌─────┐        ┌─┴─┐     ┌───┐┌─┴─┐┌─────┐┌─┴─┐┌───┐ ├───┤          ┌─┴─┐     ┌───┐└─────┘┌─┴─┐  │      ┌┴───┴┐    └───┘  │       ┌─┴─┐       ┌───┐  ┌─┴─┐┌─────┐┌─┴─┐┌───┐ ┌───┐ ┌──────────────────────┐     ┌─┴─┐     ┌───────────────────────┐     ┌─┴─┐     ┌─────────────┐                                           │       └────────────┘┌─┴─┐┌────────────────────────┐       ┌─┴─┐  │               │               │                └─┬─┘└───────────┘└─────────────┘└─┬─┘└────────────┘  │       └──────────────┘    └───┘  │  └───┘
-q_4: ──────────────────┼─────────┼───────────■─────────┼───────────■────■───┤ T ├───■────┼───────X──────────┤ H ├───────┼────────────────────────┤ X ├┤ Tdg ├┤ X ├─┤ T ├─┤ X ├┤ Tdg ├────────────┤ X ├┤ T ├──┼───┤ H ├───┼────┼────■────┼────────────┼─────■────┼─────■────┤ T ├───■────┼──┤ Sdg ├┤ X ├─┤ Rz(3π/4) ├─────────────────────┼──────────────────────────■───────────┤ Tdg ├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────┼───────────────────■───────────┼───────────■────■───┤ T ├───■────■────┼──────────────────────────────────────────────┼────────────■───────────┼────────────────────────────■──────────────■─────────────┤ T ├───────■──────────────■───────────┼─────────■───┤ T ├───┼──┤ X ├┤ Tdg ├┤ X ├┤ H ├┤ X ├┤ Tdg ├─────┤ X ├┤ T ├┤ X ├┤ Tdg ├─────┤ X ├┤ Rz(π/4) ├──┼────────────────┼────────────────┤ X ├───┤ Tdg ├────────┤ X ├─────┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├──────────┤ X ├─────┤ H ├───────┤ X ├──┼──────┤ Tdg ├───────────┼───────┤ X ├───────┤ T ├──┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─┤ Rz(1.85641576693042) ├─────┤ X ├─────┤ Rz(-1.85641576693042) ├─────┤ X ├─────┤ Rz(-2.1453) ├───────────────────────────────────────────┼─────────────────────┤ X ├┤ Rz(-0.996321215859445) ├───────┤ X ├──┼───────────────┼───────────────┼──────────────────┼────────────────────────────────┼──────────────────┼──────────────────────────────────┼───────
-                     ┌─┴─┐       │                     │   ┌───┐      ┌─┴─┐┌┴───┴┐┌─┴─┐┌─┴─┐┌──────────┐ ┌──┴───┴───┐ ┌─┴─┐┌─────────┐┌─────────┐└─┬─┘└─────┘└───┘ └───┘ └─┬─┘└┬───┬┘            └───┘└───┘┌─┴─┐┌┴───┴┐┌─┴─┐  │  ┌───┐┌─┴─┐┌─────┐ ┌─┴─┐ ┌───┐┌─┴─┐┌─────┐ └───┘      ┌─┴─┐└┬───┬┘├───┤ └──────────┘                     │       ┌───────────┐┌───┐ │ZZ(4.2882) └┬───┬┘                                                                                                                                        │       ┌───┐                   ┌─┴─┐    ┌─────┐    ┌─┴─┐ ┌───┐ ┌─┴─┐┌─────┐┌─┴─┐┌───┐ ├───┤             │  ┌─────────────┐┌─────────┐ ┌────────────┐   │                        │           ┌───┐                         ┌─┴─┐          ┌┴───┴┐    ┌─┴─┐     ┌───┐┌─┴─┐┌─────┐┌─┴─┐┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐├───┤└┬───┬┘└───┘└───┘└─┬─┘└─────┘     └───┘└───┘└─┬─┘└┬───┬┘     └───┘└─────────┘┌─┴─┐┌─────┐     ┌─┴─┐    ┌───┐     └───┘   └─────┘        └───┘     └───┘└───┘└─────┘└───┘└───┘ └───┘          └───┘     └───┘       └───┘┌─┴─┐┌───┴─────┴───┐     ┌─┴─┐┌────┴───┴────┐┌─┴───┴─┐└───┘└─────┘└───┘└───┘ └───┘ └──────────────────────┘     └───┘     └───────────────────────┘     └───┘     └─────────────┘                                           │                     └───┘└────────────────────────┘       └───┘  │               │     ┌───┐     │  ┌────────────┐  │                                │                  │                                  │
-q_5: ────────────────┤ X ├───────■─────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├┤ X ├┤ Rx(-π/2) ├─┤ Rz(-π/4) ├─┤ X ├┤ Rz(π/4) ├┤ Rx(π/2) ├──■───────────────────────■───┤ T ├───────────────────────┤ X ├┤ Tdg ├┤ X ├──■──┤ H ├┤ X ├┤ Tdg ├─┤ X ├─┤ T ├┤ X ├┤ Tdg ├────────────┤ X ├─┤ T ├─┤ H ├──────────────────────────────────■───────┤ Ry(6.079) ├┤ Z ├─■────────────┤ S ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────┤ H ├───────────────────┤ X ├────┤ Tdg ├────┤ X ├─┤ T ├─┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─────────────■──┤ Rz(0.56579) ├┤ Ry(π/2) ├─┤ Rz(0.1427) ├───■────────────────────────■───────────┤ T ├─────────────────────────┤ X ├──────────┤ Tdg ├────┤ X ├─────┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─────────────■──────────────────────────■───┤ T ├──────────────────────┤ X ├┤ Tdg ├─────┤ X ├────┤ Z ├────────────────────────────────────────────────────────────────────────────────────────────────────────────┤ X ├┤ Rz(-1.3063) ├─────┤ X ├┤ Rz(-2.3551) ├┤ Ry(π) ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■──────────────────────────────────────────────────────────────────■───────────────■─────┤ T ├─────■──┤ Rz(-3.067) ├──■────────────────────────────────■──────────────────■──────────────────────────────────■───────
-                     └───┘                                 └───┘      └───┘└─────┘└───┘└───┘└──────────┘ └──────────┘ └───┘└─────────┘└─────────┘                              └───┘                       └───┘└─────┘└───┘     └───┘└───┘└─────┘ └───┘ └───┘└───┘└─────┘            └───┘ └───┘ └───┘                                          └───────────┘└───┘              └───┘                                                                                                                                                 └───┘                   └───┘    └─────┘    └───┘ └───┘ └───┘└─────┘└───┘└───┘ └───┘                └─────────────┘└─────────┘ └────────────┘                                        └───┘                         └───┘          └─────┘    └───┘     └───┘└───┘└─────┘└───┘└───┘└───┘└─────┘└───┘└───┘ └───┘                                            └───┘                      └───┘└─────┘     └───┘    └───┘                                                                                                            └───┘└─────────────┘     └───┘└─────────────┘└───────┘                                                                                                                                                                                                                                                               └───┘        └────────────┘                                                                                                 </pre></div>
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 3.2614
+           ┌──────────┐                                                                                                       ┌───┐   ┌───┐     ┌─────┐  ┌───┐ ┌───┐ ┌───┐┌─────┐┌───┐ ┌───┐  ┌───┐                                                        ┌───┐            ┌───┐ ┌─────┐┌───┐                 ┌────────────┐┌────────────┐┌────────────┐                                                                                                                                                                                     ┌───┐                                                                   ┌───┐      ┌───┐┌─────┐┌───┐     ┌───┐                                                                                 ┌───┐          ┌─────────────┐                                                                                                                                                                                            ┌───┐                                                                     ┌───┐      ┌───┐┌─────┐┌───┐┌──────────────────────┐                                                                                                        ┌───┐                         ┌─────────────┐       ┌─────────┐       ┌─────────────┐               ┌───┐┌────────────────────────┐┌───┐┌──────────────────────┐
+q_0: ──────┤ Rz(3π/4) ├───────────────────────────────────────────────────────────────────────────────────────────────■───────┤ H ├───┤ X ├─────┤ Tdg ├──┤ X ├─┤ T ├─┤ X ├┤ Tdg ├┤ X ├─┤ T ├──┤ H ├────────■─────────■────────────────────────────────■────┤ T ├────────────┤ X ├─┤ Tdg ├┤ X ├──────────────■──┤ Rz(2.1395) ├┤ Ry(2.0919) ├┤ Rz(1.3684) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■─────────────────────────────────■─────────────────────┤ X ├───────────────────────────────■───────────────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├─────┤ X ├────────────■──────────────────────────────────────────────────────────■─────■───┤ T ├───■──────┤ Ry(-2.1846) ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■──────────────────────────■───────────────■───┤ T ├────────■──────────────────■─────────────────────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├┤ Rz(1.30629747996744) ├───────────────────■──────────────────────────────────■─────────■──────────────────────────────■────■───┤ T ├────────────■────────────┤ Rz(-1.3651) ├───────┤ Ry(π/2) ├───────┤ Rz(-2.4141) ├───────────────┤ X ├┤ Rz(-0.838728781856755) ├┤ X ├┤ Rz(4.22380907548478) ├──────────────────────────■─────────────────────────────────────■───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+     ┌─────┴──────────┴─────┐                                                                                       ┌─┴─┐     └───┘   └─┬─┘     └─────┘  └─┬─┘ └───┘ └─┬─┘└┬───┬┘└─┬─┘ ├───┤ ┌┴───┴┐┌───┐┌─┴─┐┌───┐┌─┴─┐┌─────┐          ┌───┐┌───┐ ┌─┴─┐ ┌┴───┴┐┌───┐┌───┐ └─┬─┘ └┬───┬┘└─┬─┘              │  └────────────┘└────────────┘└───┬───┬────┘                                                 ┌───┐           ┌───┐┌─────┐┌───┐     ┌───┐               ┌──────────────┐  │  ┌───┐     ┌────────────┐       │  ┌───────────┐ ┌───┐└─┬─┘┌──────────────┐┌───────────┐  │  ┌─────────────┐              │   └───┘      └─┬─┘└─────┘└─┬─┘     └─┬─┘            │                                                 ┌───┐    │   ┌─┴─┐┌┴───┴┐┌─┴─┐┌───┴─────────────┴────┐┌───┐┌───────────────────────┐ ┌───┐                                                                                                    │                          │               │   ├───┤        │      ┌───┐       │                                     │   └───┘      └─┬─┘└─────┘└─┬─┘└──────────────────────┘                   │                                  │         │                      ┌───┐   │  ┌─┴─┐┌┴───┴┐         ┌─┴─┐          └────┬───┬────┘       └──┬───┬──┘       └────┬───┬────┘               └─┬─┘└────────────────────────┘└─┬─┘└──────────────────────┘                          │                             ┌───┐   │                  ┌───┐  ┌─────┐  ┌───┐     ┌────────────┐                                                        ┌───┐┌───────────────────────┐     ┌───┐
+q_1: ┤ Rz(6.13001602516006) ├────────────────────────────────────────────────────────────────────────────X──────────┤ X ├───────────────■──────────────────┼───────────■───┤ T ├───┼───┤ X ├─┤ Tdg ├┤ X ├┤ X ├┤ H ├┤ X ├┤ Tdg ├──────────┤ X ├┤ T ├─┤ X ├─┤ Tdg ├┤ X ├┤ T ├───┼────┤ H ├───┼────────────────┼──────────────────────────────────┤ X ├────────────────────■─────────────────────────────■───┤ T ├───────────┤ X ├┤ Tdg ├┤ X ├─────┤ X ├──────────X────┤ Rz(-0.15782) ├──┼──┤ X ├─────┤ Rz(2.1041) ├───────┼──┤ Ry(-1.48) ├─┤ X ├──┼──┤ Rz(-0.28426) ├┤ Ry(1.712) ├──┼──┤ Rz(0.87374) ├──■───────────┼────────────────┼───────────┼─────────┼──────────────┼───────────────────────────────────■─────────────┤ T ├────┼───┤ X ├┤ Tdg ├┤ X ├┤ Rz(1.40164127769636) ├┤ X ├┤ Rz(-1.40164127769636) ├─┤ X ├──■────────────────────────────────────────────────────────────────────────────────────────────■────┼─────────────────────■────┼───────■───────┼───┤ T ├───■────┼──────┤ T ├───────┼─────────────────────────────────────┼────────────────┼───────────┼─────────────■──────────────────────────■────┼──────────────────────────────────┼─────────┼──────────────────■───┤ T ├───┼──┤ X ├┤ Tdg ├─────────┤ X ├───────────────┤ H ├───────────────┤ X ├───────────────┤ H ├────────────■─────────┼──────────────────────────────┼────────────────────────────────────────────────────┼──────────────■──────────────┤ T ├───┼──────────────────┤ X ├──┤ Tdg ├──┤ X ├─────┤ Rz(1.0361) ├────────────────────────────────────────────────────────┤ X ├┤ Rz(-2.60686136104895) ├─────┤ X ├─────
+     └──────────────────────┘     ┌───┐┌───┐┌─────┐┌───┐┌───┐┌───┐┌─────┐┌───┐┌───┐ ┌───┐                │      ┌───┴───┴────┐                             │               └───┘   │   └─┬─┘ └─────┘└─┬─┘└───┘└───┘└───┘└┬───┬┘          └─┬─┘└───┘ └───┘ └─────┘└─┬─┘└───┘   │    └───┘   │                │      ┌───┐                       └─┬─┘         ┌───┐    ┌─┴─┐   ┌─────┐    ┌───┐ ┌───┐┌─┴─┐┌┴───┴┐┌───┐┌───┐└─┬─┘└┬───┬┘└─┬─┘     └─┬─┘          │    └───┬─────┬────┘┌─┴─┐└─┬─┘┌────┴────────────┴────┐┌─┴─┐├───────────┴┐└─┬─┘  │  └─┬─────────┬──┘└───────────┘  │  └─────────────┘┌─┴─┐┌─────┐  │                │           │         │            ┌─┴─┐             ┌───┐             ┌─┴─┐          ┌┴───┴┐ ┌─┴─┐ ├───┤└┬───┬┘└───┘└──────────────────────┘└─┬─┘└───────────────────────┘ └─┬─┘  │ZZ(0.74145)                                                                                 │    │             ┌───┐   │    │     ┌─┴─┐     │  ┌┴───┴┐┌─┴─┐  │  ┌───┴───┴────┐  │  ┌────────────┐┌────────────┐       │                │           │             │            ┌───┐ ┌───┐   │    │                                  │         │                  │   └───┘   │  └───┘└─────┘         └───┘               └───┘               └─┬─┘               ├───┤          ┌─┴─┐       │           ┌─────┐            │           ┌───┐                   ┌───┐            │            ┌─┴─┐           ┌┴───┴┐  │  ┌───┐┌─────────┐└─┬─┘┌─┴─────┴─┐└─┬─┘     └────────────┘                                                        └─┬─┘└───────────────────────┘     └─┬─┘
+q_2: ──────────────────────────■──┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├────────■───────┼──────┤ Ry(4.0455) ├─────────────────────────────┼───────────■───────────┼─────┼────────────┼────■─────────■───┤ T ├───■─────────┼─────────────────■─────┼──────────┼────────────┼────■─────■─────┼──────┤ T ├───────────■─────────────■───────────┤ H ├────┤ X ├───┤ Tdg ├────┤ X ├─┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├──┼───┤ H ├───┼─────────■────────────X────────┤ Sdg ├─────┤ X ├──┼──┤ Rz(-1.7391209782858) ├┤ X ├┤ Rz(1.7391) ├──┼────┼────┤ Ry(π/2) ├──────────────────┼─────────────────┤ X ├┤ Tdg ├──┼────────────────┼───────────┼─────────┼────────────┤ X ├─────────────┤ T ├─────────────┤ X ├──────────┤ Tdg ├─┤ X ├─┤ T ├─┤ H ├────────────────────────────────■──────────────────────────────■────■────────────────────────────────────────────────────────────────────────────────■───────────┼────┼─────────■───┤ T ├───┼────┼─────┤ X ├─────┼──┤ Tdg ├┤ X ├──┼──┤ Rz(1.1107) ├──┼──┤ Ry(1.9224) ├┤ Rz(2.0685) ├───────┼────────────────┼───────────┼─────────────┼────────────┤ X ├─┤ S ├───┼────┼──────────────■───────────────────┼─────────┼──────────────────┼───────────┼─────────────────────────────────────────────────────────────────■─────────────────┤ H ├──────────┤ X ├───────┼───────────┤ Tdg ├────────────┼───────────┤ X ├───────────────────┤ T ├────────────┼────────────┤ X ├───────────┤ Tdg ├──┼──┤ X ├┤ Rz(π/4) ├──┼──┤ Ry(π/2) ├──┼───────────────────────────────────────────────────────────────────────────────┼─────────────────────────────■────┼───────
+              ┌───┐            │  └───┘└─┬─┘└─────┘└─┬─┘└───┘└─┬─┘└─────┘└─┬─┘└───┘ └───┘        │       │      └────────────┘                             │           │           │     │    ┌───┐   │    │         │   └───┘   │  ┌───┐  │                 │     │          │    ┌───┐   │    │   ┌─┴─┐   │     ┌┴───┴┐        ┌─┴─┐         ┌───┐         └───┘    └───┘   └─────┘    └─┬─┘ └───┘└───┘└─────┘└─┬─┘└───┘  │   ├───┤   │  ┌──────────────┐┌───────┐    └─────┘     └───┘  │  └──────────────────────┘└───┘└────────────┘  │    │    ├─────────┤    ┌──────────┐  │                 └───┘└─────┘  │                │           │  ┌───┐  │         ┌──┴───┴───┐      ┌──┴───┴───┐         └───┘          └┬───┬┘┌┴───┴┐├───┤ ├───┤ ┌───┐        ┌─────┐         ┌───┐          ┌───┐           ┌───┐                                                                 ┌───┐      ┌───┐┌─┴─┐┌─────┐┌─┴─┐  │  ┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐  │     ├───┤     │  └┬───┬┘└───┘  │  └────────────┘  │  └────────────┘└────────────┘       │                │   ┌───┐   │             │            └─┬─┘┌┴───┴┐  │    │            ┌─┴─┐          ┌───┐  │         │                  │           │                                                                                   └───┘          └───┘       │           └─────┘            │           └─┬─┘          ┌────────┴───┴─────────┐  │            └───┘           └─────┘  │  └─┬─┘└─────────┘  │  └─────────┘  │                         ┌───┐┌───────────┐┌─────────────┐┌───┐┌────────────┐  │       ┌──────────────┐    ┌─┴─┐  │  ┌───┐
+q_3: ─────────┤ T ├────────────┼─────────┼───────────┼─────────┼───────────┼─────────────────────┼───────┼──────────────────────■──────────────────────────■───────────┼───────────■─────■────┤ T ├───■────┼─────────┼───────────┼──┤ X ├──┼────■────────────┼─────┼────■─────┼────┤ T ├───┼────┼───┤ X ├───┼─────┤ Tdg ├────────┤ X ├─────────┤ X ├───────────────────────────────────────■──────────────────────■─────────■───┤ T ├───■──┤ Rz(-0.25207) ├┤ Ry(π) ├───────────────────────■───────────────────────────────────────────────■────┼────┤ Rx(π/2) ├────┤ Rz(3π/4) ├──┼───────────────────────────────┼────────────────┼───────────┼──┤ X ├──┼─────────┤ Rz(-π/4) ├──────┤ Rx(-π/2) ├─────────────────────────┤ X ├─┤ Tdg ├┤ X ├─┤ T ├─┤ X ├────────┤ Tdg ├─────────┤ X ├──────────┤ T ├───────────┤ H ├──────────────────────────────────■─────────────────────■────■───┤ T ├───■──┤ H ├┤ X ├┤ Tdg ├┤ X ├──┼──┤ T ├┤ X ├┤ Tdg ├┤ X ├──┼─────┤ T ├─────┼───┤ H ├────────┼──────────────────┼──────────────────────■──────────────┼───────────■────■───┤ T ├───■─────────────┼──────────────■──┤ Sdg ├──┼────┼────────────┤ X ├──────────┤ S ├──┼─────────┼──────────────────┼───────────┼─────────────────────────────────────────────■───────────────────────────────────────■────────────────────────■──────────────────────────────■─────────────┼────────────┤ Rz(2.53925791897968) ├──┼─────────────────────────────────────┼────┼───────────────┼───────────────┼─────────────────────────┤ X ├┤ Rz(3.067) ├┤ Ry(-2.4148) ├┤ X ├┤ Ry(2.4148) ├──┼───────┤ Rz(-0.89384) ├────┤ X ├──┼──┤ S ├
+              └───┘            │         │           │         │           │        ┌───┐        │       │          ┌───┐       │                        ┌───┐┌─────┐┌─┴─┐ ┌───┐ ┌───┐┌─────┐ └───┘      ┌─┴─┐┌───┐  │   ┌───┐   │  └─┬─┘  │    │            │     │    │     │    ├───┤   │    │  ┌┴───┴┐┌─┴─┐ ┌─┴─────┴──┐     └───┘         └─┬─┘                                    ┌─────┐                                 └───┘      └──────────────┘└───────┘                                                                            │    └─────────┘    └──────────┘  │                               │                │   ┌───┐   │  └─┬─┘  │         └──────────┘      └──────────┘                         └─┬─┘ └─────┘└─┬─┘ └───┘ └─┬─┘        └─────┘         └─┬─┘          └───┘           ├───┤                                  │             ┌───┐   │  ┌─┴─┐┌┴───┴┐┌─┴─┐├───┤├───┤├─────┤└───┘┌─┴─┐├───┤├───┤├─────┤└───┘┌─┴─┐┌──┴───┴──┐  │   └───┘        │                ┌─┴─┐   ┌─────┐        ┌─┴─┐     ┌───┐┌─┴─┐┌─────┐┌─┴─┐┌───┐ ├───┤               ┌─┴─┐          ┌───┐└─────┘┌─┴─┐  │           ┌┴───┴┐         └───┘  │       ┌─┴─┐       ┌───┐  ┌─┴─┐┌─────┐┌─┴─┐┌───┐ ┌───┐ ┌──────────────────────┐     ┌─┴─┐     ┌───────────────────────┐     ┌─┴─┐     ┌─────────────┐                                               │            └──────────────────────┘┌─┴─┐┌────────────────────────┐       ┌─┴─┐  │               │               │                         └─┬─┘└───────────┘└─────────────┘└─┬─┘└────────────┘  │       └──────────────┘    └───┘  │  └───┘
+q_4: ──────────────────────────┼─────────┼───────────■─────────┼───────────■────■───┤ T ├───■────┼───────X──────────┤ H ├───────┼────────────────────────┤ X ├┤ Tdg ├┤ X ├─┤ T ├─┤ X ├┤ Tdg ├────────────┤ X ├┤ T ├──┼───┤ H ├───┼────┼────■────┼────────────┼─────■────┼─────■────┤ T ├───■────┼──┤ Sdg ├┤ X ├─┤ Rz(3π/4) ├─────────────────────┼──────────────────────────■───────────┤ Tdg ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────┼───────────────────■───────────┼───────────■────■───┤ T ├───■────■────┼──────────────────────────────────────────────────────────────────┼────────────■───────────┼────────────────────────────■──────────────■─────────────┤ T ├───────■──────────────■───────────┼─────────■───┤ T ├───┼──┤ X ├┤ Tdg ├┤ X ├┤ H ├┤ X ├┤ Tdg ├─────┤ X ├┤ T ├┤ X ├┤ Tdg ├─────┤ X ├┤ Rz(π/4) ├──┼────────────────┼────────────────┤ X ├───┤ Tdg ├────────┤ X ├─────┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├───────────────┤ X ├──────────┤ H ├───────┤ X ├──┼───────────┤ Tdg ├────────────────┼───────┤ X ├───────┤ T ├──┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─┤ Rz(1.85641576693042) ├─────┤ X ├─────┤ Rz(-1.85641576693042) ├─────┤ X ├─────┤ Rz(-2.1453) ├───────────────────────────────────────────────┼────────────────────────────────────┤ X ├┤ Rz(-0.996321215859445) ├───────┤ X ├──┼───────────────┼───────────────┼───────────────────────────┼────────────────────────────────┼──────────────────┼──────────────────────────────────┼───────
+                             ┌─┴─┐       │                     │   ┌───┐      ┌─┴─┐┌┴───┴┐┌─┴─┐┌─┴─┐┌──────────┐ ┌──┴───┴───┐ ┌─┴─┐┌─────────┐┌─────────┐└─┬─┘└─────┘└───┘ └───┘ └─┬─┘└┬───┬┘            └───┘└───┘┌─┴─┐┌┴───┴┐┌─┴─┐  │  ┌───┐┌─┴─┐┌─────┐ ┌─┴─┐ ┌───┐┌─┴─┐┌─────┐ └───┘      ┌─┴─┐└┬───┬┘├───┤ └──────────┘                     │       ┌───────────┐┌───┐ │ZZ(4.2882) └┬───┬┘                                                                                                                                                 │       ┌───┐                   ┌─┴─┐    ┌─────┐    ┌─┴─┐ ┌───┐ ┌─┴─┐┌─────┐┌─┴─┐┌───┐ ├───┤             │  ┌───────────────────────┐   ┌────┐   ┌──────────────────────┐   │                        │           ┌───┐                         ┌─┴─┐          ┌┴───┴┐    ┌─┴─┐     ┌───┐┌─┴─┐┌─────┐┌─┴─┐┌───┐┌─┴─┐┌┴───┴┐┌─┴─┐├───┤└┬───┬┘└───┘└───┘└─┬─┘└─────┘     └───┘└───┘└─┬─┘└┬───┬┘     └───┘└─────────┘┌─┴─┐┌─────┐     ┌─┴─┐    ┌───┐     └───┘   └─────┘        └───┘     └───┘└───┘└─────┘└───┘└───┘ └───┘               └───┘          └───┘       └───┘┌─┴─┐┌────────┴─────┴────────┐     ┌─┴─┐┌────┴───┴────┐┌─┴───┴─┐└───┘└─────┘└───┘└───┘ └───┘ └──────────────────────┘     └───┘     └───────────────────────┘     └───┘     └─────────────┘                                               │                                    └───┘└────────────────────────┘       └───┘  │               │     ┌───┐     │  ┌─────────────────────┐  │                                │                  │                                  │
+q_5: ────────────────────────┤ X ├───────■─────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├┤ X ├┤ Rx(-π/2) ├─┤ Rz(-π/4) ├─┤ X ├┤ Rz(π/4) ├┤ Rx(π/2) ├──■───────────────────────■───┤ T ├───────────────────────┤ X ├┤ Tdg ├┤ X ├──■──┤ H ├┤ X ├┤ Tdg ├─┤ X ├─┤ T ├┤ X ├┤ Tdg ├────────────┤ X ├─┤ T ├─┤ H ├──────────────────────────────────■───────┤ Ry(6.079) ├┤ Z ├─■────────────┤ S ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■───────┤ H ├───────────────────┤ X ├────┤ Tdg ├────┤ X ├─┤ T ├─┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─────────────■──┤ Rz(-1.00500893102643) ├───┤ √X ├───┤ Rz(1.71350049100516) ├───■────────────────────────■───────────┤ T ├─────────────────────────┤ X ├──────────┤ Tdg ├────┤ X ├─────┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├─────────────■──────────────────────────■───┤ T ├──────────────────────┤ X ├┤ Tdg ├─────┤ X ├────┤ Z ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤ X ├┤ Rz(-1.30629747996744) ├─────┤ X ├┤ Rz(-2.3551) ├┤ Ry(π) ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────■─────────────────────────────────────────────────────────────────────────────────■───────────────■─────┤ T ├─────■──┤ Rz(3.2162142475914) ├──■────────────────────────────────■──────────────────■──────────────────────────────────■───────
+                             └───┘                                 └───┘      └───┘└─────┘└───┘└───┘└──────────┘ └──────────┘ └───┘└─────────┘└─────────┘                              └───┘                       └───┘└─────┘└───┘     └───┘└───┘└─────┘ └───┘ └───┘└───┘└─────┘            └───┘ └───┘ └───┘                                          └───────────┘└───┘              └───┘                                                                                                                                                          └───┘                   └───┘    └─────┘    └───┘ └───┘ └───┘└─────┘└───┘└───┘ └───┘                └───────────────────────┘   └────┘   └──────────────────────┘                                        └───┘                         └───┘          └─────┘    └───┘     └───┘└───┘└─────┘└───┘└───┘└───┘└─────┘└───┘└───┘ └───┘                                            └───┘                      └───┘└─────┘     └───┘    └───┘                                                                                                                      └───┘└───────────────────────┘     └───┘└─────────────┘└───────┘                                                                                                                                                                                                                                                                                  └───┘        └─────────────────────┘                                                                                                 </pre></div>
 </div>
+<p>We can run our circuit and get job object back, which will store information about execution: job id, status of job and results when it will be available</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># run circuit</span>
-<span class="n">ionq_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ionq_job</span><span class="o">.</span><span class="n">job_id</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<p>If we do not want to wait for a job completion and return to it later, we can use <code class="docutils literal notranslate"><span class="pre">retrieve_job</span></code> method on device to get job object</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_job</span><span class="o">.</span><span class="n">job_id</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">retrieve_job</span><span class="p">(</span><span class="n">job_id</span><span class="o">=</span><span class="s2">&quot;&lt;TASK_ARN&gt;&quot;</span><span class="p">)</span>
+<span class="n">retrieved_job</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&#39;arn:aws:braket:us-east-1:722650277903:quantum-task/48e87a54-9579-4d5a-83aa-e87e7edc6120&#39;
+&lt;qiskit_braket_provider.providers.braket_job.AWSBraketJob at 0x7f9c13fd4d10&gt;
 </pre></div></div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[75]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># get job by job_id</span>
-<span class="n">retrieved_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">retrieve_job</span><span class="p">(</span><span class="n">job_id</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_IONQ_SAVED_TASK_ARN&quot;</span><span class="p">])</span>
-</pre></div>
-</div>
-</div>
+<p>Check status</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[76]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
@@ -496,7 +611,7 @@ q_5: ────────────────┤ X ├──────
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[76]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -504,8 +619,9 @@ q_5: ────────────────┤ X ├──────
 &lt;JobStatus.DONE: &#39;job has successfully run&#39;&gt;
 </pre></div></div>
 </div>
+<p>And plot histogram of results</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[77]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
@@ -513,18 +629,23 @@ q_5: ────────────────┤ X ├──────
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[77]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_14_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_14_0.png" />
+<img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_35_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_35_0.png" />
 </div>
 </div>
 </section>
 <section id="Running-algorithms">
 <h2>Running algorithms<a class="headerlink" href="#Running-algorithms" title="Permalink to this heading">¶</a></h2>
+<p>Let’s review an example of running algorithms using Qiskit on Braket devices.</p>
+<p>Qiskit provides a number of Algorithms and they are grouped by category according to the task they can perform. For instance Minimum Eigensolvers to find the smallest eigen value of an operator, for example ground state energy of a chemistry Hamiltonian or a solution to an optimization problem when expressed as an Ising Hamiltonian.</p>
+<p>Algorithms are configurable and often part of the configuration will be in the form of smaller building blocks, of which different instances of the building block type can be given. For instance with <code class="docutils literal notranslate"><span class="pre">VQE</span></code>, the Variational Quantum Eigensolver, it takes a trial wavefunction, in the form of a <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> and a classical optimizer among other things.</p>
+<p>Let’s take a look at an example to construct a VQE instance. Here <code class="docutils literal notranslate"><span class="pre">TwoLocal</span></code> is the variational form (trial wavefunction), a parameterized circuit which can be varied, and SLSQP a classical optimizer. Then we pass hamiltonian to <code class="docutils literal notranslate"><span class="pre">compute_minimum_eigenvalue</span></code> method of <code class="docutils literal notranslate"><span class="pre">VQE</span></code> to get result.</p>
+<p>Full example and explanation of algorithm detail you can find <a class="reference external" href="https://qiskit.org/documentation/tutorials/algorithms/01_algorithms_introduction.html#An-Introduction-to-Algorithms-in-Qiskit">here</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[48]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">H2_op</span> <span class="o">=</span> <span class="p">(</span>
@@ -553,32 +674,36 @@ q_5: ────────────────┤ X ├──────
 <div class="highlight"><pre>
 {   &#39;aux_operator_eigenvalues&#39;: None,
     &#39;cost_function_evals&#39;: 9,
-    &#39;eigenstate&#39;: {   &#39;00&#39;: 0.8454843286542927,
-                      &#39;01&#39;: 0.28125,
-                      &#39;10&#39;: 0.14986973510352247,
-                      &#39;11&#39;: 0.42847841252506524},
-    &#39;eigenvalue&#39;: (-0.9640051666453908+0j),
-    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[0]): -2.3927748649949567,
-                              ParameterVectorElement(θ[1]): 2.4697879986238824,
-                              ParameterVectorElement(θ[2]): -1.9005130390534406,
-                              ParameterVectorElement(θ[3]): -2.5168166820743014,
-                              ParameterVectorElement(θ[4]): -6.256884315134194,
-                              ParameterVectorElement(θ[5]): -0.7574239815126385,
-                              ParameterVectorElement(θ[6]): 0.7930414888274298,
-                              ParameterVectorElement(θ[7]): -5.903305877757919},
-    &#39;optimal_point&#39;: array([-2.39277486,  2.469788  , -1.90051304, -2.51681668, -6.25688432,
-       -0.75742398,  0.79304149, -5.90330588]),
-    &#39;optimal_value&#39;: -0.9640051666453908,
+    &#39;eigenstate&#39;: {   &#39;00&#39;: 0.04419417382415922,
+                      &#39;01&#39;: 0.94631274560792,
+                      &#39;10&#39;: 0.19515618744994995,
+                      &#39;11&#39;: 0.2538762001448738},
+    &#39;eigenvalue&#39;: (-1.6891153397630962+0j),
+    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[0]): -1.5057852302979455,
+                              ParameterVectorElement(θ[1]): 0.17806892747075853,
+                              ParameterVectorElement(θ[2]): -2.9377191205349478,
+                              ParameterVectorElement(θ[3]): -6.1111063638168925,
+                              ParameterVectorElement(θ[4]): 0.5757868603404876,
+                              ParameterVectorElement(θ[5]): 0.6859617452099496,
+                              ParameterVectorElement(θ[6]): -5.657884129072659,
+                              ParameterVectorElement(θ[7]): 0.7981284053630464},
+    &#39;optimal_point&#39;: array([-1.50578523,  0.17806893, -2.93771912, -6.11110636,  0.57578686,
+        0.68596175, -5.65788413,  0.79812841]),
+    &#39;optimal_value&#39;: -1.6891153397630962,
     &#39;optimizer_evals&#39;: None,
-    &#39;optimizer_time&#39;: 0.17025303840637207}
+    &#39;optimizer_time&#39;: 0.29915356636047363}
 </pre></div></div>
 </div>
 </section>
 <section id="Running-Hybrid-Jobs">
 <h2>Running Hybrid Jobs<a class="headerlink" href="#Running-Hybrid-Jobs" title="Permalink to this heading">¶</a></h2>
-<p>Prepare script</p>
+<p>Amazon Braket Hybrid Jobs enables you to easily run hybrid quantum-classical algorithms, such as the Variational Quantum Eigensolver (VQE) and the Quantum Approximate Optimization Algorithm (QAOA), that combine classical compute resources with quantum computing devices to optimize the performance of today’s quantum systems.</p>
+<p>In order to run Hybrid Job we need to acomplish couple of step:</p>
+<ol class="arabic simple">
+<li><p>Prepare script</p></li>
+</ol>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span> cat ./data/2_hybrid_jobs/job_script.py
@@ -639,9 +764,11 @@ def main():
     )
 </pre></div></div>
 </div>
-<p>Prepare image</p>
+<ol class="arabic simple" start="2">
+<li><p>Prepare image</p></li>
+</ol>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[53]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span> cat ./data/2_hybrid_jobs/Dockerfile
@@ -660,8 +787,11 @@ RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-community/qiskit-braket-provider
 </pre></div></div>
 </div>
+<ol class="arabic simple" start="3">
+<li><p>Run Hybrid Job</p></li>
+</ol>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[54]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">image_uri</span> <span class="o">=</span> <span class="s2">&quot;&lt;ACCOUNT_ID&gt;.dkr.ecr.&lt;AWS_REGION&gt;.amazonaws.com/amazon-braket-qiskit-provider:latest&quot;</span>
@@ -671,47 +801,20 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
     <span class="n">source_module</span><span class="o">=</span><span class="s2">&quot;data/2_hybrid_jobs/job_script.py&quot;</span><span class="p">,</span>
     <span class="n">entry_point</span><span class="o">=</span><span class="s2">&quot;job_script:main&quot;</span><span class="p">,</span>
     <span class="n">wait_until_complete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">job_name</span><span class="o">=</span><span class="s2">&quot;qiskit-braket-vqe-6&quot;</span><span class="p">,</span>
+    <span class="n">job_name</span><span class="o">=</span><span class="s2">&quot;qiskit-braket-vqe&quot;</span><span class="p">,</span>
     <span class="n">image_uri</span><span class="o">=</span><span class="n">image_uri</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[66]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># print(job.result())</span>
-<span class="n">AwsQuantumJob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_IONQ_SAVED_HYBRID_JOB_ARN&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+<span class="n">AwsQuantumJob</span><span class="p">(</span><span class="s2">&quot;&lt;JOB_ARN&gt;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[66]:
-</pre></div>
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-{&#39;VQE&#39;: {&#39;eigenstate&#39;: {&#39;01&#39;: 0.8366600265340756, &#39;11&#39;: 0.5477225575051661},
-  &#39;eigenvalue&#39;: -1.6823050629682066,
-  &#39;optimal_parameters&#39;: [2.965910707685307,
-   -4.658133055892289,
-   -4.3956015975227265,
-   -3.682189424847994,
-   0.3499389384822065,
-   -2.55160387237748,
-   2.0897918250881915,
-   1.0061448749802206],
-  &#39;optimal_point&#39;: [2.965910707685307,
-   -4.658133055892289,
-   -4.3956015975227265,
-   -3.682189424847994,
-   0.3499389384822065,
-   -2.55160387237748,
-   2.0897918250881915,
-   1.0061448749802206],
-  &#39;optimal_value&#39;: -1.6823050629682066}}
-</pre></div></div>
 </div>
 </section>
 </section>
