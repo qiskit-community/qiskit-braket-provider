@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,6 +14,7 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -45,6 +46,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span>
 
 <span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsDevice</span><span class="p">,</span> <span class="n">AwsQuantumTaskBatch</span><span class="p">,</span> <span class="n">AwsQuantumTask</span>
 <span class="kn">from</span> <span class="nn">braket.circuits</span> <span class="kn">import</span> <span class="n">Circuit</span>
@@ -211,6 +213,9 @@
             <span class="n">backend_version</span><span class="o">=</span><span class="n">backend_version</span><span class="p">,</span>
             <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">pkg_version</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">get_distribution</span><span class="p">(</span><span class="s2">&quot;qiskit-braket-provider&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">version</span>
+        <span class="n">user_agent</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;QiskitBraketProvider/</span><span class="si">{</span><span class="n">pkg_version</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">device</span><span class="o">.</span><span class="n">aws_session</span><span class="o">.</span><span class="n">add_braket_user_agent</span><span class="p">(</span><span class="n">user_agent</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span></div>
 
@@ -351,7 +356,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -368,7 +373,7 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>How-to: Qiskit Hybrid Job &#8212; Qiskit-Braket provider 0.0.1
  documentation</title>
@@ -15,6 +15,7 @@
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -257,6 +258,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -265,10 +267,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -280,22 +286,25 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
 </style>
 <section id="How-to:-Qiskit-Hybrid-Job">
-<h1>How-to: Qiskit Hybrid Job<a class="headerlink" href="#How-to:-Qiskit-Hybrid-Job" title="Permalink to this headline">¶</a></h1>
+<h1>How-to: Qiskit Hybrid Job<a class="headerlink" href="#How-to:-Qiskit-Hybrid-Job" title="Permalink to this heading">¶</a></h1>
 <section id="Prepare-files">
-<h2>Prepare files<a class="headerlink" href="#Prepare-files" title="Permalink to this headline">¶</a></h2>
+<h2>Prepare files<a class="headerlink" href="#Prepare-files" title="Permalink to this heading">¶</a></h2>
 <section id="Prepare-Hybrid-job-script">
-<h3>Prepare Hybrid job script<a class="headerlink" href="#Prepare-Hybrid-job-script" title="Permalink to this headline">¶</a></h3>
+<h3>Prepare Hybrid job script<a class="headerlink" href="#Prepare-Hybrid-job-script" title="Permalink to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -330,7 +339,7 @@ save_job_result(results.result().get_counts())
 </div>
 </section>
 <section id="Prepare-docker-image">
-<h3>Prepare docker image<a class="headerlink" href="#Prepare-docker-image" title="Permalink to this headline">¶</a></h3>
+<h3>Prepare docker image<a class="headerlink" href="#Prepare-docker-image" title="Permalink to this heading">¶</a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -354,26 +363,26 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
 </section>
 </section>
 <section id="Prepare-env">
-<h2>Prepare env<a class="headerlink" href="#Prepare-env" title="Permalink to this headline">¶</a></h2>
+<h2>Prepare env<a class="headerlink" href="#Prepare-env" title="Permalink to this heading">¶</a></h2>
 <section id="Login-to-AWS-CLI-and-docker">
-<h3>Login to AWS CLI and docker<a class="headerlink" href="#Login-to-AWS-CLI-and-docker" title="Permalink to this headline">¶</a></h3>
+<h3>Login to AWS CLI and docker<a class="headerlink" href="#Login-to-AWS-CLI-and-docker" title="Permalink to this heading">¶</a></h3>
 <p>Login to AWS’ ERC to pull base image</p>
 <p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">ecr</span> <span class="pre">get-login-password</span> <span class="pre">--region</span> <span class="pre">us-west-2</span> <span class="pre">|</span> <span class="pre">docker</span> <span class="pre">login</span> <span class="pre">--username</span> <span class="pre">AWS</span> <span class="pre">--password-stdin</span> <span class="pre">292282985366.dkr.ecr.us-west-2.amazonaws.com</span></code></p>
 <p>Login to yours ERC to push your image</p>
 <p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">ecr</span> <span class="pre">get-login-password</span> <span class="pre">--region</span> <span class="pre">&lt;YOUR_AWS_REGION&gt;</span> <span class="pre">|</span> <span class="pre">docker</span> <span class="pre">login</span> <span class="pre">--username</span> <span class="pre">AWS</span> <span class="pre">--password-stdin</span> <span class="pre">&lt;YOUR_ACCOUNT_ID&gt;.dkr.ecr.&lt;YOUR_AWS_REGION&gt;.amazonaws.com</span></code></p>
 </section>
 <section id="Create-ECR-repo">
-<h3>Create ECR repo<a class="headerlink" href="#Create-ECR-repo" title="Permalink to this headline">¶</a></h3>
+<h3>Create ECR repo<a class="headerlink" href="#Create-ECR-repo" title="Permalink to this heading">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">!</span> <span class="pre">aws</span> <span class="pre">ecr</span> <span class="pre">create-repository</span> <span class="pre">--repository-name</span> <span class="pre">amazon-braket-qiskit-provider</span></code></p>
 </section>
 <section id="Build-docker-image">
-<h3>Build docker image<a class="headerlink" href="#Build-docker-image" title="Permalink to this headline">¶</a></h3>
+<h3>Build docker image<a class="headerlink" href="#Build-docker-image" title="Permalink to this heading">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">!</span> <span class="pre">docker</span> <span class="pre">build</span> <span class="pre">-t</span> <span class="pre">amazon-braket-qiskit-provider</span> <span class="pre">./data/2_hybrid_jobs/</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">!</span> <span class="pre">docker</span> <span class="pre">tag</span> <span class="pre">amazon-braket-qiskit-provider:latest</span> <span class="pre">&lt;YOUR_ACCOUNT_ID&gt;.dkr.ecr.&lt;YOUR_AWS_REGION&gt;.amazonaws.com/amazon-braket-qiskit-provider:latest</span></code></p>
 </section>
 </section>
 <section id="Running-your-job">
-<h2>Running your job<a class="headerlink" href="#Running-your-job" title="Permalink to this headline">¶</a></h2>
+<h2>Running your job<a class="headerlink" href="#Running-your-job" title="Permalink to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -488,7 +497,7 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -505,7 +514,7 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |

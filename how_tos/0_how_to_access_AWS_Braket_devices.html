@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>How-to: access AWS Braket devices &#8212; Qiskit-Braket provider 0.0.1
  documentation</title>
@@ -15,6 +15,7 @@
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
     <script src="../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -257,6 +258,7 @@ div.nboutput.container div.output_area > div[class^='highlight']{
 }
 
 /* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
 div.rendered_html table {
   border: none;
   border-collapse: collapse;
@@ -265,10 +267,14 @@ div.rendered_html table {
   font-size: 12px;
   table-layout: fixed;
 }
+.jp-RenderedHTMLCommon thead,
 div.rendered_html thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
 div.rendered_html tr,
 div.rendered_html th,
 div.rendered_html td {
@@ -280,18 +286,21 @@ div.rendered_html td {
   max-width: none;
   border: none;
 }
+.jp-RenderedHTMLCommon th,
 div.rendered_html th {
   font-weight: bold;
 }
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
 div.rendered_html tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
+.jp-RenderedHTMLCommon tbody tr:hover,
 div.rendered_html tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
 </style>
 <section id="How-to:-access-AWS-Braket-devices">
-<h1>How-to: access AWS Braket devices<a class="headerlink" href="#How-to:-access-AWS-Braket-devices" title="Permalink to this headline">¶</a></h1>
+<h1>How-to: access AWS Braket devices<a class="headerlink" href="#How-to:-access-AWS-Braket-devices" title="Permalink to this heading">¶</a></h1>
 <div class="line-block">
 <div class="line">In order to get access to AWS Braket devices through Qiskit you need to import <code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> provider.</div>
 <div class="line">Provider gives you access to Braket backends.</div>
@@ -315,7 +324,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <section id="Exploring-all-backends-by-Braket-provider">
-<h2>Exploring all backends by Braket provider<a class="headerlink" href="#Exploring-all-backends-by-Braket-provider" title="Permalink to this headline">¶</a></h2>
+<h2>Exploring all backends by Braket provider<a class="headerlink" href="#Exploring-all-backends-by-Braket-provider" title="Permalink to this heading">¶</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[52]:
 </pre></div>
@@ -470,7 +479,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </section>
 <section id="Quering-for-specific-backend">
-<h2>Quering for specific backend<a class="headerlink" href="#Quering-for-specific-backend" title="Permalink to this headline">¶</a></h2>
+<h2>Quering for specific backend<a class="headerlink" href="#Quering-for-specific-backend" title="Permalink to this heading">¶</a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[42]:
 </pre></div>
@@ -549,7 +558,7 @@ BraketBackend[Lucy]
 </div>
 </section>
 <section id="Query-options">
-<h2>Query options<a class="headerlink" href="#Query-options" title="Permalink to this headline">¶</a></h2>
+<h2>Query options<a class="headerlink" href="#Query-options" title="Permalink to this heading">¶</a></h2>
 <p>To get a full list of possible query options refer to <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/latest/_apidoc/braket.aws.aws_device.html?highlight=get_devices#braket.aws.aws_device.AwsDevice.get_devices">Braket SDK get_device documentation</a></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[51]:
@@ -648,7 +657,7 @@ BraketBackend[Lucy]
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -665,7 +674,7 @@ BraketBackend[Lucy]
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
