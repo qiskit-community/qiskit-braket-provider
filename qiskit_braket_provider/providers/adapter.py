@@ -322,8 +322,15 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     for qiskit_gates in circuit.data:
         name = qiskit_gates[0].name
         if name == "measure":
+            # TODO: change Probability result type for Sample for proper functioning # pylint:disable=fixme
+            # Getting the index from the bit mapping
             quantum_circuit.add_result_type(
-                result_types.Probability([qiskit_gates[1][0].index])
+                result_types.Probability(
+                    target=[
+                        circuit.qubit_indices[qiskit_gates[1][0]].index,
+                        circuit.clbit_indices[qiskit_gates[2][0]].index,
+                    ]
+                )
             )
         elif name == "barrier":
             # This does not exist
@@ -335,7 +342,9 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
 
             for gate in qiskit_gate_names_to_braket_gates[name](*params):
                 instruction = Instruction(
-                    operator=gate, target=[i.index for i in qiskit_gates[1]]
+                    # Getting the index from the bit mapping
+                    operator=gate,
+                    target=[circuit.qubit_indices[i].index for i in qiskit_gates[1]],
                 )
                 quantum_circuit += instruction
     return quantum_circuit
