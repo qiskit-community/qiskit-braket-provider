@@ -327,8 +327,8 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             quantum_circuit.add_result_type(
                 result_types.Probability(
                     target=[
-                        circuit.qubit_indices[qiskit_gates[1][0]].index,
-                        circuit.clbit_indices[qiskit_gates[2][0]].index,
+                        circuit.find_bit(qiskit_gates[1][0]).index,
+                        circuit.find_bit(qiskit_gates[2][0]).index,
                     ]
                 )
             )
@@ -344,7 +344,7 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
                 instruction = Instruction(
                     # Getting the index from the bit mapping
                     operator=gate,
-                    target=[circuit.qubit_indices[i].index for i in qiskit_gates[1]],
+                    target=[circuit.find_bit(i).index for i in qiskit_gates[1]],
                 )
                 quantum_circuit += instruction
     return quantum_circuit
