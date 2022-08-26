@@ -87,7 +87,7 @@ qiskit_to_braket_gate_names_mapping = {
     "cp": "cphaseshift",
     "rxx": "xx",
     "ryy": "yy",
-    "ecr": "ecr"
+    "ecr": "ecr",
 }
 
 
@@ -126,7 +126,7 @@ qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
     "cswap": lambda: [gates.CSwap()],
     "rxx": lambda angle: [gates.XX(angle)],
     "ryy": lambda angle: [gates.YY(angle)],
-    "ecr": lambda: [gates.ECR()]
+    "ecr": lambda: [gates.ECR()],
 }
 
 
@@ -159,7 +159,7 @@ qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] 
     "yy": RYYGate(Parameter("theta")),
     "z": ZGate(),
     "zz": RZZGate(Parameter("theta")),
-    "ecr": ECRGate()
+    "ecr": ECRGate(),
 }
 
 
