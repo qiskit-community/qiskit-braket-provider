@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 import pkg_resources
 
+from botocore import errorfactory
 from qiskit import QuantumCircuit, transpile, BasicAer
 from qiskit.algorithms import VQE, VQEResult
 from qiskit.algorithms.optimizers import (
@@ -175,6 +176,30 @@ class TestAWSBraketBackend(TestCase):
             job_result.backend_version, retrieved_job_result.backend_version
         )
         self.assertEqual(job_result.backend_name, retrieved_job_result.backend_name)
+
+    @unittest.skip("Call to external resources.")
+    def test_running_incompatible_verbatim_circuit_on_aspen_raises_error(self):
+        """Tests working of verbatim=True and disable_qubit_rewiring=True.
+
+        Note that in case of Rigetti devices, both of those parameters are
+        needed if one wishes to run instructions wrapped in verbatim boxes.
+        """
+        device = AWSBraketProvider().get_backend("Aspen-M-2")
+        circuit = QuantumCircuit(2)
+        circuit.cnot(0, 1)
+
+        with self.assertRaises(errorfactory.ClientError):
+            device.run(circuit, verbatim=True, disable_qubit_rewiring=True)
+
+    @unittest.skip("Call to external resources.")
+    def test_running_circuit_with_disabled_rewiring_requires_matching_topolog(self):
+        """Tests working of disable_qubit_rewiring=True."""
+        device = AWSBraketProvider().get_backend("Aspen-M-2")
+        circuit = QuantumCircuit(4)
+        circuit.cz(0, 3)
+
+        with self.assertRaises(errorfactory.ClientError):
+            device.run(circuit, disable_qubit_rewiring=True)
 
 
 class TestAWSBackendTarget(TestCase):
