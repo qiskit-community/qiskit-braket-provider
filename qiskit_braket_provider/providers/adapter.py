@@ -1,20 +1,16 @@
 """Util function for provider."""
-from typing import Iterable, List, Dict, Callable
-from typing import Tuple, Union, Optional
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from braket.aws import AwsDevice
-from braket.circuits import Instruction, Circuit, result_types
-from braket.circuits import gates
+from braket.circuits import Circuit, Instruction, gates, result_types
 from braket.device_schema import (
-    JaqcdDeviceActionProperties,
-    GateModelQpuParadigmProperties,
     DeviceActionType,
+    GateModelQpuParadigmProperties,
+    JaqcdDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
-from braket.device_schema.rigetti import (
-    RigettiDeviceCapabilities,
-)
+from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from braket.device_schema.simulators import (
     GateModelSimulatorDeviceCapabilities,
     GateModelSimulatorParadigmProperties,
@@ -22,39 +18,40 @@ from braket.device_schema.simulators import (
 from braket.devices import LocalSimulator
 from numpy import pi
 from qiskit import QuantumCircuit
-from qiskit.circuit import Instruction as QiskitInstruction, Parameter, Measure
+from qiskit.circuit import Instruction as QiskitInstruction
+from qiskit.circuit import Measure, Parameter
 from qiskit.circuit.library import (
-    HGate,
-    CXGate,
+    CCXGate,
+    CPhaseGate,
     CSwapGate,
+    CXGate,
     CYGate,
     CZGate,
     ECRGate,
+    HGate,
     IGate,
-    RXGate,
-    RYGate,
-    RZGate,
-    SGate,
-    SdgGate,
-    SwapGate,
-    TGate,
-    TdgGate,
-    XGate,
-    YGate,
-    ZGate,
-    RZZGate,
-    RXXGate,
-    RYYGate,
-    SXGate,
     PhaseGate,
+    RXGate,
+    RXXGate,
+    RYGate,
+    RYYGate,
+    RZGate,
+    RZZGate,
+    SdgGate,
+    SGate,
+    SwapGate,
     SXdgGate,
-    CPhaseGate,
-    CCXGate,
+    SXGate,
+    TdgGate,
+    TGate,
     U1Gate,
     U2Gate,
     U3Gate,
+    XGate,
+    YGate,
+    ZGate,
 )
-from qiskit.transpiler import Target, InstructionProperties
+from qiskit.transpiler import InstructionProperties, Target
 
 from qiskit_braket_provider.exception import QiskitBraketException
 
@@ -366,3 +363,14 @@ def convert_qiskit_to_braket_circuits(
     """
     for circuit in circuits:
         yield convert_qiskit_to_braket_circuit(circuit)
+
+
+def wrap_circuits_in_verbatim_box(circuits: List[Circuit]) -> Iterable[Circuit]:
+    """Convert each Braket circuit an equivalent one wrapped in verbatim box.
+
+    Args:
+           circuits (List(Circuit): circuits to be wrapped in verbatim box.
+    Returns:
+           Circuits wrapped in verbatim box.
+    """
+    return [Circuit().add_verbatim_box(circuit) for circuit in circuits]
