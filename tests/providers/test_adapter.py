@@ -31,9 +31,10 @@ class TestVerbatimBoxWrapper(TestCase):
     """Test wrapping in Verbatim box."""
 
     def test_wrapped_circuits_have_one_instruction_equivalent_to_original_one(self):
+        """Test circuits wrapped in verbatim box have correct instructions."""
         circuits = [
-            Circuit().rz(1, 0.1).cz(0, 1).rx(0, 0.1),
-            Circuit().cz(0, 1).cz(1, 2),
+            Circuit().rz(1, 0.1).cz(0, 1).rx(0, 0.1),  # pylint: disable=no-member
+            Circuit().cz(0, 1).cz(1, 2),               # pylint: disable=no-member
         ]
 
         wrapped_circuits = wrap_circuits_in_verbatim_box(circuits)
