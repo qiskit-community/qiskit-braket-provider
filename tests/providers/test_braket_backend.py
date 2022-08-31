@@ -201,6 +201,20 @@ class TestAWSBraketBackend(TestCase):
         with self.assertRaises(errorfactory.ClientError):
             device.run(circuit, disable_qubit_rewiring=True)
 
+    @unittest.skip("Call to external resources.")
+    def test_native_circuits_with_measurements_can_be_run_in_verbatim_mode(self):
+        """Tests running circuit with measurement in verbatim mode."""
+        backend = AWSBraketProvider().get_backend("Aspen-M-2")
+        circuit = QuantumCircuit(2)
+        circuit.cz(0, 1)
+        circuit.measure_all()
+
+        result = backend.run(
+            circuit, shots=10, verbatim=True, disable_qubit_rewiring=True
+        ).result()
+
+        self.assertEqual(sum(result.get_counts().values()), 10)
+
 
 class TestAWSBackendTarget(TestCase):
     """Tests target for AWS Braket backend."""

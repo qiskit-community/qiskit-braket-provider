@@ -285,7 +285,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         for instruction in instructions:
             simulator_instruction_props: Optional[
                 Dict[
-                    Union[Tuple[int], Tuple[int, int]], Optional[InstructionProperties]
+                    Union[Tuple[int], Tuple[int, int]],
+                    Optional[InstructionProperties],
                 ]
             ] = {}
             # adding 1 qubit instructions
@@ -371,6 +372,10 @@ def wrap_circuits_in_verbatim_box(circuits: List[Circuit]) -> Iterable[Circuit]:
     Args:
            circuits (List(Circuit): circuits to be wrapped in verbatim box.
     Returns:
-           Circuits wrapped in verbatim box.
+           Circuits wrapped in verbatim box, comprising the same instructions
+           as the original one and with result types preserved.
     """
-    return [Circuit().add_verbatim_box(circuit) for circuit in circuits]
+    return [
+        Circuit(circuit.result_types).add_verbatim_box(Circuit(circuit.instructions))
+        for circuit in circuits
+    ]
