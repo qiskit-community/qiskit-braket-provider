@@ -18,6 +18,7 @@ from .adapter import (
     aws_device_to_target,
     local_simulator_to_target,
     convert_qiskit_to_braket_circuits,
+    wrap_circuits_in_verbatim_box,
 )
 from .braket_job import AWSBraketJob
 from ..exception import QiskitBraketException
@@ -244,8 +245,12 @@ class AWSBraketBackend(BraketBackend):
             raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
 
         braket_circuits = list(convert_qiskit_to_braket_circuits(circuits))
+
+        if options.pop("verbatim", False):
+            braket_circuits = wrap_circuits_in_verbatim_box(braket_circuits)
+
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
-            braket_circuits, shots=options.get("shots")
+            braket_circuits, **options
         )
         tasks: List[AwsQuantumTask] = batch_task.tasks
         job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
