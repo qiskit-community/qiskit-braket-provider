@@ -3,6 +3,7 @@
 from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.xanadu import XanaduDeviceCapabilities
+from braket.device_schema.quera import QueraDeviceCapabilities
 from qiskit.providers import ProviderV1
 
 from .braket_backend import AWSBraketBackend, BraketLocalBackend
@@ -39,7 +40,12 @@ class AWSBraketProvider(ProviderV1):
             d
             for d in devices
             if not isinstance(
-                d.properties, (DwaveDeviceCapabilities, XanaduDeviceCapabilities)
+                d.properties,
+                (
+                    DwaveDeviceCapabilities,
+                    XanaduDeviceCapabilities,
+                    QueraDeviceCapabilities,
+                ),
             )
         ]
         backends = []
