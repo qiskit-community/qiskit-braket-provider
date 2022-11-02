@@ -16,6 +16,7 @@
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
@@ -44,6 +45,7 @@
 <span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsDevice</span>
 <span class="kn">from</span> <span class="nn">braket.device_schema.dwave</span> <span class="kn">import</span> <span class="n">DwaveDeviceCapabilities</span>
 <span class="kn">from</span> <span class="nn">braket.device_schema.xanadu</span> <span class="kn">import</span> <span class="n">XanaduDeviceCapabilities</span>
+<span class="kn">from</span> <span class="nn">braket.device_schema.quera</span> <span class="kn">import</span> <span class="n">QueraDeviceCapabilities</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">ProviderV1</span>
 
 <span class="kn">from</span> <span class="nn">.braket_backend</span> <span class="kn">import</span> <span class="n">AWSBraketBackend</span><span class="p">,</span> <span class="n">BraketLocalBackend</span>
@@ -80,7 +82,12 @@
             <span class="n">d</span>
             <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">devices</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="n">d</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span> <span class="p">(</span><span class="n">DwaveDeviceCapabilities</span><span class="p">,</span> <span class="n">XanaduDeviceCapabilities</span><span class="p">)</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="n">DwaveDeviceCapabilities</span><span class="p">,</span>
+                    <span class="n">XanaduDeviceCapabilities</span><span class="p">,</span>
+                    <span class="n">QueraDeviceCapabilities</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="p">]</span>
         <span class="n">backends</span> <span class="o">=</span> <span class="p">[]</span>
@@ -175,7 +182,7 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
