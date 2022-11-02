@@ -1,0 +1,666 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>How-to: run circuit on Braket device using verbatim mode &#8212; Qiskit-Braket provider 0.0.2
+ documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="../tutorials/index.html" />
+    <link rel="prev" title="How-to: Qiskit Hybrid Job" href="3_how_to_qiskit_hybrid_job.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="How-to:-run-circuit-on-Braket-device-using-verbatim-mode">
+<h1>How-to: run circuit on Braket device using verbatim mode<a class="headerlink" href="#How-to:-run-circuit-on-Braket-device-using-verbatim-mode" title="Permalink to this heading">¶</a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span>
+<span class="kn">from</span> <span class="nn">qiskit.visualization</span> <span class="kn">import</span> <span class="n">plot_histogram</span>
+<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+</pre></div>
+</div>
+</div>
+<p>Some AWS backends support running circuits using verbatim mode and/or with disabled qubit rewiring. If you are not familiar with those concepts, refer to the <a class="reference external" href="https://aws.amazon.com/about-aws/whats-new/2021/09/amazon-braket-verbatim-compilation-quantum-circuits/">documentation</a>, here we’ll constrain ourselves to a short reminder:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">verbatim</span> <span class="pre">box</span></code> is a part of the circuit that <em>will not</em> be compiled by Braket. Hence, it needs to comprise only gates that are native to particular device.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">qubit</span> <span class="pre">rewiring</span></code> is a process in which logical qubits in submitted circuits are mapped into concrete physical qubits on actual device.</p></li>
+</ul>
+<p>Typically, one wants to design circuits using high-level concepts, without worrying about qubit placement or gate compilation. However, in some cases it might be desirable to have a precise control of the circuits being submitted.</p>
+<p>We will start this how-to by defining a simple circuit comprising <code class="docutils literal notranslate"><span class="pre">cnot(0,</span> <span class="pre">1)</span></code> gate and running it on Aspem-M-2 device.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<span class="n">aspen</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-2&quot;</span><span class="p">)</span>
+
+<span class="n">circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">circuit</span><span class="o">.</span><span class="n">cnot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">aspen</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">plot_histogram</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/how_tos_4_how_to_verbatim_circuits_3_0.png" src="../_images/how_tos_4_how_to_verbatim_circuits_3_0.png" />
+</div>
+</div>
+<p>Our circuit run perfectly fine. Since Rigetti devices don’t support CNOT gate natively, we deduce that the circuit was compiled by Braket and our CNOT gate got decomposed into some equivalent sequence of gates.</p>
+<p>We will now see what happens if we pass <code class="docutils literal notranslate"><span class="pre">verbatim=True</span></code> and <code class="docutils literal notranslate"><span class="pre">disable_qubit_rewiring=True</span></code> options.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aspen</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disable_qubit_rewiring</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ValidationException</span>                       Traceback (most recent call last)
+Input <span class="ansi-green-fg">In [3]</span>, in <span class="ansi-cyan-fg">&lt;cell line: 1&gt;</span><span class="ansi-blue-fg">()</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">aspen</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">run</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">circuit</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">verbatim</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">disable_qubit_rewiring</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/Projects/qiskit-braket-provider/qiskit_braket_provider/providers/braket_backend.py:251</span>, in <span class="ansi-cyan-fg">AWSBraketBackend.run</span><span class="ansi-blue-fg">(self, run_input, **options)</span>
+<span class="ansi-green-intense-fg ansi-bold">    248</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> options<span style="color: rgb(98,98,98)">.</span>pop(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">verbatim</span><span style="color: rgb(175,0,0)">&#34;</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>):
+<span class="ansi-green-intense-fg ansi-bold">    249</span>     braket_circuits <span style="color: rgb(98,98,98)">=</span> wrap_circuits_in_verbatim_box(braket_circuits)
+<span class="ansi-green-fg">--&gt; 251</span> batch_task: AwsQuantumTaskBatch <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_device</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">run_batch</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    252</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">braket_circuits</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">options</span>
+<span class="ansi-green-intense-fg ansi-bold">    253</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    254</span> tasks: List[AwsQuantumTask] <span style="color: rgb(98,98,98)">=</span> batch_task<span style="color: rgb(98,98,98)">.</span>tasks
+<span class="ansi-green-intense-fg ansi-bold">    255</span> job_id <span style="color: rgb(98,98,98)">=</span> TASK_ID_DIVIDER<span style="color: rgb(98,98,98)">.</span>join(task<span style="color: rgb(98,98,98)">.</span>id <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> task <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> tasks)
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_device.py:208</span>, in <span class="ansi-cyan-fg">AwsDevice.run_batch</span><span class="ansi-blue-fg">(self, task_specifications, s3_destination_folder, shots, max_parallel, max_connections, poll_timeout_seconds, poll_interval_seconds, *aws_quantum_task_args, **aws_quantum_task_kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    165</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">run_batch</span>(
+<span class="ansi-green-intense-fg ansi-bold">    166</span>     <span style="color: rgb(0,135,0)">self</span>,
+<span class="ansi-green-intense-fg ansi-bold">    167</span>     task_specifications: List[Union[Circuit, Problem, OpenQasmProgram, BlackbirdProgram]],
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    175</span>     <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>aws_quantum_task_kwargs,
+<span class="ansi-green-intense-fg ansi-bold">    176</span> ) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> AwsQuantumTaskBatch:
+<span class="ansi-green-intense-fg ansi-bold">    177</span>     <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Executes a batch of tasks in parallel</span>
+<span class="ansi-green-intense-fg ansi-bold">    178</span>
+<span class="ansi-green-intense-fg ansi-bold">    179</span> <span style="color: rgb(175,0,0)">    Args:</span>
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    206</span> <span style="color: rgb(175,0,0)">        `braket.aws.aws_quantum_task_batch.AwsQuantumTaskBatch`</span>
+<span class="ansi-green-intense-fg ansi-bold">    207</span> <span style="color: rgb(175,0,0)">    &#34;&#34;&#34;</span>
+<span class="ansi-green-fg">--&gt; 208</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">AwsQuantumTaskBatch</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    209</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">AwsSession</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">copy_session</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_aws_session</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">max_connections</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">max_connections</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    210</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_arn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    211</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">task_specifications</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    212</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">s3_destination_folder</span>
+<span class="ansi-green-intense-fg ansi-bold">    213</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">or</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    214</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">AwsSession</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">parse_s3_uri</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">os</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">environ</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">get</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">AMZN_BRAKET_TASK_RESULTS_S3_URI</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    215</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">if</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">AMZN_BRAKET_TASK_RESULTS_S3_URI</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">in</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">os</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">environ</span>
+<span class="ansi-green-intense-fg ansi-bold">    216</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">else</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-intense-fg ansi-bold">    217</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    218</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">or</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_aws_session</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">default_bucket</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">tasks</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#34;</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    219</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">shots</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">if</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">shots</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">is</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">not</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">else</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_default_shots</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    220</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">max_parallel</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">max_parallel</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">if</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">max_parallel</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">is</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">not</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">else</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_default_max_parallel</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    221</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">max_workers</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">max_connections</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    222</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">poll_timeout_seconds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">poll_timeout_seconds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    223</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">poll_interval_seconds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">poll_interval_seconds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    224</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">aws_quantum_task_args</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    225</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">aws_quantum_task_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    226</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_quantum_task_batch.py:83</span>, in <span class="ansi-cyan-fg">AwsQuantumTaskBatch.__init__</span><span class="ansi-blue-fg">(self, aws_session, device_arn, task_specifications, s3_destination_folder, shots, max_parallel, max_workers, poll_timeout_seconds, poll_interval_seconds, *aws_quantum_task_args, **aws_quantum_task_kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">     42</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__init__</span>(
+<span class="ansi-green-intense-fg ansi-bold">     43</span>     <span style="color: rgb(0,135,0)">self</span>,
+<span class="ansi-green-intense-fg ansi-bold">     44</span>     aws_session: AwsSession,
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">     54</span>     <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>aws_quantum_task_kwargs,
+<span class="ansi-green-intense-fg ansi-bold">     55</span> ):
+<span class="ansi-green-intense-fg ansi-bold">     56</span>     <span style="color: rgb(175,0,0)">&#34;&#34;&#34;Creates a batch of quantum tasks.</span>
+<span class="ansi-green-intense-fg ansi-bold">     57</span>
+<span class="ansi-green-intense-fg ansi-bold">     58</span> <span style="color: rgb(175,0,0)">    Args:</span>
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">     81</span> <span style="color: rgb(175,0,0)">            `braket.aws.aws_quantum_task.AwsQuantumTask.create()`.</span>
+<span class="ansi-green-intense-fg ansi-bold">     82</span> <span style="color: rgb(175,0,0)">    &#34;&#34;&#34;</span>
+<span class="ansi-green-fg">---&gt; 83</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_tasks <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">AwsQuantumTaskBatch</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_execute</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">     84</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">aws_session</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     85</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">device_arn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     86</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">task_specifications</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     87</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">s3_destination_folder</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     88</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">shots</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     89</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">max_parallel</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     90</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">max_workers</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     91</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">poll_timeout_seconds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     92</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">poll_interval_seconds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     93</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">aws_quantum_task_args</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     94</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">aws_quantum_task_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">     95</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     96</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_aws_session <span style="color: rgb(98,98,98)">=</span> aws_session
+<span class="ansi-green-intense-fg ansi-bold">     97</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_results <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_quantum_task_batch.py:151</span>, in <span class="ansi-cyan-fg">AwsQuantumTaskBatch._execute</span><span class="ansi-blue-fg">(aws_session, device_arn, task_specifications, s3_destination_folder, shots, max_parallel, max_workers, poll_timeout_seconds, poll_interval_seconds, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    134</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> ThreadPoolExecutor(max_workers<span style="color: rgb(98,98,98)">=</span>max_threads) <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> executor:
+<span class="ansi-green-intense-fg ansi-bold">    135</span>     task_futures <span style="color: rgb(98,98,98)">=</span> [
+<span class="ansi-green-intense-fg ansi-bold">    136</span>         executor<span style="color: rgb(98,98,98)">.</span>submit(
+<span class="ansi-green-intense-fg ansi-bold">    137</span>             AwsQuantumTaskBatch<span style="color: rgb(98,98,98)">.</span>_create_task,
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    149</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> task <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> task_specifications
+<span class="ansi-green-intense-fg ansi-bold">    150</span>     ]
+<span class="ansi-green-fg">--&gt; 151</span> tasks <span style="color: rgb(98,98,98)">=</span> [future<span style="color: rgb(98,98,98)">.</span>result() <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> future <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> task_futures]
+<span class="ansi-green-intense-fg ansi-bold">    152</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> tasks
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_quantum_task_batch.py:151</span>, in <span class="ansi-cyan-fg">&lt;listcomp&gt;</span><span class="ansi-blue-fg">(.0)</span>
+<span class="ansi-green-intense-fg ansi-bold">    134</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> ThreadPoolExecutor(max_workers<span style="color: rgb(98,98,98)">=</span>max_threads) <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> executor:
+<span class="ansi-green-intense-fg ansi-bold">    135</span>     task_futures <span style="color: rgb(98,98,98)">=</span> [
+<span class="ansi-green-intense-fg ansi-bold">    136</span>         executor<span style="color: rgb(98,98,98)">.</span>submit(
+<span class="ansi-green-intense-fg ansi-bold">    137</span>             AwsQuantumTaskBatch<span style="color: rgb(98,98,98)">.</span>_create_task,
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    149</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> task <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> task_specifications
+<span class="ansi-green-intense-fg ansi-bold">    150</span>     ]
+<span class="ansi-green-fg">--&gt; 151</span> tasks <span style="color: rgb(98,98,98)">=</span> [<span class="ansi-yellow-bg">future</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">result</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> future <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> task_futures]
+<span class="ansi-green-intense-fg ansi-bold">    152</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> tasks
+
+File <span class="ansi-green-fg">/usr/lib64/python3.9/concurrent/futures/_base.py:439</span>, in <span class="ansi-cyan-fg">Future.result</span><span class="ansi-blue-fg">(self, timeout)</span>
+<span class="ansi-green-intense-fg ansi-bold">    437</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> CancelledError()
+<span class="ansi-green-intense-fg ansi-bold">    438</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_state <span style="color: rgb(98,98,98)">==</span> FINISHED:
+<span class="ansi-green-fg">--&gt; 439</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">__get_result</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    441</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_condition<span style="color: rgb(98,98,98)">.</span>wait(timeout)
+<span class="ansi-green-intense-fg ansi-bold">    443</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_state <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> [CANCELLED, CANCELLED_AND_NOTIFIED]:
+
+File <span class="ansi-green-fg">/usr/lib64/python3.9/concurrent/futures/_base.py:391</span>, in <span class="ansi-cyan-fg">Future.__get_result</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">    389</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_exception:
+<span class="ansi-green-intense-fg ansi-bold">    390</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; 391</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_exception
+<span class="ansi-green-intense-fg ansi-bold">    392</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">finally</span>:
+<span class="ansi-green-intense-fg ansi-bold">    393</span>         <span style="color: rgb(95,135,135)"># Break a reference cycle with the exception in self._exception</span>
+<span class="ansi-green-intense-fg ansi-bold">    394</span>         <span style="color: rgb(0,135,0)">self</span> <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">/usr/lib64/python3.9/concurrent/futures/thread.py:58</span>, in <span class="ansi-cyan-fg">_WorkItem.run</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">     55</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span>
+<span class="ansi-green-intense-fg ansi-bold">     57</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">---&gt; 58</span>     result <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">fn</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     59</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">BaseException</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> exc:
+<span class="ansi-green-intense-fg ansi-bold">     60</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>future<span style="color: rgb(98,98,98)">.</span>set_exception(exc)
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_quantum_task_batch.py:166</span>, in <span class="ansi-cyan-fg">AwsQuantumTaskBatch._create_task</span><span class="ansi-blue-fg">(remaining, aws_session, device_arn, task_specification, s3_destination_folder, shots, poll_interval_seconds, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    154</span> <span style="color: rgb(175,0,255)">@staticmethod</span>
+<span class="ansi-green-intense-fg ansi-bold">    155</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">_create_task</span>(
+<span class="ansi-green-intense-fg ansi-bold">    156</span>     remaining,
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    164</span>     <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs,
+<span class="ansi-green-intense-fg ansi-bold">    165</span> ):
+<span class="ansi-green-fg">--&gt; 166</span>     task <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">AwsQuantumTask</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">create</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    167</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">aws_session</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    168</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">device_arn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    169</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">task_specification</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    170</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">s3_destination_folder</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    171</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">shots</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    172</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">poll_interval_seconds</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">poll_interval_seconds</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    173</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    174</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    175</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    177</span>     remaining<span style="color: rgb(98,98,98)">.</span>pop()
+<span class="ansi-green-intense-fg ansi-bold">    179</span>     <span style="color: rgb(95,135,135)"># If the task hits a terminal state before all tasks have been created,</span>
+<span class="ansi-green-intense-fg ansi-bold">    180</span>     <span style="color: rgb(95,135,135)"># it can be returned immediately</span>
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_quantum_task.py:147</span>, in <span class="ansi-cyan-fg">AwsQuantumTask.create</span><span class="ansi-blue-fg">(aws_session, device_arn, task_specification, s3_destination_folder, shots, device_parameters, disable_qubit_rewiring, tags, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    142</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(task_specification, Circuit) <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> task_specification<span style="color: rgb(98,98,98)">.</span>parameters:
+<span class="ansi-green-intense-fg ansi-bold">    143</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-intense-fg ansi-bold">    144</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Cannot execute circuit with unbound parameters: </span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    145</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>task_specification<span style="color: rgb(98,98,98)">.</span>parameters<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    146</span>     )
+<span class="ansi-green-fg">--&gt; 147</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">_create_internal</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    148</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">task_specification</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    149</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">aws_session</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    150</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">create_task_kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    151</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">device_arn</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    152</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">device_parameters</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(175,0,255)">or</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">{</span><span class="ansi-yellow-bg">}</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    153</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">disable_qubit_rewiring</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    154</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    155</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    156</span> <span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">/usr/lib64/python3.9/functools.py:888</span>, in <span class="ansi-cyan-fg">singledispatch.&lt;locals&gt;.wrapper</span><span class="ansi-blue-fg">(*args, **kw)</span>
+<span class="ansi-green-intense-fg ansi-bold">    884</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> args:
+<span class="ansi-green-intense-fg ansi-bold">    885</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">TypeError</span>(<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#39;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>funcname<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)"> requires at least </span><span style="color: rgb(175,0,0)">&#39;</span>
+<span class="ansi-green-intense-fg ansi-bold">    886</span>                     <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">1 positional argument</span><span style="color: rgb(175,0,0)">&#39;</span>)
+<span class="ansi-green-fg">--&gt; 888</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">dispatch</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">0</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg" style="color: rgb(0,0,135)">__class__</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kw</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_quantum_task.py:496</span>, in <span class="ansi-cyan-fg">_</span><span class="ansi-blue-fg">(circuit, aws_session, create_task_kwargs, device_arn, device_parameters, disable_qubit_rewiring, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    489</span>     device_parameters <span style="color: rgb(98,98,98)">=</span> GateModelSimulatorDeviceParameters(
+<span class="ansi-green-intense-fg ansi-bold">    490</span>         paradigmParameters<span style="color: rgb(98,98,98)">=</span>paradigm_parameters
+<span class="ansi-green-intense-fg ansi-bold">    491</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    493</span> create_task_kwargs<span style="color: rgb(98,98,98)">.</span>update(
+<span class="ansi-green-intense-fg ansi-bold">    494</span>     {<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">action</span><span style="color: rgb(175,0,0)">&#34;</span>: circuit<span style="color: rgb(98,98,98)">.</span>to_ir()<span style="color: rgb(98,98,98)">.</span>json(), <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">deviceParameters</span><span style="color: rgb(175,0,0)">&#34;</span>: device_parameters<span style="color: rgb(98,98,98)">.</span>json()}
+<span class="ansi-green-intense-fg ansi-bold">    495</span> )
+<span class="ansi-green-fg">--&gt; 496</span> task_arn <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">aws_session</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">create_quantum_task</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">create_task_kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    497</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> AwsQuantumTask(task_arn, aws_session, <span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/braket/aws/aws_session.py:180</span>, in <span class="ansi-cyan-fg">AwsSession.create_quantum_task</span><span class="ansi-blue-fg">(self, **boto3_kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    178</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> job_token:
+<span class="ansi-green-intense-fg ansi-bold">    179</span>     boto3_kwargs<span style="color: rgb(98,98,98)">.</span>update({<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">jobToken</span><span style="color: rgb(175,0,0)">&#34;</span>: job_token})
+<span class="ansi-green-fg">--&gt; 180</span> response <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">braket_client</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">create_quantum_task</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">boto3_kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    181</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> response[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">quantumTaskArn</span><span style="color: rgb(175,0,0)">&#34;</span>]
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/botocore/client.py:508</span>, in <span class="ansi-cyan-fg">ClientCreator._create_api_method.&lt;locals&gt;._api_call</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    504</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">TypeError</span>(
+<span class="ansi-green-intense-fg ansi-bold">    505</span>         <span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#34;</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>py_operation_name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">() only accepts keyword arguments.</span><span style="color: rgb(175,0,0)">&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    506</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    507</span> <span style="color: rgb(95,135,135)"># The &#34;self&#34; in this scope is referring to the BaseClient.</span>
+<span class="ansi-green-fg">--&gt; 508</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_make_api_call</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">operation_name</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-packages/botocore/client.py:915</span>, in <span class="ansi-cyan-fg">BaseClient._make_api_call</span><span class="ansi-blue-fg">(self, operation_name, api_params)</span>
+<span class="ansi-green-intense-fg ansi-bold">    913</span>     error_code <span style="color: rgb(98,98,98)">=</span> parsed_response<span style="color: rgb(98,98,98)">.</span>get(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Error</span><span style="color: rgb(175,0,0)">&#34;</span>, {})<span style="color: rgb(98,98,98)">.</span>get(<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Code</span><span style="color: rgb(175,0,0)">&#34;</span>)
+<span class="ansi-green-intense-fg ansi-bold">    914</span>     error_class <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>exceptions<span style="color: rgb(98,98,98)">.</span>from_code(error_code)
+<span class="ansi-green-fg">--&gt; 915</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> error_class(parsed_response, operation_name)
+<span class="ansi-green-intense-fg ansi-bold">    916</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-intense-fg ansi-bold">    917</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> parsed_response
+
+<span class="ansi-red-fg">ValidationException</span>: An error occurred (ValidationException) when calling the CreateQuantumTask operation: Backend ARN, arn:aws:braket:us-west-1::device/qpu/rigetti/Aspen-M-2, does not support the operation cnot as a native gate. Supported operations for this Backend ARN are [&#39;rz&#39;, &#39;cz&#39;, &#39;xy&#39;, &#39;rx&#39;, &#39;cphaseshift&#39;].
+</pre></div></div>
+</div>
+<p>As expected, we obtained a <code class="docutils literal notranslate"><span class="pre">ValidationException</span></code>. As a last step, let us verify that running circuit with native gates and matching topology is possible.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">native_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">native_circuit</span><span class="o">.</span><span class="n">cz</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">aspen</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">native_circuit</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disable_qubit_rewiring</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+<span class="n">plot_histogram</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">Qiskit-Braket provider</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=qiskit-community&repo=qiskit-braket-provider&type=star&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">API References</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How-to: run circuit on Braket device using verbatim mode</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Tutorial: Qiskit-Braket provider overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Tutorial: Runing VQE on Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/2_tutorial_hybrid_jobs_byoc.html">Tutorial: Variational algorithms on Hybrid jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/3_tutorial_minimum_eigen_optimizer.html">Tutorial: Minimum Eigen Optimizer</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="3_how_to_qiskit_hybrid_job.html" title="previous chapter">How-to: Qiskit Hybrid Job</a></li>
+      <li>Next: <a href="../tutorials/index.html" title="next chapter">&lt;no title&gt;</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/how_tos/4_how_to_verbatim_circuits.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
