@@ -183,7 +183,6 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
         target for Qiskit backend
     """
     target = Target()
-    target.add_instruction(Measure())
 
     instructions = [
         inst
@@ -192,17 +191,26 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
     ]
     properties = simulator.properties
     paradigm: GateModelSimulatorParadigmProperties = properties.paradigm
+
+    # add measurement instruction
+    target.add_instruction(Measure(), {(i,): None for i in range(paradigm.qubitCount)})
+
     for instruction in instructions:
         instruction_props: Optional[
             Dict[Union[Tuple[int], Tuple[int, int]], Optional[InstructionProperties]]
         ] = {}
 
-        for src in range(paradigm.qubitCount):
-            for dst in range(paradigm.qubitCount):
-                if src != dst:
-                    instruction_props[(src, dst)] = None
-                    instruction_props[(dst, src)] = None
-        target.add_instruction(instruction, instruction_props)
+        if instruction.num_qubits == 1:
+            for i in range(paradigm.qubitCount):
+                instruction_props[(i,)] = None
+            target.add_instruction(instruction, instruction_props)
+        elif instruction.num_qubits == 2:
+            for src in range(paradigm.qubitCount):
+                for dst in range(paradigm.qubitCount):
+                    if src != dst:
+                        instruction_props[(src, dst)] = None
+                        instruction_props[(dst, src)] = None
+            target.add_instruction(instruction, instruction_props)
 
     return target
 
@@ -218,7 +226,6 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     """
     # building target
     target = Target(description=f"Target for AWS Device: {device.name}")
-    target.add_instruction(Measure())
 
     properties = device.properties
     # gate model devices
@@ -232,12 +239,18 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
         connectivity = paradigm.connectivity
         instructions: List[QiskitInstruction] = []
+
         for operation in action_properties.supportedOperations:
             instruction = _op_to_instruction(operation)
             if instruction is not None:
                 # TODO: remove when target will be supporting > 2 qubit gates  # pylint:disable=fixme
                 if instruction.num_qubits <= 2:
                     instructions.append(instruction)
+
+        # add measurement instructions
+        target.add_instruction(
+            Measure(), {(i,): None for i in range(paradigm.qubitCount)}
+        )
 
         for instruction in instructions:
             instruction_props: Optional[
@@ -276,12 +289,19 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         )
         simulator_paradigm: GateModelSimulatorParadigmProperties = properties.paradigm
         instructions = []
+
         for operation in simulator_action_properties.supportedOperations:
             instruction = _op_to_instruction(operation)
             if instruction is not None:
                 # TODO: remove when target will be supporting > 2 qubit gates  # pylint:disable=fixme
                 if instruction.num_qubits <= 2:
                     instructions.append(instruction)
+
+        # add measurement instructions
+        target.add_instruction(
+            Measure(), {(i,): None for i in range(simulator_paradigm.qubitCount)}
+        )
+
         for instruction in instructions:
             simulator_instruction_props: Optional[
                 Dict[
