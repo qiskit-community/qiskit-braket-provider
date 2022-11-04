@@ -227,5 +227,5 @@ class TestAWSBackendTarget(TestCase):
         target = aws_device_to_target(mock_device)
         self.assertEqual(target.num_qubits, 30)
         self.assertEqual(len(target.operations), 2)
-        self.assertEqual(len(target.instructions), 31)
+        self.assertEqual(len(target.instructions), 60)
         self.assertIn("Target for AWS Device", target.description)
