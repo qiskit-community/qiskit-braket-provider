@@ -48,7 +48,7 @@ def _get_result_from_aws_tasks(
             data = ExperimentResultData(
                 counts=counts,
                 memory=[
-                    "".join([str(state) for state in shot_result][::-1])
+                    "".join(shot_result[::-1].astype(str))
                     for shot_result in result.measurements
                 ],
             )
