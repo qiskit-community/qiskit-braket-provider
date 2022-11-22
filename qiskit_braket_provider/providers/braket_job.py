@@ -45,7 +45,13 @@ def _get_result_from_aws_tasks(
             counts = {
                 k[::-1]: v for k, v in dict(result.measurement_counts).items()
             }  # convert to little-endian
-            data = ExperimentResultData(counts=counts, memory=list(result.measurements))
+            data = ExperimentResultData(
+                counts=counts,
+                memory=[
+                    "".join([str(state) for state in shot_result][::-1])
+                    for shot_result in result.measurements
+                ],
+            )
         else:
             return None
 

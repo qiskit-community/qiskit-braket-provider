@@ -25,5 +25,6 @@ class TestAWSBraketJob(TestCase):
         self.assertTrue(job.result().results[0].data.counts, {"00": 1})
         self.assertTrue(job.result().results[0].shots, 100)
         self.assertTrue(job.result().results[0].status, "COMPLETED")
+        self.assertTrue(job.result().get_memory(), ["00"])
 
         self.assertTrue(job.status(), "AVAILABLE")
