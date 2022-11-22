@@ -62,8 +62,8 @@
 
 <span class="nd">@retry</span><span class="p">(</span>
     <span class="n">retry_on_result</span><span class="o">=</span><span class="n">retry_if_result_none</span><span class="p">,</span>
-    <span class="n">stop_max_delay</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QISKIT_BRAKET_PROVIDER_MAX_DELAY&quot;</span><span class="p">,</span> <span class="mi">60000</span><span class="p">),</span>
-    <span class="n">wait_fixed</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QISKIT_BRAKET_PROVIDER_WAIT_TIME&quot;</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span>
+    <span class="n">stop_max_delay</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QISKIT_BRAKET_PROVIDER_MAX_DELAY&quot;</span><span class="p">,</span> <span class="mi">60000</span><span class="p">)),</span>
+    <span class="n">wait_fixed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QISKIT_BRAKET_PROVIDER_WAIT_TIME&quot;</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)),</span>
     <span class="n">wrap_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_result_from_aws_tasks</span><span class="p">(</span>
