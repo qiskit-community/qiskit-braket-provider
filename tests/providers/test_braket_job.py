@@ -33,8 +33,8 @@ class TestAWSBraketJob(TestCase):
         job = self._get_job()
 
         self.assertEqual(job.result().job_id, "AwesomeId")
-        self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 1})
-        self.assertEqual(job.result().results[0].data.memory, ["10", "01"])
+        self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
+        self.assertEqual(job.result().results[0].data.memory, ["10", "10", "01"])
         self.assertEqual(job.result().results[0].status, "COMPLETED")
-        self.assertEqual(job.result().results[0].shots, 2)
-        self.assertEqual(job.result().get_memory(), ["10", "01"])
+        self.assertEqual(job.result().results[0].shots, 3)
+        self.assertEqual(job.result().get_memory(), ["10", "10", "01"])
