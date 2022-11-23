@@ -1,6 +1,6 @@
 """Tests for AWS Braket job."""
 
-from unittest import TestCase, expectedFailure
+from unittest import TestCase
 
 from qiskit.providers import JobStatus
 
@@ -33,18 +33,8 @@ class TestAWSBraketJob(TestCase):
         job = self._get_job()
 
         self.assertEqual(job.result().job_id, "AwesomeId")
-        self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 1})
-        self.assertEqual(job.result().results[0].data.memory, ["10", "01"])
+        self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
+        self.assertEqual(job.result().results[0].data.memory, ["10", "10", "01"])
         self.assertEqual(job.result().results[0].status, "COMPLETED")
-        self.assertEqual(job.result().get_memory(), ["10", "01"])
-
-    @expectedFailure
-    def test_result_shots(self):
-        """
-        Test result shots.
-
-        Expected to fail because shots is not extracted from the job.tasks.
-        """
-        job = self._get_job()
-
-        self.assertEqual(job.result().results[0].shots, 2)
+        self.assertEqual(job.result().results[0].shots, 3)
+        self.assertEqual(job.result().get_memory(), ["10", "10", "01"])

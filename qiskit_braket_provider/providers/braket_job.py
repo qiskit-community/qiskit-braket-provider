@@ -24,7 +24,7 @@ def retry_if_result_none(result):
     wrap_exception=True,
 )
 def _get_result_from_aws_tasks(
-    tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]], shots: int
+    tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]]
 ) -> Optional[List[ExperimentResult]]:
     """Returns experiment results of AWS tasks.
 
@@ -55,7 +55,7 @@ def _get_result_from_aws_tasks(
             return None
 
         experiment_result = ExperimentResult(
-            shots=shots,
+            shots=result.task_metadata.shots,
             success=True,
             status=task.state(),
             data=data,
@@ -107,9 +107,7 @@ class AWSBraketJob(JobV1):
         return
 
     def result(self) -> Result:
-        experiment_results = _get_result_from_aws_tasks(
-            tasks=self._tasks, shots=self.shots
-        )
+        experiment_results = _get_result_from_aws_tasks(tasks=self._tasks)
         return Result(
             backend_name=self._backend,
             backend_version=self._backend.version,
