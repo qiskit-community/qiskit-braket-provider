@@ -307,7 +307,7 @@ div.rendered_html tbody tr:hover {
 <h2>Qiskit to Braket mapping<a class="headerlink" href="#Qiskit-to-Braket-mapping" title="Permalink to this heading">¶</a></h2>
 <p><img alt="qiskit-to-braket-diagram" src="../_images/qiskit-braket-mapping.png" /></p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># pip install qiskit_braket_provider</span>
@@ -317,7 +317,7 @@ div.rendered_html tbody tr:hover {
 <hr class="docutils" />
 <p>Import all required classes and functions for this overview</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">VQE</span>
@@ -345,7 +345,7 @@ div.rendered_html tbody tr:hover {
 <p><code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through Braket SDK.</p>
 <p>Let’s get available devices to use by Qiskit</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
@@ -355,7 +355,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -365,6 +365,7 @@ div.rendered_html tbody tr:hover {
  BraketBackend[Aspen-8],
  BraketBackend[Aspen-9],
  BraketBackend[Aspen-M-1],
+ BraketBackend[Aspen-M-2],
  BraketBackend[IonQ Device],
  BraketBackend[Lucy],
  BraketBackend[SV1],
@@ -374,7 +375,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <p>For prototyping it is usually a good practice to use simulators to set up workflow of your program and then change it to real device. We can access local simulator by creating instance of class <code class="docutils literal notranslate"><span class="pre">BraketLocalBackend</span></code></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
@@ -383,7 +384,7 @@ div.rendered_html tbody tr:hover {
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -393,7 +394,7 @@ BraketBackend[sv_simulator]
 </div>
 <p>We also get get cloud state vector simulator by using method <code class="docutils literal notranslate"><span class="pre">get_backend</span></code> for provider.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aws_statevector_simulator</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
@@ -402,7 +403,7 @@ BraketBackend[sv_simulator]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -412,7 +413,7 @@ BraketBackend[SV1]
 </div>
 <p>Of course we can query for specific real devices</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IonQ Device&quot;</span><span class="p">)</span>
@@ -423,7 +424,7 @@ BraketBackend[SV1]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -433,7 +434,7 @@ BraketBackend[SV1]
 </div>
 <p>And if you want to explore what is available by specific contraints, you can specify query arguments to <code class="docutils literal notranslate"><span class="pre">backends</span></code> method of provider. Arguments are fully compatible with Braket’s <code class="docutils literal notranslate"><span class="pre">get_device</span></code> method. See full doc <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/stable/_apidoc/braket.aws.aws_device.html#braket.aws.aws_device.AwsDevice.get_devices">here</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
@@ -442,7 +443,7 @@ BraketBackend[SV1]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -455,7 +456,7 @@ BraketBackend[SV1]
 <h2>Running circuits on AWS devices<a class="headerlink" href="#Running-circuits-on-AWS-devices" title="Permalink to this heading">¶</a></h2>
 <p>Let’s create circuit first. We will start with “Hello World” example :)</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -466,7 +467,7 @@ BraketBackend[SV1]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -478,7 +479,7 @@ q_1: ─────┤ X ├
 </div>
 <p>Run job agains selected device</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">job</span> <span class="o">=</span> <span class="n">aws_statevector_simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">qc</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -487,17 +488,17 @@ q_1: ─────┤ X ├
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;qiskit_braket_provider.providers.braket_job.AWSBraketJob at 0x7f9c181ccdd0&gt;
+&lt;qiskit_braket_provider.providers.braket_job.AWSBraketJob at 0x2805a8d00&gt;
 </pre></div></div>
 </div>
 <p>Plot histogram</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
@@ -505,12 +506,30 @@ q_1: ─────┤ X ├
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_23_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_23_0.png" />
 </div>
+</div>
+<p>Retrieve the measured state of each single shot.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_memory</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;00&#39;, &#39;11&#39;, &#39;11&#39;, &#39;11&#39;, &#39;00&#39;, &#39;00&#39;, &#39;11&#39;, &#39;11&#39;, &#39;11&#39;, &#39;00&#39;]
+</pre></div></div>
 </div>
 <p>Now it’s time to run more complex circuits on devices we got in previous paragraphs.</p>
 <p>We will start with generating random circuit and printing it out.</p>
@@ -635,7 +654,7 @@ q_5: ────────────────────────┤
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_35_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_35_0.png" />
+<img alt="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_37_0.png" src="../_images/tutorials_0_tutorial_qiskit-braket-provider_overview_37_0.png" />
 </div>
 </div>
 </section>
