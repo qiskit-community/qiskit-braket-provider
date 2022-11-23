@@ -1,6 +1,7 @@
 name: Release to PyPi and upload artifact
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - '*'
