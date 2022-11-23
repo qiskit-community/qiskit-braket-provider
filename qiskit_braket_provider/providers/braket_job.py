@@ -1,13 +1,12 @@
 """AWS Braket job."""
 import os
 from datetime import datetime
-
 from typing import List, Optional, Union
 
 from braket.aws import AwsQuantumTask
 from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
-from qiskit.providers import JobV1, BackendV2, JobStatus
+from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from retrying import retry

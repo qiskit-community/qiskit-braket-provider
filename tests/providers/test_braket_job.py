@@ -1,6 +1,8 @@
 """Tests for AWS Braket job."""
 
-from unittest import TestCase
+from unittest import TestCase, expectedFailure
+
+from qiskit.providers import JobStatus
 
 from qiskit_braket_provider.providers import AWSBraketJob, BraketLocalBackend
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
@@ -9,22 +11,35 @@ from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 class TestAWSBraketJob(TestCase):
     """Tests AWSBraketJob."""
 
-    def test_job(self):
-        """Tests job."""
-
-        job = AWSBraketJob(
+    def _get_job(self):
+        return AWSBraketJob(
             backend=BraketLocalBackend(name="default"),
             job_id="AwesomeId",
             tasks=[MOCK_LOCAL_QUANTUM_TASK],
-            shots=100,
+            shots=10,
         )
 
-        self.assertTrue(job)
+    def test_job(self):
+        """Tests job."""
+        job = self._get_job()
 
-        self.assertTrue(job.result().job_id, "AwesomeId")
-        self.assertTrue(job.result().results[0].data.counts, {"00": 1})
-        self.assertTrue(job.result().results[0].shots, 100)
-        self.assertTrue(job.result().results[0].status, "COMPLETED")
-        self.assertTrue(job.result().get_memory(), ["00"])
+        self.assertTrue(isinstance(job, AWSBraketJob))
+        self.assertEqual(job.shots, 10)
 
-        self.assertTrue(job.status(), "AVAILABLE")
+        self.assertEqual(job.status(), JobStatus.DONE)
+
+    def test_result(self):
+        """Tests result."""
+        job = self._get_job()
+
+        self.assertEqual(job.result().job_id, "AwesomeId")
+        self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 1})
+        self.assertEqual(job.result().results[0].data.memory, ["10", "01"])
+        self.assertEqual(job.result().results[0].status, "COMPLETED")
+        self.assertEqual(job.result().get_memory(), ["10", "01"])
+
+    @expectedFailure
+    def test_result_shots(self):
+        job = self._get_job()
+
+        self.assertEqual(job.result().results[0].shots, 2)

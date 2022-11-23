@@ -114,14 +114,14 @@ MOCK_GATE_MODEL_SIMULATOR_TN = {
 
 MOCK_GATE_MODEL_QUANTUM_TASK_RESULT = GateModelQuantumTaskResult(
     task_metadata=TaskMetadata(
-        **{"id": str(uuid.uuid4()), "deviceId": "default", "shots": 100}
+        **{"id": str(uuid.uuid4()), "deviceId": "default", "shots": 2}
     ),
     additional_metadata=None,
-    measurements=np.array([[0, 1], [1, 0]]),
+    measurements=[np.array([0, 1]), np.array([1, 0])],
     measured_qubits=[0, 1],
     result_types=None,
     values=None,
-    measurement_counts=Counter({"00": 1}),
+    measurement_counts=Counter({"01": 1, "10": 1}),
 )
 
 MOCK_LOCAL_QUANTUM_TASK = LocalQuantumTask(MOCK_GATE_MODEL_QUANTUM_TASK_RESULT)
