@@ -40,6 +40,11 @@ class TestAWSBraketJob(TestCase):
 
     @expectedFailure
     def test_result_shots(self):
+        """
+        Test result shots.
+
+        Expected to fail because shots is not extracted from the job.tasks.
+        """
         job = self._get_job()
 
         self.assertEqual(job.result().results[0].shots, 2)
