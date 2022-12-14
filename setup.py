@@ -1,5 +1,7 @@
 """Setup file for Qiskit-Braket provider."""
 import os
+from typing import Any, Dict, Optional
+
 import setuptools
 
 with open("README.md", encoding="utf-8") as f:
@@ -12,8 +14,10 @@ version_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "VERSION.txt")
 )
 
-with open(version_path, "r") as fd:
-    version = fd.read().rstrip()
+version_dict: Optional[Dict[str, Any]] = {}
+with open(version_path) as fp:
+    exec(fp.read(), version_dict)
+version = version_dict["__version__"]
 
 setuptools.setup(
     name="qiskit_braket_provider",
