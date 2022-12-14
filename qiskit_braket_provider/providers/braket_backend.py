@@ -5,7 +5,6 @@ import datetime
 import logging
 from abc import ABC
 from typing import Iterable, Union, List
-import pkg_resources
 
 from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
 from braket.circuits import Circuit
@@ -21,6 +20,7 @@ from .adapter import (
     wrap_circuits_in_verbatim_box,
 )
 from .braket_job import AWSBraketJob
+from .. import version
 from ..exception import QiskitBraketException
 
 logger = logging.getLogger(__name__)
@@ -173,8 +173,7 @@ class AWSBraketBackend(BraketBackend):
             backend_version=backend_version,
             **fields,
         )
-        pkg_version = pkg_resources.get_distribution("qiskit-braket-provider").version
-        user_agent = f"QiskitBraketProvider/{pkg_version}"
+        user_agent = f"QiskitBraketProvider/{version.__version__}"
         device.aws_session.add_braket_user_agent(user_agent)
         self._device = device
         self._target = aws_device_to_target(device=device)

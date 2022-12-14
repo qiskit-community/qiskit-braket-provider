@@ -12,8 +12,13 @@ version_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "VERSION.txt")
 )
 
-with open(version_path, "r") as fd:
-    version = fd.read().rstrip()
+# with open(version_path, "r") as fd:
+#     version = fd.read().rstrip()
+
+version = {}
+with open(version_path) as fp:
+    exec(fp.read(), version)
+version = version["__version__"]
 
 setuptools.setup(
     name="qiskit_braket_provider",

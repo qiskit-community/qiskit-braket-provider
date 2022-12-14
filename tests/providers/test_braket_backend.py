@@ -2,7 +2,6 @@
 import unittest
 from unittest import TestCase
 from unittest.mock import Mock
-import pkg_resources
 
 from botocore import errorfactory
 from qiskit import QuantumCircuit, transpile, BasicAer
@@ -21,7 +20,7 @@ from qiskit.result import Result
 from qiskit.transpiler import Target
 from qiskit.utils import QuantumInstance
 
-from qiskit_braket_provider import AWSBraketProvider
+from qiskit_braket_provider import AWSBraketProvider, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
@@ -38,10 +37,7 @@ class TestAWSBraketBackend(TestCase):
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
-        user_agent = (
-            f"QiskitBraketProvider/"
-            f"{pkg_resources.get_distribution('qiskit-braket-provider').version}"
-        )
+        user_agent = f"QiskitBraketProvider/" f"{version.__version__}"
         device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
         with self.assertRaises(NotImplementedError):
             backend.drive_channel(0)
