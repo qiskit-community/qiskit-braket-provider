@@ -1,5 +1,6 @@
 """Setup file for Qiskit-Braket provider."""
 import os
+from typing import Any, Dict, Optional
 
 import setuptools
 
@@ -13,7 +14,7 @@ version_path = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "VERSION.txt")
 )
 
-version_dict = {}
+version_dict: Optional[Dict[str, Any]] = {}
 with open(version_path) as fp:
     exec(fp.read(), version_dict)
 version = version_dict["__version__"]
