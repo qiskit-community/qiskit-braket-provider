@@ -11,7 +11,7 @@ with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
 
 version_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "VERSION.txt")
+    os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "version.py")
 )
 
 version_dict: Optional[Dict[str, Any]] = {}

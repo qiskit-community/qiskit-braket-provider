@@ -18,24 +18,23 @@ Sphinx documentation builder
 
 # General options:
 import os
+from typing import Optional, Dict, Any
 
 project = "Qiskit-Braket provider"
 copyright = "2022"  # pylint: disable=redefined-builtin
 author = "Qiskit team"
 
 # The full version, including alpha/beta/rc tags
-with open(
-    os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "qiskit_braket_provider",
-        "VERSION.txt",
-    ),
-    "r",
-) as f:
-    release = f.read()
-# The short X.Y version
-version = release
+version_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..",
+    "qiskit_braket_provider",
+    "version.py",
+)
+version_dict: Optional[Dict[str, Any]] = {}
+with open(version_path) as fp:
+    exec(fp.read(), version_dict)
+version = version_dict["__version__"]
 
 extensions = [
     "sphinx.ext.napoleon",
