@@ -39,7 +39,7 @@ def combine_dicts(
     Returns:
         merged dicts with list of keys
     """
-    combined_dict = {}
+    combined_dict: Dict[str, List[float]] = {}
     for key in dict1.keys():
         if key in combined_dict:
             combined_dict[key].append(dict1[key])
