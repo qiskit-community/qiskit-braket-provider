@@ -1,5 +1,6 @@
 """Tests for AWS Braket backends."""
 import unittest
+from typing import Dict, List
 from unittest import TestCase
 from unittest.mock import Mock
 
@@ -24,6 +25,32 @@ from qiskit_braket_provider import AWSBraketProvider, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+
+
+def combine_dicts(
+    dict1: Dict[str, float], dict2: Dict[str, float]
+) -> Dict[str, List[float]]:
+    """Combines dictionaries with different keys.
+
+    Args:
+        dict1: first
+        dict2: second
+
+    Returns:
+        merged dicts with list of keys
+    """
+    combined_dict: Dict[str, List[float]] = {}
+    for key in dict1.keys():
+        if key in combined_dict:
+            combined_dict[key].append(dict1[key])
+        else:
+            combined_dict[key] = [dict1[key]]
+    for key in dict2.keys():
+        if key in combined_dict:
+            combined_dict[key].append(dict2[key])
+        else:
+            combined_dict[key] = [dict2[key]]
+    return combined_dict
 
 
 class TestAWSBraketBackend(TestCase):
@@ -143,11 +170,26 @@ class TestAWSBraketBackend(TestCase):
                     .get_counts()
                 )
 
-                self.assertEqual(
-                    sorted([k for k, v in braket_result.items() if v > 50]),
-                    sorted([k for k, v in aer_result.items() if v > 0.05]),
+                combined_results = combine_dicts(
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()}, aer_result
                 )
-                self.assertIsInstance(braket_result, dict)
+
+                for key, values in combined_results.items():
+                    if len(values) == 1:
+                        self.assertTrue(
+                            values[0] < 0.05,
+                            f"Missing {key} key in one of the results.",
+                        )
+                    else:
+                        percent_diff = abs(
+                            ((float(values[0]) - values[1]) / values[0]) * 100
+                        )
+                        abs_diff = abs(values[0] - values[1])
+                        self.assertTrue(
+                            percent_diff < 10 or abs_diff < 0.05,
+                            f"Key {key} with percent difference {percent_diff} "
+                            f"and absolute difference {abs_diff}. Original values {values}",
+                        )
 
     @unittest.skip("Call to external resources.")
     def test_retrieve_job(self):
