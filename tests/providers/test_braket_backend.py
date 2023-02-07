@@ -27,7 +27,9 @@ from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
 
-def combine_dicts(dict1: Dict[str, float], dict2: Dict[str, float]) -> Dict[str, List[float]]:
+def combine_dicts(
+    dict1: Dict[str, float], dict2: Dict[str, float]
+) -> Dict[str, List[float]]:
     """Combines dictionaries with different keys.
 
     Args:
