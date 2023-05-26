@@ -65,8 +65,8 @@ def _get_result_from_aws_tasks(
     return experiment_results
 
 
-class AWSBraketJob(JobV1):
-    """AWSBraketJob."""
+class AmazonBraketTask(JobV1):
+    """AmazonBraketTask."""
 
     def __init__(
         self,
@@ -75,7 +75,7 @@ class AWSBraketJob(JobV1):
         tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
         **metadata: Optional[dict]
     ):
-        """AWSBraketJob for local execution of circuits.
+        """AmazonBraketTask for local execution of circuits.
 
         Args:
             job_id: id of the job
@@ -135,3 +135,5 @@ class AWSBraketJob(JobV1):
             status = JobStatus.RUNNING
 
         return status
+
+AWSBraketJob = AmazonBraketTask
