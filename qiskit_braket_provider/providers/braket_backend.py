@@ -53,7 +53,7 @@ class BraketLocalBackend(BraketBackend):
             name: name of backend
             **fields: extra fields
         """
-        super().__init__(name=name, **fields)
+        super().__init__(name="sv_simulator", **fields)
         self.backend_name = name
         self._aws_device = LocalSimulator(backend=self.backend_name)
         self._target = local_simulator_to_target(self._aws_device)

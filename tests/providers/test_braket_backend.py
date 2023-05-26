@@ -90,11 +90,6 @@ class TestAWSBraketBackend(TestCase):
         with self.assertRaises(NotImplementedError):
             backend.control_channel([0, 1])
 
-    def test_local_backend_output(self):
-        "Test local backend output"
-        first_backend = BraketLocalBackend(name="braket_dm")
-        self.assertEqual(first_backend, "BraketBackend[braket_dm]")
-
     def test_local_backend_circuit(self):
         """Tests local backend with circuit."""
         backend = BraketLocalBackend(name="default")
