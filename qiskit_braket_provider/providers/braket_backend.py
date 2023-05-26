@@ -19,7 +19,7 @@ from .adapter import (
     convert_qiskit_to_braket_circuits,
     wrap_circuits_in_verbatim_box,
 )
-from .braket_job import AWSBraketTask
+from .braket_task import AWSBraketTask
 from .. import version
 from ..exception import QiskitBraketException
 
