@@ -17,9 +17,9 @@ Provider classes and functions
     AWSBraketBackend
     BraketLocalBackend
     AWSBraketProvider
-    AWSBraketJob
+    AmazonBraketTask
 """
 
 from .braket_backend import AWSBraketBackend, BraketLocalBackend
 from .braket_provider import AWSBraketProvider
-from .braket_job import AWSBraketJob
+from .braket_job import AmazonBraketTask
