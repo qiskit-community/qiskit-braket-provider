@@ -19,7 +19,7 @@ from .adapter import (
     convert_qiskit_to_braket_circuits,
     wrap_circuits_in_verbatim_box,
 )
-from .braket_job import AmazonBraketTask
+from .braket_job import AWSBraketJob
 from .. import version
 from ..exception import QiskitBraketException
 
@@ -100,7 +100,7 @@ class BraketLocalBackend(BraketBackend):
 
     def run(
         self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
-    ) -> AmazonBraketTask:
+    ) -> AWSBraketJob:
 
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
@@ -126,7 +126,7 @@ class BraketLocalBackend(BraketBackend):
 
         job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
 
-        return AmazonBraketTask(
+        return AWSBraketJob(
             job_id=job_id,
             tasks=tasks,
             backend=self,
@@ -178,7 +178,7 @@ class AWSBraketBackend(BraketBackend):
         self._device = device
         self._target = aws_device_to_target(device=device)
 
-    def retrieve_job(self, job_id: str) -> AmazonBraketTask:
+    def retrieve_job(self, job_id: str) -> AWSBraketJob:
         """Return a single job submitted to AWS backend.
 
         Args:
@@ -189,7 +189,7 @@ class AWSBraketBackend(BraketBackend):
         """
         task_ids = job_id.split(TASK_ID_DIVIDER)
 
-        return AmazonBraketTask(
+        return AWSBraketJob(
             job_id=job_id,
             backend=self,
             tasks=[AwsQuantumTask(arn=task_id) for task_id in task_ids],
@@ -254,6 +254,6 @@ class AWSBraketBackend(BraketBackend):
         tasks: List[AwsQuantumTask] = batch_task.tasks
         job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
 
-        return AmazonBraketTask(
+        return AWSBraketJob(
             job_id=job_id, tasks=tasks, backend=self, shots=options.get("shots")
         )
