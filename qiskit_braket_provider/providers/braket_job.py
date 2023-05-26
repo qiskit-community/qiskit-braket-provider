@@ -10,6 +10,8 @@ from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from retrying import retry
+from deprecated import deprecated
+
 
 
 def retry_if_result_none(result):
@@ -135,5 +137,9 @@ class AmazonBraketTask(JobV1):
             status = JobStatus.RUNNING
 
         return status
+
+@deprecated("AWSBraketJob is deprecated. Use AmazonBraketTask instead.")
+class AWSBraketJob:
+    pass
 
 AWSBraketJob = AmazonBraketTask
