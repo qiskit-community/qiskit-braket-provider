@@ -2,6 +2,7 @@
 import os
 from datetime import datetime
 from typing import List, Optional, Union
+from typing_extensions import deprecated
 
 from braket.aws import AwsQuantumTask
 from braket.tasks import GateModelQuantumTaskResult
@@ -135,3 +136,17 @@ class AWSBraketTask(JobV1):
             status = JobStatus.RUNNING
 
         return status
+
+
+@deprecated("Use AWSBraketTask instead.")
+class AWSBraketJob(AWSBraketTask):
+    """AWSBraketJob."""
+
+    def __init__(
+        self,
+        job_id: str,
+        backend: BackendV2,
+        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
+        **metadata: Optional[dict]
+    ):
+        super().__init__(job_id, backend, tasks, **metadata)
