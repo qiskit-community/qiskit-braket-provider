@@ -117,6 +117,24 @@ class TestAWSBraketBackend(TestCase):
         _00 = results[1].get_counts()["00"]
         _11 = results[1].get_counts()["11"]
         self.assertEqual(_00 + _11, 1024)
+        
+
+    def test_local_backend_circuit_shots0(self):
+        """Tests local backend with circuit with shots=0."""
+        backend = BraketLocalBackend(name="default")
+
+        circuit = QuantumCircuit(2)
+        circuit.x(0)
+        circuit.cx(0, 1)
+
+        result = backend.run(circuit, shots=0).result()
+
+        statevector = result.get_statevector()
+        self.assertEqual(statevector[0], 0.+0.j)
+        self.assertEqual(statevector[1], 0.+0.j)
+        self.assertEqual(statevector[2], 0.+0.j)
+        self.assertEqual(statevector[3], 1.+0.j)
+
 
     def test_vqe(self):
         """Tests VQE."""
