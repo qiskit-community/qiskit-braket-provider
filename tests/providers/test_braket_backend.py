@@ -93,7 +93,7 @@ class TestAWSBraketBackend(TestCase):
     def test_local_backend_output(self):
         "Test local backend output"
         first_backend = BraketLocalBackend(name="braket_dm")
-        self.assertEqual(first_backend, "BraketBackend[braket_dm]")
+        self.assertEqual(first_backend.backend_name, "braket_dm")
 
     def test_local_backend_circuit(self):
         """Tests local backend with circuit."""
