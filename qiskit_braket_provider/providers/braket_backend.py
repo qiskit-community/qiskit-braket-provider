@@ -101,7 +101,6 @@ class BraketLocalBackend(BraketBackend):
     def run(
         self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
     ) -> AWSBraketJob:
-
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )

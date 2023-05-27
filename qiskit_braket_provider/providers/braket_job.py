@@ -43,14 +43,18 @@ def _get_result_from_aws_tasks(
             result: GateModelQuantumTaskResult = task.result()
 
             if result.task_metadata.shots == 0:
-                statevector = result.values[result._result_types_indices["{'type': <Type.statevector: 'statevector'>}"]]
+                statevector = result.values[
+                    result._result_types_indices[
+                        "{'type': <Type.statevector: 'statevector'>}"
+                    ]
+                ]
                 data = ExperimentResultData(
-                    statevector=statevector
+                    statevector=statevector,
                 )
             else:
                 counts = {
                     k[::-1]: v for k, v in dict(result.measurement_counts).items()
-                }  # convert to little-endian            
+                }  # convert to little-endian
 
                 data = ExperimentResultData(
                     counts=counts,
