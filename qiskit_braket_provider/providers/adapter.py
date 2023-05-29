@@ -19,6 +19,7 @@ from braket.devices import LocalSimulator
 from numpy import pi
 from qiskit import QuantumCircuit
 from qiskit.circuit import Instruction as QiskitInstruction
+from braket.circuits.observable import Observable
 from qiskit.circuit import Measure, Parameter
 from qiskit.circuit.library import (
     CCXGate,
@@ -347,7 +348,8 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             # TODO: change Probability result type for Sample for proper functioning # pylint:disable=fixme
             # Getting the index from the bit mapping
             quantum_circuit.add_result_type(
-                result_types.Probability(
+                result_types.Sample(
+                    observable = Observable.Z(),
                     target=[
                         circuit.find_bit(qiskit_gates[1][0]).index,
                         circuit.find_bit(qiskit_gates[2][0]).index,
