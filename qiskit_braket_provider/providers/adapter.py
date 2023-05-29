@@ -2,7 +2,14 @@
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from braket.aws import AwsDevice
-from braket.circuits import Circuit, Instruction, gates, result_types
+from braket.circuits import (
+    Circuit,
+    FreeParameter,
+    FreeParameterExpression,
+    Instruction,
+    gates,
+    result_types,
+)
 from braket.device_schema import (
     DeviceActionType,
     GateModelQpuParadigmProperties,
@@ -19,7 +26,7 @@ from braket.devices import LocalSimulator
 from numpy import pi
 from qiskit import QuantumCircuit
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import Measure, Parameter
+from qiskit.circuit import Measure, Parameter, ParameterExpression
 from qiskit.circuit.library import (
     CCXGate,
     CPhaseGate,
@@ -361,6 +368,10 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             params = []
             if hasattr(qiskit_gates[0], "params"):
                 params = qiskit_gates[0].params
+
+            for i, param in enumerate(params):
+                if isinstance(param, ParameterExpression):
+                    params[i] = FreeParameter(param.name)
 
             for gate in qiskit_gate_names_to_braket_gates[name](*params):
                 instruction = Instruction(
