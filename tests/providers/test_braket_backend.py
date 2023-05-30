@@ -91,7 +91,7 @@ class TestAWSBraketBackend(TestCase):
             backend.control_channel([0, 1])
 
     def test_local_backend_output(self):
-        "Test local backend output"
+        """Test local backend output"""
         first_backend = BraketLocalBackend(name="braket_dm")
         self.assertEqual(first_backend.backend_name, "braket_dm")
 
