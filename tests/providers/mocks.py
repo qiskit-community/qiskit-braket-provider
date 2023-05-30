@@ -34,8 +34,8 @@ RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON = {
         "shotsRange": [1, 10],
     },
     "action": {
-        "braket.ir.jaqcd.program": {
-            "actionType": "braket.ir.jaqcd.program",
+        "braket.ir.openqasm.program": {
+            "actionType": "braket.ir.openqasm.program",
             "version": ["1"],
             "supportedOperations": ["H"],
         }
