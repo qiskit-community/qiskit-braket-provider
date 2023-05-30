@@ -5,7 +5,6 @@ from braket.aws import AwsDevice
 from braket.circuits import (
     Circuit,
     FreeParameter,
-    FreeParameterExpression,
     Instruction,
     gates,
     result_types,
@@ -26,7 +25,7 @@ from braket.devices import LocalSimulator
 from numpy import pi
 from qiskit import QuantumCircuit
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import Measure, Parameter, ParameterExpression
+from qiskit.circuit import Measure, Parameter
 from qiskit.circuit.library import (
     CCXGate,
     CPhaseGate,
@@ -370,7 +369,7 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
                 params = qiskit_gates[0].params
 
             for i, param in enumerate(params):
-                if isinstance(param, ParameterExpression):
+                if isinstance(param, Parameter):
                     params[i] = FreeParameter(param.name)
 
             for gate in qiskit_gate_names_to_braket_gates[name](*params):

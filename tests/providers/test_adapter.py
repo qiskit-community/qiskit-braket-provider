@@ -1,9 +1,12 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
 
-from braket.circuits import Circuit
+from braket.circuits import Circuit, FreeParameter
+from qiskit import QuantumCircuit
+from qiskit.circuit import Parameter
 
 from qiskit_braket_provider.providers.adapter import (
+    convert_qiskit_to_braket_circuit,
     qiskit_gate_name_to_braket_gate_mapping,
     qiskit_gate_names_to_braket_gates,
     qiskit_to_braket_gate_names_mapping,
@@ -24,6 +27,18 @@ class TestAdapter(TestCase):
         self.assertEqual(
             list(sorted(qiskit_to_braket_gate_names_mapping.values())),
             list(sorted(qiskit_gate_name_to_braket_gate_mapping.keys())),
+        )
+
+    def test_convert_qiskit_to_braket_circuit(self):
+        """Tests convert_qiskit_to_braket_circuit works with parametric circuits."""
+
+        theta = Parameter("θ")
+        qiskit_circuit = QuantumCircuit(1, 1)
+        qiskit_circuit.rz(theta, 0)
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        self.assertEqual(
+            braket_circuit.instructions[0].operator.angle, FreeParameter("θ")
         )
 
 
