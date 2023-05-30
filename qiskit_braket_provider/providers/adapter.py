@@ -7,6 +7,7 @@ from braket.device_schema import (
     DeviceActionType,
     GateModelQpuParadigmProperties,
     JaqcdDeviceActionProperties,
+    OpenQASMDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
@@ -233,8 +234,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         properties,
         (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
     ):
-        action_properties: JaqcdDeviceActionProperties = properties.action.get(
-            DeviceActionType.JAQCD
+        action_properties: OpenQASMDeviceActionProperties = properties.action.get(
+            DeviceActionType.OPENQASM
         )
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
         connectivity = paradigm.connectivity
