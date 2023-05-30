@@ -37,7 +37,9 @@ class TestAdapter(TestCase):
         qiskit_circuit.rz(theta, 0)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
-        braket_circuit_ans = Circuit().rz(0, FreeParameter("θ"))
+        braket_circuit_ans = Circuit().rz(  # pylint: disable=no-member
+            0, FreeParameter("θ")
+        )
 
         self.assertEqual(braket_circuit, braket_circuit_ans)
 
