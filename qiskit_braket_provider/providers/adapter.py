@@ -2,7 +2,7 @@
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from braket.aws import AwsDevice
-from braket.circuits import Circuit, Instruction, gates, result_types
+from braket.circuits import Circuit, Instruction, gates, result_types, Observable
 from braket.device_schema import (
     DeviceActionType,
     GateModelQpuParadigmProperties,
@@ -349,11 +349,11 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             # Getting the index from the bit mapping
             quantum_circuit.add_result_type(
                 result_types.Sample(
-                    observable = Observable.Z(),
+                    observable=Observable,
                     target=[
                         circuit.find_bit(qiskit_gates[1][0]).index,
                         circuit.find_bit(qiskit_gates[2][0]).index,
-                    ]
+                    ],
                 )
             )
         elif name == "barrier":
