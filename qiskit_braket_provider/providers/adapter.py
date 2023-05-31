@@ -19,7 +19,6 @@ from braket.devices import LocalSimulator
 from numpy import pi
 from qiskit import QuantumCircuit
 from qiskit.circuit import Instruction as QiskitInstruction
-from braket.circuits.observable import Observable
 from qiskit.circuit import Measure, Parameter
 from qiskit.circuit.library import (
     CCXGate,
