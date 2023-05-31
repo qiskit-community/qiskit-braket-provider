@@ -107,7 +107,7 @@ class BraketLocalBackend(BraketBackend):
         circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
-            circuits = map(lambda x: x.state_vector(), circuits)
+            circuits = list(map(lambda x: x.state_vector(), circuits))
         tasks = []
         try:
             for circuit in circuits:
