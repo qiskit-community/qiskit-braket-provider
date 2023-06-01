@@ -78,16 +78,28 @@
     <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">()</span> <span class="ow">in</span> <span class="n">AwsQuantumTask</span><span class="o">.</span><span class="n">RESULTS_READY_STATES</span><span class="p">:</span>
             <span class="n">result</span><span class="p">:</span> <span class="n">GateModelQuantumTaskResult</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-            <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">k</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurement_counts</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="p">}</span>  <span class="c1"># convert to little-endian</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span>
-                <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span>
-                <span class="n">memory</span><span class="o">=</span><span class="p">[</span>
-                    <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shot_result</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
-                    <span class="k">for</span> <span class="n">shot_result</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">measurements</span>
-                <span class="p">],</span>
-            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">task_metadata</span><span class="o">.</span><span class="n">shots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">statevector</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">_result_types_indices</span><span class="p">[</span>
+                        <span class="s2">&quot;{&#39;type&#39;: &lt;Type.statevector: &#39;statevector&#39;&gt;}&quot;</span>
+                    <span class="p">]</span>
+                <span class="p">]</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span>
+                    <span class="n">statevector</span><span class="o">=</span><span class="n">statevector</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">k</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurement_counts</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>  <span class="c1"># convert to little-endian</span>
+
+                <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span>
+                    <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span>
+                    <span class="n">memory</span><span class="o">=</span><span class="p">[</span>
+                        <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shot_result</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+                        <span class="k">for</span> <span class="n">shot_result</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">measurements</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
@@ -209,6 +221,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Tutorial: Qiskit-Braket provider overview</a></li>

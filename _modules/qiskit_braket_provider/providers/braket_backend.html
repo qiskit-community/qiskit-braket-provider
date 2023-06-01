@@ -138,12 +138,13 @@
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span> <span class="o">**</span><span class="n">options</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AWSBraketJob</span><span class="p">:</span>
-
         <span class="n">convert_input</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">[</span><span class="n">run_input</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">run_input</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">circuits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">convert_qiskit_to_braket_circuits</span><span class="p">(</span><span class="n">convert_input</span><span class="p">))</span>
         <span class="n">shots</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s2">&quot;shots&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;shots&quot;</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">else</span> <span class="mi">1024</span>
+        <span class="k">if</span> <span class="n">shots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">circuits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">state_vector</span><span class="p">(),</span> <span class="n">circuits</span><span class="p">))</span>
         <span class="n">tasks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">circuit</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
@@ -331,6 +332,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Tutorial: Qiskit-Braket provider overview</a></li>
