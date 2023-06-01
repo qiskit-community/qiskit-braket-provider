@@ -101,12 +101,13 @@ class BraketLocalBackend(BraketBackend):
     def run(
         self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
     ) -> AWSBraketJob:
-
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
         shots = options["shots"] if "shots" in options else 1024
+        if shots == 0:
+            circuits = list(map(lambda x: x.state_vector(), circuits))
         tasks = []
         try:
             for circuit in circuits:
