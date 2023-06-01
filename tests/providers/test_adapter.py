@@ -29,7 +29,7 @@ class TestAdapter(TestCase):
             list(sorted(qiskit_gate_name_to_braket_gate_mapping.keys())),
         )
 
-    def test_convert_qiskit_to_braket_circuit(self):
+    def test_convert_parametric_qiskit_to_braket_circuit(self):
         """Tests convert_qiskit_to_braket_circuit works with parametric circuits."""
 
         theta = Parameter("θ")
