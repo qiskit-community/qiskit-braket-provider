@@ -1,9 +1,13 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
 
-from braket.circuits import Circuit
+from braket.circuits import Circuit, FreeParameter
+import numpy as np
+from qiskit import QuantumCircuit
+from qiskit.circuit import Parameter
 
 from qiskit_braket_provider.providers.adapter import (
+    convert_qiskit_to_braket_circuit,
     qiskit_gate_name_to_braket_gate_mapping,
     qiskit_gate_names_to_braket_gates,
     qiskit_to_braket_gate_names_mapping,
@@ -25,6 +29,35 @@ class TestAdapter(TestCase):
             list(sorted(qiskit_to_braket_gate_names_mapping.values())),
             list(sorted(qiskit_gate_name_to_braket_gate_mapping.keys())),
         )
+
+    def test_convert_parametric_qiskit_to_braket_circuit(self):
+        """Tests convert_qiskit_to_braket_circuit works with parametric circuits."""
+
+        theta = Parameter("θ")
+        phi = Parameter("φ")
+        lam = Parameter("λ")
+        qiskit_circuit = QuantumCircuit(1, 1)
+        qiskit_circuit.rz(theta, 0)
+        qiskit_circuit.u(theta, phi, lam, 0)
+        qiskit_circuit.u(theta, phi, np.pi, 0)
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        braket_circuit_ans = (
+            Circuit()  # pylint: disable=no-member
+            .rz(0, FreeParameter("θ"))
+            .rz(0, FreeParameter("λ"))
+            .rx(0, np.pi / 2)
+            .rz(0, FreeParameter("θ"))
+            .rx(0, -np.pi / 2)
+            .rz(0, FreeParameter("φ"))
+            .rz(0, np.pi)
+            .rx(0, np.pi / 2)
+            .rz(0, FreeParameter("θ"))
+            .rx(0, -np.pi / 2)
+            .rz(0, FreeParameter("φ"))
+        )
+
+        self.assertEqual(braket_circuit, braket_circuit_ans)
 
 
 class TestVerbatimBoxWrapper(TestCase):
