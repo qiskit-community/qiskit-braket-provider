@@ -2,6 +2,7 @@
 from unittest import TestCase
 
 from braket.circuits import Circuit, FreeParameter
+import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 
@@ -33,12 +34,27 @@ class TestAdapter(TestCase):
         """Tests convert_qiskit_to_braket_circuit works with parametric circuits."""
 
         theta = Parameter("θ")
+        phi = Parameter("φ")
+        lam = Parameter("λ")
         qiskit_circuit = QuantumCircuit(1, 1)
         qiskit_circuit.rz(theta, 0)
+        qiskit_circuit.u(theta, phi, lam, 0)
+        qiskit_circuit.u(theta, phi, np.pi, 0)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
-        braket_circuit_ans = Circuit().rz(  # pylint: disable=no-member
-            0, FreeParameter("θ")
+        braket_circuit_ans = (
+            Circuit()  # pylint: disable=no-member
+            .rz(0, FreeParameter("θ"))
+            .rz(0, FreeParameter("λ"))
+            .rx(0, np.pi / 2)
+            .rz(0, FreeParameter("θ"))
+            .rx(0, -np.pi / 2)
+            .rz(0, FreeParameter("φ"))
+            .rz(0, np.pi)
+            .rx(0, np.pi / 2)
+            .rz(0, FreeParameter("θ"))
+            .rx(0, -np.pi / 2)
+            .rz(0, FreeParameter("φ"))
         )
 
         self.assertEqual(braket_circuit, braket_circuit_ans)

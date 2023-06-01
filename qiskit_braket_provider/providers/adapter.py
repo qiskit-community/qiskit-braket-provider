@@ -50,6 +50,7 @@ from qiskit.circuit.library import (
     SXGate,
     TdgGate,
     TGate,
+    UGate,
     U1Gate,
     U2Gate,
     U3Gate,
@@ -62,6 +63,7 @@ from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
 qiskit_to_braket_gate_names_mapping = {
+    "u": "u",
     "u1": "u1",
     "u2": "u2",
     "u3": "u3",
@@ -95,6 +97,13 @@ qiskit_to_braket_gate_names_mapping = {
 
 
 qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
+    "u": lambda theta, phi, lam: [
+        gates.Rz(lam),
+        gates.Rx(pi / 2),
+        gates.Rz(theta),
+        gates.Rx(-pi / 2),
+        gates.Rz(phi),
+    ],
     "u1": lambda lam: [gates.Rz(lam)],
     "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(pi / 2), gates.Rz(phi)],
     "u3": lambda theta, phi, lam: [
@@ -134,6 +143,7 @@ qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
 
 
 qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] = {
+    "u": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "u1": U1Gate(Parameter("theta")),
     "u2": U2Gate(Parameter("theta"), Parameter("lam")),
     "u3": U3Gate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
