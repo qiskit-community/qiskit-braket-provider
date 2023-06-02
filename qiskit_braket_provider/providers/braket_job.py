@@ -41,16 +41,28 @@ def _get_result_from_aws_tasks(
     for task in tasks:
         if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
             result: GateModelQuantumTaskResult = task.result()
-            counts = {
-                k[::-1]: v for k, v in dict(result.measurement_counts).items()
-            }  # convert to little-endian
-            data = ExperimentResultData(
-                counts=counts,
-                memory=[
-                    "".join(shot_result[::-1].astype(str))
-                    for shot_result in result.measurements
-                ],
-            )
+
+            if result.task_metadata.shots == 0:
+                statevector = result.values[
+                    result._result_types_indices[
+                        "{'type': <Type.statevector: 'statevector'>}"
+                    ]
+                ]
+                data = ExperimentResultData(
+                    statevector=statevector,
+                )
+            else:
+                counts = {
+                    k[::-1]: v for k, v in dict(result.measurement_counts).items()
+                }  # convert to little-endian
+
+                data = ExperimentResultData(
+                    counts=counts,
+                    memory=[
+                        "".join(shot_result[::-1].astype(str))
+                        for shot_result in result.measurements
+                    ],
+                )
         else:
             return None
 

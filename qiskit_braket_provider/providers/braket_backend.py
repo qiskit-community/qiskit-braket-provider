@@ -53,7 +53,7 @@ class BraketLocalBackend(BraketBackend):
             name: name of backend
             **fields: extra fields
         """
-        super().__init__(name="sv_simulator", **fields)
+        super().__init__(name=name, **fields)
         self.backend_name = name
         self._aws_device = LocalSimulator(backend=self.backend_name)
         self._target = local_simulator_to_target(self._aws_device)
@@ -101,12 +101,13 @@ class BraketLocalBackend(BraketBackend):
     def run(
         self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
     ) -> AWSBraketJob:
-
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
         shots = options["shots"] if "shots" in options else 1024
+        if shots == 0:
+            circuits = list(map(lambda x: x.state_vector(), circuits))
         tasks = []
         try:
             for circuit in circuits:
