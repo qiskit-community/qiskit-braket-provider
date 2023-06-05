@@ -8,6 +8,7 @@ from braket.circuits import (
     Instruction,
     gates,
     result_types,
+    observables,
 )
 from braket.device_schema import (
     DeviceActionType,
@@ -364,11 +365,13 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             # TODO: change Probability result type for Sample for proper functioning # pylint:disable=fixme
             # Getting the index from the bit mapping
             quantum_circuit.add_result_type(
-                result_types.Probability(
+                # pylint:disable=fixme
+                result_types.Sample(
+                    observable=observables.Z(),
                     target=[
                         circuit.find_bit(qiskit_gates[1][0]).index,
                         circuit.find_bit(qiskit_gates[2][0]).index,
-                    ]
+                    ],
                 )
             )
         elif name == "barrier":
