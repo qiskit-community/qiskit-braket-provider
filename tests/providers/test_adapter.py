@@ -1,7 +1,7 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
 
-from braket.circuits import Circuit, FreeParameter
+from braket.circuits import Circuit, FreeParameter, observables
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
@@ -58,6 +58,23 @@ class TestAdapter(TestCase):
         )
 
         self.assertEqual(braket_circuit, braket_circuit_ans)
+
+    def test_sample_result_typle(self):
+        """Tests sample result type with observables Z"""
+        qiskit_circuit = QuantumCircuit(2, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cnot(0, 1)
+        qiskit_circuit.measure(0, 0)
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        circuits = (
+            Circuit()  # pylint: disable=no-member
+            .h(0)
+            .cnot(0, 1)
+            .sample(observable=observables.Z(), target=0)
+        )
+
+        self.assertEqual(braket_circuit, circuits)
 
 
 class TestVerbatimBoxWrapper(TestCase):

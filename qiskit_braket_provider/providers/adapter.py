@@ -2,7 +2,14 @@
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 from braket.aws import AwsDevice
-from braket.circuits import Circuit, Instruction, gates, result_types, observables
+from braket.circuits import (
+    Circuit,
+    FreeParameter,
+    Instruction,
+    gates,
+    result_types,
+    observables,
+)
 from braket.device_schema import (
     DeviceActionType,
     GateModelQpuParadigmProperties,
