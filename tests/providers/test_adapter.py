@@ -59,8 +59,9 @@ class TestAdapter(TestCase):
 
         self.assertEqual(braket_circuit, braket_circuit_ans)
 
-    def test_sample_result_typle(self):
+    def test_sample_result_type(self):
         """Tests sample result type with observables Z"""
+
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
         qiskit_circuit.cnot(0, 1)
