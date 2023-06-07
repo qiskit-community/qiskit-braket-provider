@@ -6,3 +6,5 @@ from .providers import (
     AWSBraketBackend,
     BraketLocalBackend,
 )
+
+from .transpiler import transpile
