@@ -251,12 +251,10 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         properties,
         (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
     ):
-        action_properties: OpenQASMDeviceActionProperties = properties.action.get(
-            DeviceActionType.OPENQASM
-        ) if properties.action.get(
-            DeviceActionType.OPENQASM
-        ) else properties.action.get(
-            DeviceActionType.JAQCD
+        action_properties: OpenQASMDeviceActionProperties = (
+            properties.action.get(DeviceActionType.OPENQASM)
+            if properties.action.get(DeviceActionType.OPENQASM)
+            else properties.action.get(DeviceActionType.JAQCD)
         )
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
         connectivity = paradigm.connectivity
