@@ -101,7 +101,7 @@ class BraketLocalBackend(BraketBackend):
     def run(
         self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
     ) -> AWSBraketJob:
-
+        
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
@@ -110,7 +110,7 @@ class BraketLocalBackend(BraketBackend):
         tasks = []
         try:
             for circuit in circuits:
-                task: Union[LocalQuantumTask] = self._aws_device.run(
+                task: LocalQuantumTask = self._aws_device.run(
                     task_specification=circuit, shots=shots
                 )
                 tasks.append(task)
