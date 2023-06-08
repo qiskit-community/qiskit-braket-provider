@@ -1,29 +1,23 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
 
-import numpy as np
-
 from braket.circuits import Circuit, FreeParameter, observables
-
 from braket.devices import LocalSimulator
-
+import numpy as np
 from qiskit import QuantumCircuit, execute, Aer
+from qiskit.circuit import Parameter
 
 from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuit,
+    decompose_fully,
     qiskit_gate_name_to_braket_gate_mapping,
     qiskit_gate_names_to_braket_gates,
     qiskit_to_braket_gate_names_mapping,
-    convert_qiskit_to_braket_circuit,
     wrap_circuits_in_verbatim_box,
-    decompose_fully
 )
 
-from qiskit.circuit import Parameter
-from qiskit.circuit.parameter import Parameter
-
 from qiskit.circuit.library import PauliEvolutionGate
-from qiskit.opflow import I, Z, X, Y
+from qiskit.opflow import I, Z, X
 
 from qiskit.circuit.library.standard_gates import (
     HGate, CHGate, IGate, PhaseGate, CPhaseGate, MCPhaseGate, RGate, RXGate,
@@ -35,7 +29,6 @@ from qiskit.circuit.library.standard_gates import (
     RCCXGate, RC3XGate, MCXGate, MCXGrayCode, MCXRecursive, MCXVChain, YGate,
     CYGate, ZGate, CZGate, CCZGate
 )
-
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
@@ -94,53 +87,26 @@ standard_gates = [
         ZGate()
     ]
 
+
 class TestAdapter(TestCase):
     """Tests adapter."""
 
-    def test_exponential_gate_decomp_00(self):
-        translatable = True
+    def test_state_preparation_01(self):
+        "Tests state_preparation handling of Adapter"
+        input_state_vector = np.array([np.sqrt(3)/2, np.sqrt(2)*complex(1,1)/4])
 
-        operator = (Z ^ Z) - 0.1 * (X ^ I)
-        evo = PauliEvolutionGate(operator, time=0.2)
-
-        # plug it into a circuit
-        circuit = QuantumCircuit(2)
-        circuit.append(evo, range(2))
-        decomp_circuit = decompose_fully(circuit)
-        for simple_gate in decomp_circuit.data:
-            translatable = translatable and simple_gate[0].name in qiskit_gate_names_to_braket_gates.keys()
-        self.assertTrue(translatable)
-
-    def test_standard_gate_decomp(self):
-        translatable = True
-        for standard_gate in standard_gates:
-            circuit = QuantumCircuit(5)
-            circuit.append(standard_gate,list_list[standard_gate.num_qubits])
-            decomp_circuit = decompose_fully(circuit)
-            for simple_gate in decomp_circuit.data:
-                translatable = translatable and simple_gate[0].name in qiskit_gate_names_to_braket_gates.keys()
-        self.assertTrue(translatable)
-
-
-    def test_u_gate(self):
         qiskit_circuit = QuantumCircuit(1)
-        device = LocalSimulator()
-        for _ in range(8):
-            qiskit_circuit.u(np.pi/2, np.pi/3, np.pi/4, 0)
+        qiskit_circuit.prepare_state(input_state_vector, 0)
 
-            simulator = Aer.get_backend('statevector_simulator')
-            job = execute(qiskit_circuit, simulator)
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit.state_vector()
 
-            braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
-            braket_circuit.state_vector()
+        result = LocalSimulator().run(braket_circuit)
+        output_state_vector = np.array(result.result().values[0])
 
-            braket_output = device.run(braket_circuit).result().values[0]
-            qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
-
-            self.assertTrue(
-                np.sqrt(np.sum(np.square(np.abs(braket_output - qiskit_output)))) < _EPS
-            )
-
+        self.assertTrue(
+            (np.sqrt(np.sum(np.square(np.abs(input_state_vector - output_state_vector)))) < _EPS)
+        )
 
     def test_state_preparation_00(self):
         "Tests state_preparation handling of Adapter"
@@ -162,22 +128,48 @@ class TestAdapter(TestCase):
             (np.sqrt(np.sum(np.square(np.abs(input_state_vector - output_state_vector)))) < _EPS)
         )
 
-    def test_state_preparation_01(self):
-        "Tests state_preparation handling of Adapter"
-        input_state_vector = np.array([np.sqrt(3)/2, np.sqrt(2)*complex(1,1)/4])
-
+    def test_u_gate(self):
         qiskit_circuit = QuantumCircuit(1)
-        qiskit_circuit.prepare_state(input_state_vector, 0)
+        device = LocalSimulator()
+        for _ in range(8):
+            qiskit_circuit.u(np.pi/2, np.pi/3, np.pi/4, 0)
 
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
-        braket_circuit.state_vector()
+            simulator = Aer.get_backend('statevector_simulator')
+            job = execute(qiskit_circuit, simulator)
 
-        result = LocalSimulator().run(braket_circuit)
-        output_state_vector = np.array(result.result().values[0])
+            braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+            braket_circuit.state_vector()
 
-        self.assertTrue(
-            (np.sqrt(np.sum(np.square(np.abs(input_state_vector - output_state_vector)))) < _EPS)
-        )
+            braket_output = device.run(braket_circuit).result().values[0]
+            qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
+
+            self.assertTrue(
+                np.sqrt(np.sum(np.square(np.abs(braket_output - qiskit_output)))) < _EPS
+            )
+
+    def test_standard_gate_decomp(self):
+        translatable = True
+        for standard_gate in standard_gates:
+            circuit = QuantumCircuit(5)
+            circuit.append(standard_gate,list_list[standard_gate.num_qubits])
+            decomp_circuit = decompose_fully(circuit)
+            for simple_gate in decomp_circuit.data:
+                translatable = translatable and simple_gate[0].name in qiskit_gate_names_to_braket_gates.keys()
+        self.assertTrue(translatable)
+
+    def test_exponential_gate_decomp_00(self):
+        translatable = True
+
+        operator = (Z ^ Z) - 0.1 * (X ^ I)
+        evo = PauliEvolutionGate(operator, time=0.2)
+
+        # plug it into a circuit
+        circuit = QuantumCircuit(2)
+        circuit.append(evo, range(2))
+        decomp_circuit = decompose_fully(circuit)
+        for simple_gate in decomp_circuit.data:
+            translatable = translatable and simple_gate[0].name in qiskit_gate_names_to_braket_gates.keys()
+        self.assertTrue(translatable)
 
     def test_mappers(self):
         """Tests mappers."""
@@ -207,15 +199,19 @@ class TestAdapter(TestCase):
             Circuit()  # pylint: disable=no-member
             .rz(0, FreeParameter("θ"))
             .rz(0, FreeParameter("λ"))
-            .rx(0, np.pi / 2)
-            .rz(0, FreeParameter("θ"))
-            .rx(0, -np.pi / 2)
+            .ry(0, FreeParameter("θ"))
             .rz(0, FreeParameter("φ"))
+            .phaseshift(0, (FreeParameter("φ")+FreeParameter("λ")) * (0.5))
+            .x(0)
+            .phaseshift(0, (FreeParameter("φ")+FreeParameter("λ")) * (0.5))
+            .x(0)
             .rz(0, np.pi)
-            .rx(0, np.pi / 2)
-            .rz(0, FreeParameter("θ"))
-            .rx(0, -np.pi / 2)
+            .ry(0, FreeParameter("θ"))
             .rz(0, FreeParameter("φ"))
+            .phaseshift(0, (FreeParameter("φ")+np.pi) * (0.5))
+            .x(0)
+            .phaseshift(0, (FreeParameter("φ")+np.pi) * (0.5))
+            .x(0)
         )
 
         self.assertEqual(braket_circuit, braket_circuit_ans)
