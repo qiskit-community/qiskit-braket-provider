@@ -58,13 +58,13 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">qubit</span> <span class="pre">rewiring</span></code> is a process in which logical qubits in submitted circuits are mapped into concrete physical qubits on actual device.</p></li>
 </ul>
 <p>Typically, one wants to design circuits using high-level concepts, without worrying about qubit placement or gate compilation. However, in some cases it might be desirable to have a precise control of the circuits being submitted.</p>
-<p>We will start this how-to by defining a simple circuit comprising <code class="docutils literal notranslate"><span class="pre">cnot(0,</span> <span class="pre">1)</span></code> gate and running it on Aspem-M-2 device.</p>
+<p>We will start this how-to by defining a simple circuit comprising <code class="docutils literal notranslate"><span class="pre">cnot(0,</span> <span class="pre">1)</span></code> gate and running it on Aspem-M-3 device.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
-<span class="n">aspen</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-2&quot;</span><span class="p">)</span>
+<span class="n">aspen</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-3&quot;</span><span class="p">)</span>
 
 <span class="n">circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">circuit</span><span class="o">.</span><span class="n">cnot</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -292,7 +292,7 @@ File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-pack
 <span class="ansi-green-intense-fg ansi-bold">    916</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
 <span class="ansi-green-intense-fg ansi-bold">    917</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> parsed_response
 
-<span class="ansi-red-fg">ValidationException</span>: An error occurred (ValidationException) when calling the CreateQuantumTask operation: Backend ARN, arn:aws:braket:us-west-1::device/qpu/rigetti/Aspen-M-2, does not support the operation cnot as a native gate. Supported operations for this Backend ARN are [&#39;rz&#39;, &#39;cz&#39;, &#39;xy&#39;, &#39;rx&#39;, &#39;cphaseshift&#39;].
+<span class="ansi-red-fg">ValidationException</span>: An error occurred (ValidationException) when calling the CreateQuantumTask operation: Backend ARN, arn:aws:braket:us-west-1::device/qpu/rigetti/Aspen-M-3, does not support the operation cnot as a native gate. Supported operations for this Backend ARN are [&#39;rz&#39;, &#39;cz&#39;, &#39;xy&#39;, &#39;rx&#39;, &#39;cphaseshift&#39;].
 </pre></div></div>
 </div>
 <p>As expected, we obtained a <code class="docutils literal notranslate"><span class="pre">ValidationException</span></code>. As a last step, let us verify that running circuit with native gates and matching topology is possible.</p>

@@ -99,13 +99,15 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[BraketBackend[Aspen-10],
+[BraketBackend[Aria 1],
+ BraketBackend[Aspen-10],
  BraketBackend[Aspen-11],
  BraketBackend[Aspen-8],
  BraketBackend[Aspen-9],
  BraketBackend[Aspen-M-1],
  BraketBackend[Aspen-M-2],
- BraketBackend[IonQ Device],
+ BraketBackend[Aspen-M-3],
+ BraketBackend[Harmony],
  BraketBackend[Lucy],
  BraketBackend[SV1],
  BraketBackend[TN1],
@@ -128,7 +130,7 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-BraketBackend[sv_simulator]
+BraketBackend[default]
 </pre></div></div>
 </div>
 <p>We also get get cloud state vector simulator by using method <code class="docutils literal notranslate"><span class="pre">get_backend</span></code> for provider.</p>
@@ -155,7 +157,7 @@ BraketBackend[SV1]
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IonQ Device&quot;</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ionq_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Harmony&quot;</span><span class="p">)</span>
 <span class="n">rigetti_device</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-1&quot;</span><span class="p">)</span>
 
 <span class="n">ionq_device</span><span class="p">,</span> <span class="n">rigetti_device</span>
@@ -168,7 +170,7 @@ BraketBackend[SV1]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-(BraketBackend[IonQ Device], BraketBackend[Aspen-M-1])
+(BraketBackend[Harmony], BraketBackend[Aspen-M-1])
 </pre></div></div>
 </div>
 <p>And if you want to explore what is available by specific contraints, you can specify query arguments to <code class="docutils literal notranslate"><span class="pre">backends</span></code> method of provider. Arguments are fully compatible with Braket’s <code class="docutils literal notranslate"><span class="pre">get_device</span></code> method. See full doc <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/stable/_apidoc/braket.aws.aws_device.html#braket.aws.aws_device.AwsDevice.get_devices">here</a>.</p>
