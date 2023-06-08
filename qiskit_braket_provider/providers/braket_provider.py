@@ -29,7 +29,6 @@ class AWSBraketProvider(ProviderV1):
     """
 
     def backends(self, name=None, **kwargs):
-
         if kwargs.get("local"):
             return [BraketLocalBackend(name="default")]
         names = [name] if name else None
