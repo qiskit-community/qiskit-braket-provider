@@ -1,5 +1,4 @@
 """Tests for AWS Braket provider."""
-import unittest
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -23,12 +22,12 @@ class TestAWSBraketProvider(TestCase):
     """Tests AWSBraketProvider."""
 
     def setUp(self):
-        mock_session = Mock()
+        self.mock_session = Mock()
         simulators = [MOCK_GATE_MODEL_SIMULATOR_SV, MOCK_GATE_MODEL_SIMULATOR_TN]
-        mock_session.get_device.side_effect = simulators
-        mock_session.region = SIMULATOR_REGION
-        mock_session.boto_session.region_name = SIMULATOR_REGION
-        mock_session.search_devices.return_value = simulators
+        self.mock_session.get_device.side_effect = simulators
+        self.mock_session.region = SIMULATOR_REGION
+        self.mock_session.boto_session.region_name = SIMULATOR_REGION
+        self.mock_session.search_devices.return_value = simulators
 
     def test_provider_backends(self):
         """Tests provider."""
