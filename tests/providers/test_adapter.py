@@ -3,9 +3,65 @@ from unittest import TestCase
 
 from braket.circuits import Circuit, FreeParameter, observables
 from braket.devices import LocalSimulator
+
 import numpy as np
+
 from qiskit import QuantumCircuit, execute, Aer
 from qiskit.circuit import Parameter
+from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.opflow import I, Z, X
+from qiskit.circuit.library.standard_gates import (
+    HGate,
+    CHGate,
+    IGate,
+    PhaseGate,
+    CPhaseGate,
+    RGate,
+    RXGate,
+    CRXGate,
+    RXXGate,
+    RYGate,
+    CRYGate,
+    RYYGate,
+    RZGate,
+    CRZGate,
+    RZZGate,
+    RZXGate,
+    XXMinusYYGate,
+    XXPlusYYGate,
+    ECRGate,
+    SGate,
+    SdgGate,
+    CSGate,
+    CSdgGate,
+    SwapGate,
+    CSwapGate,
+    iSwapGate,
+    SXGate,
+    SXdgGate,
+    CSXGate,
+    DCXGate,
+    TGate,
+    TdgGate,
+    UGate,
+    CUGate,
+    U1Gate,
+    CU1Gate,
+    U2Gate,
+    U3Gate,
+    CU3Gate,
+    XGate,
+    CXGate,
+    CCXGate,
+    C3SXGate,
+    RCCXGate,
+    RC3XGate,
+    YGate,
+    CYGate,
+    ZGate,
+    CZGate,
+    CCZGate,
+)
 
 from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuit,
@@ -16,129 +72,121 @@ from qiskit_braket_provider.providers.adapter import (
     wrap_circuits_in_verbatim_box,
 )
 
-from qiskit.circuit.library import PauliEvolutionGate
-from qiskit.opflow import I, Z, X
-
-from qiskit.circuit.library.standard_gates import (
-    HGate, CHGate, IGate, PhaseGate, CPhaseGate, MCPhaseGate, RGate, RXGate,
-    CRXGate, RXXGate, RYGate, CRYGate, RYYGate, RZGate, CRZGate, RZZGate,
-    RZXGate, XXMinusYYGate, XXPlusYYGate, ECRGate, SGate, SdgGate, CSGate,
-    CSdgGate, SwapGate, CSwapGate, iSwapGate, SXGate, SXdgGate, CSXGate,
-    DCXGate, TGate, TdgGate, UGate, CUGate, U1Gate, CU1Gate, MCU1Gate, U2Gate,
-    U3Gate, CU3Gate, XGate, CXGate, CCXGate, C3XGate, C3SXGate, C4XGate,
-    RCCXGate, RC3XGate, MCXGate, MCXGrayCode, MCXRecursive, MCXVChain, YGate,
-    CYGate, ZGate, CZGate, CCZGate
-)
-
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
-list_list = [[],[0], [0, 1], [0, 1, 2], [0,1,2,3], [0,1,2,3,4]]
+list_list = [[], [0], [0, 1], [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3, 4]]
 
 standard_gates = [
-        IGate(),
-        SXGate(),
-        XGate(),
-        CXGate(),
-        RZGate(Parameter("λ")),
-        RGate(Parameter("ϴ"), Parameter("φ")),
-        C3SXGate(),
-        CCXGate(),
-        DCXGate(),
-        CHGate(),
-        CPhaseGate(Parameter("ϴ")),
-        CRXGate(Parameter("ϴ")),
-        CRYGate(Parameter("ϴ")),
-        CRZGate(Parameter("ϴ")),
-        CSwapGate(),
-        CSXGate(),
-        CUGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ"), Parameter("γ")),
-        CU1Gate(Parameter("λ")),
-        CU3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
-        CYGate(),
-        CZGate(),
-        CCZGate(),
-        HGate(),
-        PhaseGate(Parameter("ϴ")),
-        RCCXGate(),
-        RC3XGate(),
-        RXGate(Parameter("ϴ")),
-        RXXGate(Parameter("ϴ")),
-        RYGate(Parameter("ϴ")),
-        RYYGate(Parameter("ϴ")),
-        RZZGate(Parameter("ϴ")),
-        RZXGate(Parameter("ϴ")),
-        XXMinusYYGate(Parameter("ϴ")),
-        XXPlusYYGate(Parameter("ϴ")),
-        ECRGate(),
-        SGate(),
-        SdgGate(),
-        CSGate(),
-        CSdgGate(),
-        SwapGate(),
-        iSwapGate(),
-        SXdgGate(),
-        TGate(),
-        TdgGate(),
-        UGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
-        U1Gate(Parameter("λ")),
-        U2Gate(Parameter("φ"), Parameter("λ")),
-        U3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
-        YGate(),
-        ZGate()
-    ]
+    IGate(),
+    SXGate(),
+    XGate(),
+    CXGate(),
+    RZGate(Parameter("λ")),
+    RGate(Parameter("ϴ"), Parameter("φ")),
+    C3SXGate(),
+    CCXGate(),
+    DCXGate(),
+    CHGate(),
+    CPhaseGate(Parameter("ϴ")),
+    CRXGate(Parameter("ϴ")),
+    CRYGate(Parameter("ϴ")),
+    CRZGate(Parameter("ϴ")),
+    CSwapGate(),
+    CSXGate(),
+    CUGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ"), Parameter("γ")),
+    CU1Gate(Parameter("λ")),
+    CU3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
+    CYGate(),
+    CZGate(),
+    CCZGate(),
+    HGate(),
+    PhaseGate(Parameter("ϴ")),
+    RCCXGate(),
+    RC3XGate(),
+    RXGate(Parameter("ϴ")),
+    RXXGate(Parameter("ϴ")),
+    RYGate(Parameter("ϴ")),
+    RYYGate(Parameter("ϴ")),
+    RZZGate(Parameter("ϴ")),
+    RZXGate(Parameter("ϴ")),
+    XXMinusYYGate(Parameter("ϴ")),
+    XXPlusYYGate(Parameter("ϴ")),
+    ECRGate(),
+    SGate(),
+    SdgGate(),
+    CSGate(),
+    CSdgGate(),
+    SwapGate(),
+    iSwapGate(),
+    SXdgGate(),
+    TGate(),
+    TdgGate(),
+    UGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
+    U1Gate(Parameter("λ")),
+    U2Gate(Parameter("φ"), Parameter("λ")),
+    U3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
+    YGate(),
+    ZGate(),
+]
 
 
 class TestAdapter(TestCase):
     """Tests adapter."""
 
     def test_state_preparation_01(self):
-        "Tests state_preparation handling of Adapter"
-        input_state_vector = np.array([np.sqrt(3)/2, np.sqrt(2)*complex(1,1)/4])
+        """Tests state_preparation handling of Adapter"""
+        input_state_vector = np.array([np.sqrt(3) / 2, np.sqrt(2) * complex(1, 1) / 4])
 
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
-        braket_circuit.state_vector()
-
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
         self.assertTrue(
-            (np.sqrt(np.sum(np.square(np.abs(input_state_vector - output_state_vector)))) < _EPS)
+            (
+                np.sqrt(
+                    np.sum(np.square(np.abs(input_state_vector - output_state_vector)))
+                )
+                < _EPS
+            )
         )
 
     def test_state_preparation_00(self):
-        "Tests state_preparation handling of Adapter"
-        input_state_vector = np.array([1/np.sqrt(2), -1/np.sqrt(2)])
-        
+        """Tests state_preparation handling of Adapter"""
+        input_state_vector = np.array([1 / np.sqrt(2), -1 / np.sqrt(2)])
+
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        #Note that the function convert_qiskit_to_braket_circuit
-        #operates under the assumption that the qubit it is operating on
-        #is originally in the zero state
+        # Note that the function convert_qiskit_to_braket_circuit
+        # operates under the assumption that the qubit it is operating on
+        # is originally in the zero state
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
-        braket_circuit.state_vector()
-
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
         self.assertTrue(
-            (np.sqrt(np.sum(np.square(np.abs(input_state_vector - output_state_vector)))) < _EPS)
+            (
+                np.sqrt(
+                    np.sum(np.square(np.abs(input_state_vector - output_state_vector)))
+                )
+                < _EPS
+            )
         )
 
     def test_u_gate(self):
+        """Tests adapter conversion of u gate"""
         qiskit_circuit = QuantumCircuit(1)
         device = LocalSimulator()
         for _ in range(8):
-            qiskit_circuit.u(np.pi/2, np.pi/3, np.pi/4, 0)
+            qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
 
-            simulator = Aer.get_backend('statevector_simulator')
+            simulator = Aer.get_backend("statevector_simulator")
             job = execute(qiskit_circuit, simulator)
 
             braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
-            braket_circuit.state_vector()
 
             braket_output = device.run(braket_circuit).result().values[0]
             qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
@@ -148,16 +196,21 @@ class TestAdapter(TestCase):
             )
 
     def test_standard_gate_decomp(self):
+        """Tests adapter decomposition of all standard gates to forms that can be translated"""
         translatable = True
         for standard_gate in standard_gates:
             circuit = QuantumCircuit(5)
-            circuit.append(standard_gate,list_list[standard_gate.num_qubits])
+            circuit.append(standard_gate, list_list[standard_gate.num_qubits])
             decomp_circuit = decompose_fully(circuit)
             for simple_gate in decomp_circuit.data:
-                translatable = translatable and simple_gate[0].name in qiskit_gate_names_to_braket_gates.keys()
+                translatable = (
+                    translatable
+                    and simple_gate[0].name in qiskit_gate_names_to_braket_gates
+                )
         self.assertTrue(translatable)
 
     def test_exponential_gate_decomp_00(self):
+        """Tests adapter decomposition of exponential gates to forms that can be translated"""
         translatable = True
 
         operator = (Z ^ Z) - 0.1 * (X ^ I)
@@ -168,7 +221,10 @@ class TestAdapter(TestCase):
         circuit.append(evo, range(2))
         decomp_circuit = decompose_fully(circuit)
         for simple_gate in decomp_circuit.data:
-            translatable = translatable and simple_gate[0].name in qiskit_gate_names_to_braket_gates.keys()
+            translatable = (
+                translatable
+                and simple_gate[0].name in qiskit_gate_names_to_braket_gates
+            )
         self.assertTrue(translatable)
 
     def test_mappers(self):
@@ -201,16 +257,16 @@ class TestAdapter(TestCase):
             .rz(0, FreeParameter("λ"))
             .ry(0, FreeParameter("θ"))
             .rz(0, FreeParameter("φ"))
-            .phaseshift(0, (FreeParameter("φ")+FreeParameter("λ")) * (0.5))
+            .phaseshift(0, (FreeParameter("φ") + FreeParameter("λ")) * (0.5))
             .x(0)
-            .phaseshift(0, (FreeParameter("φ")+FreeParameter("λ")) * (0.5))
+            .phaseshift(0, (FreeParameter("φ") + FreeParameter("λ")) * (0.5))
             .x(0)
             .rz(0, np.pi)
             .ry(0, FreeParameter("θ"))
             .rz(0, FreeParameter("φ"))
-            .phaseshift(0, (FreeParameter("φ")+np.pi) * (0.5))
+            .phaseshift(0, (FreeParameter("φ") + np.pi) * (0.5))
             .x(0)
-            .phaseshift(0, (FreeParameter("φ")+np.pi) * (0.5))
+            .phaseshift(0, (FreeParameter("φ") + np.pi) * (0.5))
             .x(0)
         )
 
