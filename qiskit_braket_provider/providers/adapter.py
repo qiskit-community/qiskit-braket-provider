@@ -233,6 +233,28 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
     return target
 
 
+def convert_continuous_qubit_indices(connectivity_graph: dict) -> dict:
+    """Aspen qubit indices are discontinuous (label between x0 and x7, x being the number of the
+    octagon) while the Qiskit transpiler creates and/or handles coupling maps with continuous indices.
+    This function converts the discontinous connectivity graph from Aspen to a continuous one.
+
+    Args:
+        connectivity_graph (dict): connectivity graph from Aspen
+
+    Returns:
+        dict: Connectivity graph
+    """
+    indices = [int(key) for key in connectivity_graph.keys()]
+    indices.sort()
+    map_list = list(range(0, indices[-1] + 1))
+    mapper = dict(zip(indices, map_list))
+    final_dict = {
+        mapper[int(k)]: [mapper[int(v)] for v in val]
+        for k, val in connectivity_graph.items()
+    }
+    return final_dict
+
+
 def aws_device_to_target(device: AwsDevice) -> Target:
     """Converts properties of Braket device into Qiskit Target object.
 
@@ -293,6 +315,13 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                                 instruction_props[(dst, src)] = None
                 # building coupling map for device with connectivity graph
                 else:
+                    if isinstance(properties, RigettiDeviceCapabilities):
+                        connectivity.connectivityGraph = (
+                            convert_continuous_qubit_indices(
+                                connectivity.connectivityGraph
+                            )
+                        )
+
                     for src, connections in connectivity.connectivityGraph.items():
                         for dst in connections:
                             instruction_props[(int(src), int(dst))] = None
