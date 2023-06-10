@@ -4,9 +4,9 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from braket.aws import AwsDeviceType
-from qiskit import transpile
+from qiskit import circuit as qiskit_circuit
 from qiskit.circuit.random import random_circuit
-
+from qiskit.compiler import transpile
 from qiskit_braket_provider.providers import AWSBraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
     BraketBackend,
@@ -68,4 +68,18 @@ class TestAWSBraketProvider(TestCase):
             circuit, backend=state_vector_backend, seed_transpiler=42
         )
         result = state_vector_backend.run(transpiled_circuit, shots=10)
+        self.assertTrue(result)
+
+    @unittest.skip("Call to external service")
+    def test_real_device_discontinous_qubit_indices_qiskit_transpilation(self):
+        """Tests circuit transpilation on real device with discontinous qubit indices."""
+        provider = AWSBraketProvider()
+        device = provider.get_backend("Aspen-M-3")
+
+        circ = qiskit_circuit.QuantumCircuit(3)
+        circ.h(0)
+        circ.cx(0, 1)
+        circ.cx(1, 2)
+
+        result = transpile(circ, device)
         self.assertTrue(result)
