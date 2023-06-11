@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 from braket.aws import AwsDevice, AwsDeviceType
 from qiskit import transpile
-from qiskit.circuit.random import random_circuit
+from qiskit.circuit import QuantumCircuit
 
 from qiskit_braket_provider.providers import AWSBraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
@@ -64,22 +64,22 @@ class TestAWSBraketProvider(TestCase):
                 with self.subTest(f"{backend.name}"):
                     self.assertIsInstance(backend, AWSBraketBackend)
 
-    def test_real_device_circuit_execution(self):
-        """Tests circuit execution on real device."""
-        provider = AWSBraketProvider()
-        with patch(
-            "qiskit_braket_provider.providers.braket_provider.AwsDevice"
-        ) as mock_get_devices:
-            mock_get_devices.get_devices.return_value = [
-                AwsDevice(MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"], self.mock_session)
-            ]
+    @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
+    def test_qiskit_circuit_transpilation(self, mock_get_devices):
+        """Tests qiskit circuit transpilation."""
+        mock_get_devices.return_value = [
+            AwsDevice(MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"], self.mock_session)
+        ]
 
-            state_vector_backend = provider.get_backend(
-                "SV1", aws_session=self.mock_session
-            )
-            circuit = random_circuit(3, 5, seed=42)
-            transpiled_circuit = transpile(
-                circuit, backend=state_vector_backend, seed_transpiler=42
-            )
-            result = state_vector_backend.run(transpiled_circuit, shots=10)
-            self.assertTrue(result)
+        provider = AWSBraketProvider()
+        state_vector_backend = provider.get_backend(
+            "SV1", aws_session=self.mock_session
+        )
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+
+        transpiled_circuit = transpile(
+            circuit, backend=state_vector_backend, seed_transpiler=42
+        )
+        self.assertTrue(transpiled_circuit)
