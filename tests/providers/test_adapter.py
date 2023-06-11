@@ -6,7 +6,7 @@ from braket.devices import LocalSimulator
 
 import numpy as np
 
-from qiskit import QuantumCircuit, execute, Aer
+from qiskit import QuantumCircuit, execute, BasicAer
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.opflow import I, Z, X
@@ -141,6 +141,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit.state_vector()  # pylint: disable=no-member
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
@@ -160,10 +161,8 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        # Note that the function convert_qiskit_to_braket_circuit
-        # operates under the assumption that the qubit it is operating on
-        # is originally in the zero state
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit.state_vector()  # pylint: disable=no-member
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
@@ -183,10 +182,11 @@ class TestAdapter(TestCase):
         for _ in range(8):
             qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
 
-            simulator = Aer.get_backend("statevector_simulator")
-            job = execute(qiskit_circuit, simulator)
+            backend = BasicAer.get_backend("statevector_simulator")
+            job = execute(qiskit_circuit, backend)
 
             braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+            braket_circuit.state_vector()  # pylint: disable=no-member
 
             braket_output = device.run(braket_circuit).result().values[0]
             qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))

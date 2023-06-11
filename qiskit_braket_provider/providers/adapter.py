@@ -366,15 +366,18 @@ def decompose_fully(circuit: QuantumCircuit) -> QuantumCircuit:
     """
     old_circuit, decomposed_circuit = None, circuit
     translatable_gates = set(qiskit_gate_names_to_braket_gates.keys())
-    translatable_gates = translatable_gates.union({"measure", "barrier"})
+    translatable_gates = translatable_gates.union({"measure", "barrier", "reset"})
     # decompose quantum circuit
     while not (
         {gate.name for gate, _, _ in decomposed_circuit.data}.issubset(
             translatable_gates
         )
+        and not (old_circuit == decomposed_circuit)
     ):
         old_circuit = decomposed_circuit
         decomposed_circuit = old_circuit.decompose()
+        if old_circuit == decomposed_circuit:
+            break
     # correct global_phase shifts which might have occurred
     global_phase = decomposed_circuit.global_phase
     if global_phase != 0:
@@ -395,8 +398,11 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
         Circuit: Braket circuit
     """
     quantum_circuit = Circuit()
-    circuit = decompose_fully(circuit)
-    # all standard gates are fully decomposed so that dictionary replacement can
+    translatable_gates = set(qiskit_gate_names_to_braket_gates.keys()).union(
+        {"measure", "barrier", "reset"}
+    )
+    if not ({gate.name for gate, _, _ in circuit.data}.issubset(translatable_gates)):
+        circuit = decompose_fully(circuit)
     # handle qiskit to braket conversion
     for qiskit_gates in circuit.data:
         name = qiskit_gates[0].name
