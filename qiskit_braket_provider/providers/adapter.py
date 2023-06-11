@@ -24,7 +24,9 @@ from braket.device_schema.simulators import (
     GateModelSimulatorParadigmProperties,
 )
 from braket.devices import LocalSimulator
+
 from numpy import pi
+
 from qiskit import QuantumCircuit
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import Measure, Parameter
@@ -99,21 +101,25 @@ qiskit_to_braket_gate_names_mapping = {
 
 
 qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
-    "u": lambda theta, phi, lam: [
-        gates.Rz(lam),
-        gates.Rx(pi / 2),
-        gates.Rz(theta),
-        gates.Rx(-pi / 2),
-        gates.Rz(phi),
-    ],
     "u1": lambda lam: [gates.Rz(lam)],
     "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(pi / 2), gates.Rz(phi)],
     "u3": lambda theta, phi, lam: [
         gates.Rz(lam),
-        gates.Rx(pi / 2),
-        gates.Rz(theta),
-        gates.Rx(-pi / 2),
+        gates.Ry(theta),
         gates.Rz(phi),
+        gates.PhaseShift((lam + phi) * (0.5)),
+        gates.X(),
+        gates.PhaseShift((lam + phi) * (0.5)),
+        gates.X(),
+    ],
+    "u": lambda theta, phi, lam: [
+        gates.Rz(lam),
+        gates.Ry(theta),
+        gates.Rz(phi),
+        gates.PhaseShift((lam + phi) * (0.5)),
+        gates.X(),
+        gates.PhaseShift((lam + phi) * (0.5)),
+        gates.X(),
     ],
     "p": lambda angle: [gates.PhaseShift(angle)],
     "cp": lambda angle: [gates.CPhaseShift(angle)],
@@ -352,6 +358,39 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     return target
 
 
+def decompose_fully(circuit: QuantumCircuit) -> QuantumCircuit:
+    """Returns a qiskit circuit which is decomposed as much as possible.
+    Args:
+            circuit (QuantumCircuit): Qiskit Quantum Cricuit
+
+    Returns:
+        QuantumCircuit: decomposed Qiskit circuit
+    """
+    old_circuit, decomposed_circuit = None, circuit
+    translatable_gates = set(qiskit_gate_names_to_braket_gates.keys())
+    translatable_gates = translatable_gates.union({"measure", "barrier", "reset"})
+    # decompose quantum circuit
+    while not (
+        {gate.name for gate, _, _ in decomposed_circuit.data}.issubset(
+            translatable_gates
+        )
+        and not (old_circuit == decomposed_circuit)
+    ):
+        old_circuit = decomposed_circuit
+        decomposed_circuit = old_circuit.decompose()
+        if old_circuit == decomposed_circuit:
+            break
+    # correct global_phase shifts which might have occurred
+    global_phase = decomposed_circuit.global_phase
+    if global_phase != 0:
+        decomposed_circuit.p(global_phase, range(decomposed_circuit.num_qubits))
+        decomposed_circuit.x(range(decomposed_circuit.num_qubits))
+        decomposed_circuit.p(global_phase, range(decomposed_circuit.num_qubits))
+        decomposed_circuit.x(range(decomposed_circuit.num_qubits))
+        decomposed_circuit.global_phase = 0
+    return decomposed_circuit
+
+
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
@@ -361,6 +400,12 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
         Circuit: Braket circuit
     """
     quantum_circuit = Circuit()
+    translatable_gates = set(qiskit_gate_names_to_braket_gates.keys()).union(
+        {"measure", "barrier", "reset"}
+    )
+    if not ({gate.name for gate, _, _ in circuit.data}.issubset(translatable_gates)):
+        circuit = decompose_fully(circuit)
+    # handle qiskit to braket conversion
     for qiskit_gates in circuit.data:
         name = qiskit_gates[0].name
         if name == "measure":
