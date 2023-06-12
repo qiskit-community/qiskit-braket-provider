@@ -4,5 +4,6 @@ from .providers import (
     AWSBraketProvider,
     AmazonBraketTask,
     AWSBraketBackend,
+    AWSBraketJob,
     BraketLocalBackend,
 )
