@@ -13,7 +13,6 @@ from retrying import retry
 from warnings import warn
 
 
-    
 def retry_if_result_none(result):
     """Retry on result function."""
     return result is None
@@ -87,7 +86,7 @@ class AmazonBraketTask(JobV1):
         job_id: str,
         backend: BackendV2,
         tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
-        **metadata: Optional[dict]
+        **metadata: Optional[dict],
     ):
         """AmazonBraketTask for local execution of circuits.
 
@@ -151,15 +150,17 @@ class AmazonBraketTask(JobV1):
         return status
 
 
-
 class AWSBraketJob(AmazonBraketTask):
-
     def __init_subclass__(cls, **kwargs):
         """This throws a deprecation warning on subclassing."""
-        warn(f'{cls.__name__} is deprecated.', DeprecationWarning, stacklevel=2)
+        warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
         super().__init_subclass__(**kwargs)
 
     def __init__(self, *args, **kwargs):
         """This throws a deprecation warning on initialization."""
-        warn(f'{self.__class__.__name__} is deprecated.', DeprecationWarning, stacklevel=2)
+        warn(
+            f"{self.__class__.__name__} is deprecated.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(*args, **kwargs)
