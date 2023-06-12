@@ -10,8 +10,10 @@ from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from retrying import retry
+from warnings import warn
 
 
+    
 def retry_if_result_none(result):
     """Retry on result function."""
     return result is None
@@ -147,3 +149,17 @@ class AmazonBraketTask(JobV1):
             status = JobStatus.RUNNING
 
         return status
+
+
+
+class AWSBraketJob(AmazonBraketTask):
+
+    def __init_subclass__(cls, **kwargs):
+        """This throws a deprecation warning on subclassing."""
+        warn(f'{cls.__name__} is deprecated.', DeprecationWarning, stacklevel=2)
+        super().__init_subclass__(**kwargs)
+
+    def __init__(self, *args, **kwargs):
+        """This throws a deprecation warning on initialization."""
+        warn(f'{self.__class__.__name__} is deprecated.', DeprecationWarning, stacklevel=2)
+        super().__init__(*args, **kwargs)
