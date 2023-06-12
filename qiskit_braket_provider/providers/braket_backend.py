@@ -125,10 +125,10 @@ class BraketLocalBackend(BraketBackend):
                 logger.error("State of %s: %s.", task.id, task.state())
             raise ex
 
-        job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+        task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(
-            job_id=job_id,
+            task_id=task_id,
             tasks=tasks,
             backend=self,
             shots=shots,
@@ -179,19 +179,19 @@ class AWSBraketBackend(BraketBackend):
         self._device = device
         self._target = aws_device_to_target(device=device)
 
-    def retrieve_job(self, job_id: str) -> AmazonBraketTask:
+    def retrieve_job(self, task_id: str) -> AmazonBraketTask:
         """Return a single job submitted to AWS backend.
 
         Args:
-            job_id: ID of the job to retrieve.
+            task_id: ID of the task to retrieve.
 
         Returns:
             The job with the given ID.
         """
-        task_ids = job_id.split(TASK_ID_DIVIDER)
+        task_ids = task_id.split(TASK_ID_DIVIDER)
 
         return AmazonBraketTask(
-            job_id=job_id,
+            task_id=task_id,
             backend=self,
             tasks=[AwsQuantumTask(arn=task_id) for task_id in task_ids],
         )
@@ -253,8 +253,8 @@ class AWSBraketBackend(BraketBackend):
             braket_circuits, **options
         )
         tasks: List[AwsQuantumTask] = batch_task.tasks
-        job_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+        task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(
-            job_id=job_id, tasks=tasks, backend=self, shots=options.get("shots")
+            task_id=task_id, tasks=tasks, backend=self, shots=options.get("shots")
         )

@@ -14,7 +14,7 @@ class TestAmazonBraketTask(TestCase):
     def _get_job(self):
         return AmazonBraketTask(
             backend=BraketLocalBackend(name="default"),
-            job_id="AwesomeId",
+            task_id="AwesomeId",
             tasks=[MOCK_LOCAL_QUANTUM_TASK],
             shots=10,
         )
@@ -32,7 +32,7 @@ class TestAmazonBraketTask(TestCase):
         """Tests result."""
         job = self._get_job()
 
-        self.assertEqual(job.result().job_id, "AwesomeId")
+        self.assertEqual(job.result().task_id, "AwesomeId")
         self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
         self.assertEqual(job.result().results[0].data.memory, ["10", "10", "01"])
         self.assertEqual(job.result().results[0].status, "COMPLETED")

@@ -83,7 +83,7 @@ class AmazonBraketTask(JobV1):
 
     def __init__(
         self,
-        job_id: str,
+        task_id: str,
         backend: BackendV2,
         tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
         **metadata: Optional[dict],
@@ -91,13 +91,13 @@ class AmazonBraketTask(JobV1):
         """AmazonBraketTask for local execution of circuits.
 
         Args:
-            job_id: id of the job
+            task_id: id of the task
             backend: Local simulator
             tasks: Executed tasks
             **metadata:
         """
-        super().__init__(backend=backend, job_id=job_id, metadata=metadata)
-        self._job_id = job_id
+        super().__init__(backend=backend, task_id=task_id, metadata=metadata)
+        self._task_id = task_id
         self._backend = backend
         self._metadata = metadata
         self._tasks = tasks
@@ -124,7 +124,7 @@ class AmazonBraketTask(JobV1):
         return Result(
             backend_name=self._backend,
             backend_version=self._backend.version,
-            job_id=self._job_id,
+            task_id=self._task_id,
             qobj_id=0,
             success=self.status() not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
             results=experiment_results,
