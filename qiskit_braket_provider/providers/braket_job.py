@@ -136,13 +136,13 @@ class AmazonBraketTask(JobV1):
             task.cancel()
 
     def status(self):
-        braket_tasks_states = [task.state() for task in self._tasks]
+        braket_jobs_states = [task.state() for task in self._tasks]
 
-        if "FAILED" in braket_tasks_states:
+        if "FAILED" in braket_jobs_states:
             status = JobStatus.ERROR
-        elif "CANCELLED" in braket_tasks_states:
+        elif "CANCELLED" in braket_jobs_states:
             status = JobStatus.CANCELLED
-        elif all(state == "COMPLETED" for state in braket_tasks_states):
+        elif all(state == "COMPLETED" for state in braket_jobs_states):
             status = JobStatus.DONE
         else:
             status = JobStatus.RUNNING
