@@ -96,7 +96,7 @@ class AmazonBraketTask(JobV1):
             tasks: Executed tasks
             **metadata:
         """
-        super().__init__(backend=backend, task_id=task_id, metadata=metadata)
+        super().__init__(backend=backend, job_id=task_id, metadata=metadata)
         self._task_id = task_id
         self._backend = backend
         self._metadata = metadata
@@ -128,7 +128,7 @@ class AmazonBraketTask(JobV1):
         return Result(
             backend_name=self._backend,
             backend_version=self._backend.version,
-            task_id=self._task_id,
+            job_id=self._task_id,
             qobj_id=0,
             success=self.status() not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
             results=experiment_results,
@@ -160,11 +160,32 @@ class AWSBraketJob(AmazonBraketTask):
         warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
         super().__init_subclass__(**kwargs)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        job_id: str,
+        backend: BackendV2,
+        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
+        **metadata: Optional[dict],
+    ):
         """This throws a deprecation warning on initialization."""
         warn(
             f"{self.__class__.__name__} is deprecated.",
             DeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(*args, **kwargs)
+        """AWSBraketJob for local execution of circuits.
+
+        Args:
+            jobs_id: id of the task
+            backend: Local simulator
+            tasks: Executed tasks
+            **metadata:
+        """
+        super().__init__(
+            task_id=job_id, backend=backend, tasks=tasks, metadata=metadata
+        )
+        self._job_id = job_id
+        self._backend = backend
+        self._metadata = metadata
+        self._tasks = tasks
+        self._date_of_creation = datetime.now()
