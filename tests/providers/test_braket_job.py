@@ -66,7 +66,7 @@ class TestAWSBraketJob(TestCase):
 
     def test_AWS_result(self):
         """Tests result."""
-        job= self._get_job()
+        job = self._get_job()
 
         self.assertEqual(job.result().job_id, "AwesomeId")
         self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
