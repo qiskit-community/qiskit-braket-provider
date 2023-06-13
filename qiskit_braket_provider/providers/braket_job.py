@@ -2,6 +2,7 @@
 import os
 from datetime import datetime
 from typing import List, Optional, Union
+from warnings import warn
 
 from braket.aws import AwsQuantumTask
 from braket.tasks import GateModelQuantumTaskResult
@@ -10,7 +11,6 @@ from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from retrying import retry
-from warnings import warn
 
 
 def retry_if_result_none(result):
@@ -156,6 +156,7 @@ class AmazonBraketTask(JobV1):
 
 class AWSBraketJob(AmazonBraketTask):
     """AWSBraketJob."""
+
     def __init_subclass__(cls, **kwargs):
         """This throws a deprecation warning on subclassing."""
         warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
@@ -174,14 +175,6 @@ class AWSBraketJob(AmazonBraketTask):
             DeprecationWarning,
             stacklevel=2,
         )
-        """AWSBraketJob for local execution of circuits.
-
-        Args:
-            job_id: id of the job
-            backend: Local simulator
-            tasks: Executed tasks
-            **metadata:
-        """
         super().__init__(task_id=job_id, backend=backend, tasks=tasks, **metadata)
         self._job_id = job_id
         self._backend = backend
