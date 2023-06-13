@@ -2,7 +2,7 @@
 
 from .providers import (
     AWSBraketProvider,
-    AWSBraketJob,
+    AmazonBraketTask,
     AWSBraketBackend,
     BraketLocalBackend,
 )
