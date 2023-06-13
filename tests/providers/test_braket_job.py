@@ -61,7 +61,8 @@ class TestAWSBraketJob(TestCase):
 
         self.assertTrue(isinstance(job, AWSBraketJob))
         self.assertEqual(job.shots, 10)
-
+        
+        self.assertEqual(job.result().job_id, "AwesomeId")
         self.assertEqual(job.status(), JobStatus.DONE)
 
     def test_AWS_result(self):
