@@ -176,14 +176,12 @@ class AWSBraketJob(AmazonBraketTask):
         """AWSBraketJob for local execution of circuits.
 
         Args:
-            jobs_id: id of the task
+            job_id: id of the job
             backend: Local simulator
             tasks: Executed tasks
             **metadata:
         """
-        super().__init__(
-            task_id=job_id, backend=backend, tasks=tasks, metadata=metadata
-        )
+        super().__init__(job_id, backend, tasks, **metadata)
         self._job_id = job_id
         self._backend = backend
         self._metadata = metadata
