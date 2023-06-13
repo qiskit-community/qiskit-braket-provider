@@ -24,11 +24,11 @@ When submitting a pull request and you feel it is ready for review,
 please ensure that:
 
 1. The code follows the _code style_ of this project and successfully
-   passes the _unit tests_. Machine Learning uses [Pylint](https://www.pylint.org) and
+   passes the _unit tests_. This project uses [Pylint](https://www.pylint.org) and
    [PEP8](https://www.python.org/dev/peps/pep-0008) style guidelines.
    
    You can run
    ```shell script
-   make lint
+   tox -elint
    ```
    from the root of the repository clone for lint conformance checks.
