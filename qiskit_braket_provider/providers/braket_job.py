@@ -119,6 +119,10 @@ class AmazonBraketTask(JobV1):
     def submit(self):
         return
 
+    def task_id(self) -> str:
+        """Return a unique id identifying the task."""
+        return self._task_id
+
     def result(self) -> Result:
         experiment_results = _get_result_from_aws_tasks(tasks=self._tasks)
         return Result(
