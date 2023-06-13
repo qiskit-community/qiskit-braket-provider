@@ -155,6 +155,7 @@ class AmazonBraketTask(JobV1):
 
 
 class AWSBraketJob(AmazonBraketTask):
+    """AWSBraketJob."""
     def __init_subclass__(cls, **kwargs):
         """This throws a deprecation warning on subclassing."""
         warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
