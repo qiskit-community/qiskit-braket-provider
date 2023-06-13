@@ -181,7 +181,7 @@ class AWSBraketJob(AmazonBraketTask):
             tasks: Executed tasks
             **metadata:
         """
-        super().__init__(job_id, backend, tasks, **metadata)
+        super().__init__(task_id=job_id, backend=backend, tasks=tasks, **metadata)
         self._job_id = job_id
         self._backend = backend
         self._metadata = metadata
