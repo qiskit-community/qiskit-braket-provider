@@ -56,7 +56,7 @@ class TestAWSBraketJob(TestCase):
         )
 
     def test_AWS_job(self):
-        """Tests job"""
+        """Tests job."""
         job = self._get_job()
 
         self.assertTrue(isinstance(job, AWSBraketJob))
