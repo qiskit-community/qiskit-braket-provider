@@ -13,7 +13,6 @@ from retrying import retry
 from deprecated import deprecated
 
 
-
 def retry_if_result_none(result):
     """Retry on result function."""
     return result is None
@@ -138,8 +137,10 @@ class AmazonBraketTask(JobV1):
 
         return status
 
+
 @deprecated("AWSBraketJob is deprecated. Use AmazonBraketTask instead.")
 class AWSBraketJob:
     pass
+
 
 AWSBraketJob = AmazonBraketTask
