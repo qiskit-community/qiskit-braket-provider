@@ -424,15 +424,20 @@ def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
     """
     
     num_qubits = circuit.qubit_count
-    quantum_circuit = QuantumCircuit(num_qubits)
+    quantum_circuit = QuantumCircuit(num_qubits, num_qubits)
     
-    from qiskit.circuit import CircuitInstruction
-    from qiskit.circuit import Instruction
-    from qiskit.circuit import Qubit, Clbit, QuantumRegister, ClassicalRegister
+    from qiskit.circuit import CircuitInstruction, Instruction
         
     for circ_instruction in circuit.instructions:
         operator = circ_instruction.operator
         instruction = _op_to_instruction(operator.name)
+
+        if hasattr(operator, "angle"):
+            if isinstance(operator.angle, FreeParameter):
+                instruction.params = [Parameter(operator.angle.name)]
+            else:
+                instruction.params = [operator.angle]
+
         quantum_circuit.append(instruction, circ_instruction.target)
         
     for result_type in circuit.result_types:
