@@ -214,7 +214,7 @@ class TestAWSBraketBackend(TestCase):
 
     @unittest.skip("Call to external resources.")
     def test_retrieve_job(self):
-        """Tests retrieve job by id."""
+        """Tests retrieve task by id."""
         backend = AWSBraketProvider().get_backend("SV1")
         circuits = [
             transpile(
@@ -223,13 +223,13 @@ class TestAWSBraketBackend(TestCase):
             for seed in range(3)
         ]
         job = backend.run(circuits, shots=10)
-        job_id = job.job_id()
-        retrieved_job = backend.retrieve_job(job_id)
+        task_id = job.task_id()
+        retrieved_job = backend.retrieve_job(task_id)
 
         job_result: Result = job.result()
         retrieved_job_result: Result = retrieved_job.result()
 
-        self.assertEqual(job_result.job_id, retrieved_job_result.job_id)
+        self.assertEqual(job_result.task_id, retrieved_job_result.task_id)
         self.assertEqual(job_result.status, retrieved_job_result.status)
         self.assertEqual(
             job_result.backend_version, retrieved_job_result.backend_version
