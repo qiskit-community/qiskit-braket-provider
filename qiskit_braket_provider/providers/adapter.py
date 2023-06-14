@@ -7,6 +7,8 @@ from braket.circuits import (
     FreeParameter,
     Instruction,
     Gate,
+    Qubit,
+    QubitSet,
     gates,
     result_types,
     observables,
