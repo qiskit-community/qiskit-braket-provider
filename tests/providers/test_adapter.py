@@ -10,6 +10,7 @@ from qiskit import QuantumCircuit, execute, BasicAer
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.opflow import I, Z, X
+
 from qiskit.circuit.library.standard_gates import (
     HGate,
     CHGate,
@@ -44,7 +45,6 @@ from qiskit.circuit.library.standard_gates import (
     TGate,
     TdgGate,
     UGate,
-    CUGate,
     U1Gate,
     CU1Gate,
     U2Gate,
@@ -65,16 +65,17 @@ from qiskit.circuit.library.standard_gates import (
 
 from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuit,
-    decompose_fully,
     qiskit_gate_name_to_braket_gate_mapping,
     qiskit_gate_names_to_braket_gates,
     qiskit_to_braket_gate_names_mapping,
     wrap_circuits_in_verbatim_box,
 )
 
+from tests.providers.test_braket_backend import combine_dicts
+
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
-list_list = [[], [0], [0, 1], [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3, 4]]
+std_gate_qubits_list = [[], [0], [0, 1], [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3, 4]]
 
 standard_gates = [
     IGate(),
@@ -93,7 +94,8 @@ standard_gates = [
     CRZGate(Parameter("ϴ")),
     CSwapGate(),
     CSXGate(),
-    CUGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ"), Parameter("γ")),
+    # CUGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ"), Parameter("γ")), qiskit's
+    # assign_parameter method not working for this gate as of 6/13/2023
     CU1Gate(Parameter("λ")),
     CU3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
     CYGate(),
@@ -108,10 +110,10 @@ standard_gates = [
     RYGate(Parameter("ϴ")),
     RYYGate(Parameter("ϴ")),
     RZZGate(Parameter("ϴ")),
-    RZXGate(Parameter("ϴ")),
+    # RZXGate(Parameter("ϴ")), braket treats q0 as q1 and q0 as q1 after translating with this gate
     XXMinusYYGate(Parameter("ϴ")),
     XXPlusYYGate(Parameter("ϴ")),
-    ECRGate(),
+    # ECRGate(), braket treats q0 as q1 and q0 as q1 after translating with this gate
     SGate(),
     SdgGate(),
     CSGate(),
@@ -128,6 +130,8 @@ standard_gates = [
     YGate(),
     ZGate(),
 ]
+
+flipped_gates = [RZXGate(Parameter("ϴ")), ECRGate()]
 
 
 class TestAdapter(TestCase):
@@ -146,12 +150,7 @@ class TestAdapter(TestCase):
         output_state_vector = np.array(result.result().values[0])
 
         self.assertTrue(
-            (
-                np.sqrt(
-                    np.sum(np.square(np.abs(input_state_vector - output_state_vector)))
-                )
-                < _EPS
-            )
+            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
         )
 
     def test_state_preparation_00(self):
@@ -167,22 +166,17 @@ class TestAdapter(TestCase):
         output_state_vector = np.array(result.result().values[0])
 
         self.assertTrue(
-            (
-                np.sqrt(
-                    np.sum(np.square(np.abs(input_state_vector - output_state_vector)))
-                )
-                < _EPS
-            )
+            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
         )
 
     def test_u_gate(self):
         """Tests adapter conversion of u gate"""
         qiskit_circuit = QuantumCircuit(1)
+        backend = BasicAer.get_backend("statevector_simulator")
         device = LocalSimulator()
         for _ in range(8):
             qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
 
-            backend = BasicAer.get_backend("statevector_simulator")
             job = execute(qiskit_circuit, backend)
 
             braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
@@ -191,41 +185,152 @@ class TestAdapter(TestCase):
             braket_output = device.run(braket_circuit).result().values[0]
             qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
 
-            self.assertTrue(
-                np.sqrt(np.sum(np.square(np.abs(braket_output - qiskit_output)))) < _EPS
-            )
+            self.assertTrue(np.linalg.norm(braket_output - qiskit_output) < _EPS)
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
-        translatable = True
-        for standard_gate in standard_gates:
-            circuit = QuantumCircuit(5)
-            circuit.append(standard_gate, list_list[standard_gate.num_qubits])
-            decomp_circuit = decompose_fully(circuit)
-            for simple_gate in decomp_circuit.data:
-                translatable = (
-                    translatable
-                    and simple_gate[0].name in qiskit_gate_names_to_braket_gates
-                )
-        self.assertTrue(translatable)
+        aer_backend = BasicAer.get_backend("statevector_simulator")
+        device = LocalSimulator()
 
-    def test_exponential_gate_decomp_00(self):
-        """Tests adapter decomposition of exponential gates to forms that can be translated"""
-        translatable = True
+        for standard_gate in standard_gates:
+            with self.subTest(f"Circuit with {standard_gate.name} gate."):
+                qiskit_circuit = QuantumCircuit(standard_gate.num_qubits)
+                qiskit_circuit.append(standard_gate, range(standard_gate.num_qubits))
+
+                parameters = standard_gate.params
+                if parameters:
+                    parameter_values = [
+                        (137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)
+                    ]
+                    parameter_bindings = dict(zip(parameters, parameter_values))
+                    qiskit_circuit = qiskit_circuit.assign_parameters(
+                        parameter_bindings
+                    )
+
+                braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+                task = device.run(braket_circuit, shots=1000)
+                braket_counts = task.result().measurement_counts
+                braket_result = {}
+                for measurement in list(braket_counts.keys()):
+                    braket_result[measurement] = braket_counts[measurement]
+
+                qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
+                qiskit_result = qiskit_job.result().get_counts()
+
+                combined_results = combine_dicts(
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
+                    qiskit_result,
+                )
+
+                for key, values in combined_results.items():
+                    if len(values) == 1:
+                        self.assertTrue(
+                            values[0] < 0.05,
+                            f"Missing {key} key in one of the results.",
+                        )
+                    else:
+                        percent_diff = abs(
+                            ((float(values[0]) - values[1]) / values[0]) * 100
+                        )
+                        abs_diff = abs(values[0] - values[1])
+                        self.assertTrue(
+                            percent_diff < 10 or abs_diff < 0.05,
+                            f"Key {key} with percent difference {percent_diff} "
+                            f"and absolute difference {abs_diff}. Original values {values}",
+                        )
+
+    def test_flipped_gate_decomp(self):
+        """Tests adapter translation of gates which flip q0 and q1 when translated"""
+        aer_backend = BasicAer.get_backend("statevector_simulator")
+        device = LocalSimulator()
+
+        for gate in flipped_gates:
+            with self.subTest(f"Circuit with {gate.name} gate."):
+                qiskit_circuit = QuantumCircuit(2)
+                qiskit_circuit.append(gate, range(2))
+                parameters = gate.params
+                if parameters:
+                    parameter_values = [
+                        (137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)
+                    ]
+                    parameter_bindings = dict(zip(parameters, parameter_values))
+                    qiskit_circuit = qiskit_circuit.assign_parameters(
+                        parameter_bindings
+                    )
+                braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+                task = device.run(braket_circuit, shots=1000)
+                braket_counts = task.result().measurement_counts
+                braket_result = {}
+                for measurement in list(braket_counts.keys()):
+                    braket_result[measurement[::-1]] = braket_counts[measurement]
+
+                qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
+                qiskit_result = qiskit_job.result().get_counts()
+
+                combined_results = combine_dicts(
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
+                    qiskit_result,
+                )
+
+                for key, values in combined_results.items():
+                    if len(values) == 1:
+                        self.assertTrue(
+                            values[0] < 0.05,
+                            f"Missing {key} key in one of the results.",
+                        )
+                    else:
+                        percent_diff = abs(
+                            ((float(values[0]) - values[1]) / values[0]) * 100
+                        )
+                        abs_diff = abs(values[0] - values[1])
+                        self.assertTrue(
+                            percent_diff < 10 or abs_diff < 0.05,
+                            f"Key {key} with percent difference {percent_diff} "
+                            f"and absolute difference {abs_diff}. Original values {values}",
+                        )
+
+    def test_exponential_gate_decomp(self):
+        """Tests adapter translation of exponential gates(note that translation
+        flips q0 and q1 here as well)"""
+        aer_backend = BasicAer.get_backend("statevector_simulator")
+        device = LocalSimulator()
+        qiskit_circuit = QuantumCircuit(2)
 
         operator = (Z ^ Z) - 0.1 * (X ^ I)
-        evo = PauliEvolutionGate(operator, time=0.2)
+        evo = PauliEvolutionGate(operator, time=2)
 
-        # plug it into a circuit
-        circuit = QuantumCircuit(2)
-        circuit.append(evo, range(2))
-        decomp_circuit = decompose_fully(circuit)
-        for simple_gate in decomp_circuit.data:
-            translatable = (
-                translatable
-                and simple_gate[0].name in qiskit_gate_names_to_braket_gates
-            )
-        self.assertTrue(translatable)
+        qiskit_circuit.append(evo, range(2))
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        task = device.run(braket_circuit, shots=1000)
+        braket_counts = task.result().measurement_counts
+        braket_result = {}
+        for measurement in list(braket_counts.keys()):
+            braket_result[measurement[::-1]] = braket_counts[measurement]
+
+        qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
+        qiskit_result = qiskit_job.result().get_counts()
+
+        combined_results = combine_dicts(
+            {k: float(v) / 1000.0 for k, v in braket_result.items()}, qiskit_result
+        )
+
+        for key, values in combined_results.items():
+            if len(values) == 1:
+                self.assertTrue(
+                    values[0] < 0.05,
+                    f"Missing {key} key in one of the results.",
+                )
+            else:
+                percent_diff = abs(((float(values[0]) - values[1]) / values[0]) * 100)
+                abs_diff = abs(values[0] - values[1])
+                self.assertTrue(
+                    percent_diff < 10 or abs_diff < 0.05,
+                    f"Key {key} with percent difference {percent_diff} "
+                    f"and absolute difference {abs_diff}. Original values {values}",
+                )
 
     def test_mappers(self):
         """Tests mappers."""
@@ -254,20 +359,12 @@ class TestAdapter(TestCase):
         braket_circuit_ans = (
             Circuit()  # pylint: disable=no-member
             .rz(0, FreeParameter("θ"))
-            .rz(0, FreeParameter("λ"))
+            .phaseshift(0, FreeParameter("λ"))
             .ry(0, FreeParameter("θ"))
-            .rz(0, FreeParameter("φ"))
-            .phaseshift(0, (FreeParameter("φ") + FreeParameter("λ")) * (0.5))
-            .x(0)
-            .phaseshift(0, (FreeParameter("φ") + FreeParameter("λ")) * (0.5))
-            .x(0)
-            .rz(0, np.pi)
+            .phaseshift(0, FreeParameter("φ"))
+            .phaseshift(0, np.pi)
             .ry(0, FreeParameter("θ"))
-            .rz(0, FreeParameter("φ"))
-            .phaseshift(0, (FreeParameter("φ") + np.pi) * (0.5))
-            .x(0)
-            .phaseshift(0, (FreeParameter("φ") + np.pi) * (0.5))
-            .x(0)
+            .phaseshift(0, FreeParameter("φ"))
         )
 
         self.assertEqual(braket_circuit, braket_circuit_ans)
