@@ -426,8 +426,14 @@ def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
     num_qubits = circuit.qubit_count
     quantum_circuit = QuantumCircuit(num_qubits)
     
-    for instruction in circuit.instructions:
-        print(instruction)
+    from qiskit.circuit import CircuitInstruction
+    from qiskit.circuit import Instruction
+    from qiskit.circuit import Qubit, Clbit, QuantumRegister, ClassicalRegister
+        
+    for circ_instruction in circuit.instructions:
+        operator = circ_instruction.operator
+        instruction = _op_to_instruction(operator.name)
+        quantum_circuit.append(instruction, circ_instruction.target)
         
     for result_type in circuit.result_types:
         print(result_type)
