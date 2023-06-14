@@ -6,6 +6,7 @@ from braket.circuits import (
     Circuit,
     FreeParameter,
     Instruction,
+    Gate,
     gates,
     result_types,
     observables,
@@ -410,6 +411,42 @@ def convert_qiskit_to_braket_circuits(
     """
     for circuit in circuits:
         yield convert_qiskit_to_braket_circuit(circuit)
+
+
+def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
+    """Return a Qiskit quantum circuit from a Braket quantum circuit.
+     
+    Args:
+        circuit (Circuit): Braket Quantum Circuit
+
+    Returns:
+        QuantumCircuit: Qiskit Quantum circuit
+    """
+    
+    num_qubits = circuit.qubit_count
+    quantum_circuit = QuantumCircuit(num_qubits)
+    
+    for instruction in circuit.instructions:
+        print(instruction)
+        
+    for result_type in circuit.result_types:
+        print(result_type)
+
+    return quantum_circuit
+
+def from_braket_circuits(
+    circuits: List[Circuit],
+) -> Iterable[QuantumCircuit]:
+    """Converts all Braket circuits to Qiskit circuits.
+     
+    Args:
+        circuits (List(Circuit)): Braket circuit
+
+    Returns:
+        QuantumCircuit (Iterable[QuantumCircuit]): Qiskit Quantum Circuit
+    """
+    for circuit in circuits:
+        yield from_braket_circuit(circuit)
 
 
 def wrap_circuits_in_verbatim_box(circuits: List[Circuit]) -> Iterable[Circuit]:
