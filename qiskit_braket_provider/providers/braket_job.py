@@ -148,8 +148,10 @@ class AmazonBraketTask(JobV1):
             status = JobStatus.CANCELLED
         elif all(state == "COMPLETED" for state in braket_tasks_states):
             status = JobStatus.DONE
-        else:
+        elif all(state == "RUNNING" for state in braket_tasks_states):
             status = JobStatus.RUNNING
+        else:
+            status = JobStatus.QUEUED
 
         return status
 
