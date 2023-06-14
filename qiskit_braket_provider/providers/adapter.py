@@ -440,8 +440,11 @@ def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
 
         quantum_circuit.append(instruction, circ_instruction.target)
         
+    quantum_circuit.barrier()
+    
     for result_type in circuit.result_types:
-        print(result_type)
+        for qubits in result_type.target:
+            quantum_circuit.measure(qubits.real,qubits.real)
 
     return quantum_circuit
 
