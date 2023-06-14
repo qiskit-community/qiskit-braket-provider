@@ -39,6 +39,7 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumTask</span>
 <span class="kn">from</span> <span class="nn">braket.tasks</span> <span class="kn">import</span> <span class="n">GateModelQuantumTaskResult</span>
@@ -114,26 +115,26 @@
     <span class="k">return</span> <span class="n">experiment_results</span>
 
 
-<div class="viewcode-block" id="AWSBraketJob"><a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AWSBraketJob.html#qiskit_braket_provider.providers.AWSBraketJob">[docs]</a><span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">JobV1</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;AWSBraketJob.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AmazonBraketTask"><a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask">[docs]</a><span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">JobV1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;AmazonBraketTask.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="AWSBraketJob.__init__"><a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AWSBraketJob.html#qiskit_braket_provider.providers.AWSBraketJob.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="AmazonBraketTask.__init__"><a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">backend</span><span class="p">:</span> <span class="n">BackendV2</span><span class="p">,</span>
         <span class="n">tasks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">LocalQuantumTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]],</span>
-        <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>
+        <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;AWSBraketJob for local execution of circuits.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;AmazonBraketTask for local execution of circuits.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            job_id: id of the job</span>
+<span class="sd">            task_id: id of the task</span>
 <span class="sd">            backend: Local simulator</span>
 <span class="sd">            tasks: Executed tasks</span>
 <span class="sd">            **metadata:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_job_id</span> <span class="o">=</span> <span class="n">job_id</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span> <span class="o">=</span> <span class="n">task_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">tasks</span>
@@ -155,12 +156,16 @@
     <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span>
 
+    <span class="k">def</span> <span class="nf">task_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a unique id identifying the task.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span>
+
     <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
         <span class="n">experiment_results</span> <span class="o">=</span> <span class="n">_get_result_from_aws_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Result</span><span class="p">(</span>
             <span class="n">backend_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="p">,</span>
             <span class="n">backend_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_job_id</span><span class="p">,</span>
+            <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span><span class="p">,</span>
             <span class="n">qobj_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">success</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AwsQuantumTask</span><span class="o">.</span><span class="n">NO_RESULT_TERMINAL_STATES</span><span class="p">,</span>
             <span class="n">results</span><span class="o">=</span><span class="n">experiment_results</span><span class="p">,</span>
@@ -184,6 +189,35 @@
             <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span>
 
         <span class="k">return</span> <span class="n">status</span></div>
+
+
+<span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">AmazonBraketTask</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;AWSBraketJob.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on subclassing.&quot;&quot;&quot;</span>
+        <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">backend</span><span class="p">:</span> <span class="n">BackendV2</span><span class="p">,</span>
+        <span class="n">tasks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">LocalQuantumTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]],</span>
+        <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on initialization.&quot;&quot;&quot;</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_job_id</span> <span class="o">=</span> <span class="n">job_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">tasks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_date_of_creation</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 </pre></div>
 
           </div>

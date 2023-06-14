@@ -56,7 +56,7 @@
     <span class="n">convert_qiskit_to_braket_circuits</span><span class="p">,</span>
     <span class="n">wrap_circuits_in_verbatim_box</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.braket_job</span> <span class="kn">import</span> <span class="n">AWSBraketJob</span>
+<span class="kn">from</span> <span class="nn">.braket_job</span> <span class="kn">import</span> <span class="n">AmazonBraketTask</span>
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">version</span>
 <span class="kn">from</span> <span class="nn">..exception</span> <span class="kn">import</span> <span class="n">QiskitBraketException</span>
 
@@ -137,7 +137,7 @@
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span> <span class="o">**</span><span class="n">options</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AWSBraketJob</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AmazonBraketTask</span><span class="p">:</span>
         <span class="n">convert_input</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">[</span><span class="n">run_input</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">run_input</span><span class="p">)</span>
         <span class="p">)</span>
@@ -162,10 +162,10 @@
                 <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;State of </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">())</span>
             <span class="k">raise</span> <span class="n">ex</span>
 
-        <span class="n">job_id</span> <span class="o">=</span> <span class="n">TASK_ID_DIVIDER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="n">TASK_ID_DIVIDER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">AWSBraketJob</span><span class="p">(</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">AmazonBraketTask</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
             <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
             <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">shots</span><span class="o">=</span><span class="n">shots</span><span class="p">,</span>
@@ -216,19 +216,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">retrieve_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AWSBraketJob</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">retrieve_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AmazonBraketTask</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a single job submitted to AWS backend.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            job_id: ID of the job to retrieve.</span>
+<span class="sd">            task_id: ID of the task to retrieve.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The job with the given ID.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">task_ids</span> <span class="o">=</span> <span class="n">job_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">TASK_ID_DIVIDER</span><span class="p">)</span>
+        <span class="n">task_ids</span> <span class="o">=</span> <span class="n">task_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">TASK_ID_DIVIDER</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">AWSBraketJob</span><span class="p">(</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">AmazonBraketTask</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
             <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">tasks</span><span class="o">=</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">(</span><span class="n">arn</span><span class="o">=</span><span class="n">task_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">task_id</span> <span class="ow">in</span> <span class="n">task_ids</span><span class="p">],</span>
         <span class="p">)</span>
@@ -290,10 +290,10 @@
             <span class="n">braket_circuits</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span>
         <span class="p">)</span>
         <span class="n">tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_task</span><span class="o">.</span><span class="n">tasks</span>
-        <span class="n">job_id</span> <span class="o">=</span> <span class="n">TASK_ID_DIVIDER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="n">TASK_ID_DIVIDER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">AWSBraketJob</span><span class="p">(</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shots&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AmazonBraketTask</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shots&quot;</span><span class="p">)</span>
         <span class="p">)</span></div>
 </pre></div>
 

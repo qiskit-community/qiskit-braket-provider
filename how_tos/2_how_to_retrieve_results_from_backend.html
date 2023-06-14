@@ -55,7 +55,7 @@
 </div>
 <p>Let’s create random circuit</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">circuit</span> <span class="o">=</span> <span class="n">random_circuit</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
@@ -64,25 +64,25 @@
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
-<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">                                                   ┌───┐
-q_0: ─────X────────────■───────────────────────────┤ X ├
-          │            │      ┌─────┐┌────────────┐└─┬─┘
-q_1: ─────X────────────┼──────┤ Sdg ├┤ Rx(3.9689) ├──┼──
-     ┌──────────┐      │      └─────┘└────────────┘  │
-q_2: ┤ U1(6.13) ├──────┼─────────X───────────────────■──
-     └──┬───┬───┘┌─────┴─────┐   │       ┌───┐       │
-q_3: ───┤ T ├────┤ Rz(5.823) ├───┼───────┤ S ├───────┼──
-       ┌┴───┴┐   └───────────┘   │       └───┘       │
-q_4: ──┤ Tdg ├───────────────────X───────────────────■──
-       └─────┘                                          </pre></div>
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">                                 ┌───┐┌───────────────────┐
+q_0: ──────────────────────────■─┤ Y ├┤ U2(6.0991,5.6116) ├───────────
+       ┌───────────────────┐   │ ├───┤└┬──────────────────┤
+q_1: ──┤ R(4.3817,0.59173) ├───┼─┤ H ├─┤ R(4.7632,2.2276) ├───────────
+       └───────────────────┘   │ └─┬─┘ └──────────────────┘
+q_2: ──────────────────────────■───┼────────────■────────────■────────
+     ┌───────────────────────┐     │            │            │   ┌───┐
+q_3: ┤0                      ├─────■────────────┼────────────┼───┤ H ├
+     │  {XX+YY}(6.13,4.7824) │            ┌─────┴──────┐   ┌─┴──┐└───┘
+q_4: ┤1                      ├────────────┤ Ry(4.0455) ├───┤ Sx ├─────
+     └───────────────────────┘            └────────────┘   └────┘     </pre></div>
 </div>
 <p>Get backend</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
@@ -92,7 +92,7 @@ q_4: ──┤ Tdg ├───────────────────X
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -102,7 +102,7 @@ BraketBackend[SV1]
 </div>
 <p>Transpile circuit against given backend</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">seed_transpiler</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
@@ -111,26 +111,26 @@ BraketBackend[SV1]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
-<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 4.8274
-                                                                          ┌───┐┌───┐┌─────┐┌───┐┌───┐┌───┐┌─────┐┌───┐┌───┐ ┌───┐
-q_0 -> 0 ───────────X────────────────────■─────────────────────────────■──┤ H ├┤ X ├┤ Tdg ├┤ X ├┤ T ├┤ X ├┤ Tdg ├┤ X ├┤ T ├─┤ H ├──────
-                    │           ┌─────┐  │        ┌────────────┐       │  └───┘└─┬─┘└─────┘└─┬─┘└───┘└─┬─┘└─────┘└─┬─┘└───┘ └───┘
-q_1 -> 1 ───────────X───────────┤ Sdg ├──┼────────┤ Rx(3.9689) ├───────┼─────────┼───────────┼─────────┼───────────┼───────────────────
-         ┌─────────────────────┐└─────┘  │        └────────────┘       │         │           │         │           │        ┌───┐
-q_2 -> 2 ┤ P(6.13001602516006) ├───X─────┼─────────────────────────────┼─────────┼───────────■─────────┼───────────■────■───┤ T ├───■──
-         └────┬────────────┬───┘   │   ┌─┴─┐┌───────────────────────┐┌─┴─┐┌───┐  │                     │                │   └───┘   │
-q_3 -> 3 ─────┤ P(-2.5863) ├───────┼───┤ X ├┤ Rz(-2.91151808057099) ├┤ X ├┤ S ├──┼─────────────────────┼────────────────┼───────────┼──
-              └──┬─────┬───┘       │   └───┘└───────────────────────┘└───┘└───┘  │                     │   ┌───┐      ┌─┴─┐┌─────┐┌─┴─┐
-q_4 -> 4 ────────┤ Tdg ├───────────X─────────────────────────────────────────────■─────────────────────■───┤ T ├──────┤ X ├┤ Tdg ├┤ X ├
-                 └─────┘                                                                                   └───┘      └───┘└─────┘└───┘</pre></div>
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 2.0774
+                                        ┌───────────┐     ┌────┐    ┌────────────┐
+q_0 -> 0 ───────────────────────■───────┤ P(2.2423) ├─────┤ √X ├────┤ P(-1.7549) ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+         ┌──────────────┐       │       ├───────────┴┐┌───┴────┴───┐└────────────┘                ┌───┐┌─────────────┐ ┌────────────┐┌──────────────┐
+q_1 -> 1 ┤ Rz(-0.14167) ├───────┼───────┤ Ry(2.4735) ├┤ Rz(2.9079) ├──────────────────────────────┤ X ├┤ Rz(-2.4203) ├─┤ Ry(2.2266) ├┤ Rz(-0.95318) ├────────────────────────────────────────────────────────────────────────
+         └──────────────┘       │       └────────────┘└────────────┘                              └─┬─┘└─────────────┘ └────────────┘└──────────────┘      ┌────────┐
+q_2 -> 2 ───────────────────────■───────────────────────────────────────────────────────────────────┼─────────■────────────────────────────────────────■───┤ P(π/4) ├─────────────■───────────────■──────────────────────────
+                         ┌─────────────┐    ┌───┐     ┌────────────┐    ┌───┐     ┌──────────────┐  │         │         ┌──────────┐    ┌────────┐     │   └────────┘             │               │
+q_3 -> 3 ────────────────┤ P(0.069993) ├────┤ X ├─────┤ Ry(-3.065) ├────┤ X ├─────┤ P(-0.069993) ├──■─────────┼─────────┤ Ry(-π/2) ├────┤ Rz(-π) ├─────┼──────────────────────────┼───────────────┼──────────────────────────
+                         └─┬─────────┬─┘    └─┬─┘     ├────────────┤    └─┬─┘     ├─────────────┬┘          ┌─┴─┐     ┌─┴──────────┴┐   └────────┘   ┌─┴─┐┌──────────┐┌────────┐┌─┴─┐┌─────────┐┌─┴─┐┌───────────┐┌─────────┐
+q_4 -> 4 ──────────────────┤ Ry(π/2) ├────────■───────┤ Ry(-3.065) ├──────■───────┤ Ry(0.45197) ├───────────┤ X ├─────┤ Ry(-2.0228) ├────────────────┤ X ├┤ Ry(-π/2) ├┤ Rz(-π) ├┤ X ├┤ P(-π/4) ├┤ X ├┤ Rz(-3π/4) ├┤ Ry(π/2) ├
+                           └─────────┘                └────────────┘              └─────────────┘           └───┘     └─────────────┘                └───┘└──────────┘└────────┘└───┘└─────────┘└───┘└───────────┘└─────────┘</pre></div>
 </div>
 <p>Run circuit</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -138,7 +138,7 @@ q_4 -> 4 ────────┤ Tdg ├───────────X�
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="sa">f</span><span class="s2">&quot;Task id </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -146,35 +146,35 @@ q_4 -> 4 ────────┤ Tdg ├───────────X�
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&#39;Task id 3e6b6feb-fdc9-42c3-a7ba-0c4cd94089e2&#39;
+&#39;Task id b171d67b-e8c4-4ec6-b548-1b6e8f7c6c38&#39;
 </pre></div></div>
 </div>
 <p>Retrieve job by id from backend</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">retrieve_job</span><span class="p">(</span><span class="n">job_id</span><span class="o">=</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">())</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">retrieve_job</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">())</span>
 <span class="n">retrieved_job</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;qiskit_braket_plugin.providers.braket_job.AWSBraketJob at 0x7f8821bc6220&gt;
+&lt;qiskit_braket_provider.providers.braket_job.AmazonBraketTask at 0x7fa20be88490&gt;
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">()</span>
@@ -182,12 +182,12 @@ q_4 -> 4 ────────┤ Tdg ├───────────X�
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;00010&#39;: 7, &#39;00000&#39;: 3}
+{&#39;00001&#39;: 4, &#39;01011&#39;: 1, &#39;01000&#39;: 1, &#39;00011&#39;: 3, &#39;01001&#39;: 1}
 </pre></div></div>
 </div>
 </section>

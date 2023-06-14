@@ -42,16 +42,53 @@
   <section id="Tutorial:-Minimum-Eigen-Optimizer">
 <h1>Tutorial: Minimum Eigen Optimizer<a class="headerlink" href="#Tutorial:-Minimum-Eigen-Optimizer" title="Permalink to this heading">¶</a></h1>
 <p>For original tutorial refer to <a class="reference external" href="https://qiskit.org/documentation/optimization/tutorials/03_minimum_eigen_optimizer.html">https://qiskit.org/documentation/optimization/tutorials/03_minimum_eigen_optimizer.html</a></p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>qiskit_optimization
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Collecting qiskit_optimization
+  Downloading qiskit_optimization-0.5.0-py3-none-any.whl (156 kB)
+     <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">156.5/156.5 kB</span> <span class="ansi-red-fg">1.8 MB/s</span> eta <span class="ansi-cyan-fg">0:00:00</span>00:0100:01
+Requirement already satisfied: qiskit-terra&gt;=0.22.4 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit_optimization) (0.24.1)
+Requirement already satisfied: scipy&gt;=1.4 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit_optimization) (1.10.1)
+Requirement already satisfied: numpy&gt;=1.17 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit_optimization) (1.23.5)
+Collecting docplex!=2.24.231,&gt;=2.21.207 (from qiskit_optimization)
+  Downloading docplex-2.25.236.tar.gz (633 kB)
+     <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">633.5/633.5 kB</span> <span class="ansi-red-fg">4.1 MB/s</span> eta <span class="ansi-cyan-fg">0:00:00</span>00:0100:01
+  Preparing metadata (setup.py) ... done
+Requirement already satisfied: setuptools&gt;=40.1.0 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit_optimization) (67.7.2)
+Requirement already satisfied: networkx&gt;=2.6.3 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit_optimization) (3.1)
+Requirement already satisfied: six in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from docplex!=2.24.231,&gt;=2.21.207-&gt;qiskit_optimization) (1.16.0)
+Requirement already satisfied: rustworkx&gt;=0.12.0 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (0.13.0)
+Requirement already satisfied: ply&gt;=3.10 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (3.11)
+Requirement already satisfied: psutil&gt;=5 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (5.9.5)
+Requirement already satisfied: sympy&gt;=1.3 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (1.12)
+Requirement already satisfied: dill&gt;=0.3 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (0.3.6)
+Requirement already satisfied: python-dateutil&gt;=2.8.0 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (2.8.2)
+Requirement already satisfied: stevedore&gt;=3.0.0 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (5.1.0)
+Requirement already satisfied: symengine&lt;0.10,&gt;=0.9 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (0.9.2)
+Requirement already satisfied: pbr!=2.1.0,&gt;=2.0.0 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from stevedore&gt;=3.0.0-&gt;qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (5.11.1)
+Requirement already satisfied: mpmath&gt;=0.19 in /home/robotastray/qiskit-braket-provider/venv/lib/python3.8/site-packages (from sympy&gt;=1.3-&gt;qiskit-terra&gt;=0.22.4-&gt;qiskit_optimization) (1.3.0)
+Building wheels for collected packages: docplex
+  Building wheel for docplex (setup.py) ... done
+  Created wheel for docplex: filename=docplex-2.25.236-py3-none-any.whl size=671350 sha256=9249c6a84de2faf8bdcbab214a249d5d0f59baacde525363554a1e68347f1283
+  Stored in directory: /home/robotastray/.cache/pip/wheels/b8/98/f8/22c3fe8d29be988cc4584363f494a459fb8f09c16d8e438ac7
+Successfully built docplex
+Installing collected packages: docplex, qiskit_optimization
+Successfully installed docplex-2.25.236 qiskit_optimization-0.5.0
+</pre></div></div>
+</div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -76,7 +113,7 @@
 <section id="Converting-a-QUBO-to-an-Operator">
 <h2>Converting a QUBO to an Operator<a class="headerlink" href="#Converting-a-QUBO-to-an-Operator" title="Permalink to this heading">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a QUBO</span>
@@ -116,7 +153,7 @@ End
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">op</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">qubo</span><span class="o">.</span><span class="n">to_ising</span><span class="p">()</span>
@@ -133,16 +170,16 @@ End
 <div class="highlight"><pre>
 offset: 1.5
 operator:
--1.75 * ZII
+-0.5 * IIZ
 + 0.25 * IZI
-+ 0.5 * ZZI
-- 0.5 * IIZ
-- 0.25 * ZIZ
+- 1.75 * ZII
 + 0.25 * IZZ
+- 0.25 * ZIZ
++ 0.5 * ZZI
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qp</span> <span class="o">=</span> <span class="n">QuadraticProgram</span><span class="p">()</span>
@@ -178,8 +215,8 @@ End
 </section>
 <section id="Solving-a-QUBO-with-the-MinimumEigenOptimizer">
 <h2>Solving a QUBO with the MinimumEigenOptimizer<a class="headerlink" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer" title="Permalink to this heading">¶</a></h2>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="mi">10598</span>
@@ -194,8 +231,21 @@ End
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_69023/2374560280.py:3: DeprecationWarning: The class ``qiskit.utils.quantum_instance.QuantumInstance`` is deprecated as of qiskit-terra 0.24.0. It will be removed no earlier than 3 months after the release date. For code migration guidelines, visit https://qisk.it/qi_migration.
+  quantum_instance = QuantumInstance(
+/tmp/ipykernel_69023/2374560280.py:8: DeprecationWarning: The class ``qiskit.algorithms.minimum_eigen_solvers.qaoa.QAOA`` is deprecated as of qiskit-terra 0.24.0. It will be removed no earlier than 3 months after the release date. Instead, use the class ``qiskit.algorithms.minimum_eigensolvers.QAOA``. See https://qisk.it/algo_migration for a migration guide.
+  qaoa_mes = QAOA(quantum_instance=quantum_instance, initial_point=[0.0, 0.0])
+/tmp/ipykernel_69023/2374560280.py:9: DeprecationWarning: The class ``qiskit.algorithms.minimum_eigen_solvers.numpy_minimum_eigen_solver.NumPyMinimumEigensolver`` is deprecated as of qiskit-terra 0.24.0. It will be removed no earlier than 3 months after the release date. Instead, use the class ``qiskit.algorithms.minimum_eigensolvers.NumPyMinimumEigensolver``. See https://qisk.it/algo_migration for a migration guide.
+  exact_mes = NumPyMinimumEigensolver()
+</pre></div></div>
+</div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa</span> <span class="o">=</span> <span class="n">MinimumEigenOptimizer</span><span class="p">(</span><span class="n">qaoa_mes</span><span class="p">)</span>  <span class="c1"># using QAOA</span>
@@ -206,7 +256,7 @@ End
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exact_result</span> <span class="o">=</span> <span class="n">exact</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
@@ -219,13 +269,11 @@ End
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-optimal function value: -2.0
-optimal value: [0. 1. 0.]
-status: SUCCESS
+fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa_result</span> <span class="o">=</span> <span class="n">qaoa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
@@ -238,16 +286,14 @@ status: SUCCESS
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-optimal function value: -2.0
-optimal value: [0. 1. 0.]
-status: SUCCESS
+fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </pre></div></div>
 </div>
 </section>
 <section id="Analysis-of-Samples">
 <h2>Analysis of Samples<a class="headerlink" href="#Analysis-of-Samples" title="Permalink to this heading">¶</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;variable order:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">])</span>
@@ -262,18 +308,17 @@ status: SUCCESS
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 variable order: [&#39;x&#39;, &#39;y&#39;, &#39;z&#39;]
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.07031249999999999, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.0625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.08496093750000001, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.08007812500000001, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.1611328125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.20800781249999997, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.16015625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.123046875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.302734375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.0888671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.22851562500000003, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.12500000000000003, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.025390624999999997, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.10644531250000001, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_filtered_samples</span><span class="p">(</span>
@@ -294,7 +339,7 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_samples</span> <span class="o">=</span> <span class="n">get_filtered_samples</span><span class="p">(</span>
@@ -312,18 +357,17 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.07031249999999999, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.0625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.08496093750000001, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.08007812500000001, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.1611328125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.20800781249999997, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.16015625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.123046875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.302734375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.0888671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.22851562500000003, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.12500000000000003, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.025390624999999997, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.10644531250000001, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">fval</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">samples</span><span class="p">]</span>
@@ -332,7 +376,7 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
@@ -340,16 +384,16 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-1.5
+1.7142857142857142
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
@@ -357,16 +401,16 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-1.9364916731037085
+1.979486637221574
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
@@ -380,23 +424,22 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;x=0 y=1 z=0&#39;: 0.07031249999999999,
- &#39;x=0 y=0 z=0&#39;: 0.0625,
- &#39;x=1 y=1 z=0&#39;: 0.08496093750000001,
- &#39;x=1 y=0 z=0&#39;: 0.08007812500000001,
- &#39;x=0 y=0 z=1&#39;: 0.1611328125,
- &#39;x=1 y=0 z=1&#39;: 0.20800781249999997,
- &#39;x=0 y=1 z=1&#39;: 0.16015625,
- &#39;x=1 y=1 z=1&#39;: 0.1728515625}
+{&#39;x=0 y=1 z=0&#39;: 0.123046875,
+ &#39;x=1 y=1 z=0&#39;: 0.302734375,
+ &#39;x=1 y=0 z=0&#39;: 0.0888671875,
+ &#39;x=0 y=0 z=1&#39;: 0.22851562500000003,
+ &#39;x=1 y=0 z=1&#39;: 0.12500000000000003,
+ &#39;x=0 y=1 z=1&#39;: 0.025390624999999997,
+ &#39;x=1 y=1 z=1&#39;: 0.10644531250000001}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">samples_for_plot</span><span class="p">)</span>
@@ -404,7 +447,7 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -415,7 +458,7 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 <section id="RecursiveMinimumEigenOptimizer">
 <h2>RecursiveMinimumEigenOptimizer<a class="headerlink" href="#RecursiveMinimumEigenOptimizer" title="Permalink to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa</span> <span class="o">=</span> <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">(</span>
@@ -425,7 +468,7 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa_result</span> <span class="o">=</span> <span class="n">rqaoa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
@@ -438,13 +481,11 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.1728515625, status
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-optimal function value: -2.0
-optimal value: [0. 1. 0.]
-status: SUCCESS
+fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_samples</span> <span class="o">=</span> <span class="n">get_filtered_samples</span><span class="p">(</span>
@@ -456,7 +497,7 @@ status: SUCCESS
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
@@ -470,7 +511,7 @@ status: SUCCESS
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -479,7 +520,7 @@ status: SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">samples_for_plot</span><span class="p">)</span>
@@ -487,7 +528,7 @@ status: SUCCESS
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="output_area docutils container">

@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>qiskit_braket_provider.providers.AWSBraketJob &#8212; Qiskit-Braket provider  documentation</title>
+    <title>qiskit_braket_provider.providers.AmazonBraketTask &#8212; Qiskit-Braket provider  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
     <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
@@ -37,17 +37,17 @@
 
           <div class="body" role="main">
             
-  <section id="qiskit-braket-provider-providers-awsbraketjob">
-<h1>qiskit_braket_provider.providers.AWSBraketJob<a class="headerlink" href="#qiskit-braket-provider-providers-awsbraketjob" title="Permalink to this heading">¶</a></h1>
+  <section id="qiskit-braket-provider-providers-amazonbrakettask">
+<h1>qiskit_braket_provider.providers.AmazonBraketTask<a class="headerlink" href="#qiskit-braket-provider-providers-amazonbrakettask" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AWSBraketJob">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AWSBraketJob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_job.html#AWSBraketJob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AWSBraketJob" title="Permalink to this definition">¶</a></dt>
-<dd><p>AWSBraketJob.</p>
-<p>AWSBraketJob for local execution of circuits.</p>
+<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AmazonBraketTask">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AmazonBraketTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_job.html#AmazonBraketTask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AmazonBraketTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>AmazonBraketTask.</p>
+<p>AmazonBraketTask for local execution of circuits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the job</p></li>
+<li><p><strong>task_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the task</p></li>
 <li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BackendV2</span></code>) – Local simulator</p></li>
 <li><p><strong>tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">LocalQuantumTask</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">AwsQuantumTask</span></code>]]) – Executed tasks</p></li>
 <li><p><strong>**metadata</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>]) – </p></li>
@@ -55,13 +55,13 @@
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AWSBraketJob.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_job.html#AWSBraketJob.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AWSBraketJob.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>AWSBraketJob for local execution of circuits.</p>
+<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AmazonBraketTask.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_job.html#AmazonBraketTask.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AmazonBraketTask.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>AmazonBraketTask for local execution of circuits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the job</p></li>
+<li><p><strong>task_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – id of the task</p></li>
 <li><p><strong>backend</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">BackendV2</span></code>) – Local simulator</p></li>
 <li><p><strong>tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">LocalQuantumTask</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">AwsQuantumTask</span></code>]]) – Executed tasks</p></li>
 <li><p><strong>**metadata</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>]) – </p></li>
@@ -73,8 +73,8 @@
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.AWSBraketJob.__init__" title="qiskit_braket_provider.providers.AWSBraketJob.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(job_id, backend, tasks, **metadata)</p></td>
-<td><p>AWSBraketJob for local execution of circuits.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.AmazonBraketTask.__init__" title="qiskit_braket_provider.providers.AmazonBraketTask.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(task_id, backend, tasks, **metadata)</p></td>
+<td><p>AmazonBraketTask for local execution of circuits.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend</span></code>()</p></td>
 <td><p>Return the backend where this job was executed.</p></td>
@@ -106,7 +106,10 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit</span></code>()</p></td>
 <td><p>Submit the job to the backend for execution.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">wait_for_final_state</span></code>([timeout, wait, callback])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">task_id</span></code>()</p></td>
+<td><p>Return a unique id identifying the task.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">wait_for_final_state</span></code>([timeout, wait, callback])</p></td>
 <td><p>Poll the job status until it progresses to a final state such as <code class="docutils literal notranslate"><span class="pre">DONE</span></code> or <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>.</p></td>
 </tr>
 </tbody>
@@ -217,7 +220,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
-      <a href="../_sources/stubs/qiskit_braket_provider.providers.AWSBraketJob.rst.txt"
+      <a href="../_sources/stubs/qiskit_braket_provider.providers.AmazonBraketTask.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 
