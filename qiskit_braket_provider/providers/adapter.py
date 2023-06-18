@@ -472,7 +472,7 @@ def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
         instruction.num_qubits = num_qubits
         instruction.params = params
 
-        quantum_circuit.append(instruction, QubitSet(qubits))
+        quantum_circuit.append(instruction.copy(), QubitSet(qubits))
                         
     quantum_circuit.barrier()
     
