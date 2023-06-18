@@ -414,6 +414,20 @@ def convert_qiskit_to_braket_circuits(
     for circuit in circuits:
         yield convert_qiskit_to_braket_circuit(circuit)
 
+def set_control(num_controls: int, gate: str):
+    if num_controls <= 0:
+        name = gate
+    elif num_controls == 1:
+        name = "c" + gate
+    elif num_controls == 2:
+        name = "cc" + gate
+    elif num_controls > 2:
+        if gate == "cx":
+            name = "m" + gate
+        else:
+            name = "c" + str(num_controls) + gate
+    return name
+
 
 def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
@@ -431,22 +445,40 @@ def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
     from qiskit.circuit import CircuitInstruction, Instruction
         
     for circ_instruction in circuit.instructions:
+        
         operator = circ_instruction.operator
         instruction = _op_to_instruction(operator.name)
-
+        
+        name = operator.name.lower()
+        num_qubits = operator.qubit_count + len(circ_instruction.control)
+        params = []            
+            
+        if hasattr(circ_instruction, "control"):
+            name = set_control(len(circ_instruction.control), operator.name.lower())
+            
         if hasattr(operator, "angle"):
             if isinstance(operator.angle, FreeParameter):
-                instruction.params = [Parameter(operator.angle.name)]
+                params = [Parameter(operator.angle.name)]
             else:
-                instruction.params = [operator.angle]
+                params = [operator.angle]
+                
+        qubits = []
+        for qubit in circ_instruction.control:
+            qubits.append(qubit)
+        for qubit in circ_instruction.target:
+            qubits.append(qubit)
+                    
+        instruction.name = name
+        instruction.num_qubits = num_qubits
+        instruction.params = params
 
-        quantum_circuit.append(instruction, circ_instruction.target)
-        
+        quantum_circuit.append(instruction, QubitSet(qubits))
+                        
     quantum_circuit.barrier()
     
     for result_type in circuit.result_types:
         for qubits in result_type.target:
-            quantum_circuit.measure(qubits.real,qubits.real)
+            quantum_circuit.measure(qubits.real, qubits.real)
 
     return quantum_circuit
 
