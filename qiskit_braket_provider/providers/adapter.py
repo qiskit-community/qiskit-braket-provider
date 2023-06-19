@@ -63,8 +63,8 @@ from qiskit.circuit.library import (
     YGate,
     ZGate,
 )
-from qiskit.transpiler import InstructionProperties, Target
 
+from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
 qiskit_to_braket_gate_names_mapping = {
@@ -151,7 +151,6 @@ qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
 translatable_qiskit_gates = set(qiskit_gate_names_to_braket_gates.keys()).union(
     {"measure", "barrier", "reset"}
 )
-
 
 qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] = {
     "u": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
