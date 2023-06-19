@@ -77,7 +77,7 @@ class TestAWSBraketProvider(TestCase):
         state_vector_backend = provider.get_backend(
             "SV1", aws_session=self.mock_session
         )
-        circuit = QuantumCircuit(2)
+        circuit = qiskit_circuit.QuantumCircuit(2)
         circuit.h(0)
         circuit.cx(0, 1)
 
