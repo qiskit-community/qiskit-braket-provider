@@ -298,21 +298,25 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                         def convert_continuous_qubit_indices(
                             connectivity_graph: dict,
                         ) -> dict:
-                            """Aspen qubit indices are discontinuous (label between x0 and x7, x being the number of the
-                            octagon) while the Qiskit transpiler creates and/or handles coupling maps with continuous indices.
-                            This function converts the discontinous connectivity graph from Aspen to a continuous one.
+                            """Aspen qubit indices are discontinuous (label between x0 and x7, x being
+                            the number of the octagon) while the Qiskit transpiler creates and/or
+                            handles coupling maps with continuous indices. This function converts the
+                            discontinous connectivity graph from Aspen to a continuous one.
 
                             Args:
-                                connectivity_graph (dict): connectivity graph from Aspen. For example if qubit 1 is connected
-                                to qubit 2 and 3, and qubit 2 is connected to qubit 3, the connectivity graph will be
+                                connectivity_graph (dict): connectivity graph from Aspen. For example
+                                if qubit 1 is connected to qubit 2 and 3, and qubit 2 is connected to
+                                qubit 3, the connectivity graph will be
                                 {1: [2, 3], 2: [1, 3], 3: [1, 2]}
 
                             Returns:
-                                dict: Connectivity graph with continuous indices. For example for an input connectivity graph
-                                with discontinuous indices (qubit 1, 2 and then qubit 7) as shown here:
+                                dict: Connectivity graph with continuous indices. For example for an
+                                input connectivity graph with discontinuous indices (qubit 1, 2 and then
+                                qubit 7) as shown here:
                                     {1: [2, 7], 2: [1, 7], 7: [1, 2]},
-                                the qubit index 7 will be mapped to qubit index 3 for the qiskit transpilation step. Thereby
-                                the resultant continous qubit indices output will be:
+                                the qubit index 7 will be mapped to qubit index 3 for the qiskit
+                                transpilation step. Thereby the resultant continous qubit indices output
+                                will be:
                                     {1: [2, 3], 2: [1, 3], 3: [1, 2]}
                             """
                             # Creates list of existing qubit indices which are discontinuous.
@@ -320,7 +324,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                             indices.sort()
                             # Creates a list of continuous indices for number of qubits.
                             map_list = list(range(len(indices)))
-                            # Creates a dictionary to remap the discountinous indices to the continuous ones.
+                            # Creates a dictionary to remap the discountinous indices to continuous.
                             mapper = dict(zip(indices, map_list))
                             # Performs the remapping from the discontinous to the continuous indices.
                             continous_connectivity_graph = {
