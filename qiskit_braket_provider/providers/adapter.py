@@ -41,6 +41,7 @@ from qiskit.circuit.library import (
     ECRGate,
     HGate,
     IGate,
+    iSwapGate,
     PhaseGate,
     RXGate,
     RXXGate,
@@ -60,6 +61,7 @@ from qiskit.circuit.library import (
     U2Gate,
     U3Gate,
     XGate,
+    XXPlusYYGate,
     YGate,
     ZGate,
 )
@@ -146,7 +148,6 @@ qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
     "ecr": lambda: [gates.ECR()],
 }
 
-
 qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] = {
     "u": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "u1": U1Gate(Parameter("theta")),
@@ -156,11 +157,16 @@ qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] 
     "ccnot": CCXGate(),
     "cnot": CXGate(),
     "cphaseshift": CPhaseGate(Parameter("theta")),
+    #"cphaseshift00": CPhaseGate(Parameter("theta")), ## EDIT
+    #"cphaseshift01": CPhaseGate(Parameter("theta")), ## EDIT
+    #"cphaseshift10": CPhaseGate(Parameter("theta")), ## EDIT
     "cswap": CSwapGate(),
     "cy": CYGate(),
     "cz": CZGate(),
     "i": IGate(),
+    "iswap": iSwapGate(),
     "phaseshift": PhaseGate(Parameter("theta")),
+    #"pswap": #[[1,0,0,0],[0,0,exp(1j*phi),0],[0,exp(1j*phi),0,0],[0,0,0,1]]
     "rx": RXGate(Parameter("theta")),
     "ry": RYGate(Parameter("theta")),
     "rz": RZGate(Parameter("phi")),
@@ -173,6 +179,7 @@ qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] 
     "vi": SXdgGate(),
     "x": XGate(),
     "xx": RXXGate(Parameter("theta")),
+    "xy": XXPlusYYGate(Parameter("theta")),
     "y": YGate(),
     "yy": RYYGate(Parameter("theta")),
     "z": ZGate(),
@@ -414,6 +421,17 @@ def convert_qiskit_to_braket_circuits(
     for circuit in circuits:
         yield convert_qiskit_to_braket_circuit(circuit)
 
+
+def set_qubits(size, target, control) -> Union[tuple, int]:
+    from qiskit.circuit import Qubit
+    qubits = []
+    for c in control:
+        qubits.append(Qubit(QuantumRegister(size, 'q'), c.real))
+    for t in target:
+        qubits.append(Qubit(QuantumRegister(size, 'q'), t.real))
+                
+    return tuple(qubits), len(tuple(qubits))
+
 def set_control(num_controls: int, gate: str):
     if num_controls <= 0:
         name = gate
@@ -428,7 +446,6 @@ def set_control(num_controls: int, gate: str):
             name = "c" + str(num_controls) + gate
     return name
 
-
 def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
      
@@ -439,47 +456,64 @@ def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
         QuantumCircuit: Qiskit Quantum circuit
     """
     
-    num_qubits = circuit.qubit_count
-    quantum_circuit = QuantumCircuit(num_qubits, num_qubits)
+    num_qubits = circuit.qubit_count - 1
+
+    for circ_instruction in circuit.instructions:
+        for c in circ_instruction.control:
+            if c.real > num_qubits:
+                num_qubits = c.real 
+        for t in circ_instruction.target:
+            if t.real > num_qubits:
+                num_qubits = t.real
     
+    num_qubits += 1
+    quantum_circuit = QuantumCircuit(num_qubits)#, num_qubits)
+        
     from qiskit.circuit import CircuitInstruction, Instruction
         
     for circ_instruction in circuit.instructions:
         
         operator = circ_instruction.operator
+        
         instruction = _op_to_instruction(operator.name)
         
-        name = operator.name.lower()
-        num_qubits = operator.qubit_count + len(circ_instruction.control)
-        params = []            
+        if instruction == None:
+            raise Exception(f"Braket gate \"{operator.name}\" not supported in Qiskit") 
+        
+        instruction.name = operator.name.lower()
+        _, instruction.num_qubits = set_qubits(num_qubits, circ_instruction.target, circ_instruction.control)
+        params = instruction.params = []
+        
+        #if hasattr(circ_instruction, "power"):
+        #    print("power:", circ_instruction.power)
             
         if hasattr(circ_instruction, "control"):
-            name = set_control(len(circ_instruction.control), operator.name.lower())
-            
+            instruction.name = set_control(len(circ_instruction.control), operator.name.lower())            
+
         if hasattr(operator, "angle"):
             if isinstance(operator.angle, FreeParameter):
-                params = [Parameter(operator.angle.name)]
+                print(operator)
+                import copy as cp
+                p = Parameter(operator.angle.name)
+                print(p)
+                instruction.params = [p]
             else:
-                params = [operator.angle]
+                instruction.params = [operator.angle]
                 
         qubits = []
         for qubit in circ_instruction.control:
             qubits.append(qubit)
         for qubit in circ_instruction.target:
             qubits.append(qubit)
-                    
-        instruction.name = name
-        instruction.num_qubits = num_qubits
-        instruction.params = params
 
         quantum_circuit.append(instruction.copy(), QubitSet(qubits))
-                        
-    quantum_circuit.barrier()
-    
-    for result_type in circuit.result_types:
+                
+    if circuit.result_types == []:
+        quantum_circuit.measure_all()
+    else:   
         for qubits in result_type.target:
-            quantum_circuit.measure(qubits.real, qubits.real)
-
+            quantum_circuit.measure(qubits.real, qubits.real)        
+        
     return quantum_circuit
 
 def from_braket_circuits(
