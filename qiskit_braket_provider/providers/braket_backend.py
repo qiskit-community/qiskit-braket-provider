@@ -111,7 +111,7 @@ class BraketLocalBackend(BraketBackend):
         tasks = []
         try:
             for circuit in circuits:
-                task: Union[LocalQuantumTask] = self._aws_device.run(
+                task: LocalQuantumTask = self._aws_device.run(
                     task_specification=circuit, shots=shots
                 )
                 tasks.append(task)

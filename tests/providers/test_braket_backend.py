@@ -173,14 +173,7 @@ class TestAWSBraketBackend(TestCase):
         for i in range(1, 10):
             with self.subTest(f"Random circuit with {i} qubits."):
                 circuit = random_circuit(i, 5, seed=42)
-                braket_transpiled_circuit = transpile(
-                    circuit, backend=backend, seed_transpiler=42
-                )
-                braket_result = (
-                    backend.run(braket_transpiled_circuit, shots=1000)
-                    .result()
-                    .get_counts()
-                )
+                braket_result = backend.run(circuit, shots=1000).result().get_counts()
 
                 transpiled_aer_circuit = transpile(
                     circuit, backend=aer_backend, seed_transpiler=42

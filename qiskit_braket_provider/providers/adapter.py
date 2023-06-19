@@ -1,5 +1,6 @@
 """Util function for provider."""
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+import warnings
 
 from braket.aws import AwsDevice
 from braket.circuits import (
@@ -24,8 +25,10 @@ from braket.device_schema.simulators import (
     GateModelSimulatorParadigmProperties,
 )
 from braket.devices import LocalSimulator
+
 from numpy import pi
-from qiskit import QuantumCircuit
+
+from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import Measure, Parameter
 from qiskit.circuit.library import (
@@ -60,8 +63,8 @@ from qiskit.circuit.library import (
     YGate,
     ZGate,
 )
-from qiskit.transpiler import InstructionProperties, Target
 
+from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
 qiskit_to_braket_gate_names_mapping = {
@@ -97,23 +100,24 @@ qiskit_to_braket_gate_names_mapping = {
     "ecr": "ecr",
 }
 
+_EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
-    "u": lambda theta, phi, lam: [
-        gates.Rz(lam),
-        gates.Rx(pi / 2),
-        gates.Rz(theta),
-        gates.Rx(-pi / 2),
-        gates.Rz(phi),
+    "u1": lambda lam: [gates.PhaseShift(lam)],
+    "u2": lambda phi, lam: [
+        gates.PhaseShift(lam),
+        gates.Ry(pi / 2),
+        gates.PhaseShift(phi),
     ],
-    "u1": lambda lam: [gates.Rz(lam)],
-    "u2": lambda phi, lam: [gates.Rz(lam), gates.Ry(pi / 2), gates.Rz(phi)],
     "u3": lambda theta, phi, lam: [
-        gates.Rz(lam),
-        gates.Rx(pi / 2),
-        gates.Rz(theta),
-        gates.Rx(-pi / 2),
-        gates.Rz(phi),
+        gates.PhaseShift(lam),
+        gates.Ry(theta),
+        gates.PhaseShift(phi),
+    ],
+    "u": lambda theta, phi, lam: [
+        gates.PhaseShift(lam),
+        gates.Ry(theta),
+        gates.PhaseShift(phi),
     ],
     "p": lambda angle: [gates.PhaseShift(angle)],
     "cp": lambda angle: [gates.CPhaseShift(angle)],
@@ -143,6 +147,10 @@ qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
     "ecr": lambda: [gates.ECR()],
 }
 
+
+translatable_qiskit_gates = set(qiskit_gate_names_to_braket_gates.keys()).union(
+    {"measure", "barrier", "reset"}
+)
 
 qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] = {
     "u": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
@@ -293,6 +301,54 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                                 instruction_props[(dst, src)] = None
                 # building coupling map for device with connectivity graph
                 else:
+                    if isinstance(properties, RigettiDeviceCapabilities):
+
+                        def convert_continuous_qubit_indices(
+                            connectivity_graph: dict,
+                        ) -> dict:
+                            """Aspen qubit indices are discontinuous (label between x0 and x7, x being
+                            the number of the octagon) while the Qiskit transpiler creates and/or
+                            handles coupling maps with continuous indices. This function converts the
+                            discontinous connectivity graph from Aspen to a continuous one.
+
+                            Args:
+                                connectivity_graph (dict): connectivity graph from Aspen. For example
+                                4 qubit system, the connectivity graph will be:
+                                    {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+                                    "7": ["0","1","2"]}
+
+                            Returns:
+                                dict: Connectivity graph with continuous indices. For example for an
+                                input connectivity graph with discontinuous indices (qubit 0, 1, 2 and
+                                then qubit 7) as shown here:
+                                    {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+                                    "7": ["0","1","2"]}
+                                the qubit index 7 will be mapped to qubit index 3 for the qiskit
+                                transpilation step. Thereby the resultant continous qubit indices
+                                output will be:
+                                    {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
+                                    "3": ["0","1","2"]}
+                            """
+                            # Creates list of existing qubit indices which are discontinuous.
+                            indices = [int(key) for key in connectivity_graph.keys()]
+                            indices.sort()
+                            # Creates a list of continuous indices for number of qubits.
+                            map_list = list(range(len(indices)))
+                            # Creates a dictionary to remap the discountinous indices to continuous.
+                            mapper = dict(zip(indices, map_list))
+                            # Performs the remapping from the discontinous to the continuous indices.
+                            continous_connectivity_graph = {
+                                mapper[int(k)]: [mapper[int(v)] for v in val]
+                                for k, val in connectivity_graph.items()
+                            }
+                            return continous_connectivity_graph
+
+                        connectivity.connectivityGraph = (
+                            convert_continuous_qubit_indices(
+                                connectivity.connectivityGraph
+                            )
+                        )
+
                     for src, connections in connectivity.connectivityGraph.items():
                         for dst in connections:
                             instruction_props[(int(src), int(dst))] = None
@@ -361,6 +417,13 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
         Circuit: Braket circuit
     """
     quantum_circuit = Circuit()
+    if not (
+        {gate.name for gate, _, _ in circuit.data}.issubset(translatable_qiskit_gates)
+    ):
+        circuit = transpile(circuit, basis_gates=translatable_qiskit_gates)
+    if circuit.global_phase > _EPS:
+        warnings.warn("Circuit transpilation resulted in global phase shift")
+    # handle qiskit to braket conversion
     for qiskit_gates in circuit.data:
         name = qiskit_gates[0].name
         if name == "measure":
@@ -379,6 +442,10 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
         elif name == "barrier":
             # This does not exist
             pass
+        elif name == "reset":
+            raise NotImplementedError(
+                "reset operation not supported by qiskit to braket adapter"
+            )
         else:
             params = []
             if hasattr(qiskit_gates[0], "params"):
