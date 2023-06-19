@@ -305,19 +305,21 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 
                             Args:
                                 connectivity_graph (dict): connectivity graph from Aspen. For example
-                                if qubit 1 is connected to qubit 2 and 3, and qubit 2 is connected to
-                                qubit 3, the connectivity graph will be
-                                {"1": ["2", "3"], "2": ["3"]}
+                                4 qubit system, the connectivity graph will be:
+                                    {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+                                    "7": ["0","1","2"]}
 
                             Returns:
                                 dict: Connectivity graph with continuous indices. For example for an
-                                input connectivity graph with discontinuous indices (qubit 1, 2, 3 and
-                                then qubit 7, qubit 8) as shown here:
-                                    {"1": ["2", "3"], "7": ["8"]}
-                                the qubit index 7, 8 will be mapped to qubit index 4, 5 resp for the
-                                qiskit transpilation step. Thereby the resultant continous qubit
-                                indices output will be:
-                                    {"1": ["2", "3"], "4": ["5"]}
+                                input connectivity graph with discontinuous indices (qubit 0, 1, 2 and
+                                then qubit 7) as shown here:
+                                    {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+                                    "7": ["0","1","2"]}
+                                the qubit index 7 will be mapped to qubit index 3 for the qiskit
+                                transpilation step. Thereby the resultant continous qubit indices
+                                output will be:
+                                    {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
+                                    "3": ["0","1","2"]}
                             """
                             # Creates list of existing qubit indices which are discontinuous.
                             indices = [int(key) for key in connectivity_graph.keys()]
