@@ -1,6 +1,7 @@
 """Mocks for testing."""
 
 from collections import Counter
+import copy
 
 import uuid
 import numpy as np
@@ -12,6 +13,7 @@ from braket.device_schema.rigetti import RigettiDeviceCapabilities
 
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
+RIGETTI_ASPEN_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-M-3"
 SV1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
 TN1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/tn1"
 RIGETTI_REGION = "us-west-1"
@@ -62,6 +64,34 @@ RIGETTI_MOCK_GATE_MODEL_QPU = {
     "deviceStatus": "OFFLINE",
     "deviceArn": RIGETTI_ARN,
     "deviceCapabilities": RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.json(),
+}
+
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON = copy.deepcopy(
+    RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON
+)
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
+    "supportedOperations"
+] = ["RX", "RZ", "CP", "CZ", "XY"]
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["qubitCount"] = 4
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["connectivity"][
+    "connectivityGraph"
+] = {
+    "0": ["1", "2", "7"],
+    "1": ["0", "2", "7"],
+    "2": ["0", "1", "7"],
+    "7": ["0", "1", "2"],
+}
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES = RigettiDeviceCapabilities.parse_obj(
+    RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON
+)
+
+MOCK_RIGETTI_GATE_MODEL_M_3_QPU = {
+    "deviceName": "Aspen-M-3",
+    "deviceType": "QPU",
+    "providerName": "provider1",
+    "deviceStatus": "ONLINE",
+    "deviceArn": RIGETTI_ASPEN_ARN,
+    "deviceCapabilities": RIGETTI_MOCK_M_3_QPU_CAPABILITIES.json(),
 }
 
 MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON = {
