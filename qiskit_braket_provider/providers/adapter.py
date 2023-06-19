@@ -251,11 +251,12 @@ def convert_continuous_qubit_indices(connectivity_graph: dict) -> dict:
         the resultant continous qubit indices output will be:
             {1: [2, 3], 2: [1, 3], 3: [1, 2]}
     """
-    # Creates indices list and maps them to a continuous list
+    # Creates list of existing qubit indices which are discontinuous.
     indices = [int(key) for key in connectivity_graph.keys()]
     indices.sort()
+    # Creates a list of continuous indices for number of qubits.
     map_list = list(range(len(indices)))
-    # Creates a dictionary to remap the discountinous indices sto the continuous ones.
+    # Creates a dictionary to remap the discountinous indices to the continuous ones.
     mapper = dict(zip(indices, map_list))
     # Performs the remapping from the discontinous to the continuous indices.
     continous_connectivity_graph = {
