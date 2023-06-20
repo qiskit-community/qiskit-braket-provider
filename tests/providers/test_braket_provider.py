@@ -2,7 +2,6 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 import uuid
-from typing import List
 
 from braket.circuits import Circuit
 from braket.aws import AwsSession, AwsQuantumTaskBatch
@@ -79,7 +78,7 @@ class TestAWSBraketProvider(TestCase):
         mock_get_devices.return_value = [
             AwsDevice(MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"], self.mock_session)
         ]
-        S3_TARGET = AwsSession.S3DestinationFolder("mock_bucket", "mock_key")
+        s3_target = AwsSession.S3DestinationFolder("mock_bucket", "mock_key")
         q_circuit = qiskit_circuit.QuantumCircuit(2)
         q_circuit.h(0)
         q_circuit.cx(0, 1)
@@ -91,7 +90,7 @@ class TestAWSBraketProvider(TestCase):
             Mock(),
             MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"],
             braket_circuit,
-            S3_TARGET,
+            s3_target,
             1000,
             max_parallel=10,
         )
