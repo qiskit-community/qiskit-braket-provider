@@ -1,7 +1,11 @@
 """Tests for AWS Braket job."""
 
 from unittest import TestCase
+from unittest.mock import Mock
+from typing import Literal
 
+import pytest
+from braket.aws.aws_quantum_task import AwsQuantumTask
 from qiskit.providers import JobStatus
 
 from qiskit_braket_provider.providers import (
@@ -75,3 +79,47 @@ class TestAWSBraketJob(TestCase):
         self.assertEqual(job.result().results[0].status, "COMPLETED")
         self.assertEqual(job.result().results[0].shots, 3)
         self.assertEqual(job.result().get_memory(), ["10", "10", "01"])
+
+
+class TestBracketJobStatus:
+    """Tests for AWS Braket job status."""
+
+    def _get_mock_aws_quantum_task(
+        self,
+        status: Literal[
+            "CREATED",
+            "QUEUED",
+            "RUNNING",
+            "COMPLETED",
+            "FAILED",
+            "CANCELLING",
+            "CANCELLED",
+        ],
+    ) -> AwsQuantumTask:
+        """Creates a mock AwsQuantumTask with the given status."""
+        task = Mock(spec=AwsQuantumTask)
+        task.state.return_value = status
+        return task
+
+    @pytest.mark.parametrize(
+        "task_states, expected_status",
+        [
+            (["COMPLETED", "FAILED"], JobStatus.ERROR),
+            (["COMPLETED", "CANCELLED"], JobStatus.CANCELLED),
+            (["COMPLETED", "COMPLETED"], JobStatus.DONE),
+            (["RUNNING", "RUNNING"], JobStatus.RUNNING),
+            (["QUEUED", "QUEUED"], JobStatus.QUEUED),
+        ],
+    )
+    def test_status(self, task_states, expected_status):
+        """Tests job status when multiple task status is present."""
+        job = AWSBraketJob(
+            backend=BraketLocalBackend(name="default"),
+            job_id="MockId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK],
+            shots=100,
+        )
+        job._tasks = Mock(spec=AmazonBraketTask)
+        job._tasks = [self._get_mock_aws_quantum_task(state) for state in task_states]
+
+        assert job.status() == expected_status
