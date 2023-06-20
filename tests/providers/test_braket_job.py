@@ -2,7 +2,6 @@
 
 from unittest import TestCase
 from unittest.mock import Mock
-from typing import Literal
 
 import pytest
 from braket.aws.aws_quantum_task import AwsQuantumTask
@@ -84,19 +83,12 @@ class TestAWSBraketJob(TestCase):
 class TestBracketJobStatus:
     """Tests for AWS Braket job status."""
 
-    def _get_mock_aws_quantum_task(
-        self,
-        status: Literal[
-            "CREATED",
-            "QUEUED",
-            "RUNNING",
-            "COMPLETED",
-            "FAILED",
-            "CANCELLING",
-            "CANCELLED",
-        ],
-    ) -> AwsQuantumTask:
-        """Creates a mock AwsQuantumTask with the given status."""
+    def _get_mock_aws_quantum_task(self, status: str) -> AwsQuantumTask:
+        """
+        Creates a mock AwsQuantumTask with the given status.
+        Status can be one of "CREATED", "QUEUED", "RUNNING", "COMPLETED",
+        "FAILED", "CANCELLING", "CANCELLED"
+        """
         task = Mock(spec=AwsQuantumTask)
         task.state.return_value = status
         return task
