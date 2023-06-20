@@ -7,6 +7,7 @@ from braket.circuits import (
     Circuit,
     FreeParameter,
     Instruction,
+    Gate,
     gates,
     result_types,
     observables,
@@ -462,6 +463,36 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
                     target=[circuit.find_bit(i).index for i in qiskit_gates[1]],
                 )
                 quantum_circuit += instruction
+    return quantum_circuit
+
+
+def from_braket_circuit(circuit: Circuit) -> QuantumCircuit:
+    """Return a Qiskit quantum circuit from a Braket quantum circuit.
+     Args:
+            circuit (Circuit): Braket Quantum Circuit
+
+    Returns:
+        QuantumCircuit: Qiskit circuit
+    """
+    num_qubits = circuit.qubit_count
+    quantum_circuit = QuantumCircuit(num_qubits)
+    quantum_circuit.metadata = {"instructions": [], "result_types": []}
+    for instruction in circuit.instructions:
+        quantum_circuit.metadata["instructions"].append(instruction)
+        operator = instruction.operator
+        if isinstance(operator, Gate):
+            qiskit_instr = _op_to_instruction(operator.name)
+            if hasattr(operator, "angle"):
+                qiskit_instr.params = [
+                    Parameter(operator.angle.name)
+                    if isinstance(operator.angle, FreeParameter)
+                    else operator.angle
+                ]
+            quantum_circuit.append(qiskit_instr, instruction.target)
+    if circuit.result_types == []:
+        quantum_circuit.measure_active()
+    else:
+        quantum_circuit.metadata["result_types"] = circuit.result_types
     return quantum_circuit
 
 
