@@ -1,7 +1,11 @@
 """Tests for AWS Braket provider."""
 from unittest import TestCase
 from unittest.mock import Mock, patch
+import uuid
+from typing import List
 
+from braket.circuits import Circuit
+from braket.aws import AwsSession, AwsQuantumTaskBatch
 from braket.aws import AwsDevice, AwsDeviceType
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
@@ -66,25 +70,51 @@ class TestAWSBraketProvider(TestCase):
                 with self.subTest(f"{backend.name}"):
                     self.assertIsInstance(backend, AWSBraketBackend)
 
+    @patch("qiskit_braket_provider.providers.braket_backend.AWSBraketBackend")
     @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
-    def test_qiskit_circuit_transpilation(self, mock_get_devices):
+    def test_qiskit_circuit_transpilation_run(
+        self, mock_get_devices, mock_aws_braket_backend
+    ):
         """Tests qiskit circuit transpilation."""
         mock_get_devices.return_value = [
             AwsDevice(MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"], self.mock_session)
         ]
+        S3_TARGET = AwsSession.S3DestinationFolder("mock_bucket", "mock_key")
+        q_circuit = qiskit_circuit.QuantumCircuit(2)
+        q_circuit.h(0)
+        q_circuit.cx(0, 1)
+        braket_circuit = Circuit().h(0).cnot(0, 1)
+
+        mock_aws_braket_backend = Mock(spec=AWSBraketBackend)
+        mock_aws_braket_backend._device = Mock(spec=AwsDevice)
+        task = AwsQuantumTaskBatch(
+            Mock(),
+            MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"],
+            braket_circuit,
+            S3_TARGET,
+            1000,
+            max_parallel=10,
+        )
+        task_mock = Mock()
+        task_mock.id = str(uuid.uuid4())
+        task_mock.state.return_value = "RUNNING"
+        task = Mock(spec=AwsQuantumTaskBatch, return_value=task)
+        task.tasks = [task_mock]
 
         provider = AWSBraketProvider()
         state_vector_backend = provider.get_backend(
             "SV1", aws_session=self.mock_session
         )
-        circuit = qiskit_circuit.QuantumCircuit(2)
-        circuit.h(0)
-        circuit.cx(0, 1)
 
         transpiled_circuit = transpile(
-            circuit, backend=state_vector_backend, seed_transpiler=42
+            q_circuit, backend=state_vector_backend, seed_transpiler=42
         )
-        self.assertTrue(transpiled_circuit)
+
+        state_vector_backend._device.run_batch = Mock(
+            spec=AwsQuantumTaskBatch, return_value=task
+        )
+        result = state_vector_backend.run(transpiled_circuit, shots=10)
+        self.assertTrue(result)
 
     @patch("braket.aws.aws_device.AwsDevice.get_devices")
     def test_discontinous_qubit_indices_qiskit_transpilation(self, mock_get_devices):
