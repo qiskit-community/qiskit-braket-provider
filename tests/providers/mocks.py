@@ -114,7 +114,7 @@ MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON = {
         "braket.ir.jaqcd.program": {
             "actionType": "braket.ir.jaqcd.program",
             "version": ["1"],
-            "supportedOperations": ["H"],
+            "supportedOperations": ["H", "CNOT"],
         }
     },
     "paradigm": {"qubitCount": 30},
