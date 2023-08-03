@@ -6,7 +6,8 @@ from unittest.mock import Mock
 
 from botocore import errorfactory
 from qiskit import QuantumCircuit, transpile, BasicAer
-from qiskit.algorithms import VQE, VQEResult
+from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
+
 from qiskit.algorithms.optimizers import (
     SLSQP,
 )
@@ -19,7 +20,7 @@ from qiskit.opflow import (
 )
 from qiskit.result import Result
 from qiskit.transpiler import Target
-from qiskit.utils import QuantumInstance
+from qiskit.primitives import BackendEstimator
 
 from qiskit_braket_provider import AWSBraketProvider, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
@@ -151,13 +152,12 @@ class TestAWSBraketBackend(TestCase):
             + (0.18093119978423156 * X ^ X)
         )
 
-        quantum_instance = QuantumInstance(
-            local_simulator, seed_transpiler=42, seed_simulator=42
-        )
+        estimator = BackendEstimator(backend=local_simulator, skip_transpilation=False)
+
         ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
         slsqp = SLSQP(maxiter=1)
 
-        vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=quantum_instance)
+        vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)
 
         result = vqe.compute_minimum_eigenvalue(h2_op)
 
