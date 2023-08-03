@@ -8,7 +8,7 @@ from botocore import errorfactory
 from qiskit import QuantumCircuit, transpile, BasicAer
 from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 
-from qiskit.algorithms.optimizers import (
+from qiskit_algorithms.optimizers import (
     SLSQP,
 )
 from qiskit.circuit.library import TwoLocal
