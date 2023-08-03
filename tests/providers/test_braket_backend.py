@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 from botocore import errorfactory
 from qiskit import QuantumCircuit, transpile, BasicAer
-from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
+from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 
 from qiskit.algorithms.optimizers import (
     SLSQP,
