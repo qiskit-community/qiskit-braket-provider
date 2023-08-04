@@ -111,8 +111,6 @@ standard_gates = [
     RYYGate(Parameter("ϴ")),
     RZZGate(Parameter("ϴ")),
     RZXGate(Parameter("ϴ")),
-    # XXMinusYYGate(Parameter("ϴ")),
-    # XXPlusYYGate(Parameter("ϴ")),
     ECRGate(),
     SGate(),
     SdgGate(),
