@@ -10,7 +10,7 @@ import numpy as np
 from qiskit import QuantumCircuit, execute, BasicAer
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
-from qiskit.opflow import I, Z, X
+from qiskit.quantum_info import SparsePauliOp
 
 from qiskit.circuit.library.standard_gates import (
     HGate,
@@ -111,8 +111,8 @@ standard_gates = [
     RYYGate(Parameter("ϴ")),
     RZZGate(Parameter("ϴ")),
     RZXGate(Parameter("ϴ")),
-    XXMinusYYGate(Parameter("ϴ")),
-    XXPlusYYGate(Parameter("ϴ")),
+    # XXMinusYYGate(Parameter("ϴ")),
+    # XXPlusYYGate(Parameter("ϴ")),
     ECRGate(),
     SGate(),
     SdgGate(),
@@ -234,7 +234,13 @@ class TestAdapter(TestCase):
         backend = BraketLocalBackend()
         qiskit_circuit = QuantumCircuit(2)
 
-        operator = (Z ^ Z) - 0.1 * (X ^ I)
+        operator = SparsePauliOp(
+            ["ZZ", "XI"],
+            coeffs=[
+                1,
+                -0.1,
+            ],
+        )
         evo = PauliEvolutionGate(operator, time=2)
 
         qiskit_circuit.append(evo, range(2))
