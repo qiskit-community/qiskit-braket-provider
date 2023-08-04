@@ -6,18 +6,15 @@ from unittest.mock import Mock
 
 from botocore import errorfactory
 from qiskit import QuantumCircuit, transpile, BasicAer
-from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 
-from qiskit_algorithms.optimizers import (
+from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
+
+from qiskit.algorithms.optimizers import (
     SLSQP,
 )
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
-from qiskit.opflow import (
-    I,
-    X,
-    Z,
-)
+from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Result
 from qiskit.transpiler import Target
 from qiskit.primitives import BackendEstimator
@@ -143,13 +140,15 @@ class TestAWSBraketBackend(TestCase):
     def test_vqe(self):
         """Tests VQE."""
         local_simulator = BraketLocalBackend(name="default")
-
-        h2_op = (
-            (-1.052373245772859 * I ^ I)
-            + (0.39793742484318045 * I ^ Z)
-            + (-0.39793742484318045 * Z ^ I)
-            + (-0.01128010425623538 * Z ^ Z)
-            + (0.18093119978423156 * X ^ X)
+        h2_op = SparsePauliOp(
+            ["II", "IZ", "ZI", "ZZ", "XX"],
+            coeffs=[
+                -1.052373245772859,
+                0.39793742484318045,
+                -0.39793742484318045,
+                -0.01128010425623538,
+                0.18093119978423156,
+            ],
         )
 
         estimator = BackendEstimator(backend=local_simulator, skip_transpilation=False)
