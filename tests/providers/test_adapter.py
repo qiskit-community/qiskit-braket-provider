@@ -29,8 +29,6 @@ from qiskit.circuit.library.standard_gates import (
     CRZGate,
     RZZGate,
     RZXGate,
-    XXMinusYYGate,
-    XXPlusYYGate,
     ECRGate,
     SGate,
     SdgGate,
