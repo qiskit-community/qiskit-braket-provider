@@ -59,18 +59,14 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">VQE</span>
-<span class="kn">from</span> <span class="nn">qiskit.opflow</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">I</span><span class="p">,</span>
-    <span class="n">X</span><span class="p">,</span>
-    <span class="n">Z</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.algorithms.minimum_eigensolvers</span> <span class="kn">import</span> <span class="n">VQE</span>
+<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">SparsePauliOp</span>
 <span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">transpile</span><span class="p">,</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.random</span> <span class="kn">import</span> <span class="n">random_circuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.visualization</span> <span class="kn">import</span> <span class="n">plot_histogram</span>
 <span class="kn">from</span> <span class="nn">qiskit.algorithms.optimizers</span> <span class="kn">import</span> <span class="n">SLSQP</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">TwoLocal</span>
-<span class="kn">from</span> <span class="nn">qiskit.utils</span> <span class="kn">import</span> <span class="n">QuantumInstance</span>
+<span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">BackendEstimator</span>
 
 <span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumJob</span>
 
@@ -234,7 +230,7 @@ q_1: ─────┤ X ├
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;qiskit_braket_provider.providers.braket_job.AmazonBraketTask at 0x7f7a5b4cde50&gt;
+&lt;qiskit_braket_provider.providers.braket_job.AmazonBraketTask at 0x138166410&gt;
 </pre></div></div>
 </div>
 <p>Plot histogram</p>
@@ -269,7 +265,7 @@ q_1: ─────┤ X ├
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;11&#39;, &#39;11&#39;, &#39;00&#39;, &#39;11&#39;, &#39;11&#39;, &#39;00&#39;, &#39;00&#39;, &#39;11&#39;, &#39;11&#39;, &#39;00&#39;]
+[&#39;11&#39;, &#39;11&#39;, &#39;00&#39;, &#39;11&#39;, &#39;11&#39;, &#39;11&#39;, &#39;00&#39;, &#39;00&#39;, &#39;00&#39;, &#39;00&#39;]
 </pre></div></div>
 </div>
 <p>Now it’s time to run more complex circuits on devices we got in previous paragraphs.</p>
@@ -291,10 +287,10 @@ q_1: ─────┤ X ├
 <pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">     ┌────────────────────────┐                                       ┌─────────────────────────┐┌────┐   ┌───────────────────┐                                                     ┌──────┐                                                                                               ┌────────────────────┐┌───────────┐┌─────────────────────────┐                                   ┌──────────────┐       ┌───┐        ┌────────────┐                                   ┌────────────────────┐  ┌───┐                                                           ┌──────────────────┐
 q_0: ┤0                       ├────■──────────────────────────────────┤1                        ├┤ Sx ├───┤ U2(1.8116,4.2882) ├─────────────────────────────────────────────────────┤1     ├─────────────────────────────────────────X───────────────────────────────────────────────────X─┤ U2(0.56579,4.5387) ├┤ Rx(2.394) ├┤ U3(4.893,4.5044,2.8234) ├───────────────────────────────────┤0             ├───────┤ Y ├────────┤ Ry(3.7128) ├───────────────────────────■───────┤ U2(0.13579,5.1917) ├──┤ H ├──────────────────────────■────────────────────────■───────┤ R(4.1573,2.3478) ├───────────────────
      │                        │    │ ┌───┐┌────────────┐┌────────────┐│                         │└─┬──┘   └───────────────────┘                                     ┌──────────────┐│      │                                         │                                                   │ └────────────────────┘└───────────┘└──────┬────────────┬─────┘        ┌───┐            ┌─────┐   │              │       └─┬─┘        └────────────┘             ┌──────┐      │       └────────────────────┘  ├───┴┐ ┌──────────────┐┌────┐  │        ┌───┐           │       └──────────────────┘
-q_1: ┤  {XX+YY}(4.7824,4.939) ├─■──┼─┤ X ├┤ Ry(6.0991) ├┤ Rx(1.1905) ├┤                         ├──┼────────────────────────────────────────────────────────────────┤0             ├┤      ├─────────────────■───────────■───────────┼──────────────────────────────────────────────■────┼───────────■───────────────────────────────┤ Rx(1.8945) ├──────────────┤ Y ├────────────┤ Sdg ├───┤              ├─────────■─────────────────────────────────────┤1     ├──────┼─────────────■─────────────────┤ Sx ├─┤0             ├┤ Sx ├──┼────────┤ T ├───────────┼────────────────■─────────────────────────────
+q_1: ┤  (XX+YY)(4.7824,4.939) ├─■──┼─┤ X ├┤ Ry(6.0991) ├┤ Rx(1.1905) ├┤                         ├──┼────────────────────────────────────────────────────────────────┤0             ├┤      ├─────────────────■───────────■───────────┼──────────────────────────────────────────────■────┼───────────■───────────────────────────────┤ Rx(1.8945) ├──────────────┤ Y ├────────────┤ Sdg ├───┤              ├─────────■─────────────────────────────────────┤1     ├──────┼─────────────■─────────────────┤ Sx ├─┤0             ├┤ Sx ├──┼────────┤ T ├───────────┼────────────────■─────────────────────────────
      │                        │ │  │ └─┬─┘└──┬─────┬───┘└──┬─────┬───┘│                         │  │   ┌─────────────────────────┐                                  │              ││      │┌──────────────┐ │           │           │ ┌────────────────────────────────┐ ┌───┐     │    │     ┌─────┴──────┐                        └─────┬──────┘      ┌───────┴───┴────────┐   └─────┘   │  Rzx(5.3823) │                                               │      │      │             │P(5.8925)        └─┬──┘ │  Rxx(4.5678) │└─┬──┘  │    ┌───┴───┴────┐      │                │          ┌─────────────────┐
-q_2: ┤1                       ├─┼──┼───┼─────┤ Sdg ├───────┤ Tdg ├────┤  {XX-YY}(5.6116,4.8907) ├──┼───┤1                        ├────────────────■─────────────────┤              ├┤  Ecr ├┤0             ├─┼───────────┼───────────┼─┤ U(3.5136,1.9098,0.19363,2.744) ├─┤ X ├─────┼────┼─────┤ Ry(1.0491) ├──────────■───────────────────┼─────────────┤ U2(1.7105,0.60564) ├─■───────────┤              ├────■──────────────────────────────■───────────┤      ├──────┼─────────────■───────────────────■────┤1             ├──┼─────┼────┤ U1(1.9926) ├──────X────────────────┼──────────┤ R(1.985,4.8507) ├
-     └─────────┬────┬─────────┘ │  │   │     └──┬──┘       └─────┘    │                         │  │   │  {XX-YY}(2.3277,2.9503) │┌───────────────┴────────────────┐│  Rxx(2.4346) ││      ││  Rxx(2.8835) │ │           │           │ └───────────────┬────────────────┘┌┴───┴─┐   │    │     └──┬──────┬──┘          │                   │             └───────┬───┬────────┘ │           │              │    │U1(0.26147)    ┌────────────┐ │           │  Ecr │      │              ┌──────┐       ┌───────┐├──────────────┤  │     │   ┌┴────────────┤      │              ┌─┴─┐        └─────────────────┘
+q_2: ┤1                       ├─┼──┼───┼─────┤ Sdg ├───────┤ Tdg ├────┤  (XX-YY)(5.6116,4.8907) ├──┼───┤1                        ├────────────────■─────────────────┤              ├┤  Ecr ├┤0             ├─┼───────────┼───────────┼─┤ U(3.5136,1.9098,0.19363,2.744) ├─┤ X ├─────┼────┼─────┤ Ry(1.0491) ├──────────■───────────────────┼─────────────┤ U2(1.7105,0.60564) ├─■───────────┤              ├────■──────────────────────────────■───────────┤      ├──────┼─────────────■───────────────────■────┤1             ├──┼─────┼────┤ U1(1.9926) ├──────X────────────────┼──────────┤ R(1.985,4.8507) ├
+     └─────────┬────┬─────────┘ │  │   │     └──┬──┘       └─────┘    │                         │  │   │  (XX-YY)(2.3277,2.9503) │┌───────────────┴────────────────┐│  Rxx(2.4346) ││      ││  Rxx(2.8835) │ │           │           │ └───────────────┬────────────────┘┌┴───┴─┐   │    │     └──┬──────┬──┘          │                   │             └───────┬───┬────────┘ │           │              │    │U1(0.26147)    ┌────────────┐ │           │  Ecr │      │              ┌──────┐       ┌───────┐├──────────────┤  │     │   ┌┴────────────┤      │              ┌─┴─┐        └─────────────────┘
 q_3: ──────────┤ √X ├───────────┼──┼───■────────┼─────────────■───────┤                         ├──┼───┤0                        ├┤ U(4.3999,1.9627,5.2292,5.0565) ├┤              ├┤      ├┤1             ├─┼───────────┼───────────X─────────────────┼─────────────────┤ √Xdg ├───┼────┼────────┤1     ├─────────────■───────────────────┼─────────────────────┤ H ├──────────┼───────────┤1             ├────■───────────────┤ Ry(3.6509) ├─┼───────────┤      ├──────┼──────────────┤0     ├───────┤1      ├┤1             ├──■─────┼───┤ Ry(0.28218) ├──────┼──────────────┤ X ├───────────────────────────
                └────┘           │  │            │             │       │                         │  │   └──────┬────────────┬─────┘└────────────────────────────────┘│              ││      │└──────────────┘ │           │P(3.4782)                    │                 └──────┘┌──┴──┐ │        │  Ecr │             │                   │                     ├───┤          │           └┬────────────┬┘┌──────────────────┐└────────────┘ │           │      │      │              │  Ecr │       │       ││  Rxx(4.8296) │      ┌─┴──┐└──────┬──────┘      │              └─┬─┘
 q_4: ───────────────────────────■──┼────────────■─────────────┼───────┤0                        ├──┼──────────┤ Rx(2.0472) ├────────────────────────────────────────┤1             ├┤0     ├─────────────────┼───────────■─────────────────────────────┼─────────────────────────┤ Sdg ├─┼────────┤0     ├─────────────■───────────────────┼─────────────────────┤ S ├──────────┼────────────┤ U1(4.7659) ├─┤ R(3.1038,2.0726) ├───────────────┼───────────┤0     ├──────┼──────────────┤1     ├───────┤0 Rccx ├┤0             ├──────┤ Sx ├───────┼─────────────X────────────────■─────────────────────────────
@@ -346,7 +342,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 <p>If we do not want to wait for a job completion and return to it later, we can use <code class="docutils literal notranslate"><span class="pre">retrieve_job</span></code> method on device to get job object</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span> <span class="o">=</span> <span class="n">ionq_device</span><span class="o">.</span><span class="n">retrieve_job</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;&lt;TASK_ARN&gt;&quot;</span><span class="p">)</span>
@@ -355,17 +351,17 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;qiskit_braket_provider.providers.braket_job.AmazonBraketTask at 0x7f7a498e61c0&gt;
+&lt;qiskit_braket_provider.providers.braket_job.AmazonBraketTask at 0x13cd4bcd0&gt;
 </pre></div></div>
 </div>
 <p>Check status</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
@@ -373,7 +369,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -383,7 +379,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 <p>And plot histogram of results</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">retrieved_job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">())</span>
@@ -391,7 +387,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -407,66 +403,54 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 <p>Let’s take a look at an example to construct a VQE instance. Here <code class="docutils literal notranslate"><span class="pre">TwoLocal</span></code> is the variational form (trial wavefunction), a parameterized circuit which can be varied, and SLSQP a classical optimizer. Then we pass hamiltonian to <code class="docutils literal notranslate"><span class="pre">compute_minimum_eigenvalue</span></code> method of <code class="docutils literal notranslate"><span class="pre">VQE</span></code> to get result.</p>
 <p>Full example and explanation of algorithm detail you can find <a class="reference external" href="https://qiskit.org/documentation/tutorials/algorithms/01_algorithms_introduction.html#An-Introduction-to-Algorithms-in-Qiskit">here</a>.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">H2_op</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">(</span><span class="o">-</span><span class="mf">1.052373245772859</span> <span class="o">*</span> <span class="n">I</span> <span class="o">^</span> <span class="n">I</span><span class="p">)</span>
-    <span class="o">+</span> <span class="p">(</span><span class="mf">0.39793742484318045</span> <span class="o">*</span> <span class="n">I</span> <span class="o">^</span> <span class="n">Z</span><span class="p">)</span>
-    <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.39793742484318045</span> <span class="o">*</span> <span class="n">Z</span> <span class="o">^</span> <span class="n">I</span><span class="p">)</span>
-    <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.01128010425623538</span> <span class="o">*</span> <span class="n">Z</span> <span class="o">^</span> <span class="n">Z</span><span class="p">)</span>
-    <span class="o">+</span> <span class="p">(</span><span class="mf">0.18093119978423156</span> <span class="o">*</span> <span class="n">X</span> <span class="o">^</span> <span class="n">X</span><span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">H2_op</span> <span class="o">=</span> <span class="n">SparsePauliOp</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">&quot;II&quot;</span><span class="p">,</span> <span class="s2">&quot;IZ&quot;</span><span class="p">,</span> <span class="s2">&quot;ZI&quot;</span><span class="p">,</span> <span class="s2">&quot;ZZ&quot;</span><span class="p">,</span> <span class="s2">&quot;XX&quot;</span><span class="p">],</span>
+    <span class="n">coeffs</span><span class="o">=</span><span class="p">[</span>
+        <span class="o">-</span><span class="mf">1.052373245772859</span><span class="p">,</span>
+        <span class="mf">0.39793742484318045</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.39793742484318045</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">0.01128010425623538</span><span class="p">,</span>
+        <span class="mf">0.18093119978423156</span><span class="p">,</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">qi</span> <span class="o">=</span> <span class="n">QuantumInstance</span><span class="p">(</span><span class="n">local_simulator</span><span class="p">,</span> <span class="n">seed_transpiler</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">seed_simulator</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">BackendEstimator</span><span class="p">(</span><span class="n">local_simulator</span><span class="p">,</span> <span class="n">skip_transpilation</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">ansatz</span> <span class="o">=</span> <span class="n">TwoLocal</span><span class="p">(</span><span class="n">rotation_blocks</span><span class="o">=</span><span class="s2">&quot;ry&quot;</span><span class="p">,</span> <span class="n">entanglement_blocks</span><span class="o">=</span><span class="s2">&quot;cz&quot;</span><span class="p">)</span>
 <span class="n">slsqp</span> <span class="o">=</span> <span class="n">SLSQP</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span><span class="n">ansatz</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">slsqp</span><span class="p">,</span> <span class="n">quantum_instance</span><span class="o">=</span><span class="n">qi</span><span class="p">)</span>
+<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span> <span class="n">ansatz</span><span class="o">=</span><span class="n">ansatz</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">slsqp</span><span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">H2_op</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/tmp/ipykernel_21335/1309103975.py:9: DeprecationWarning: The class ``qiskit.utils.quantum_instance.QuantumInstance`` is deprecated as of qiskit-terra 0.24.0. It will be removed no earlier than 3 months after the release date. For code migration guidelines, visit https://qisk.it/qi_migration.
-  qi = QuantumInstance(local_simulator, seed_transpiler=42, seed_simulator=42)
-/tmp/ipykernel_21335/1309103975.py:13: DeprecationWarning: The class ``qiskit.algorithms.minimum_eigen_solvers.vqe.VQE`` is deprecated as of qiskit-terra 0.24.0. It will be removed no earlier than 3 months after the release date. Instead, use the class ``qiskit.algorithms.minimum_eigensolvers.VQE``. See https://qisk.it/algo_migration for a migration guide.
-  vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=qi)
-</pre></div></div>
-</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{   &#39;aux_operator_eigenvalues&#39;: None,
+{   &#39;aux_operators_evaluated&#39;: None,
     &#39;cost_function_evals&#39;: 9,
-    &#39;eigenstate&#39;: {   &#39;00&#39;: 0.5854685623498498,
-                      &#39;01&#39;: 0.5837981778834189,
-                      &#39;10&#39;: 0.46770717334674267,
-                      &#39;11&#39;: 0.3125},
-    &#39;eigenvalue&#39;: (-1.2938597123240512+0j),
-    &#39;optimal_circuit&#39;: None,
-    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[1]): -2.7502662569061473,
-                              ParameterVectorElement(θ[0]): -1.4898253895470077,
-                              ParameterVectorElement(θ[2]): 5.777835248686062,
-                              ParameterVectorElement(θ[3]): 5.998464701792347,
-                              ParameterVectorElement(θ[4]): 1.6774540702480465,
-                              ParameterVectorElement(θ[5]): -3.1634349542322076,
-                              ParameterVectorElement(θ[6]): 4.089977645429185,
-                              ParameterVectorElement(θ[7]): -5.51571636504145},
-    &#39;optimal_point&#39;: array([-1.48982539, -2.75026626,  5.77783525,  5.9984647 ,  1.67745407,
-       -3.16343495,  4.08997765, -5.51571637]),
-    &#39;optimal_value&#39;: -1.2938597123240512,
+    &#39;eigenvalue&#39;: -1.4272080711283344,
+    &#39;optimal_circuit&#39;: &lt;qiskit.circuit.library.n_local.two_local.TwoLocal object at 0x13798f690&gt;,
+    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[0]): 1.054197452954356,
+                              ParameterVectorElement(θ[1]): 2.759415645946344,
+                              ParameterVectorElement(θ[2]): -3.157245172580292,
+                              ParameterVectorElement(θ[3]): -1.504397646177443,
+                              ParameterVectorElement(θ[4]): -0.8460982537780612,
+                              ParameterVectorElement(θ[5]): 3.3343214671170145,
+                              ParameterVectorElement(θ[6]): 3.4110127659318756,
+                              ParameterVectorElement(θ[7]): -5.015554393329303},
+    &#39;optimal_point&#39;: array([ 1.05419745,  2.75941565, -3.15724517, -1.50439765, -0.84609825,
+        3.33432147,  3.41101277, -5.01555439]),
+    &#39;optimal_value&#39;: -1.4272080711283344,
     &#39;optimizer_evals&#39;: None,
-    &#39;optimizer_result&#39;: None,
-    &#39;optimizer_time&#39;: 1.0542807579040527}
+    &#39;optimizer_result&#39;: &lt;qiskit_algorithms.optimizers.optimizer.OptimizerResult object at 0x13c8bc050&gt;,
+    &#39;optimizer_time&#39;: 3.5380678176879883}
 </pre></div></div>
 </div>
 </section>
@@ -478,7 +462,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 <li><p>Prepare script</p></li>
 </ol>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>cat<span class="w"> </span>./data/2_hybrid_jobs/job_script.py
@@ -492,15 +476,11 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 <div class="highlight"><pre>
 &#34;&#34;&#34;Example of Hybrid Job payload with VQE.&#34;&#34;&#34;
 from braket.jobs import save_job_result
-from qiskit.opflow import (
-    I,
-    X,
-    Z,
-)
-from qiskit.algorithms import VQE
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.algorithms.minimum_eigensolvers import VQE
 from qiskit.algorithms.optimizers import SLSQP
 from qiskit.circuit.library import TwoLocal
-from qiskit.utils import QuantumInstance
+from qiskit.primitives import BackendEstimator
 
 from qiskit_braket_provider import AWSBraketProvider
 
@@ -508,28 +488,32 @@ from qiskit_braket_provider import AWSBraketProvider
 def main():
     backend = AWSBraketProvider().get_backend(&#34;SV1&#34;)
 
-    h2_op = (
-        (-1.052373245772859 * I ^ I)
-        + (0.39793742484318045 * I ^ Z)
-        + (-0.39793742484318045 * Z ^ I)
-        + (-0.01128010425623538 * Z ^ Z)
-        + (0.18093119978423156 * X ^ X)
+    h2_op = SparsePauliOp(
+        [&#34;II&#34;, &#34;IZ&#34;, &#34;ZI&#34;, &#34;ZZ&#34;, &#34;XX&#34;],
+        coeffs=[
+            -1.052373245772859,
+            0.39793742484318045,
+            -0.39793742484318045,
+            -0.01128010425623538,
+            0.18093119978423156,
+        ],
     )
 
-    quantum_instance = QuantumInstance(
-        backend, seed_transpiler=42, seed_simulator=42, shots=10
+    estimator = BackendEstimator(
+        backend=backend,
+        options={&#34;seed_simulator&#34;: 42, &#34;seed_transpiler&#34;: 42, &#34;shots&#34;: 10},
+        skip_transpilation=False,
     )
     ansatz = TwoLocal(rotation_blocks=&#34;ry&#34;, entanglement_blocks=&#34;cz&#34;)
     slsqp = SLSQP(maxiter=1)
 
-    vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=quantum_instance)
+    vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)
 
     vqe_result = vqe.compute_minimum_eigenvalue(h2_op)
 
     save_job_result(
         {
             &#34;VQE&#34;: {
-                &#34;eigenstate&#34;: vqe_result.eigenstate,
                 &#34;eigenvalue&#34;: vqe_result.eigenvalue.real,
                 &#34;optimal_parameters&#34;: list(vqe_result.optimal_parameters.values()),
                 &#34;optimal_point&#34;: vqe_result.optimal_point.tolist(),
@@ -543,7 +527,7 @@ def main():
 <li><p>Prepare image</p></li>
 </ol>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>cat<span class="w"> </span>./data/2_hybrid_jobs/Dockerfile

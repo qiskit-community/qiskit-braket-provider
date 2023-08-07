@@ -47,7 +47,7 @@
 <section id="Prepare-Hybrid-job-script">
 <h3>Prepare Hybrid job script<a class="headerlink" href="#Prepare-Hybrid-job-script" title="Permalink to this heading">¶</a></h3>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>cat<span class="w"> </span>./data/2_hybrid_jobs/job_script.py
@@ -61,15 +61,11 @@
 <div class="highlight"><pre>
 &#34;&#34;&#34;Example of Hybrid Job payload with VQE.&#34;&#34;&#34;
 from braket.jobs import save_job_result
-from qiskit.opflow import (
-    I,
-    X,
-    Z,
-)
-from qiskit.algorithms import VQE
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.algorithms.minimum_eigensolvers import VQE
 from qiskit.algorithms.optimizers import SLSQP
 from qiskit.circuit.library import TwoLocal
-from qiskit.utils import QuantumInstance
+from qiskit.primitives import BackendEstimator
 
 from qiskit_braket_provider import AWSBraketProvider
 
@@ -77,28 +73,32 @@ from qiskit_braket_provider import AWSBraketProvider
 def main():
     backend = AWSBraketProvider().get_backend(&#34;SV1&#34;)
 
-    h2_op = (
-        (-1.052373245772859 * I ^ I)
-        + (0.39793742484318045 * I ^ Z)
-        + (-0.39793742484318045 * Z ^ I)
-        + (-0.01128010425623538 * Z ^ Z)
-        + (0.18093119978423156 * X ^ X)
+    h2_op = SparsePauliOp(
+        [&#34;II&#34;, &#34;IZ&#34;, &#34;ZI&#34;, &#34;ZZ&#34;, &#34;XX&#34;],
+        coeffs=[
+            -1.052373245772859,
+            0.39793742484318045,
+            -0.39793742484318045,
+            -0.01128010425623538,
+            0.18093119978423156,
+        ],
     )
 
-    quantum_instance = QuantumInstance(
-        backend, seed_transpiler=42, seed_simulator=42, shots=10
+    estimator = BackendEstimator(
+        backend=backend,
+        options={&#34;seed_simulator&#34;: 42, &#34;seed_transpiler&#34;: 42, &#34;shots&#34;: 10},
+        skip_transpilation=False,
     )
     ansatz = TwoLocal(rotation_blocks=&#34;ry&#34;, entanglement_blocks=&#34;cz&#34;)
     slsqp = SLSQP(maxiter=1)
 
-    vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=quantum_instance)
+    vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)
 
     vqe_result = vqe.compute_minimum_eigenvalue(h2_op)
 
     save_job_result(
         {
             &#34;VQE&#34;: {
-                &#34;eigenstate&#34;: vqe_result.eigenstate,
                 &#34;eigenvalue&#34;: vqe_result.eigenvalue.real,
                 &#34;optimal_parameters&#34;: list(vqe_result.optimal_parameters.values()),
                 &#34;optimal_point&#34;: vqe_result.optimal_point.tolist(),

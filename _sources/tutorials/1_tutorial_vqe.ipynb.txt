@@ -10,20 +10,17 @@
   },
   {
    "cell_type": "code",
-   "execution_count": 1,
+   "execution_count": 3,
    "id": "ebac1b5c",
    "metadata": {},
    "outputs": [],
    "source": [
-    "from qiskit.algorithms import VQE\n",
-    "from qiskit.opflow import (\n",
-    "    I,\n",
-    "    X,\n",
-    "    Z,\n",
-    ")\n",
+    "from qiskit.algorithms.minimum_eigensolvers import VQE\n",
+    "from qiskit.quantum_info import SparsePauliOp\n",
     "from qiskit.algorithms.optimizers import SLSQP\n",
     "from qiskit.circuit.library import TwoLocal\n",
-    "from qiskit.utils import QuantumInstance, algorithm_globals\n",
+    "from qiskit.utils import algorithm_globals\n",
+    "from qiskit.primitives import BackendEstimator\n",
     "\n",
     "from qiskit_braket_provider import AWSBraketProvider, BraketLocalBackend\n",
     "\n",
@@ -48,7 +45,7 @@
     {
      "data": {
       "text/plain": [
-       "BraketBackend[sv_simulator]"
+       "BraketBackend[default]"
       ]
      },
      "execution_count": 2,
@@ -106,45 +103,48 @@
      "name": "stdout",
      "output_type": "stream",
      "text": [
-      "{   'aux_operator_eigenvalues': None,\n",
+      "{   'aux_operators_evaluated': None,\n",
       "    'cost_function_evals': 9,\n",
-      "    'eigenstate': {   '00': 0.7824990015968072,\n",
-      "                      '01': 0.489139870078079,\n",
-      "                      '10': 0.3814548629916782,\n",
-      "                      '11': 0.05412658773652741},\n",
-      "    'eigenvalue': (-1.0606393547183097+0j),\n",
-      "    'optimal_parameters': {   ParameterVectorElement(θ[1]): 4.19301252102391,\n",
-      "                              ParameterVectorElement(θ[0]): 3.611860069224077,\n",
+      "    'eigenvalue': -1.0778032163726936,\n",
+      "    'optimal_circuit': <qiskit.circuit.library.n_local.two_local.TwoLocal object at 0x13801f5d0>,\n",
+      "    'optimal_parameters': {   ParameterVectorElement(θ[0]): 3.611860069224077,\n",
+      "                              ParameterVectorElement(θ[1]): 4.19301252102391,\n",
       "                              ParameterVectorElement(θ[2]): 0.6019852007557844,\n",
       "                              ParameterVectorElement(θ[3]): 5.949536809130025,\n",
       "                              ParameterVectorElement(θ[4]): -3.3070470445355764,\n",
+      "                              ParameterVectorElement(θ[5]): 1.8462931831829383,\n",
       "                              ParameterVectorElement(θ[6]): -5.466043598406607,\n",
-      "                              ParameterVectorElement(θ[7]): 0.6984088030463615,\n",
-      "                              ParameterVectorElement(θ[5]): 1.8462931831829383},\n",
+      "                              ParameterVectorElement(θ[7]): 0.6984088030463615},\n",
       "    'optimal_point': array([ 3.61186007,  4.19301252,  0.6019852 ,  5.94953681, -3.30704704,\n",
       "        1.84629318, -5.4660436 ,  0.6984088 ]),\n",
-      "    'optimal_value': -1.0606393547183097,\n",
+      "    'optimal_value': -1.0778032163726936,\n",
       "    'optimizer_evals': None,\n",
-      "    'optimizer_time': 54.37140512466431}\n"
+      "    'optimizer_result': <qiskit.algorithms.optimizers.optimizer.OptimizerResult object at 0x138be0fd0>,\n",
+      "    'optimizer_time': 4.060570001602173}\n"
      ]
     }
    ],
    "source": [
-    "H2_op = (\n",
-    "    (-1.052373245772859 * I ^ I)\n",
-    "    + (0.39793742484318045 * I ^ Z)\n",
-    "    + (-0.39793742484318045 * Z ^ I)\n",
-    "    + (-0.01128010425623538 * Z ^ Z)\n",
-    "    + (0.18093119978423156 * X ^ X)\n",
+    "H2_op = SparsePauliOp(\n",
+    "    [\"II\", \"IZ\", \"ZI\", \"ZZ\", \"XX\"],\n",
+    "    coeffs=[\n",
+    "        -1.052373245772859,\n",
+    "        0.39793742484318045,\n",
+    "        -0.39793742484318045,\n",
+    "        -0.01128010425623538,\n",
+    "        0.18093119978423156,\n",
+    "    ],\n",
     ")\n",
     "\n",
-    "qi = QuantumInstance(\n",
-    "    state_vector_simulator_backend, seed_transpiler=seed, seed_simulator=seed\n",
+    "estimator = BackendEstimator(\n",
+    "    local_simulator,\n",
+    "    options={\"seed_transpiler\": seed, \"seed_simulator\": seed},\n",
+    "    skip_transpilation=False,\n",
     ")\n",
     "ansatz = TwoLocal(rotation_blocks=\"ry\", entanglement_blocks=\"cz\")\n",
     "slsqp = SLSQP(maxiter=1)\n",
     "\n",
-    "vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=qi)\n",
+    "vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)\n",
     "\n",
     "result = vqe.compute_minimum_eigenvalue(H2_op)\n",
     "print(result)"
@@ -167,7 +167,7 @@
    "name": "python",
    "nbconvert_exporter": "python",
    "pygments_lexer": "ipython3",
-   "version": "3.9.7"
+   "version": "3.11.4"
   }
  },
  "nbformat": 4,
