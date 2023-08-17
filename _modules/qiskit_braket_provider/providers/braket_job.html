@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,9 +9,9 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
@@ -115,10 +115,14 @@
     <span class="k">return</span> <span class="n">experiment_results</span>
 
 
-<div class="viewcode-block" id="AmazonBraketTask"><a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask">[docs]</a><span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">JobV1</span><span class="p">):</span>
+<div class="viewcode-block" id="AmazonBraketTask">
+<a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask">[docs]</a>
+<span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">JobV1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;AmazonBraketTask.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="AmazonBraketTask.__init__"><a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="AmazonBraketTask.__init__">
+<a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">backend</span><span class="p">:</span> <span class="n">BackendV2</span><span class="p">,</span>
@@ -139,6 +143,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">tasks</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_date_of_creation</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">shots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -191,6 +196,7 @@
             <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">QUEUED</span>
 
         <span class="k">return</span> <span class="n">status</span></div>
+
 
 
 <span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">AmazonBraketTask</span><span class="p">):</span>
@@ -301,7 +307,7 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>

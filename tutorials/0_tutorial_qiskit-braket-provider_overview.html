@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,9 +11,9 @@
     <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
@@ -41,9 +41,9 @@
           <div class="body" role="main">
             
   <section id="Tutorial:-Qiskit-Braket-provider-overview">
-<h1>Tutorial: Qiskit-Braket provider overview<a class="headerlink" href="#Tutorial:-Qiskit-Braket-provider-overview" title="Permalink to this heading">¶</a></h1>
+<h1>Tutorial: Qiskit-Braket provider overview<a class="headerlink" href="#Tutorial:-Qiskit-Braket-provider-overview" title="Link to this heading">¶</a></h1>
 <section id="Qiskit-to-Braket-mapping">
-<h2>Qiskit to Braket mapping<a class="headerlink" href="#Qiskit-to-Braket-mapping" title="Permalink to this heading">¶</a></h2>
+<h2>Qiskit to Braket mapping<a class="headerlink" href="#Qiskit-to-Braket-mapping" title="Link to this heading">¶</a></h2>
 <p><img alt="qiskit-to-braket-diagram" src="../_images/qiskit-braket-mapping.png" /></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -76,7 +76,7 @@
 </div>
 </section>
 <section id="Access-Braket-devices-from-Qiskit">
-<h2>Access Braket devices from Qiskit<a class="headerlink" href="#Access-Braket-devices-from-Qiskit" title="Permalink to this heading">¶</a></h2>
+<h2>Access Braket devices from Qiskit<a class="headerlink" href="#Access-Braket-devices-from-Qiskit" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through Braket SDK.</p>
 <p>Let’s get available devices to use by Qiskit</p>
 <div class="nbinput docutils container">
@@ -190,7 +190,7 @@ BraketBackend[SV1]
 </div>
 </section>
 <section id="Running-circuits-on-AWS-devices">
-<h2>Running circuits on AWS devices<a class="headerlink" href="#Running-circuits-on-AWS-devices" title="Permalink to this heading">¶</a></h2>
+<h2>Running circuits on AWS devices<a class="headerlink" href="#Running-circuits-on-AWS-devices" title="Link to this heading">¶</a></h2>
 <p>Let’s create circuit first. We will start with “Hello World” example :)</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -396,7 +396,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 </section>
 <section id="Running-algorithms">
-<h2>Running algorithms<a class="headerlink" href="#Running-algorithms" title="Permalink to this heading">¶</a></h2>
+<h2>Running algorithms<a class="headerlink" href="#Running-algorithms" title="Link to this heading">¶</a></h2>
 <p>Let’s review an example of running algorithms using Qiskit on Braket devices.</p>
 <p>Qiskit provides a number of Algorithms and they are grouped by category according to the task they can perform. For instance Minimum Eigensolvers to find the smallest eigen value of an operator, for example ground state energy of a chemistry Hamiltonian or a solution to an optimization problem when expressed as an Ising Hamiltonian.</p>
 <p>Algorithms are configurable and often part of the configuration will be in the form of smaller building blocks, of which different instances of the building block type can be given. For instance with <code class="docutils literal notranslate"><span class="pre">VQE</span></code>, the Variational Quantum Eigensolver, it takes a trial wavefunction, in the form of a <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> and a classical optimizer among other things.</p>
@@ -455,7 +455,7 @@ q_5 -> 5 ┤ Rz(-3.1159) ├┤ Ry(1.656) ├┤ Rz(0.58629) ├─────�
 </div>
 </section>
 <section id="Running-Hybrid-Jobs">
-<h2>Running Hybrid Jobs<a class="headerlink" href="#Running-Hybrid-Jobs" title="Permalink to this heading">¶</a></h2>
+<h2>Running Hybrid Jobs<a class="headerlink" href="#Running-Hybrid-Jobs" title="Link to this heading">¶</a></h2>
 <p>Amazon Braket Hybrid Jobs enables you to easily run hybrid quantum-classical algorithms, such as the Variational Quantum Eigensolver (VQE) and the Quantum Approximate Optimization Algorithm (QAOA), that combine classical compute resources with quantum computing devices to optimize the performance of today’s quantum systems.</p>
 <p>In order to run Hybrid Job we need to acomplish couple of step:</p>
 <ol class="arabic simple">
@@ -676,7 +676,7 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
