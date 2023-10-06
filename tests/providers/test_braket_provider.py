@@ -3,10 +3,11 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 import uuid
 
+from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from braket.circuits import Circuit
 from braket.aws import AwsSession, AwsQuantumTaskBatch
 from braket.aws import AwsDevice, AwsDeviceType
-from qiskit import circuit as qiskit_circuit
+from qiskit import circuit as qiskit_circuit, QuantumCircuit
 from qiskit.compiler import transpile
 
 from qiskit_braket_provider.providers import AWSBraketProvider
@@ -104,7 +105,6 @@ class TestAWSBraketProvider(TestCase):
         state_vector_backend = provider.get_backend(
             "SV1", aws_session=self.mock_session
         )
-
         transpiled_circuit = transpile(
             q_circuit, backend=state_vector_backend, seed_transpiler=42
         )
@@ -144,3 +144,32 @@ class TestAWSBraketProvider(TestCase):
 
         result = transpile(circ, device)
         self.assertTrue(result)
+
+    @patch("qiskit_braket_provider.providers.braket_backend.AWSBraketBackend.run")
+    @patch(
+        "qiskit_braket_provider.providers.braket_job.AmazonBraketTask.queue_position"
+    )
+    def test_queue_position_for_quantum_tasks(self, mock_queue_position, mock_run):
+        """Tests queue position for quantum tasks."""
+
+        mock_return_value = QuantumTaskQueueInfo(
+            queue_type=QueueType.NORMAL, queue_position=">2000", message=None
+        )
+        mock_task = Mock()
+        mock_task.queue_position = mock_queue_position
+        mock_queue_position.return_value = mock_return_value
+        mock_run.return_value = mock_task
+
+        device = AWSBraketProvider().get_backend("SV1")
+
+        circuit = QuantumCircuit(3)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.cx(0, 2)
+
+        qpu_task = device.run(circuit, shots=1)
+        result = qpu_task.queue_position()
+
+        mock_queue_position.assert_called_once()
+        assert isinstance(result, QuantumTaskQueueInfo)
+        self.assertEqual(result, mock_return_value)
