@@ -149,7 +149,10 @@ class TestAWSBraketProvider(TestCase):
     @patch(
         "qiskit_braket_provider.providers.braket_job.AmazonBraketTask.queue_position"
     )
-    def test_queue_position_for_quantum_tasks(self, mock_queue_position, mock_run):
+    @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
+    def test_queue_position_for_quantum_tasks(
+        self, mocked_device, mock_queue_position, mock_run
+    ):
         """Tests queue position for quantum tasks."""
 
         mock_return_value = QuantumTaskQueueInfo(
@@ -160,8 +163,8 @@ class TestAWSBraketProvider(TestCase):
         mock_queue_position.return_value = mock_return_value
         mock_run.return_value = mock_task
 
-        device = AWSBraketProvider().get_backend("SV1")
-
+        mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
+        device = AWSBraketBackend(device=mocked_device)
         circuit = QuantumCircuit(3)
         circuit.h(0)
         circuit.cx(0, 1)
