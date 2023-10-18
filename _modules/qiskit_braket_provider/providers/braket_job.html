@@ -42,6 +42,7 @@
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
 <span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumTask</span>
+<span class="kn">from</span> <span class="nn">braket.aws.queue_information</span> <span class="kn">import</span> <span class="n">QuantumTaskQueueInfo</span>
 <span class="kn">from</span> <span class="nn">braket.tasks</span> <span class="kn">import</span> <span class="n">GateModelQuantumTaskResult</span>
 <span class="kn">from</span> <span class="nn">braket.tasks.local_quantum_task</span> <span class="kn">import</span> <span class="n">LocalQuantumTask</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobV1</span>
@@ -160,6 +161,42 @@
 
     <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">queue_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumTaskQueueInfo</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The queue position details for the quantum job.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QuantumTaskQueueInfo: Instance of QuantumTaskQueueInfo class</span>
+<span class="sd">            representing the queue position information for the quantum job.</span>
+<span class="sd">            The queue_position is only returned when quantum job is not in</span>
+<span class="sd">            RUNNING/CANCELLING/TERMINAL states, else queue_position is returned as None.</span>
+<span class="sd">            The normal tasks refers to the quantum jobs not submitted via Hybrid Jobs.</span>
+<span class="sd">            Whereas, the priority tasks refers to the total number of quantum jobs waiting to run</span>
+<span class="sd">            submitted through Amazon Braket Hybrid Jobs. These tasks run before the normal tasks.</span>
+<span class="sd">            If the queue position for normal or priority quantum tasks is greater than 2000,</span>
+<span class="sd">            we display their respective queue position as &#39;&gt;2000&#39;.</span>
+
+<span class="sd">            Note: We don&#39;t provide queue information for the LocalQuantumTasks.</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            job status = QUEUED and queue position is 2050</span>
+<span class="sd">            &gt;&gt;&gt; task.queue_position()</span>
+<span class="sd">            QuantumTaskQueueInfo(queue_type=&lt;QueueType.NORMAL: &#39;Normal&#39;&gt;,</span>
+<span class="sd">            queue_position=&#39;&gt;2000&#39;, message=None)</span>
+
+<span class="sd">            job status = COMPLETED</span>
+<span class="sd">            &gt;&gt;&gt; task.queue_position()</span>
+<span class="sd">            QuantumTaskQueueInfo(queue_type=&lt;QueueType.NORMAL: &#39;Normal&#39;&gt;,</span>
+<span class="sd">            queue_position=None, message=&#39;Task is in COMPLETED status. AmazonBraket does</span>
+<span class="sd">            not show queue position for this status.&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">LocalQuantumTask</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="s2">&quot;We don&#39;t provide queue information for the LocalQuantumTask.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">AwsQuantumTask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">())</span><span class="o">.</span><span class="n">queue_position</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">task_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a unique id identifying the task.&quot;&quot;&quot;</span>
@@ -307,7 +344,7 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>

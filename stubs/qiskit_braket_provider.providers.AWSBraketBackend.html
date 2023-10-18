@@ -113,13 +113,16 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">qubit_properties</span></code>(qubit)</p></td>
 <td><p>Return QubitProperties for a given qubit.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve_job</span></code>(task_id)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">queue_depth</span></code>()</p></td>
+<td><p>Task queue depth refers to the total number of quantum tasks currently waiting to run on a particular device.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve_job</span></code>(task_id)</p></td>
 <td><p>Return a single job submitted to AWS backend.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code>(run_input, **options)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code>(run_input, **options)</p></td>
 <td><p>Run on the backend.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_options</span></code>(**fields)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_options</span></code>(**fields)</p></td>
 <td><p>Set the options fields for the backend</p></td>
 </tr>
 </tbody>
@@ -265,7 +268,7 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |

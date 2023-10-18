@@ -20,6 +20,7 @@
       ~AmazonBraketTask.done
       ~AmazonBraketTask.in_final_state
       ~AmazonBraketTask.job_id
+      ~AmazonBraketTask.queue_position
       ~AmazonBraketTask.result
       ~AmazonBraketTask.running
       ~AmazonBraketTask.status
