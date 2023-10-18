@@ -7,6 +7,7 @@ from abc import ABC
 from typing import Iterable, Union, List
 
 from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
+from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.devices import LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
@@ -213,6 +214,39 @@ class AWSBraketBackend(BraketBackend):
     ) -> Union[QubitProperties, List[QubitProperties]]:
         # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
         raise NotImplementedError
+
+    def queue_depth(self) -> QueueDepthInfo:
+        """
+        Task queue depth refers to the total number of quantum tasks currently waiting
+        to run on a particular device.
+
+        Returns:
+            QueueDepthInfo: Instance of the QueueDepth class representing queue depth
+            information for quantum jobs and hybrid jobs.
+            Queue depth refers to the number of quantum jobs and hybrid jobs queued on a particular
+            device. The normal tasks refers to the quantum jobs not submitted via Hybrid Jobs.
+            Whereas, the priority tasks refers to the total number of quantum jobs waiting to run
+            submitted through Amazon Braket Hybrid Jobs. These tasks run before the normal tasks.
+            If the queue depth for normal or priority quantum tasks is greater than 4000, we display
+            their respective queue depth as '>4000'. Similarly, for hybrid jobs if there are more
+            than 1000 jobs queued on a device, display the hybrid jobs queue depth as '>1000'.
+            Additionally, for QPUs if hybrid jobs queue depth is 0, we display information about
+            priority and count of the running hybrid job.
+
+        Example:
+            Queue depth information for a running hybrid job.
+            >>> device = AWSBraketProvider().get_backend("SV1")
+            >>> print(device.queue_depth())
+            QueueDepthInfo(quantum_tasks={<QueueType.NORMAL: 'Normal'>: '0',
+            <QueueType.PRIORITY: 'Priority'>: '1'}, jobs='0 (1 prioritized job(s) running)')
+
+            If more than 4000 quantum jobs queued on a device.
+            >>> device = AWSBraketProvider().get_backend("SV1")
+            >>> print(device.queue_depth())
+            QueueDepthInfo(quantum_tasks={<QueueType.NORMAL: 'Normal'>: '>4000',
+            <QueueType.PRIORITY: 'Priority'>: '2000'}, jobs='100')
+        """
+        return self._device.queue_depth()
 
     @property
     def dtm(self) -> float:
