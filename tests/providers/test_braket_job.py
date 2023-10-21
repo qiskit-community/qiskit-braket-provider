@@ -79,6 +79,18 @@ class TestAWSBraketJob(TestCase):
         self.assertEqual(job.result().results[0].shots, 3)
         self.assertEqual(job.result().get_memory(), ["10", "10", "01"])
 
+    def test_queue_position_for_local_quantum_task(self):
+        """Tests job status when multiple task status is present."""
+        job = AWSBraketJob(
+            backend=BraketLocalBackend(name="default"),
+            job_id="MockId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK],
+            shots=100,
+        )
+        message = "We don't provide queue information for the LocalQuantumTask."
+        with pytest.raises(NotImplementedError, match=message):
+            job.queue_position()
+
 
 class TestBracketJobStatus:
     """Tests for AWS Braket job status."""

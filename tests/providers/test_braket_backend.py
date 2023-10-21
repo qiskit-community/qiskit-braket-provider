@@ -2,9 +2,10 @@
 import unittest
 from typing import Dict, List
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from botocore import errorfactory
+from braket.aws.queue_information import QueueDepthInfo, QueueType
 from qiskit import QuantumCircuit, transpile, BasicAer
 
 from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
@@ -22,7 +23,10 @@ from qiskit.primitives import BackendEstimator
 from qiskit_braket_provider import AWSBraketProvider, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
-from tests.providers.mocks import RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+from tests.providers.mocks import (
+    RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES,
+    RIGETTI_MOCK_M_3_QPU_CAPABILITIES,
+)
 
 
 def combine_dicts(
@@ -265,6 +269,23 @@ class TestAWSBraketBackend(TestCase):
         ).result()
 
         self.assertEqual(sum(result.get_counts().values()), 10)
+
+    @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
+    def test_queue_depth(self, mocked_device):
+        """Tests queue depth."""
+
+        mock_return_value = QueueDepthInfo(
+            quantum_tasks={QueueType.NORMAL: "19", QueueType.PRIORITY: "3"},
+            jobs="0 (3 prioritized job(s) running)",
+        )
+        mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
+        mocked_device.queue_depth.return_value = mock_return_value
+        backend = AWSBraketBackend(device=mocked_device)
+        result = backend.queue_depth()
+
+        mocked_device.queue_depth.assert_called_once()
+        assert isinstance(result, QueueDepthInfo)
+        self.assertEqual(result, mock_return_value)
 
 
 class TestAWSBackendTarget(TestCase):

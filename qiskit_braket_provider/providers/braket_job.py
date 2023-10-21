@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 from warnings import warn
 
 from braket.aws import AwsQuantumTask
+from braket.aws.queue_information import QuantumTaskQueueInfo
 from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2, JobStatus, JobV1
@@ -118,6 +119,42 @@ class AmazonBraketTask(JobV1):
 
     def submit(self):
         return
+
+    def queue_position(self) -> QuantumTaskQueueInfo:
+        """
+        The queue position details for the quantum job.
+
+        Returns:
+            QuantumTaskQueueInfo: Instance of QuantumTaskQueueInfo class
+            representing the queue position information for the quantum job.
+            The queue_position is only returned when quantum job is not in
+            RUNNING/CANCELLING/TERMINAL states, else queue_position is returned as None.
+            The normal tasks refers to the quantum jobs not submitted via Hybrid Jobs.
+            Whereas, the priority tasks refers to the total number of quantum jobs waiting to run
+            submitted through Amazon Braket Hybrid Jobs. These tasks run before the normal tasks.
+            If the queue position for normal or priority quantum tasks is greater than 2000,
+            we display their respective queue position as '>2000'.
+
+            Note: We don't provide queue information for the LocalQuantumTasks.
+
+        Examples:
+            job status = QUEUED and queue position is 2050
+            >>> task.queue_position()
+            QuantumTaskQueueInfo(queue_type=<QueueType.NORMAL: 'Normal'>,
+            queue_position='>2000', message=None)
+
+            job status = COMPLETED
+            >>> task.queue_position()
+            QuantumTaskQueueInfo(queue_type=<QueueType.NORMAL: 'Normal'>,
+            queue_position=None, message='Task is in COMPLETED status. AmazonBraket does
+            not show queue position for this status.')
+        """
+        for task in self._tasks:
+            if isinstance(task, LocalQuantumTask):
+                raise NotImplementedError(
+                    "We don't provide queue information for the LocalQuantumTask."
+                )
+            return AwsQuantumTask(self.task_id()).queue_position()
 
     def task_id(self) -> str:
         """Return a unique id identifying the task."""
