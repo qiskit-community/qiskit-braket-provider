@@ -35,6 +35,7 @@ version_dict: Optional[Dict[str, Any]] = {}
 with open(version_path) as fp:
     exec(fp.read(), version_dict)
 version = version_dict["__version__"]
+release = version_dict["__version__"]
 
 extensions = [
     "sphinx.ext.napoleon",
@@ -48,6 +49,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "reno.sphinxext",
     "nbsphinx",
+    "qiskit_sphinx_theme",
 ]
 templates_path = ["_templates"]
 numfig = True
@@ -72,10 +74,5 @@ nbsphinx_execute = "never"
 nbsphinx_widgets_path = ""
 exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 
-html_theme_options = {
-    "github_user": "qiskit-community",
-    "github_repo": "qiskit-braket-provider",
-    "github_button": True,
-    "github_type": "star",
-    "github_count": False,
-}
+html_theme = "qiskit-ecosystem"
+html_title = f"{project} {release}"
