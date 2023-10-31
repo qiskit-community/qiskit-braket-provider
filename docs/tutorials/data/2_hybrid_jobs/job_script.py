@@ -10,6 +10,7 @@ from qiskit_braket_provider import AWSBraketProvider
 
 
 def main():
+    # Sets up the "SV1" backend the quantum device, a default simulator provided by Amazon Braket.
     backend = AWSBraketProvider().get_backend("SV1")
 
     h2_op = SparsePauliOp(
@@ -35,6 +36,7 @@ def main():
 
     vqe_result = vqe.compute_minimum_eigenvalue(h2_op)
 
+    # Save the results of the VQE computation to the EC2 instance.
     save_job_result(
         {
             "VQE": {
