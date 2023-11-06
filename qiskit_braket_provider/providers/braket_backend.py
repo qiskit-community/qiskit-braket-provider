@@ -106,16 +106,14 @@ class BraketLocalBackend(BraketBackend):
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
-        if "shots" not in options:
-            options["shots"] = 1024
-        shots = options["shots"]
+        shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
         tasks = []
         try:
             for circuit in circuits:
                 task: LocalQuantumTask = self._aws_device.run(
-                    task_specification=circuit, **options
+                    task_specification=circuit, shots=shots
                 )
                 tasks.append(task)
 
