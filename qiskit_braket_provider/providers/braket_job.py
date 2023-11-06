@@ -33,32 +33,31 @@ def _get_result_from_aws_tasks(
 
     # For each task the results is get and filled into an ExperimentResult object
     for task in tasks:
-        if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
-            result: GateModelQuantumTaskResult = task.result()
-
-            if result.task_metadata.shots == 0:
-                statevector = result.values[
-                    result._result_types_indices[
-                        "{'type': <Type.statevector: 'statevector'>}"
-                    ]
-                ]
-                data = ExperimentResultData(
-                    statevector=statevector,
-                )
-            else:
-                counts = {
-                    k[::-1]: v for k, v in dict(result.measurement_counts).items()
-                }  # convert to little-endian
-
-                data = ExperimentResultData(
-                    counts=counts,
-                    memory=[
-                        "".join(shot_result[::-1].astype(str))
-                        for shot_result in result.measurements
-                    ],
-                )
-        else:
+        result: GateModelQuantumTaskResult = task.result()
+        if not result:
             return None
+
+        if result.task_metadata.shots == 0:
+            statevector = result.values[
+                result._result_types_indices[
+                    "{'type': <Type.statevector: 'statevector'>}"
+                ]
+            ]
+            data = ExperimentResultData(
+                statevector=statevector,
+            )
+        else:
+            counts = {
+                k[::-1]: v for k, v in dict(result.measurement_counts).items()
+            }  # convert to little-endian
+
+            data = ExperimentResultData(
+                counts=counts,
+                memory=[
+                    "".join(shot_result[::-1].astype(str))
+                    for shot_result in result.measurements
+                ],
+            )
 
         experiment_result = ExperimentResult(
             shots=result.task_metadata.shots,
