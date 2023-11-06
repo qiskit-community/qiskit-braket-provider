@@ -1,5 +1,4 @@
 """AWS Braket job."""
-import os
 from datetime import datetime
 from typing import List, Optional, Union
 from warnings import warn

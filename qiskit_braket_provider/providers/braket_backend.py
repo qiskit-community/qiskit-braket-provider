@@ -114,9 +114,7 @@ class BraketLocalBackend(BraketBackend):
         try:
             for circuit in circuits:
                 task: LocalQuantumTask = self._aws_device.run(
-                    task_specification=circuit, shots=shots,
-                    poll_timeout_seconds=int(os.environ.get("QISKIT_BRAKET_PROVIDER_MAX_DELAY", 60000)),
-                    poll_interval_seconds=int(os.environ.get("QISKIT_BRAKET_PROVIDER_WAIT_TIME", 2000))
+                    task_specification=circuit, **options
                 )
                 tasks.append(task)
 
