@@ -106,7 +106,9 @@ class BraketLocalBackend(BraketBackend):
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
-        shots = options["shots"] if "shots" in options else 1024
+        if "shots" not in options:
+            options["shots"] = 1024
+        shots = options["shots"]
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
         tasks = []
