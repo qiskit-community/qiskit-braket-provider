@@ -3,6 +3,7 @@
 
 import datetime
 import logging
+import os
 from abc import ABC
 from typing import Iterable, Union, List
 
@@ -113,7 +114,9 @@ class BraketLocalBackend(BraketBackend):
         try:
             for circuit in circuits:
                 task: LocalQuantumTask = self._aws_device.run(
-                    task_specification=circuit, shots=shots
+                    task_specification=circuit, shots=shots,
+                    poll_timeout_seconds=int(os.environ.get("QISKIT_BRAKET_PROVIDER_MAX_DELAY", 60000)),
+                    poll_interval_seconds=int(os.environ.get("QISKIT_BRAKET_PROVIDER_WAIT_TIME", 2000))
                 )
                 tasks.append(task)
 
