@@ -201,32 +201,28 @@ class TestAdapter(TestCase):
                 parameter_bindings = dict(zip(parameters, parameter_values))
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
-            if standard_gate.name != "cu":
-                with self.subTest(f"Circuit with {standard_gate.name} gate."):
-                    braket_job = backend.run(qiskit_circuit, shots=1000)
-                    braket_result = braket_job.result().get_counts()
+            with self.subTest(f"Circuit with {standard_gate.name} gate."):
+                braket_job = backend.run(qiskit_circuit, shots=1000)
+                braket_result = braket_job.result().get_counts()
 
-                    qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
-                    qiskit_result = qiskit_job.result().get_counts()
+                qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
+                qiskit_result = qiskit_job.result().get_counts()
 
-                    combined_results = combine_dicts(
-                        {k: float(v) / 1000.0 for k, v in braket_result.items()},
-                        qiskit_result,
+                combined_results = combine_dicts(
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
+                    qiskit_result,
+                )
+
+                for key, values in combined_results.items():
+                    percent_diff = abs(
+                        ((float(values[0]) - values[1]) / values[0]) * 100
                     )
-
-                    for key, values in combined_results.items():
-                        percent_diff = abs(
-                            ((float(values[0]) - values[1]) / values[0]) * 100
-                        )
-                        abs_diff = abs(values[0] - values[1])
-                        self.assertTrue(
-                            percent_diff < 10 or abs_diff < 0.05,
-                            f"Key {key} with percent difference {percent_diff} "
-                            f"and absolute difference {abs_diff}. Original values {values}",
-                        )
-            else:
-                with pytest.raises(TypeError):
-                    convert_qiskit_to_braket_circuit(qiskit_circuit)
+                    abs_diff = abs(values[0] - values[1])
+                    self.assertTrue(
+                        percent_diff < 10 or abs_diff < 0.05,
+                        f"Key {key} with percent difference {percent_diff} "
+                        f"and absolute difference {abs_diff}. Original values {values}",
+                    )
 
     def test_exponential_gate_decomp(self):
         """Tests adapter translation of exponential gates"""
