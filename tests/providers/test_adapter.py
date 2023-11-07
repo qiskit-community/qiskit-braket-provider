@@ -1,6 +1,5 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
-import pytest
 
 from braket.circuits import Circuit, FreeParameter, observables
 from braket.devices import LocalSimulator
