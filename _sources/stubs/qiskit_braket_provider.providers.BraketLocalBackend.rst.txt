@@ -45,5 +45,9 @@
       ~BraketLocalBackend.provider
       ~BraketLocalBackend.target
       ~BraketLocalBackend.version
+      ~BraketLocalBackend.name
+      ~BraketLocalBackend.description
+      ~BraketLocalBackend.online_date
+      ~BraketLocalBackend.backend_version
    
    

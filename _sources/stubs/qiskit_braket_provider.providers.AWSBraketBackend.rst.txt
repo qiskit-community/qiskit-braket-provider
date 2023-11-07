@@ -47,5 +47,9 @@
       ~AWSBraketBackend.provider
       ~AWSBraketBackend.target
       ~AWSBraketBackend.version
+      ~AWSBraketBackend.name
+      ~AWSBraketBackend.description
+      ~AWSBraketBackend.online_date
+      ~AWSBraketBackend.backend_version
    
    
