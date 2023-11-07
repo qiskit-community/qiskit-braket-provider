@@ -1,5 +1,4 @@
 """AWS Braket job."""
-import os
 from datetime import datetime
 from typing import List, Optional, Union
 from warnings import warn
@@ -11,7 +10,6 @@ from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
-from retrying import retry
 
 
 def retry_if_result_none(result):
@@ -19,12 +17,6 @@ def retry_if_result_none(result):
     return result is None
 
 
-@retry(
-    retry_on_result=retry_if_result_none,
-    stop_max_delay=int(os.environ.get("QISKIT_BRAKET_PROVIDER_MAX_DELAY", 60000)),
-    wait_fixed=int(os.environ.get("QISKIT_BRAKET_PROVIDER_WAIT_TIME", 2000)),
-    wrap_exception=True,
-)
 def _get_result_from_aws_tasks(
     tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]]
 ) -> Optional[List[ExperimentResult]]:
@@ -41,32 +33,31 @@ def _get_result_from_aws_tasks(
 
     # For each task the results is get and filled into an ExperimentResult object
     for task in tasks:
-        if task.state() in AwsQuantumTask.RESULTS_READY_STATES:
-            result: GateModelQuantumTaskResult = task.result()
-
-            if result.task_metadata.shots == 0:
-                statevector = result.values[
-                    result._result_types_indices[
-                        "{'type': <Type.statevector: 'statevector'>}"
-                    ]
-                ]
-                data = ExperimentResultData(
-                    statevector=statevector,
-                )
-            else:
-                counts = {
-                    k[::-1]: v for k, v in dict(result.measurement_counts).items()
-                }  # convert to little-endian
-
-                data = ExperimentResultData(
-                    counts=counts,
-                    memory=[
-                        "".join(shot_result[::-1].astype(str))
-                        for shot_result in result.measurements
-                    ],
-                )
-        else:
+        result: GateModelQuantumTaskResult = task.result()
+        if not result:
             return None
+
+        if result.task_metadata.shots == 0:
+            statevector = result.values[
+                result._result_types_indices[
+                    "{'type': <Type.statevector: 'statevector'>}"
+                ]
+            ]
+            data = ExperimentResultData(
+                statevector=statevector,
+            )
+        else:
+            counts = {
+                k[::-1]: v for k, v in dict(result.measurement_counts).items()
+            }  # convert to little-endian
+
+            data = ExperimentResultData(
+                counts=counts,
+                memory=[
+                    "".join(shot_result[::-1].astype(str))
+                    for shot_result in result.measurements
+                ],
+            )
 
         experiment_result = ExperimentResult(
             shots=result.task_metadata.shots,
