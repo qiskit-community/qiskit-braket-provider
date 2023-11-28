@@ -24,11 +24,7 @@ def main():
         ],
     )
 
-    estimator = BackendEstimator(
-        backend=backend,
-        options={"seed_simulator": 42, "seed_transpiler": 42, "shots": 10},
-        skip_transpilation=False,
-    )
+    estimator = BackendEstimator(backend=backend, options={"shots": 10})
     ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
     slsqp = SLSQP(maxiter=1)
 
