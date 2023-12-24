@@ -56,9 +56,6 @@ from qiskit.circuit.library import (
     TdgGate,
     TGate,
     UGate,
-    U1Gate,
-    U2Gate,
-    U3Gate,
     XGate,
     YGate,
     ZGate,
@@ -103,22 +100,10 @@ qiskit_to_braket_gate_names_mapping = {
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 qiskit_gate_names_to_braket_gates: Dict[str, Callable] = {
-    "u1": lambda lam: [gates.PhaseShift(lam)],
-    "u2": lambda phi, lam: [
-        gates.PhaseShift(lam),
-        gates.Ry(pi / 2),
-        gates.PhaseShift(phi),
-    ],
-    "u3": lambda theta, phi, lam: [
-        gates.PhaseShift(lam),
-        gates.Ry(theta),
-        gates.PhaseShift(phi),
-    ],
-    "u": lambda theta, phi, lam: [
-        gates.PhaseShift(lam),
-        gates.Ry(theta),
-        gates.PhaseShift(phi),
-    ],
+    "u1": lambda lam: [gates.U(0, 0, lam)],
+    "u2": lambda phi, lam: [gates.U(pi / 2, phi, lam)],
+    "u3": lambda theta, phi, lam: [gates.U(theta, phi, lam)],
+    "u": lambda theta, phi, lam: [gates.U(theta, phi, lam)],
     "p": lambda angle: [gates.PhaseShift(angle)],
     "cp": lambda angle: [gates.CPhaseShift(angle)],
     "cx": lambda: [gates.CNot()],
@@ -154,9 +139,9 @@ translatable_qiskit_gates = set(qiskit_gate_names_to_braket_gates.keys()).union(
 
 qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] = {
     "u": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
-    "u1": U1Gate(Parameter("theta")),
-    "u2": U2Gate(Parameter("theta"), Parameter("lam")),
-    "u3": U3Gate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
+    "u1": UGate(0, 0, Parameter("lam")),
+    "u2": UGate(pi / 2, Parameter("theta"), Parameter("lam")),
+    "u3": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "h": HGate(),
     "ccnot": CCXGate(),
     "cnot": CXGate(),
