@@ -56,6 +56,9 @@ from qiskit.circuit.library import (
     TdgGate,
     TGate,
     UGate,
+    U1Gate,
+    U2Gate,
+    U3Gate,
     XGate,
     YGate,
     ZGate,
@@ -139,9 +142,9 @@ translatable_qiskit_gates = set(qiskit_gate_names_to_braket_gates.keys()).union(
 
 qiskit_gate_name_to_braket_gate_mapping: Dict[str, Optional[QiskitInstruction]] = {
     "u": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
-    "u1": UGate(0, 0, Parameter("lam")),
-    "u2": UGate(pi / 2, Parameter("theta"), Parameter("lam")),
-    "u3": UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
+    "u1": U1Gate(Parameter("theta")),
+    "u2": U2Gate(Parameter("theta"), Parameter("lam")),
+    "u3": U3Gate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "h": HGate(),
     "ccnot": CCXGate(),
     "cnot": CXGate(),
