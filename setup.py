@@ -29,7 +29,7 @@ setuptools.setup(
     keywords="qiskit braket sdk quantum",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
-    python_requires=">=3.8.2",
+    python_requires=">=3.9",
     version=version,
     classifiers=[
         "Intended Audience :: Developers",
@@ -39,7 +39,6 @@ setuptools.setup(
         "Operating System :: MacOS",
         "Operating System :: POSIX :: Linux",
         "Operating System :: Microsoft :: Windows",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
