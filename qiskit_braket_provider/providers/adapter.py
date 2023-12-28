@@ -424,42 +424,40 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     if circuit.global_phase > _EPS:
         warnings.warn("Circuit transpilation resulted in global phase shift")
     # handle qiskit to braket conversion
-    for qiskit_gates in circuit.data:
-        name = qiskit_gates[0].name
-        if name == "measure":
-            # TODO: change Probability result type for Sample for proper functioning # pylint:disable=fixme
-            # Getting the index from the bit mapping
-            quantum_circuit.add_result_type(
-                # pylint:disable=fixme
-                result_types.Sample(
-                    observable=observables.Z(),
-                    target=[
-                        circuit.find_bit(qiskit_gates[1][0]).index,
-                        circuit.find_bit(qiskit_gates[2][0]).index,
-                    ],
-                )
+    for circuit_instruction in circuit.data:
+        operation = circuit_instruction.operation
+        gate_name = operation.name
+
+        qubits = circuit_instruction.qubits
+
+        if gate_name == "measure":
+            qubit = qubits[0]  # qubit count = 1 for measure
+            qubit_index = circuit.find_bit(qubit).index
+            quantum_circuit.sample(
+                observable=observables.Z(),
+                target=[
+                    qubit_index,
+                ],
             )
-        elif name == "barrier":
+        elif gate_name == "barrier":
             # This does not exist
             pass
-        elif name == "reset":
+        elif gate_name == "reset":
             raise NotImplementedError(
                 "reset operation not supported by qiskit to braket adapter"
             )
         else:
-            params = []
-            if hasattr(qiskit_gates[0], "params"):
-                params = qiskit_gates[0].params
+            params = operation.params if hasattr(operation, "params") else []
 
             for i, param in enumerate(params):
                 if isinstance(param, Parameter):
                     params[i] = FreeParameter(param.name)
 
-            for gate in qiskit_gate_names_to_braket_gates[name](*params):
+            for gate in qiskit_gate_names_to_braket_gates[gate_name](*params):
                 instruction = Instruction(
                     # Getting the index from the bit mapping
                     operator=gate,
-                    target=[circuit.find_bit(i).index for i in qiskit_gates[1]],
+                    target=[circuit.find_bit(qubit).index for qubit in qubits],
                 )
                 quantum_circuit += instruction
     return quantum_circuit
