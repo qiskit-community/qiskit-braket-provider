@@ -8,7 +8,6 @@ from braket.circuits import (
     FreeParameter,
     Instruction,
     gates,
-    result_types,
     observables,
 )
 from braket.device_schema import (
