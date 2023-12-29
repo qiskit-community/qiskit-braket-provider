@@ -302,7 +302,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
         qiskit_circuit.cnot(0, 1)
-        qiskit_circuit.measure(0, 1)
+        qiskit_circuit.measure(0, 0)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
         circuits = (
