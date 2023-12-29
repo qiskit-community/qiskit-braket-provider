@@ -302,7 +302,25 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
         qiskit_circuit.cnot(0, 1)
-        qiskit_circuit.measure(0, 0)
+        qiskit_circuit.measure(0, 1)
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        circuits = (
+            Circuit()  # pylint: disable=no-member
+            .h(0)
+            .cnot(0, 1)
+            .sample(observable=observables.Z(), target=0)
+        )
+
+        self.assertEqual(braket_circuit, circuits)
+
+    def test_sample_result_type_different_indices(self):
+        """Tests sample result type with observables Z"""
+
+        qiskit_circuit = QuantumCircuit(2, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cnot(0, 1)
+        qiskit_circuit.measure(0, 1)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
         circuits = (
