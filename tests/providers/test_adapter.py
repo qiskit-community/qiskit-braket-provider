@@ -315,7 +315,13 @@ class TestAdapter(TestCase):
         self.assertEqual(braket_circuit, circuits)
 
     def test_sample_result_type_different_indices(self):
-        """Tests sample result type with observables Z"""
+        """
+        Tests the translation of a measure instruction.
+
+        We test that the issue #132 has been fixed. The qubit index
+        can be different from the classical bit index. The classical bit
+        is ignored during the translation.
+        """
 
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
