@@ -73,9 +73,9 @@ from qiskit.circuit.library.standard_gates import (
 )
 
 from qiskit_braket_provider.providers.adapter import (
-    convert_qiskit_to_braket_circuit,
-    qiskit_gate_name_to_braket_gate_mapping,
-    qiskit_gate_names_to_braket_gates,
+    to_braket,
+    gate_name_to_braket_gate,
+    gate_name_to_qiskit_gate,
     qiskit_to_braket_gate_names_mapping,
     wrap_circuits_in_verbatim_box,
 )
@@ -159,7 +159,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
         braket_circuit.state_vector()  # pylint: disable=no-member
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
@@ -175,7 +175,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
         braket_circuit.state_vector()  # pylint: disable=no-member
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
@@ -193,7 +193,7 @@ class TestAdapter(TestCase):
 
         job = backend.run(qiskit_circuit)
 
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
         braket_circuit.state_vector()  # pylint: disable=no-member
 
         braket_output = device.run(braket_circuit).result().values[0]
@@ -283,16 +283,16 @@ class TestAdapter(TestCase):
         """Tests mappers."""
         self.assertEqual(
             list(sorted(qiskit_to_braket_gate_names_mapping.keys())),
-            list(sorted(qiskit_gate_names_to_braket_gates.keys())),
+            list(sorted(gate_name_to_braket_gate.keys())),
         )
 
         self.assertEqual(
             list(sorted(qiskit_to_braket_gate_names_mapping.values())),
-            list(sorted(qiskit_gate_name_to_braket_gate_mapping.keys())),
+            list(sorted(gate_name_to_qiskit_gate.keys())),
         )
 
     def test_convert_parametric_qiskit_to_braket_circuit(self):
-        """Tests convert_qiskit_to_braket_circuit works with parametric circuits."""
+        """Tests to_braket works with parametric circuits."""
 
         theta = Parameter("θ")
         phi = Parameter("φ")
@@ -301,7 +301,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.rz(theta, 0)
         qiskit_circuit.u(theta, phi, lam, 0)
         qiskit_circuit.u(theta, phi, np.pi, 0)
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
 
         braket_circuit_ans = (
             Circuit()  # pylint: disable=no-member
@@ -323,7 +323,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.h(0)
         qiskit_circuit.cnot(0, 1)
         qiskit_circuit.measure(0, 0)
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
