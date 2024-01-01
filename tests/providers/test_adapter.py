@@ -74,6 +74,8 @@ from qiskit.circuit.library.standard_gates import (
 
 from qiskit_braket_provider.providers.adapter import (
     to_braket,
+    convert_qiskit_to_braket_circuit,
+    convert_qiskit_to_braket_circuits,
     gate_name_to_braket_gate,
     gate_name_to_qiskit_gate,
     qiskit_to_braket_gate_names_mapping,
@@ -183,6 +185,17 @@ class TestAdapter(TestCase):
         self.assertTrue(
             (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
         )
+
+    def test_convert_parametric_qiskit_to_braket_circuit_warning(self):
+        """Tests that a warning is raised when converting a parametric circuit to a Braket circuit."""
+        qiskit_circuit = QuantumCircuit(1)
+        qiskit_circuit.h(0)
+
+        with self.assertWarns(DeprecationWarning):
+            convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        with self.assertWarns(DeprecationWarning):
+            convert_qiskit_to_braket_circuits([qiskit_circuit])
 
     def test_u_gate(self):
         """Tests adapter conversion of u gate"""

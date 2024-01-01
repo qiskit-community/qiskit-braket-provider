@@ -486,7 +486,12 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     Returns:
         Circuit: Braket circuit
     """
-    # Deprecation message
+    warnings.warn(
+        "convert_qiskit_to_braket_circuit() is deprecated and "
+        "will be removed in a future release. "
+        "Use to_braket() instead. ",
+        DeprecationWarning,
+    )
     return to_braket(circuit)
 
 
@@ -500,7 +505,12 @@ def convert_qiskit_to_braket_circuits(
     Returns:
         Circuit (Iterable[Circuit]): Braket circuit
     """
-    # Deprecation message
+    warnings.warn(
+        "convert_qiskit_to_braket_circuits() is deprecated and "
+        "will be removed in a future release. "
+        "Use to_braket() instead. ",
+        DeprecationWarning,
+    )
     return to_braket(circuits)
 
 
