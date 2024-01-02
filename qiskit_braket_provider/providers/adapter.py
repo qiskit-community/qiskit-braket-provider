@@ -333,6 +333,13 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 
 @singledispatch
 def to_braket(circuit: Any) -> Any:
+    """Return a Braket quantum circuit from a Qiskit quantum circuit.
+     Args:
+            circuit (QuantumCircuit | list[QuantumCircuit]): Qiskit Quantum Cricuit
+
+    Returns:
+        Circuit | list[Circuit]: Braket circuit
+    """
     raise QiskitBraketException(
         f"Cannot convert {circuit.__class__} to Braket Circuit."
     )
@@ -454,6 +461,13 @@ def convert_qiskit_to_braket_circuits(
 
 @singledispatch
 def from_braket(circuit: Any) -> Any:
+    """Return a Qiskit quantum circuit from a Braket quantum circuit.
+     Args:
+            circuit (Circuit | list[Circuit]): Braket Quantum Cricuit
+
+    Returns:
+        QuantumCircuit | list[QuantumCircuit]: Qiskit quantum circuit
+    """
     raise QiskitBraketException(
         f"Cannot convert {circuit.__class__} to Qiskit circuit."
     )

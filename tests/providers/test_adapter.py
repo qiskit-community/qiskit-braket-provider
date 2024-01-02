@@ -293,7 +293,7 @@ class TestAdapter(TestCase):
 
     def test_mappers(self):
         """Tests mappers."""
-        qiskit_to_braket_gate_name_mapping = {
+        qiskit_to_braket_gate_names = {
             "p": "phaseshift",
             "cx": "cnot",
             "tdg": "ti",
@@ -308,7 +308,7 @@ class TestAdapter(TestCase):
             "ryy": "yy",
         }
 
-        qiskit_to_braket_gate_name_mapping |= {
+        qiskit_to_braket_gate_names |= {
             g: g
             for g in [
                 "u",
@@ -333,12 +333,12 @@ class TestAdapter(TestCase):
         }
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_name_mapping.keys())),
+            list(sorted(qiskit_to_braket_gate_names.keys())),
             list(sorted(gate_name_to_braket_gate.keys())),
         )
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_name_mapping.values())),
+            list(sorted(qiskit_to_braket_gate_names.values())),
             list(sorted(gate_name_to_qiskit_gate.keys())),
         )
 
