@@ -335,10 +335,10 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 def to_braket(circuit: Any) -> Any:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
-            circuit (QuantumCircuit | List[QuantumCircuit]): Qiskit Quantum Cricuit
+            circuit (QuantumCircuit | List[QuantumCircuit]): Qiskit Quantum Circuit
 
     Returns:
-        Circuit | List[Circuit]: Braket circuit
+        Circuit | Iterable[Circuit]: Braket circuit
     """
     raise QiskitBraketException(
         f"Cannot convert {circuit.__class__} to Braket Circuit."
@@ -349,7 +349,7 @@ def to_braket(circuit: Any) -> Any:
 def _(circuit: QuantumCircuit) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
-            circuit (QuantumCircuit): Qiskit Quantum Cricuit
+            circuit (QuantumCircuit): Qiskit Quantum Circuit
 
     Returns:
         Circuit: Braket circuit
@@ -411,10 +411,10 @@ def _(circuit: QuantumCircuit) -> Circuit:
 @to_braket.register
 def _(
     circuit: list,
-) -> List[Circuit]:
+) -> Iterable[Circuit]:
     """Converts all Qiskit circuits to Braket circuits.
      Args:
-            circuits (List(QuantumCircuit)): Qiskit Quantum Cricuit
+            circuits (List(QuantumCircuit)): Qiskit Quantum Circuit
 
     Returns:
         Circuit (Iterable[Circuit]): Braket circuit
