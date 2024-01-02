@@ -78,7 +78,6 @@ from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuits,
     gate_name_to_braket_gate,
     gate_name_to_qiskit_gate,
-    qiskit_to_braket_gate_names_mapping,
     wrap_circuits_in_verbatim_box,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
@@ -294,13 +293,52 @@ class TestAdapter(TestCase):
 
     def test_mappers(self):
         """Tests mappers."""
+        qiskit_to_braket_gate_name_mapping = {
+            "p": "phaseshift",
+            "cx": "cnot",
+            "tdg": "ti",
+            "sdg": "si",
+            "sx": "v",
+            "sxdg": "vi",
+            "rzz": "zz",
+            "id": "i",
+            "ccx": "ccnot",
+            "cp": "cphaseshift",
+            "rxx": "xx",
+            "ryy": "yy",
+        }
+
+        qiskit_to_braket_gate_name_mapping |= {
+            g: g
+            for g in [
+                "u",
+                "u1",
+                "u2",
+                "u3",
+                "x",
+                "y",
+                "z",
+                "t",
+                "s",
+                "swap",
+                "rx",
+                "ry",
+                "rz",
+                "h",
+                "cy",
+                "cz",
+                "cswap",
+                "ecr",
+            ]
+        }
+
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_names_mapping.keys())),
+            list(sorted(qiskit_to_braket_gate_name_mapping.keys())),
             list(sorted(gate_name_to_braket_gate.keys())),
         )
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_names_mapping.values())),
+            list(sorted(qiskit_to_braket_gate_name_mapping.values())),
             list(sorted(gate_name_to_qiskit_gate.keys())),
         )
 

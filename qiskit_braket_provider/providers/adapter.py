@@ -67,39 +67,6 @@ from qiskit.circuit.library import (
 from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
-qiskit_to_braket_gate_names_mapping = {
-    "u": "u",
-    "u1": "u1",
-    "u2": "u2",
-    "u3": "u3",
-    "p": "phaseshift",
-    "cx": "cnot",
-    "x": "x",
-    "y": "y",
-    "z": "z",
-    "t": "t",
-    "tdg": "ti",
-    "s": "s",
-    "sdg": "si",
-    "sx": "v",
-    "sxdg": "vi",
-    "swap": "swap",
-    "rx": "rx",
-    "ry": "ry",
-    "rz": "rz",
-    "rzz": "zz",
-    "id": "i",
-    "h": "h",
-    "cy": "cy",
-    "cz": "cz",
-    "ccx": "ccnot",
-    "cswap": "cswap",
-    "cp": "cphaseshift",
-    "rxx": "xx",
-    "ryy": "yy",
-    "ecr": "ecr",
-}
-
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 gate_name_to_braket_gate: Dict[str, Callable] = {
