@@ -6,7 +6,7 @@ from braket.devices import LocalSimulator
 
 import numpy as np
 
-from qiskit import QuantumCircuit, execute, BasicAer
+from qiskit import QuantumCircuit, execute, BasicAer, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
@@ -305,14 +305,14 @@ class TestAdapter(TestCase):
         qiskit_circuit.measure(0, 0)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
-        circuits = (
+        expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .h(0)
             .cnot(0, 1)
             .sample(observable=observables.Z(), target=0)
         )
 
-        self.assertEqual(braket_circuit, circuits)
+        self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_sample_result_type_different_indices(self):
         """
@@ -329,14 +329,36 @@ class TestAdapter(TestCase):
         qiskit_circuit.measure(0, 1)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
-        circuits = (
+        expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .h(0)
             .cnot(0, 1)
             .sample(observable=observables.Z(), target=0)
         )
 
-        self.assertEqual(braket_circuit, circuits)
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_multiple_registers(self):
+        qregA = QuantumRegister(2, "qregA")
+        qregB = QuantumRegister(1, "qregB")
+        creg = ClassicalRegister(2, "creg")
+        qiskit_circuit = QuantumCircuit(qregA, qregB, creg)
+        qiskit_circuit.h(qregA[0])
+        qiskit_circuit.cnot(qregA[0], qregB[0])
+        qiskit_circuit.x(qregA[1])
+        qiskit_circuit.measure(qregA[0], creg[1])
+        qiskit_circuit.measure(qregB[0], creg[0])
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()  # pylint: disable=no-member
+            .h(0)
+            .cnot(0, 2)
+            .x(1)
+            .sample(observable=observables.Z(), target=0)
+            .sample(observable=observables.Z(), target=2)
+        )
+        self.assertEqual(braket_circuit, expected_braket_circuit)
 
 
 class TestVerbatimBoxWrapper(TestCase):
