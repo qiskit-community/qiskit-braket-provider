@@ -241,12 +241,19 @@
         <article role="main">
           <section id="Tutorial:-Variational-algorithms-on-Hybrid-jobs">
 <h1>Tutorial: Variational algorithms on Hybrid jobs<a class="headerlink" href="#Tutorial:-Variational-algorithms-on-Hybrid-jobs" title="Link to this heading">#</a></h1>
-<section id="Prepare-files">
-<h2>Prepare files<a class="headerlink" href="#Prepare-files" title="Link to this heading">#</a></h2>
-<section id="Prepare-Hybrid-job-script">
-<h3>Prepare Hybrid job script<a class="headerlink" href="#Prepare-Hybrid-job-script" title="Link to this heading">#</a></h3>
+<section id="Hybrid-Jobs">
+<h2>Hybrid Jobs<a class="headerlink" href="#Hybrid-Jobs" title="Link to this heading">#</a></h2>
+<p>Amazon Braket Hybrid Jobs offers a way for you to run hybrid quantum-classical algorithms that require both classical resources and quantum processing units (QPUs). Hybrid Jobs is designed to spin up the requested classical compute, run your algorithm, and release the instances after completion so you only pay for what you use. This workflow is ideal for long-running iterative algorithms involving both classical and quantum resources. In this notebook we show you how to run such a job via the
+qiskit-braket provider.</p>
+<p>Read more at <a class="reference external" href="https://docs.aws.amazon.com/braket/latest/developerguide/braket-jobs.html">https://docs.aws.amazon.com/braket/latest/developerguide/braket-jobs.html</a></p>
+</section>
+<section id="Prepare-Files">
+<h2>Prepare Files<a class="headerlink" href="#Prepare-Files" title="Link to this heading">#</a></h2>
+<section id="Prepare-Hybrid-Job-Script">
+<h3>Prepare Hybrid Job Script<a class="headerlink" href="#Prepare-Hybrid-Job-Script" title="Link to this heading">#</a></h3>
+<p>The job script defines the specific quantum logic to be executed on the quantum processor and the classical processing that the output is saved to, in this case, setting up the device backend and saving the job results to the EC2 instance. To learn more about what the VQE is, see this example: <a class="reference external" href="https://github.com/amazon-braket/amazon-braket-examples/blob/main/examples">https://github.com/amazon-braket/amazon-braket-examples/blob/main/examples</a>/hybrid_[…]lgorithms/VQE_Transverse_Ising/VQE_Transverse_Ising_Model.ipynb</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>cat<span class="w"> </span>./data/2_hybrid_jobs/job_script.py
@@ -270,6 +277,7 @@ from qiskit_braket_provider import AWSBraketProvider
 
 
 def main():
+    # Sets up the &#34;SV1&#34; backend the quantum device, a default simulator provided by Amazon Braket.
     backend = AWSBraketProvider().get_backend(&#34;SV1&#34;)
 
     h2_op = SparsePauliOp(
@@ -283,11 +291,7 @@ def main():
         ],
     )
 
-    estimator = BackendEstimator(
-        backend=backend,
-        options={&#34;seed_simulator&#34;: 42, &#34;seed_transpiler&#34;: 42, &#34;shots&#34;: 10},
-        skip_transpilation=False,
-    )
+    estimator = BackendEstimator(backend=backend, options={&#34;shots&#34;: 10})
     ansatz = TwoLocal(rotation_blocks=&#34;ry&#34;, entanglement_blocks=&#34;cz&#34;)
     slsqp = SLSQP(maxiter=1)
 
@@ -295,6 +299,7 @@ def main():
 
     vqe_result = vqe.compute_minimum_eigenvalue(h2_op)
 
+    # Save the results of the VQE computation to the EC2 instance.
     save_job_result(
         {
             &#34;VQE&#34;: {
@@ -307,78 +312,39 @@ def main():
     )
 </pre></div></div>
 </div>
-</section>
-<section id="Prepare-docker-image">
-<h3>Prepare docker image<a class="headerlink" href="#Prepare-docker-image" title="Link to this heading">#</a></h3>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>cat<span class="w"> </span>./data/2_hybrid_jobs/Dockerfile
-</pre></div>
-</div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-FROM 292282985366.dkr.ecr.us-west-2.amazonaws.com/amazon-braket-base-jobs:1.0-cpu-py37-ubuntu18.04
-
-RUN python3 -m pip install --upgrade pip
-
-RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-community/qiskit-braket-provider
-</pre></div></div>
-</div>
-</section>
-</section>
-<section id="Prepare-env">
-<h2>Prepare env<a class="headerlink" href="#Prepare-env" title="Link to this heading">#</a></h2>
-<section id="Login-to-AWS-CLI-and-docker">
-<h3>Login to AWS CLI and docker<a class="headerlink" href="#Login-to-AWS-CLI-and-docker" title="Link to this heading">#</a></h3>
-<p>Login to AWS’ ERC to pull base image</p>
-<p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">ecr</span> <span class="pre">get-login-password</span> <span class="pre">--region</span> <span class="pre">us-west-2</span> <span class="pre">|</span> <span class="pre">docker</span> <span class="pre">login</span> <span class="pre">--username</span> <span class="pre">AWS</span> <span class="pre">--password-stdin</span> <span class="pre">292282985366.dkr.ecr.us-west-2.amazonaws.com</span></code></p>
-<p>Login to yours ERC to push your image</p>
-<p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">ecr</span> <span class="pre">get-login-password</span> <span class="pre">--region</span> <span class="pre">&lt;YOUR_AWS_REGION&gt;</span> <span class="pre">|</span> <span class="pre">docker</span> <span class="pre">login</span> <span class="pre">--username</span> <span class="pre">AWS</span> <span class="pre">--password-stdin</span> <span class="pre">&lt;YOUR_ACCOUNT_ID&gt;.dkr.ecr.&lt;YOUR_AWS_REGION&gt;.amazonaws.com</span></code></p>
-</section>
-<section id="Create-ECR-repo">
-<h3>Create ECR repo<a class="headerlink" href="#Create-ECR-repo" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">!</span> <span class="pre">aws</span> <span class="pre">ecr</span> <span class="pre">create-repository</span> <span class="pre">--repository-name</span> <span class="pre">amazon-braket-qiskit-provider</span></code></p>
-</section>
-<section id="Build-docker-image">
-<h3>Build docker image<a class="headerlink" href="#Build-docker-image" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">!</span> <span class="pre">docker</span> <span class="pre">build</span> <span class="pre">-t</span> <span class="pre">amazon-braket-qiskit-provider</span> <span class="pre">./data/2_hybrid_jobs/</span></code></p>
-<p><code class="docutils literal notranslate"><span class="pre">!</span> <span class="pre">docker</span> <span class="pre">tag</span> <span class="pre">amazon-braket-qiskit-provider:latest</span> <span class="pre">&lt;YOUR_ACCOUNT_ID&gt;.dkr.ecr.&lt;YOUR_AWS_REGION&gt;.amazonaws.com/amazon-braket-qiskit-provider:latest</span></code></p>
+<p>In summary, this script sets up the hybrid job script that executes a VQE computation using a the Amazon Braket SV1 default simulator as the quantum backend and then saves the results of the computation to the EC2 instance the hybrid job is running on.</p>
 </section>
 </section>
 <section id="Running-your-job">
 <h2>Running your job<a class="headerlink" href="#Running-your-job" title="Link to this heading">#</a></h2>
+<p>Amazon Braket provides a container for Hybrid Jobs that has the Qiskit-Braket provider and associated dependencies installed. To use the base container, call <code class="docutils literal notranslate"><span class="pre">retrieve_image(Framework.BASE,</span> <span class="pre">AwsSession().region)</span></code> as demonstrated below:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[44]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
-
-<span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumJob</span>
-
-<span class="n">image_uri</span> <span class="o">=</span> <span class="s2">&quot;&lt;ACCOUNT_ID&gt;.dkr.ecr.&lt;AWS_REGION&gt;.amazonaws.com/amazon-braket-qiskit-provider:latest&quot;</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+<span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumJob</span><span class="p">,</span> <span class="n">AwsSession</span>
+<span class="kn">from</span> <span class="nn">braket.jobs.image_uris</span> <span class="kn">import</span> <span class="n">Framework</span><span class="p">,</span> <span class="n">retrieve_image</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="n">job</span> <span class="o">=</span> <span class="n">AwsQuantumJob</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
     <span class="n">device</span><span class="o">=</span><span class="s2">&quot;arn:aws:braket:::device/quantum-simulator/amazon/sv1&quot;</span><span class="p">,</span>
     <span class="n">source_module</span><span class="o">=</span><span class="s2">&quot;data/2_hybrid_jobs/job_script.py&quot;</span><span class="p">,</span>
     <span class="n">entry_point</span><span class="o">=</span><span class="s2">&quot;job_script:main&quot;</span><span class="p">,</span>
     <span class="n">wait_until_complete</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">job_name</span><span class="o">=</span><span class="s2">&quot;qiskit-braket-vqe-6&quot;</span><span class="p">,</span>
-    <span class="n">image_uri</span><span class="o">=</span><span class="n">image_uri</span><span class="p">,</span>
+    <span class="n">job_name</span><span class="o">=</span><span class="s2">&quot;qiskit-braket-vqe-&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())),</span>
+    <span class="n">image_uri</span><span class="o">=</span><span class="n">retrieve_image</span><span class="p">(</span><span class="n">Framework</span><span class="o">.</span><span class="n">BASE</span><span class="p">,</span> <span class="n">AwsSession</span><span class="p">()</span><span class="o">.</span><span class="n">region</span><span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[45]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pprint</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+<span class="n">pprint</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -387,33 +353,64 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;VQE&#39;: {&#39;eigenstate&#39;: {&#39;01&#39;: 0.8366600265340756, &#39;11&#39;: 0.5477225575051661},
-         &#39;eigenvalue&#39;: -1.6823050629682066,
-         &#39;optimal_parameters&#39;: [2.965910707685307,
-                                -4.658133055892289,
-                                -4.3956015975227265,
-                                -3.682189424847994,
-                                0.3499389384822065,
-                                -2.55160387237748,
-                                2.0897918250881915,
-                                1.0061448749802206],
-         &#39;optimal_point&#39;: [2.965910707685307,
-                           -4.658133055892289,
-                           -4.3956015975227265,
-                           -3.682189424847994,
-                           0.3499389384822065,
-                           -2.55160387237748,
-                           2.0897918250881915,
-                           1.0061448749802206],
-         &#39;optimal_value&#39;: -1.6823050629682066}}
+{&#39;VQE&#39;: {&#39;eigenvalue&#39;: -0.49570779349360855,
+         &#39;optimal_parameters&#39;: [0.2196102979045742,
+                                -3.634974011510415,
+                                -3.8951343453580307,
+                                4.911202213644824,
+                                2.372597182173905,
+                                -1.903856255621255,
+                                -0.7605074501419118,
+                                -4.839353619669662],
+         &#39;optimal_point&#39;: [0.2196102979045742,
+                           -3.634974011510415,
+                           -3.8951343453580307,
+                           4.911202213644824,
+                           2.372597182173905,
+                           -1.903856255621255,
+                           -0.7605074501419118,
+                           -4.839353619669662],
+         &#39;optimal_value&#39;: -0.49570779349360855}}
 </pre></div></div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract data for visualization</span>
+<span class="n">optimal_parameters</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;VQE&quot;</span><span class="p">][</span><span class="s2">&quot;optimal_parameters&quot;</span><span class="p">]</span>
+<span class="n">optimal_point</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;VQE&quot;</span><span class="p">][</span><span class="s2">&quot;optimal_point&quot;</span><span class="p">]</span>
+
+<span class="c1"># Create a single plot for both sets of data</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># Plot Optimal Parameters</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">optimal_parameters</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Optimal Parameters&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Plot Optimal Point Values</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">optimal_point</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Optimal Point&quot;</span><span class="p">)</span>
+
+<span class="c1"># Set labels and title</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Parameter Index&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Parameter Value&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Optimal Parameters and Optimal Point Values&quot;</span><span class="p">)</span>
+
+<span class="c1"># Show legend</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="c1"># Show the plot</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_2_tutorial_hybrid_jobs_11_0.png" src="../_images/tutorials_2_tutorial_hybrid_jobs_11_0.png" />
 </div>
 </div>
 </section>
@@ -474,15 +471,9 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Tutorial: Variational algorithms on Hybrid jobs</a><ul>
-<li><a class="reference internal" href="#Prepare-files">Prepare files</a><ul>
-<li><a class="reference internal" href="#Prepare-Hybrid-job-script">Prepare Hybrid job script</a></li>
-<li><a class="reference internal" href="#Prepare-docker-image">Prepare docker image</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#Prepare-env">Prepare env</a><ul>
-<li><a class="reference internal" href="#Login-to-AWS-CLI-and-docker">Login to AWS CLI and docker</a></li>
-<li><a class="reference internal" href="#Create-ECR-repo">Create ECR repo</a></li>
-<li><a class="reference internal" href="#Build-docker-image">Build docker image</a></li>
+<li><a class="reference internal" href="#Hybrid-Jobs">Hybrid Jobs</a></li>
+<li><a class="reference internal" href="#Prepare-Files">Prepare Files</a><ul>
+<li><a class="reference internal" href="#Prepare-Hybrid-Job-Script">Prepare Hybrid Job Script</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#Running-your-job">Running your job</a></li>
