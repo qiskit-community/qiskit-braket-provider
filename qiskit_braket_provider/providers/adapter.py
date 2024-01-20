@@ -83,6 +83,7 @@ gate_name_to_braket_gate: Dict[str, Callable] = {
     "rxx": lambda angle: [braket_gates.XX(angle)],
     "ryy": lambda angle: [braket_gates.YY(angle)],
     "ecr": lambda: [braket_gates.ECR()],
+    "iswap": lambda: [braket_gates.ISwap()],
 }
 
 
@@ -121,6 +122,7 @@ gate_name_to_qiskit_gate: Dict[str, Optional[QiskitInstruction]] = {
     "z": qiskit_gates.ZGate(),
     "zz": qiskit_gates.RZZGate(Parameter("theta")),
     "ecr": qiskit_gates.ECRGate(),
+    "iswap": qiskit_gates.iSwapGate(),
 }
 
 
