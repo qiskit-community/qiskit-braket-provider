@@ -368,8 +368,7 @@ def _(circuit: QuantumCircuit) -> Circuit:
         )
     ):
         circuit = transpile(circuit, basis_gates=translatable_qiskit_gate_names)
-    if circuit.global_phase > _EPS:
-        warnings.warn("Circuit transpilation resulted in global phase shift")
+
     # handle qiskit to braket conversion
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
@@ -407,6 +406,10 @@ def _(circuit: QuantumCircuit) -> Circuit:
                     target=[circuit.find_bit(qubit).index for qubit in qubits],
                 )
                 quantum_circuit += instruction
+
+    if circuit.global_phase > _EPS:
+        quantum_circuit.gphase(circuit.global_phase)
+
     return quantum_circuit
 
 
