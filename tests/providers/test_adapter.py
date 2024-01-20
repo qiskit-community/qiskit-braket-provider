@@ -1,4 +1,4 @@
-"""Tests for Qiskti to Braket adapter."""
+"""Tests for Qiskit to Braket adapter."""
 from unittest import TestCase
 from unittest.mock import Mock
 
