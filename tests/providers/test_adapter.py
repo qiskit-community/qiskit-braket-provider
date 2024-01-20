@@ -22,6 +22,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import standard_gates as qiskit_gates
 
 from qiskit_braket_provider.providers.adapter import (
+    from_braket,
     to_braket,
     convert_qiskit_to_braket_circuit,
     convert_qiskit_to_braket_circuits,
@@ -348,7 +349,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.h(0)
         qiskit_circuit.cnot(0, 1)
         qiskit_circuit.measure(0, 1)
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
@@ -374,7 +375,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.x(qreg_a[1])
         qiskit_circuit.measure(qreg_a[0], creg[1])
         qiskit_circuit.measure(qreg_b[0], creg[0])
-        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
@@ -385,6 +386,79 @@ class TestAdapter(TestCase):
             .sample(observable=observables.Z(), target=2)
         )
         self.assertEqual(braket_circuit, expected_braket_circuit)
+
+
+class TestFromBraket(TestCase):
+    """Test Braket circuit conversion."""
+
+    def test_standard_gate(self):
+        """
+        Tests braket to qiskit conversion with standard gates.
+        """
+        braket_circuit = Circuit().h(0)  # pylint: disable=no-member
+        qiskit_circuit = from_braket(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(1)
+        expected_qiskit_circuit.h(0)
+
+        expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_control_modifier(self):
+        """
+        Tests braket to qiskit conversion with controlled gates.
+        """
+        braket_circuit = Circuit().x(1, control=[0])
+        qiskit_circuit = from_braket(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(2)
+        cx = qiskit_gates.XGate().control(1)
+        expected_qiskit_circuit.append(cx, [0, 1])
+
+        expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_unused_middle_qubit(self):
+        """
+        Tests braket to qiskit conversion with non-continuous qubit registers.
+        """
+        braket_circuit = Circuit().x(3, control=[0, 2], control_state="100")
+        qiskit_circuit = from_braket(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(4)
+        cx = qiskit_gates.XGate().control(2, ctrl_state="01")
+        expected_qiskit_circuit.append(cx, [0, 2, 3])
+        expected_qiskit_circuit.measure_all()
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_control_modifier_with_control_state(self):
+        """
+        Tests braket to qiskit conversion with controlled gates and control state.
+        """
+        braket_circuit = Circuit().x(3, control=[0, 1, 2], control_state="100")
+        qiskit_circuit = from_braket(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(4)
+        cx = qiskit_gates.XGate().control(3, ctrl_state="001")
+        expected_qiskit_circuit.append(cx, [0, 1, 2, 3])
+        expected_qiskit_circuit.measure_all()
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_power(self):
+        """
+        Tests braket to qiskit conversion with gate exponentiation.
+        """
+        braket_circuit = Circuit().x(0, power=0.5)
+        qiskit_circuit = from_braket(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(1)
+        sx = qiskit_gates.XGate().power(0.5)
+        expected_qiskit_circuit.append(sx, [0])
+        expected_qiskit_circuit.measure_all()
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
 
 class TestVerbatimBoxWrapper(TestCase):

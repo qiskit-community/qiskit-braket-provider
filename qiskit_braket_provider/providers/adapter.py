@@ -508,14 +508,13 @@ def _(circuit: Circuit) -> QuantumCircuit:
         if instruction.power != 1:
             gate = gate**instruction.power
         if control_qubits := instruction.control:
-            ctrl_state = instruction.control_state.as_string
+            ctrl_state = instruction.control_state.as_string[::-1]
             gate = gate.control(len(control_qubits), ctrl_state=ctrl_state)
-        target = [qiskit_circuit.qubits[i] for i in instruction.target]
-        target += [qiskit_circuit.qubits[i] for i in control_qubits]
-        qiskit_circuit.append(
-            gate,
-            target[::-1],
-        )
+
+        target = [qiskit_circuit.qubits[i] for i in control_qubits]
+        target += [qiskit_circuit.qubits[i] for i in instruction.target]
+
+        qiskit_circuit.append(gate, target)
     qiskit_circuit.measure_all()
     return qiskit_circuit
 
