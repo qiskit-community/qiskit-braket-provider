@@ -504,9 +504,15 @@ def _(circuit: Circuit) -> QuantumCircuit:
                     gate_params.append(value)
 
         gate = gate_cls(*gate_params)
+        if control_qubits := instruction.control:
+            ctrl_state = instruction.control_state.as_string
+            gate = gate.control(len(control_qubits), ctrl_state=ctrl_state)
+
+        target = [qiskit_circuit.qubits[i] for i in instruction.target]
+        target += [qiskit_circuit.qubits[i] for i in control_qubits]
         qiskit_circuit.append(
             gate,
-            [qiskit_circuit.qubits[i] for i in instruction.target],
+            target[::-1],
         )
     qiskit_circuit.measure_all()
     return qiskit_circuit
