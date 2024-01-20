@@ -342,9 +342,7 @@ def to_braket(circuit: Any) -> Any:
     Returns:
         Circuit | Iterable[Circuit]: Braket circuit
     """
-    raise QiskitBraketException(
-        f"Cannot convert {circuit.__class__} to Braket Circuit."
-    )
+    raise TypeError(f"Cannot convert {circuit.__class__} to Braket circuit.")
 
 
 @to_braket.register
@@ -473,9 +471,7 @@ def from_braket(circuit: Any) -> Any:
     Returns:
         QuantumCircuit | List[QuantumCircuit]: Qiskit quantum circuit
     """
-    raise QiskitBraketException(
-        f"Cannot convert {circuit.__class__} to Qiskit circuit."
-    )
+    raise TypeError(f"Cannot convert {circuit.__class__} to Qiskit circuit.")
 
 
 @from_braket.register

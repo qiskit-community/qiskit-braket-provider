@@ -318,6 +318,14 @@ class TestAdapter(TestCase):
             list(sorted(gate_name_to_qiskit_gate.keys())),
         )
 
+    def test_type_error_on_bad_input(self):
+        """Test raising TypeError if adapter does not receive a Qiskit QuantumCircuit."""
+        circuit = Mock()
+
+        message = f"Cannot convert {type(circuit)} to Braket circuit."
+        with pytest.raises(TypeError, match=message):
+            to_braket(circuit)
+
     def test_convert_parametric_qiskit_to_braket_circuit(self):
         """Tests to_braket works with parametric circuits."""
 
@@ -431,6 +439,14 @@ class TestAdapter(TestCase):
 
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""
+
+    def test_type_error_on_bad_input(self):
+        """Test raising TypeError if adapter does not receive a Braket Circuit."""
+        circuit = Mock()
+
+        message = f"Cannot convert {type(circuit)} to Qiskit circuit."
+        with pytest.raises(TypeError, match=message):
+            from_braket(circuit)
 
     def test_standard_gates(self):
         """
