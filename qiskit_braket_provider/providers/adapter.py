@@ -484,7 +484,7 @@ def _(circuit: Circuit) -> QuantumCircuit:
         QuantumCircuit: Qiskit quantum circuit
     """
 
-    qiskit_circuit = QuantumCircuit(circuit.qubit_count)
+    qiskit_circuit = QuantumCircuit(max(circuit.qubits) + 1)
     dict_param = {}
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
