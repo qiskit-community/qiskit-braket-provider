@@ -321,7 +321,7 @@ class TestAdapter(TestCase):
 
     def test_barrier(self):
         """
-        Tests braket to qiskit conversion with standard gates.
+        Tests conversion with barrier.
         """
         qiskit_circuit = QuantumCircuit(2)
         qiskit_circuit.x(0)
