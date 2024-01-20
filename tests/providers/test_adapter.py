@@ -391,7 +391,7 @@ class TestAdapter(TestCase):
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""
 
-    def test_standard_gate(self):
+    def test_standard_gates(self):
         """
         Tests braket to qiskit conversion with standard gates.
         """
@@ -400,6 +400,21 @@ class TestFromBraket(TestCase):
 
         expected_qiskit_circuit = QuantumCircuit(1)
         expected_qiskit_circuit.h(0)
+
+        expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_parametric_gates(self):
+        """
+        Tests braket to qiskit conversion with standard gates.
+        """
+        braket_circuit = Circuit().rx(0, FreeParameter("alpha"))
+        qiskit_circuit = from_braket(braket_circuit)
+
+        uuid = qiskit_circuit.parameters[0]._uuid
+
+        expected_qiskit_circuit = QuantumCircuit(1)
+        expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid), 0)
 
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
