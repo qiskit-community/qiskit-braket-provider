@@ -504,10 +504,11 @@ def _(circuit: Circuit) -> QuantumCircuit:
                     gate_params.append(value)
 
         gate = gate_cls(*gate_params)
+        if instruction.power != 1:
+            gate = gate**instruction.power
         if control_qubits := instruction.control:
             ctrl_state = instruction.control_state.as_string
             gate = gate.control(len(control_qubits), ctrl_state=ctrl_state)
-
         target = [qiskit_circuit.qubits[i] for i in instruction.target]
         target += [qiskit_circuit.qubits[i] for i in control_qubits]
         qiskit_circuit.append(
