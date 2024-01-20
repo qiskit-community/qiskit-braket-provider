@@ -400,7 +400,6 @@ def _(circuit: QuantumCircuit) -> Circuit:
 
             for gate in qiskit_gate_names_to_braket_gates[gate_name](*params):
                 instruction = Instruction(
-                    # Getting the index from the bit mapping
                     operator=gate,
                     target=[circuit.find_bit(qubit).index for qubit in qubits],
                 )
