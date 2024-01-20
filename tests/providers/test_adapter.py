@@ -6,7 +6,7 @@ from braket.devices import LocalSimulator
 
 import numpy as np
 
-from qiskit import QuantumCircuit, execute, BasicAer
+from qiskit import QuantumCircuit, execute, BasicAer, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
@@ -301,14 +301,65 @@ class TestAdapter(TestCase):
         qiskit_circuit.measure(0, 0)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
-        circuits = (
+        expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .h(0)
             .cnot(0, 1)
             .sample(observable=observables.Z(), target=0)
         )
 
-        self.assertEqual(braket_circuit, circuits)
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_sample_result_type_different_indices(self):
+        """
+        Tests the translation of a measure instruction.
+
+        We test that the issue #132 has been fixed. The qubit index
+        can be different from the classical bit index. The classical bit
+        is ignored during the translation.
+        """
+
+        qiskit_circuit = QuantumCircuit(2, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cnot(0, 1)
+        qiskit_circuit.measure(0, 1)
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()  # pylint: disable=no-member
+            .h(0)
+            .cnot(0, 1)
+            .sample(observable=observables.Z(), target=0)
+        )
+
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_multiple_registers(self):
+        """
+        Tests the use of multiple registers.
+
+        Confirming that #51 has been fixed.
+        """
+        qreg_a = QuantumRegister(2, "qreg_a")
+        qreg_b = QuantumRegister(1, "qreg_b")
+        creg = ClassicalRegister(2, "creg")
+        qiskit_circuit = QuantumCircuit(qreg_a, qreg_b, creg)
+        qiskit_circuit.h(qreg_a[0])
+        qiskit_circuit.cnot(qreg_a[0], qreg_b[0])
+        qiskit_circuit.x(qreg_a[1])
+        qiskit_circuit.measure(qreg_a[0], creg[1])
+        qiskit_circuit.measure(qreg_b[0], creg[0])
+        braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()  # pylint: disable=no-member
+            .h(0)
+            .cnot(0, 2)
+            .x(1)
+            .sample(observable=observables.Z(), target=0)
+            .sample(observable=observables.Z(), target=2)
+        )
+        self.assertEqual(braket_circuit, expected_braket_circuit)
 
 
 class TestVerbatimBoxWrapper(TestCase):
