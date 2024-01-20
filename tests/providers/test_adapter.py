@@ -7,6 +7,7 @@ from braket.circuits import Circuit, FreeParameter, observables
 from braket.devices import LocalSimulator
 
 import numpy as np
+import pytest
 
 from qiskit import (
     QuantumCircuit,
@@ -305,7 +306,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.u(theta, phi, np.pi, 0)
         braket_circuit = to_braket(qiskit_circuit)
 
-        braket_circuit_ans = (
+        expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .rz(0, FreeParameter("θ"))
             .phaseshift(0, FreeParameter("λ"))
@@ -316,7 +317,23 @@ class TestAdapter(TestCase):
             .phaseshift(0, FreeParameter("φ"))
         )
 
-        self.assertEqual(braket_circuit, braket_circuit_ans)
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_barrier(self):
+        """
+        Tests braket to qiskit conversion with standard gates.
+        """
+        qiskit_circuit = QuantumCircuit(2)
+        qiskit_circuit.x(0)
+        qiskit_circuit.barrier()
+        qiskit_circuit.x(1)
+
+        with pytest.warns(UserWarning, match="contains barrier instructions"):
+            braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = Circuit().x(0).x(1)
+
+        self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_sample_result_type(self):
         """Tests sample result type with observables Z"""

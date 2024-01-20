@@ -387,8 +387,9 @@ def _(circuit: QuantumCircuit) -> Circuit:
                 ],
             )
         elif gate_name == "barrier":
-            # This does not exist
-            pass
+            warnings.warn(
+                "The Qiskit circuit contains barrier instructions that are ignored."
+            )
         elif gate_name == "reset":
             raise NotImplementedError(
                 "reset operation not supported by qiskit to braket adapter"
