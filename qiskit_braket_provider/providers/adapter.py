@@ -3,6 +3,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
 from braket.aws import AwsDevice
+from qiskit.circuit import ParameterExpression
 from braket.circuits import (
     Circuit,
     FreeParameter,
@@ -451,6 +452,8 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             for i, param in enumerate(params):
                 if isinstance(param, Parameter):
                     params[i] = FreeParameter(param.name)
+                elif isinstance(param, ParameterExpression): # Enables users to use ParameterVector elements
+                    params[i] = FreeParameter(name=list(param._names.keys())[0]) # Name of the parameter is stored as a dict key
 
             for gate in qiskit_gate_names_to_braket_gates[gate_name](*params):
                 instruction = Instruction(
