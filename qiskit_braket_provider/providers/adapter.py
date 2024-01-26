@@ -3,7 +3,6 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
 
 from braket.aws import AwsDevice
-from qiskit.circuit import ParameterExpression
 from braket.circuits import (
     Circuit,
     FreeParameter,
@@ -30,7 +29,7 @@ from numpy import pi
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import Measure, Parameter
+from qiskit.circuit import Measure, Parameter, ParameterExpression
 from qiskit.circuit.library import (
     CCXGate,
     CPhaseGate,
