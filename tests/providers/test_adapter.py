@@ -6,7 +6,13 @@ from braket.devices import LocalSimulator
 
 import numpy as np
 
-from qiskit import QuantumCircuit, BasicAer, QuantumRegister, ClassicalRegister
+from qiskit import (
+    QuantumCircuit,
+    BasicAer,
+    QuantumRegister,
+    ClassicalRegister,
+    transpile,
+)
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
@@ -204,7 +210,8 @@ class TestAdapter(TestCase):
                 braket_job = backend.run(qiskit_circuit, shots=1000)
                 braket_result = braket_job.result().get_counts()
 
-                qiskit_job = aer_backend.run(qiskit_circuit, shots=1000)
+                transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
+                qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
                 qiskit_result = qiskit_job.result().get_counts()
 
                 combined_results = combine_dicts(
@@ -243,7 +250,8 @@ class TestAdapter(TestCase):
         braket_job = backend.run(qiskit_circuit, shots=1000)
         braket_result = braket_job.result().get_counts()
 
-        qiskit_job = aer_backend.run(qiskit_circuit, shots=1000)
+        transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
+        qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
         qiskit_result = qiskit_job.result().get_counts()
 
         combined_results = combine_dicts(
