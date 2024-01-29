@@ -1,6 +1,8 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
+from unittest.mock import Mock
 
+import pytest
 from braket.circuits import Circuit, FreeParameter, observables
 from braket.devices import LocalSimulator
 
@@ -139,6 +141,16 @@ standard_gates = [
 
 class TestAdapter(TestCase):
     """Tests adapter."""
+
+    def test_raise_type_error_for_bad_input(self):
+        """Test raising TypeError if adapter does not receive a qiskit.QuantumCircuit."""
+        circuit = Mock()
+
+        message = (
+            "Expected a qiskit.QuantumCircuit, got <class 'unittest.mock.Mock'> instead"
+        )
+        with pytest.raises(TypeError, match=message):
+            convert_qiskit_to_braket_circuit(circuit)
 
     def test_state_preparation_01(self):
         """Tests state_preparation handling of Adapter"""

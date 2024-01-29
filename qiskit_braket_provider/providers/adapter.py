@@ -415,6 +415,11 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     Returns:
         Circuit: Braket circuit
     """
+    if not isinstance(circuit, QuantumCircuit):
+        raise TypeError(
+            f"Expected a qiskit.QuantumCircuit, got {type(circuit)} instead"
+        )
+
     quantum_circuit = Circuit()
     if not (
         {gate.name for gate, _, _ in circuit.data}.issubset(translatable_qiskit_gates)
