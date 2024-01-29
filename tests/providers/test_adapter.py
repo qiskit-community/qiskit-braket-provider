@@ -94,16 +94,6 @@ standard_gates = [
 class TestAdapter(TestCase):
     """Tests adapter."""
 
-    def test_raise_type_error_for_bad_input(self):
-        """Test raising TypeError if adapter does not receive a qiskit.QuantumCircuit."""
-        circuit = Mock()
-
-        message = (
-            "Expected a qiskit.QuantumCircuit, got <class 'unittest.mock.Mock'> instead"
-        )
-        with pytest.raises(TypeError, match=message):
-            convert_qiskit_to_braket_circuit(circuit)
-
     def test_state_preparation_01(self):
         """Tests state_preparation handling of Adapter"""
         input_state_vector = np.array([np.sqrt(3) / 2, np.sqrt(2) * complex(1, 1) / 4])

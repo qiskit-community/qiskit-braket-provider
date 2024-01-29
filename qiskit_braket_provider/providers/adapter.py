@@ -8,7 +8,6 @@ from braket.circuits import (
     Circuit,
     FreeParameter,
     Instruction,
-    gates,
     observables,
 )
 import braket.circuits.gates as braket_gates
@@ -398,7 +397,7 @@ def _(circuit: QuantumCircuit) -> Circuit:
                 if isinstance(param, Parameter):
                     params[i] = FreeParameter(param.name)
 
-            for gate in qiskit_gate_names_to_braket_gates[gate_name](*params):
+            for gate in gate_name_to_braket_gate[gate_name](*params):
                 instruction = Instruction(
                     operator=gate,
                     target=[circuit.find_bit(qubit).index for qubit in qubits],
