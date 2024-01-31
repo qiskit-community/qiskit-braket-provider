@@ -301,7 +301,7 @@ class TestAdapter(TestCase):
 
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
-        qiskit_circuit.cnot(0, 1)
+        qiskit_circuit.cx(0, 1)
         qiskit_circuit.measure(0, 0)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
@@ -325,7 +325,7 @@ class TestAdapter(TestCase):
 
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
-        qiskit_circuit.cnot(0, 1)
+        qiskit_circuit.cx(0, 1)
         qiskit_circuit.measure(0, 1)
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
 
@@ -349,7 +349,7 @@ class TestAdapter(TestCase):
         creg = ClassicalRegister(2, "creg")
         qiskit_circuit = QuantumCircuit(qreg_a, qreg_b, creg)
         qiskit_circuit.h(qreg_a[0])
-        qiskit_circuit.cnot(qreg_a[0], qreg_b[0])
+        qiskit_circuit.cx(qreg_a[0], qreg_b[0])
         qiskit_circuit.x(qreg_a[1])
         qiskit_circuit.measure(qreg_a[0], creg[1])
         qiskit_circuit.measure(qreg_b[0], creg[0])
