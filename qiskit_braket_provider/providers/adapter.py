@@ -152,6 +152,9 @@ _qiskit_controlled_gate_names_to_braket_gates: dict[str, Callable] = {
     "cs": gates.S,
     "csdg": gates.Si,
     "csx": gates.V,
+    "ccz": gates.CZ,
+    "c3sx": gates.V,
+    "mcx": gates.CNot,
     "crx": gates.Rx,
     "cry": gates.Ry,
     "crz": gates.Rz,
@@ -473,7 +476,7 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
                 # Getting the index from the bit mapping
                 operator=gate,
                 target=target_indices,
-                control=qubit_indices[:gate_qubit_count],
+                control=qubit_indices[:-gate_qubit_count],
             )
             braket_circuit += instruction
 
