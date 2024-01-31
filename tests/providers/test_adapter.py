@@ -1,12 +1,20 @@
 """Tests for Qiskti to Braket adapter."""
 from unittest import TestCase
+from unittest.mock import Mock
 
+import pytest
 from braket.circuits import Circuit, FreeParameter, observables
 from braket.devices import LocalSimulator
 
 import numpy as np
 
-from qiskit import QuantumCircuit, execute, BasicAer, QuantumRegister, ClassicalRegister
+from qiskit import (
+    QuantumCircuit,
+    BasicAer,
+    QuantumRegister,
+    ClassicalRegister,
+    transpile,
+)
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
@@ -134,6 +142,16 @@ standard_gates = [
 class TestAdapter(TestCase):
     """Tests adapter."""
 
+    def test_raise_type_error_for_bad_input(self):
+        """Test raising TypeError if adapter does not receive a qiskit.QuantumCircuit."""
+        circuit = Mock()
+
+        message = (
+            "Expected a qiskit.QuantumCircuit, got <class 'unittest.mock.Mock'> instead"
+        )
+        with pytest.raises(TypeError, match=message):
+            convert_qiskit_to_braket_circuit(circuit)
+
     def test_state_preparation_01(self):
         """Tests state_preparation handling of Adapter"""
         input_state_vector = np.array([np.sqrt(3) / 2, np.sqrt(2) * complex(1, 1) / 4])
@@ -173,7 +191,7 @@ class TestAdapter(TestCase):
         device = LocalSimulator()
         qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
 
-        job = execute(qiskit_circuit, backend)
+        job = backend.run(qiskit_circuit)
 
         braket_circuit = convert_qiskit_to_braket_circuit(qiskit_circuit)
         braket_circuit.state_vector()  # pylint: disable=no-member
@@ -204,7 +222,8 @@ class TestAdapter(TestCase):
                 braket_job = backend.run(qiskit_circuit, shots=1000)
                 braket_result = braket_job.result().get_counts()
 
-                qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
+                transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
+                qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
                 qiskit_result = qiskit_job.result().get_counts()
 
                 combined_results = combine_dicts(
@@ -243,7 +262,8 @@ class TestAdapter(TestCase):
         braket_job = backend.run(qiskit_circuit, shots=1000)
         braket_result = braket_job.result().get_counts()
 
-        qiskit_job = execute(qiskit_circuit, aer_backend, shots=1000)
+        transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
+        qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
         qiskit_result = qiskit_job.result().get_counts()
 
         combined_results = combine_dicts(
