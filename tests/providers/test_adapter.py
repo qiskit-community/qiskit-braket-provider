@@ -197,26 +197,14 @@ class TestAdapter(TestCase):
 
     def test_global_phase(self):
         """Tests conversion when transpiler generates a global phase"""
-        qiskit_circuit = QuantumCircuit(2)
-        gate = qiskit_gates.XXPlusYYGate(0, 0)
-        qiskit_circuit.append(gate, [0, 1])  # triggers the transpiler
-        qiskit_circuit.y(0)
+        qiskit_circuit = QuantumCircuit(1, global_phase=np.pi / 2)
         qiskit_circuit.h(0)
-        transpiled_qiskit_circuit = transpile(qiskit_circuit)
 
         braket_circuit = to_braket(qiskit_circuit)
 
-        expected_braket_circuit = (
-            Circuit()
-            .phaseshift(0, 0)
-            .ry(0, np.pi / 2)
-            .phaseshift(0, -np.pi)
-            .gphase(np.pi / 2)
-        )
+        expected_braket_circuit = Circuit().h(0).gphase(np.pi / 2)
 
-        self.assertEqual(
-            braket_circuit.global_phase, transpiled_qiskit_circuit.global_phase
-        )
+        self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase)
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_exponential_gate_decomp(self):

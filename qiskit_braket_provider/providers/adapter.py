@@ -348,7 +348,9 @@ def to_braket(circuit: QuantumCircuit) -> Circuit:
             TRANSLATABLE_QISKIT_GATE_NAMES
         )
     ):
-        circuit = transpile(circuit, basis_gates=TRANSLATABLE_QISKIT_GATE_NAMES)
+        circuit = transpile(
+            circuit, basis_gates=TRANSLATABLE_QISKIT_GATE_NAMES, optimization_level=0
+        )
 
     # handle qiskit to braket conversion
     for circuit_instruction in circuit.data:
