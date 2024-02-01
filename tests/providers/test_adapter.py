@@ -2,7 +2,6 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-import pytest
 from braket.circuits import Circuit, FreeParameter, observables
 from braket.devices import LocalSimulator
 
@@ -23,12 +22,12 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import standard_gates as qiskit_gates
 
 from qiskit_braket_provider.providers.adapter import (
-    from_braket,
+    to_qiskit,
     to_braket,
     convert_qiskit_to_braket_circuit,
     convert_qiskit_to_braket_circuits,
-    gate_name_to_braket_gate,
-    gate_name_to_qiskit_gate,
+    GATE_NAME_TO_BRAKET_GATE,
+    GATE_NAME_TO_QISKIT_GATE,
     wrap_circuits_in_verbatim_box,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
@@ -135,7 +134,7 @@ class TestAdapter(TestCase):
             convert_qiskit_to_braket_circuit(qiskit_circuit)
 
         with self.assertWarns(DeprecationWarning):
-            convert_qiskit_to_braket_circuits([qiskit_circuit])
+            list(convert_qiskit_to_braket_circuits([qiskit_circuit]))
 
     def test_u_gate(self):
         """Tests adapter conversion of u gate"""
@@ -300,19 +299,19 @@ class TestAdapter(TestCase):
 
         self.assertEqual(
             list(sorted(qiskit_to_braket_gate_names.keys())),
-            list(sorted(gate_name_to_braket_gate.keys())),
+            list(sorted(GATE_NAME_TO_BRAKET_GATE.keys())),
         )
 
         self.assertEqual(
             list(sorted(qiskit_to_braket_gate_names.values())),
-            list(sorted(gate_name_to_qiskit_gate.keys())),
+            list(sorted(GATE_NAME_TO_QISKIT_GATE.keys())),
         )
 
     def test_type_error_on_bad_input(self):
         """Test raising TypeError if adapter does not receive a Qiskit QuantumCircuit."""
         circuit = Mock()
 
-        message = f"Cannot convert {type(circuit)} to Braket circuit."
+        message = f"Expected a QuantumCircuit, got {type(circuit)} instead."
         with pytest.raises(TypeError, match=message):
             to_braket(circuit)
 
@@ -342,9 +341,7 @@ class TestAdapter(TestCase):
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_barrier(self):
-        """
-        Tests conversion with barrier.
-        """
+        """Tests conversion with barrier."""
         qiskit_circuit = QuantumCircuit(2)
         qiskit_circuit.x(0)
         qiskit_circuit.barrier()
@@ -434,16 +431,16 @@ class TestFromBraket(TestCase):
         """Test raising TypeError if adapter does not receive a Braket Circuit."""
         circuit = Mock()
 
-        message = f"Cannot convert {type(circuit)} to Qiskit circuit."
+        message = f"Expected a Circuit, got {type(circuit)} instead."
         with pytest.raises(TypeError, match=message):
-            from_braket(circuit)
+            to_qiskit(circuit)
 
     def test_standard_gates(self):
         """
         Tests braket to qiskit conversion with standard gates.
         """
         braket_circuit = Circuit().h(0)
-        qiskit_circuit = from_braket(braket_circuit)
+        qiskit_circuit = to_qiskit(braket_circuit)
 
         expected_qiskit_circuit = QuantumCircuit(1)
         expected_qiskit_circuit.h(0)
@@ -456,7 +453,7 @@ class TestFromBraket(TestCase):
         Tests braket to qiskit conversion with standard gates.
         """
         braket_circuit = Circuit().rx(0, FreeParameter("alpha"))
-        qiskit_circuit = from_braket(braket_circuit)
+        qiskit_circuit = to_qiskit(braket_circuit)
 
         uuid = qiskit_circuit.parameters[0]._uuid
 
@@ -471,7 +468,7 @@ class TestFromBraket(TestCase):
         Tests braket to qiskit conversion with controlled gates.
         """
         braket_circuit = Circuit().x(1, control=[0])
-        qiskit_circuit = from_braket(braket_circuit)
+        qiskit_circuit = to_qiskit(braket_circuit)
 
         expected_qiskit_circuit = QuantumCircuit(2)
         cx = qiskit_gates.XGate().control(1)
@@ -485,7 +482,7 @@ class TestFromBraket(TestCase):
         Tests braket to qiskit conversion with non-continuous qubit registers.
         """
         braket_circuit = Circuit().x(3, control=[0, 2], control_state="10")
-        qiskit_circuit = from_braket(braket_circuit)
+        qiskit_circuit = to_qiskit(braket_circuit)
 
         expected_qiskit_circuit = QuantumCircuit(4)
         cx = qiskit_gates.XGate().control(2, ctrl_state="01")
@@ -499,7 +496,7 @@ class TestFromBraket(TestCase):
         Tests braket to qiskit conversion with controlled gates and control state.
         """
         braket_circuit = Circuit().x(3, control=[0, 1, 2], control_state="100")
-        qiskit_circuit = from_braket(braket_circuit)
+        qiskit_circuit = to_qiskit(braket_circuit)
 
         expected_qiskit_circuit = QuantumCircuit(4)
         cx = qiskit_gates.XGate().control(3, ctrl_state="001")
@@ -513,7 +510,7 @@ class TestFromBraket(TestCase):
         Tests braket to qiskit conversion with gate exponentiation.
         """
         braket_circuit = Circuit().x(0, power=0.5)
-        qiskit_circuit = from_braket(braket_circuit)
+        qiskit_circuit = to_qiskit(braket_circuit)
 
         expected_qiskit_circuit = QuantumCircuit(1)
         sx = qiskit_gates.XGate().power(0.5)

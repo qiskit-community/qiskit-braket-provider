@@ -105,7 +105,7 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        circuits: List[Circuit] = list(to_braket(convert_input))
+        circuits: List[Circuit] = [to_braket(input) for input in convert_input]
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
@@ -278,7 +278,7 @@ class AWSBraketBackend(BraketBackend):
         else:
             raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
 
-        braket_circuits = list(to_braket(circuits))
+        braket_circuits = [to_braket(circuit) for circuit in circuits]
 
         if options.pop("verbatim", False):
             braket_circuits = wrap_circuits_in_verbatim_box(braket_circuits)
