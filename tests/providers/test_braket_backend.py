@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 from botocore import errorfactory
 from braket.aws.queue_information import QueueDepthInfo, QueueType
-from qiskit import QuantumCircuit, transpile, BasicAer
+from qiskit import QuantumCircuit, transpile
 
 from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
 
@@ -15,6 +15,7 @@ from qiskit.algorithms.optimizers import (
 )
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
+from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Result
 from qiskit.transpiler import Target
