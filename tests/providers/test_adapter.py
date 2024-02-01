@@ -11,13 +11,13 @@ import pytest
 
 from qiskit import (
     QuantumCircuit,
-    BasicAer,
     QuantumRegister,
     ClassicalRegister,
     transpile,
 )
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
 
 from qiskit.circuit.library import standard_gates as qiskit_gates
