@@ -448,11 +448,6 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     dict_param = {}
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
-        gate_instance = GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
-        if gate_instance is not None:
-            gate_cls = gate_instance.__class__
-        else:
-            raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
 
         gate_params = []
         if hasattr(instruction.operator, "parameters"):
@@ -464,7 +459,8 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                 else:
                     gate_params.append(value)
 
-        gate = gate_cls(*gate_params)
+        gate = _create_gate(gate_name, gate_params)
+
         if instruction.power != 1:
             gate = gate**instruction.power
         if control_qubits := instruction.control:
@@ -477,6 +473,17 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
         qiskit_circuit.append(gate, target)
     qiskit_circuit.measure_all()
     return qiskit_circuit
+
+
+def _create_gate(
+    gate_name: str, gate_params: list[Union[float, Parameter]]
+) -> Instruction:
+    gate_instance = GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
+    if gate_instance is not None:
+        gate_cls = gate_instance.__class__
+    else:
+        raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
+    return gate_cls(*gate_params)
 
 
 def wrap_circuits_in_verbatim_box(circuits: List[Circuit]) -> Iterable[Circuit]:
