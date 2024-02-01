@@ -2,7 +2,8 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from braket.circuits import Circuit, FreeParameter, observables
+from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
+from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
 
 import numpy as np
@@ -435,15 +436,49 @@ class TestFromBraket(TestCase):
         with pytest.raises(TypeError, match=message):
             to_qiskit(circuit)
 
-    def test_standard_gates(self):
+    def test_all_standard_gates(self):
         """
         Tests braket to qiskit conversion with standard gates.
         """
-        braket_circuit = Circuit().h(0)
+
+        gate_set = [attr for attr in dir(Gate) if attr[0].isupper()]
+
+        for gate_name in gate_set:
+            if gate_name.lower() not in GATE_NAME_TO_QISKIT_GATE:
+                continue
+
+            gate = getattr(Gate, gate_name)
+            if issubclass(gate, AngledGate):
+                op = gate(0)
+            elif issubclass(gate, TripleAngledGate):
+                op = gate(0, 0, 0)
+            else:
+                op = gate()
+            target = range(op.qubit_count)
+            instr = Instruction(op, target)
+
+            braket_circuit = Circuit().add_instruction(instr)
+            qiskit_circuit = to_qiskit(braket_circuit)
+
+            expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
+            expected_qiskit_circuit.append(
+                GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()), target
+            )
+            expected_qiskit_circuit.measure_all()
+            expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
+                {p: 0 for p in expected_qiskit_circuit.parameters}
+            )
+
+            self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_bell_circuit(self):
+        """Tests braket to qiskit conversion with standard gates."""
+        braket_circuit = Circuit().h(0).cnot(0, 1)
         qiskit_circuit = to_qiskit(braket_circuit)
 
-        expected_qiskit_circuit = QuantumCircuit(1)
+        expected_qiskit_circuit = QuantumCircuit(2)
         expected_qiskit_circuit.h(0)
+        expected_qiskit_circuit.cnot(0, 1)
 
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
