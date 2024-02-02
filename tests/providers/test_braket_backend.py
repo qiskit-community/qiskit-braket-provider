@@ -156,7 +156,7 @@ class TestAWSBraketBackend(TestCase):
         circuit.h(0)
         circuit.measure(0, 0)
         with self.assertRaises(exception.QiskitBraketException):
-            backend.run(circuit, shots=10, meas_level=0)
+            backend.run(circuit, shots=10, meas_level=1)
 
     def test_vqe(self):
         """Tests VQE."""

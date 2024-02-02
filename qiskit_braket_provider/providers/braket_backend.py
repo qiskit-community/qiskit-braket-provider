@@ -37,7 +37,7 @@ class BraketBackend(BackendV2, ABC):
     def __repr__(self):
         return f"BraketBackend[{self.name}]"
 
-    def _validate_meas_level(self, meas_level: enum.Enum | int):
+    def _validate_meas_level(self, meas_level: Union[enum.Enum, int]):
         if isinstance(meas_level, enum.Enum):
             meas_level = meas_level.value
         if meas_level != 2:
