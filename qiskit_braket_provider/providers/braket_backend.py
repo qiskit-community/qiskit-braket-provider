@@ -3,6 +3,7 @@
 
 import datetime
 import logging
+import enum
 from abc import ABC
 from typing import Iterable, Union, List
 
@@ -35,6 +36,15 @@ class BraketBackend(BackendV2, ABC):
 
     def __repr__(self):
         return f"BraketBackend[{self.name}]"
+
+    def _validate_meas_level(self, meas_level: Union[enum.Enum, int]):
+        if isinstance(meas_level, enum.Enum):
+            meas_level = meas_level.value
+        if meas_level != 2:
+            raise QiskitBraketException(
+                f"Device {self.name} only supports classified measurement "
+                f"results, received meas_level={meas_level}."
+            )
 
 
 class BraketLocalBackend(BraketBackend):
@@ -109,6 +119,9 @@ class BraketLocalBackend(BraketBackend):
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
+        if "meas_level" in options:
+            self._validate_meas_level(options["meas_level"])
+            del options["meas_level"]
         tasks = []
         try:
             for circuit in circuits:
@@ -277,6 +290,10 @@ class AWSBraketBackend(BraketBackend):
             circuits = run_input
         else:
             raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
+
+        if "meas_level" in options:
+            self._validate_meas_level(options["meas_level"])
+            del options["meas_level"]
 
         braket_circuits = list(convert_qiskit_to_braket_circuits(circuits))
 
