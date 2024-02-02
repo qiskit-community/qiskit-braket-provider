@@ -10,11 +10,11 @@ import numpy as np
 
 from qiskit import (
     QuantumCircuit,
-    BasicAer,
     QuantumRegister,
     ClassicalRegister,
     transpile,
 )
+from qiskit.providers.basicaer import BasicAer
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
