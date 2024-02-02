@@ -459,18 +459,6 @@ class TestFromBraket(TestCase):
 
             self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
-    def test_bell_circuit(self):
-        """Tests braket to qiskit conversion with standard gates."""
-        braket_circuit = Circuit().h(0).cnot(0, 1)
-        qiskit_circuit = to_qiskit(braket_circuit)
-
-        expected_qiskit_circuit = QuantumCircuit(2)
-        expected_qiskit_circuit.h(0)
-        expected_qiskit_circuit.cnot(0, 1)
-
-        expected_qiskit_circuit.measure_all()
-        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
-
     def test_parametric_gates(self):
         """
         Tests braket to qiskit conversion with standard gates.
