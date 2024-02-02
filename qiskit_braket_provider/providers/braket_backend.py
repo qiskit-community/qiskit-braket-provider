@@ -41,7 +41,10 @@ class BraketBackend(BackendV2, ABC):
         if isinstance(meas_level, enum.Enum):
             meas_level = meas_level.value
         if meas_level != 2:
-            raise QiskitBraketException(f"Device {self.name} only supports classified measurement results, received meas_level={meas_level}.")
+            raise QiskitBraketException(
+                f"Device {self.name} only supports classified measurement "
+                f"results, received meas_level={meas_level}."
+            )
 
 
 class BraketLocalBackend(BraketBackend):
