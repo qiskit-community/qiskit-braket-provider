@@ -15,7 +15,6 @@ from qiskit import (
     ClassicalRegister,
     transpile,
 )
-from qiskit.providers.basicaer import BasicAer
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.providers.basicaer import BasicAer
