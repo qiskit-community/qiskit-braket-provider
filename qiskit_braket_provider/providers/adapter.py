@@ -27,6 +27,7 @@ from braket.device_schema.simulators import (
 from braket.devices import LocalSimulator
 
 from numpy import pi
+from sympy import sympify
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
