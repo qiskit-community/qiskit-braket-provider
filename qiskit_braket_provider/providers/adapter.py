@@ -10,6 +10,7 @@ from braket.circuits import (
     gates,
     observables,
 )
+from braket.parametric.free_parameter_expression import FreeParameterExpression
 from braket.device_schema import (
     DeviceActionType,
     GateModelQpuParadigmProperties,
@@ -451,9 +452,10 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
             for i, param in enumerate(params):
                 if isinstance(param, Parameter):
                     params[i] = FreeParameter(param.name)
-                elif isinstance(param, ParameterExpression): # Enables users to use ParameterVector elements
-                    params[i] = FreeParameter(name=list(param._names.keys())[0]) # Name of the parameter is stored as a dict key
-
+                elif isinstance(param, ParameterExpression):
+                    cleaned_expr_str = str(param._symbol_expr).replace('[', '').replace(']', '')
+                    params[i] = FreeParameterExpression(sympify(cleaned_expr_str))
+                    
             for gate in qiskit_gate_names_to_braket_gates[gate_name](*params):
                 instruction = Instruction(
                     # Getting the index from the bit mapping
