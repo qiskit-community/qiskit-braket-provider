@@ -67,6 +67,38 @@ from qiskit.circuit.library import (
 from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
+braket_to_qiskit_names = {
+    "u": "u",
+    "phaseshift": "p",
+    "cnot": "cx",
+    "x": "x",
+    "y": "y",
+    "z": "z",
+    "t": "t",
+    "ti": "tdg",
+    "s": "s",
+    "si": "sdg",
+    "v": "sx",
+    "vi": "sxdg",
+    "swap": "swap",
+    "rx": "rx",
+    "ry": "ry",
+    "rz": "rz",
+    "xx": "rxx",
+    "yy": "ryy",
+    "zz": "rzz",
+    "i": "id",
+    "h": "h",
+    "cy": "cy",
+    "cz": "cz",
+    "ccnot": "ccx",
+    "cswap": "cswap",
+    "cphaseshift": "cp",
+    "ecr": "ecr",
+}
+
+controlled_gate = {1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}, 2: {"c3sx"}}
+
 qiskit_to_braket_gate_names_mapping = {
     "u": "u",
     "u1": "u1",
@@ -422,7 +454,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     return target
 
 
-def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
+def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit, gateset=None) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
             circuit (QuantumCircuit): Qiskit Quantum Cricuit
@@ -430,6 +462,7 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     Returns:
         Circuit: Braket circuit
     """
+    gateset = gateset or translatable_qiskit_gates
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(
             f"Expected a qiskit.QuantumCircuit, got {type(circuit)} instead"
@@ -437,9 +470,9 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
 
     braket_circuit = Circuit()
     if not (
-        {gate.name for gate, _, _ in circuit.data}.issubset(translatable_qiskit_gates)
+        {gate.name for gate, _, _ in circuit.data}.issubset(gateset)
     ):
-        circuit = transpile(circuit, basis_gates=translatable_qiskit_gates)
+        circuit = transpile(circuit, basis_gates=gateset)
     if circuit.global_phase > _EPS:
         warnings.warn("Circuit transpilation resulted in global phase shift")
     # handle qiskit to braket conversion
@@ -501,7 +534,7 @@ def _create_free_parameters(operation):
 
 
 def convert_qiskit_to_braket_circuits(
-    circuits: list[QuantumCircuit],
+    circuits: list[QuantumCircuit], gateset=None
 ) -> Iterable[Circuit]:
     """Converts all Qiskit circuits to Braket circuits.
      Args:
@@ -511,7 +544,7 @@ def convert_qiskit_to_braket_circuits(
         Circuit (Iterable[Circuit]): Braket circuit
     """
     for circuit in circuits:
-        yield convert_qiskit_to_braket_circuit(circuit)
+        yield convert_qiskit_to_braket_circuit(circuit, gateset)
 
 
 def wrap_circuits_in_verbatim_box(circuits: list[Circuit]) -> Iterable[Circuit]:

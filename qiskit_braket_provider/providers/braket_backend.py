@@ -9,7 +9,9 @@ from typing import Iterable, Union, List
 from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
+from braket.device_schema import DeviceActionType
 from braket.devices import LocalSimulator
+from braket.ir.openqasm.modifiers import Control
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
@@ -18,7 +20,7 @@ from .adapter import (
     aws_device_to_target,
     local_simulator_to_target,
     convert_qiskit_to_braket_circuits,
-    wrap_circuits_in_verbatim_box,
+    wrap_circuits_in_verbatim_box, braket_to_qiskit_names,
 )
 from .braket_job import AmazonBraketTask
 from .. import version
@@ -105,7 +107,17 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
+        action = self._aws_device.properties.action[DeviceActionType.OPENQASM]
+        gateset = {braket_to_qiskit_names[op] for op in action.supportedOperations}
+        max_control = 0
+        for modifier in action.supportedModifiers:
+            if isinstance(modifier, Control):
+                max_control = modifier.max_qubits
+                break
+        if max_control != 0:
+            gateset.update({})
+        gateset = None
+        circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input, gateset))
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
