@@ -452,7 +452,8 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
 
             for i, param in enumerate(params):
                 if isinstance(param, Parameter):
-                    params[i] = FreeParameter(param.name)
+                    cleaned_param_name = str(param._symbol_expr).replace('[', '').replace(']', '')
+                    params[i] = FreeParameter(cleaned_param_name)
                 elif isinstance(param, ParameterExpression):
                     cleaned_expr_str = str(param._symbol_expr).replace('[', '').replace(']', '')
                     params[i] = FreeParameterExpression(sympify(cleaned_expr_str))
