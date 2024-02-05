@@ -259,7 +259,7 @@ class TestAWSBraketBackend(TestCase):
         """
         device = AWSBraketProvider().get_backend("Aspen-M-2")
         circuit = QuantumCircuit(2)
-        circuit.cnot(0, 1)
+        circuit.cx(0, 1)
 
         with self.assertRaises(errorfactory.ClientError):
             device.run(circuit, verbatim=True, disable_qubit_rewiring=True)
