@@ -67,7 +67,10 @@ braket_to_qiskit_names = {
     "ecr": "ecr",
 }
 
-controlled_gate_qubit_counts = {1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}, 3: {"c3sx"}}
+controlled_gate_qubit_counts = {
+    1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"},
+    3: {"c3sx"},
+}
 arbitrary_controlled_gates = {"mcx"}
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
@@ -131,8 +134,10 @@ _qiskit_controlled_gate_names_to_braket_gates: dict[str, Callable] = {
     "crz": braket_gates.Rz,
 }
 
-_TRANSLATABLE_QISKIT_GATE_NAMES = set(GATE_NAME_TO_BRAKET_GATE.keys()).union(set(_qiskit_controlled_gate_names_to_braket_gates)).union(
-    {"measure", "barrier", "reset"}
+_TRANSLATABLE_QISKIT_GATE_NAMES = (
+    set(GATE_NAME_TO_BRAKET_GATE.keys())
+    .union(set(_qiskit_controlled_gate_names_to_braket_gates))
+    .union({"measure", "barrier", "reset"})
 )
 
 GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
@@ -166,7 +171,8 @@ GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "z": qiskit_gates.ZGate(),
     "zz": qiskit_gates.RZZGate(Parameter("theta")),
     "ecr": qiskit_gates.ECRGate(),
-    "iswap": qiskit_gates.iSwapGate(),}
+    "iswap": qiskit_gates.iSwapGate(),
+}
 
 
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:
@@ -375,6 +381,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 
     return target
 
+
 def to_braket(circuit: QuantumCircuit, gateset=None) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
@@ -449,13 +456,13 @@ def to_braket(circuit: QuantumCircuit, gateset=None) -> Circuit:
     return braket_circuit
 
 
-
 def _create_free_parameters(operation):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
         if isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
     return params
+
 
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
