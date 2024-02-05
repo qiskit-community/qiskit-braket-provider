@@ -19,12 +19,12 @@ from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 
 from .adapter import (
     aws_device_to_target,
-    braket_to_qiskit_names,
+    BRAKET_TO_QISKIT_NAMES,
     local_simulator_to_target,
     to_braket,
     wrap_circuits_in_verbatim_box,
-    controlled_gate_qubit_counts,
-    arbitrary_controlled_gates,
+    CONTROLLED_GATE_QUBIT_COUNTS,
+    ARBITRARY_CONTROLLED_GATES,
 )
 from .braket_job import AmazonBraketTask
 from .. import version
@@ -121,7 +121,7 @@ class BraketLocalBackend(BraketBackend):
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         action = self._aws_device.properties.action[DeviceActionType.OPENQASM]
-        gateset = {braket_to_qiskit_names[op] for op in action.supportedOperations}
+        gateset = {BRAKET_TO_QISKIT_NAMES[op] for op in action.supportedOperations}
         max_control = 0
         for modifier in action.supportedModifiers:
             if isinstance(modifier, Control):
@@ -132,16 +132,16 @@ class BraketLocalBackend(BraketBackend):
                 set().union(
                     *[
                         g
-                        for q, g in controlled_gate_qubit_counts.items()
+                        for q, g in CONTROLLED_GATE_QUBIT_COUNTS.items()
                         if q <= max_control
                     ]
                 )
             )
         elif max_control is None:
             gateset.update(
-                set().union(*[g for _, g in controlled_gate_qubit_counts.items()])
+                set().union(*[g for _, g in CONTROLLED_GATE_QUBIT_COUNTS.items()])
             )
-            gateset.update(arbitrary_controlled_gates)
+            gateset.update(ARBITRARY_CONTROLLED_GATES)
         circuits: List[Circuit] = list(to_braket(convert_input, gateset))
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:

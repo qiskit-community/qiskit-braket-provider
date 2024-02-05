@@ -37,7 +37,7 @@ import qiskit.circuit.library as qiskit_gates
 from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
-braket_to_qiskit_names = {
+BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
     "phaseshift": "p",
     "cnot": "cx",
@@ -67,11 +67,11 @@ braket_to_qiskit_names = {
     "ecr": "ecr",
 }
 
-controlled_gate_qubit_counts = {
+CONTROLLED_GATE_QUBIT_COUNTS = {
     1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"},
     3: {"c3sx"},
 }
-arbitrary_controlled_gates = {"mcx"}
+ARBITRARY_CONTROLLED_GATES = {"mcx"}
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
