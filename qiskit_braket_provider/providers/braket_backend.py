@@ -18,7 +18,7 @@ from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 from .adapter import (
     aws_device_to_target,
     local_simulator_to_target,
-    convert_qiskit_to_braket_circuits,
+    to_braket,
     wrap_circuits_in_verbatim_box,
 )
 from .braket_job import AmazonBraketTask
@@ -115,7 +115,7 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
+        circuits: List[Circuit] = [to_braket(input) for input in convert_input]
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
@@ -295,7 +295,7 @@ class AWSBraketBackend(BraketBackend):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        braket_circuits = list(convert_qiskit_to_braket_circuits(circuits))
+        braket_circuits = [to_braket(circuit) for circuit in circuits]
 
         if options.pop("verbatim", False):
             braket_circuits = wrap_circuits_in_verbatim_box(braket_circuits)
