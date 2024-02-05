@@ -67,7 +67,8 @@ braket_to_qiskit_names = {
     "ecr": "ecr",
 }
 
-controlled_gate = {1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}, 2: {"c3sx"}}
+controlled_gate_qubit_counts = {1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}, 3: {"c3sx"}}
+arbitrary_controlled_gates = {"mcx"}
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
