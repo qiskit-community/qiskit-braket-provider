@@ -85,7 +85,7 @@ GATE_NAME_TO_BRAKET_GATE: Dict[str, Callable] = {
 }
 
 
-TRANSLATABLE_QISKIT_GATE_NAMES = set(GATE_NAME_TO_BRAKET_GATE.keys()).union(
+_TRANSLATABLE_QISKIT_GATE_NAMES = set(GATE_NAME_TO_BRAKET_GATE.keys()).union(
     {"measure", "barrier", "reset"}
 )
 
@@ -345,11 +345,11 @@ def to_braket(circuit: QuantumCircuit) -> Circuit:
     quantum_circuit = Circuit()
     if not (
         {gate.name for gate, _, _ in circuit.data}.issubset(
-            TRANSLATABLE_QISKIT_GATE_NAMES
+            _TRANSLATABLE_QISKIT_GATE_NAMES
         )
     ):
         circuit = transpile(
-            circuit, basis_gates=TRANSLATABLE_QISKIT_GATE_NAMES, optimization_level=0
+            circuit, basis_gates=_TRANSLATABLE_QISKIT_GATE_NAMES, optimization_level=0
         )
 
     # handle qiskit to braket conversion
@@ -444,7 +444,10 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
-    qiskit_circuit = QuantumCircuit(max(circuit.qubits) + 1)
+    qiskit_circuit = QuantumCircuit(circuit.qubit_count)
+    qubit_map = {
+        int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))
+    }
     dict_param = {}
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
@@ -467,8 +470,8 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
             ctrl_state = instruction.control_state.as_string[::-1]
             gate = gate.control(len(control_qubits), ctrl_state=ctrl_state)
 
-        target = [qiskit_circuit.qubits[i] for i in control_qubits]
-        target += [qiskit_circuit.qubits[i] for i in instruction.target]
+        target = [qiskit_circuit.qubits[qubit_map[i]] for i in control_qubits]
+        target += [qiskit_circuit.qubits[qubit_map[i]] for i in instruction.target]
 
         qiskit_circuit.append(gate, target)
     qiskit_circuit.measure_all()

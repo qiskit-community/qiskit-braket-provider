@@ -495,9 +495,9 @@ class TestFromBraket(TestCase):
         braket_circuit = Circuit().x(3, control=[0, 2], control_state="10")
         qiskit_circuit = to_qiskit(braket_circuit)
 
-        expected_qiskit_circuit = QuantumCircuit(4)
+        expected_qiskit_circuit = QuantumCircuit(3)
         cx = qiskit_gates.XGate().control(2, ctrl_state="01")
-        expected_qiskit_circuit.append(cx, [0, 2, 3])
+        expected_qiskit_circuit.append(cx, [0, 1, 2])
         expected_qiskit_circuit.measure_all()
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
