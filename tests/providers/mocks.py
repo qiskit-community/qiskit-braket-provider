@@ -41,6 +41,7 @@ RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON = {
             "actionType": "braket.ir.openqasm.program",
             "version": ["1"],
             "supportedOperations": ["H"],
+            "supportedModifiers": [{"name": "ctrl", "max_qubits": None}],
         }
     },
     "paradigm": {
@@ -73,6 +74,9 @@ RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON: Dict = copy.deepcopy(
 RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
     "supportedOperations"
 ] = ["RX", "RZ", "CP", "CZ", "XY"]
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
+    "supportedModifiers"
+] = [{"name": "ctrl", "max_qubits": 4}]
 RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["qubitCount"] = 4
 RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["connectivity"][
     "connectivityGraph"
