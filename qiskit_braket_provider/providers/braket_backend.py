@@ -1,11 +1,11 @@
 """AWS Braket backends."""
 
-
 import datetime
 import logging
 import enum
 from abc import ABC
-from typing import Iterable, Union, List
+from collections.abc import Iterable
+from typing import Union
 
 from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
@@ -94,12 +94,12 @@ class BraketLocalBackend(BraketBackend):
         )
 
     @property
-    def meas_map(self) -> List[List[int]]:
+    def meas_map(self) -> list[list[int]]:
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def qubit_properties(
-        self, qubit: Union[int, List[int]]
-    ) -> Union[QubitProperties, List[QubitProperties]]:
+        self, qubit: Union[int, list[int]]
+    ) -> Union[QubitProperties, list[QubitProperties]]:
         raise NotImplementedError
 
     def drive_channel(self, qubit: int):
@@ -115,19 +115,28 @@ class BraketLocalBackend(BraketBackend):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
     def run(
-        self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
+        self, run_input: Union[QuantumCircuit, list[QuantumCircuit]], **options
     ) -> AmazonBraketTask:
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         action = self._aws_device.properties.action[DeviceActionType.OPENQASM]
-        gateset = {BRAKET_TO_QISKIT_NAMES[op] for op in action.supportedOperations}
+        gateset = {
+            BRAKET_TO_QISKIT_NAMES[op.lower()]
+            for op in action.supportedOperations
+            if op.lower() in BRAKET_TO_QISKIT_NAMES
+        }
         max_control = 0
         for modifier in action.supportedModifiers:
             if isinstance(modifier, Control):
                 max_control = modifier.max_qubits
                 break
-        if max_control > 0:
+        if max_control is None:
+            gateset.update(
+                set().union(*[g for _, g in CONTROLLED_GATE_QUBIT_COUNTS.items()])
+            )
+            gateset.update(ARBITRARY_CONTROLLED_GATES)
+        elif max_control > 0:
             gateset.update(
                 set().union(
                     *[
@@ -137,12 +146,7 @@ class BraketLocalBackend(BraketBackend):
                     ]
                 )
             )
-        elif max_control is None:
-            gateset.update(
-                set().union(*[g for _, g in CONTROLLED_GATE_QUBIT_COUNTS.items()])
-            )
-            gateset.update(ARBITRARY_CONTROLLED_GATES)
-        circuits: List[Circuit] = list(to_braket(convert_input, gateset))
+        circuits: list[Circuit] = [to_braket(circ, gateset) for circ in convert_input]
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
@@ -250,8 +254,8 @@ class AWSBraketBackend(BraketBackend):
         return Options()
 
     def qubit_properties(
-        self, qubit: Union[int, List[int]]
-    ) -> Union[QubitProperties, List[QubitProperties]]:
+        self, qubit: Union[int, list[int]]
+    ) -> Union[QubitProperties, list[QubitProperties]]:
         # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
         raise NotImplementedError
 
@@ -295,7 +299,7 @@ class AWSBraketBackend(BraketBackend):
         )
 
     @property
-    def meas_map(self) -> List[List[int]]:
+    def meas_map(self) -> list[list[int]]:
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def drive_channel(self, qubit: int):
@@ -330,7 +334,7 @@ class AWSBraketBackend(BraketBackend):
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
             braket_circuits, **options
         )
-        tasks: List[AwsQuantumTask] = batch_task.tasks
+        tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(

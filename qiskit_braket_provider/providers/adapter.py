@@ -382,10 +382,11 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     return target
 
 
-def to_braket(circuit: QuantumCircuit, gateset=None) -> Circuit:
+def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
-            circuit (QuantumCircuit): Qiskit Quantum Circuit
+            circuit (QuantumCircuit): Qiskit quantum circuit
+            gateset (Iterable[str]): The gateset to transpile to
 
     Returns:
         Circuit: Braket circuit
@@ -482,11 +483,12 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
 
 
 def convert_qiskit_to_braket_circuits(
-    circuits: list[QuantumCircuit], gateset=None
+    circuits: list[QuantumCircuit], gateset: Iterable[str] = None
 ) -> Iterable[Circuit]:
     """Converts all Qiskit circuits to Braket circuits.
      Args:
-            circuits (List(QuantumCircuit)): Qiskit Quantum Cricuit
+            circuits (List(QuantumCircuit)): Qiskit quantum circuit
+            gateset (Iterable[str]): The gateset to transpile to
 
     Returns:
         Circuit (Iterable[Circuit]): Braket circuit
@@ -504,7 +506,7 @@ def convert_qiskit_to_braket_circuits(
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
      Args:
-            circuit (Circuit): Braket Quantum Cricuit
+            circuit (Circuit): Braket quantum circuit
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
