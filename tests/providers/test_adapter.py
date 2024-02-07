@@ -28,6 +28,7 @@ from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuit,
     convert_qiskit_to_braket_circuits,
     GATE_NAME_TO_BRAKET_GATE,
+    GATE_NAME_TO_IONQ_GATE,
     GATE_NAME_TO_QISKIT_GATE,
     get_controlled_gateset,
 )
@@ -259,6 +260,7 @@ class TestAdapter(TestCase):
             "cp": "cphaseshift",
             "rxx": "xx",
             "ryy": "yy",
+            "zz": "zz",
         }
 
         qiskit_to_braket_gate_names |= {
@@ -290,13 +292,15 @@ class TestAdapter(TestCase):
         }
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_names.keys())),
-            list(sorted(GATE_NAME_TO_BRAKET_GATE.keys())),
+            set(qiskit_to_braket_gate_names.keys()),
+            set(GATE_NAME_TO_BRAKET_GATE.keys()),
         )
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_names.values())),
-            list(sorted(GATE_NAME_TO_QISKIT_GATE.keys())),
+            set(qiskit_to_braket_gate_names.values()),
+            set(GATE_NAME_TO_QISKIT_GATE.keys()).union(
+                set(GATE_NAME_TO_IONQ_GATE.keys())
+            ),
         )
 
     def test_type_error_on_bad_input(self):
