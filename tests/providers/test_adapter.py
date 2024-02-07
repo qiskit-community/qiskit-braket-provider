@@ -1,6 +1,6 @@
 """Tests for Qiskit to Braket adapter."""
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
@@ -30,6 +30,7 @@ from qiskit_braket_provider.providers.adapter import (
     GATE_NAME_TO_BRAKET_GATE,
     GATE_NAME_TO_QISKIT_GATE,
     wrap_circuits_in_verbatim_box,
+    get_controlled_gateset,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
 
@@ -411,6 +412,31 @@ class TestAdapter(TestCase):
             .sample(observable=observables.Z(), target=2)
         )
         self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_invalid_ctrl_state(self):
+        """Tests that control states other than all 1s are rejected."""
+        qiskit_circuit = QuantumCircuit(2)
+        qiskit_circuit.x(0)
+        qiskit_circuit.cx(0, 1, ctrl_state=0)
+
+        with patch(
+            "qiskit_braket_provider.providers.adapter.transpile"
+        ) as mock_transpile:
+            mock_transpile.return_value = qiskit_circuit
+            with pytest.raises(ValueError):
+                to_braket(qiskit_circuit)
+
+    def test_get_controlled_gateset(self):
+        """Tests that the correct controlled gateset is returned for all maximum qubit counts."""
+        max1 = {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}
+        max3 = max1.union({"c3sx"})
+        unlimited = max3.union({"mcx"})
+        assert get_controlled_gateset(0) == set()
+        assert get_controlled_gateset(1) == max1
+        assert get_controlled_gateset(2) == max1
+        assert get_controlled_gateset(3) == max3
+        assert get_controlled_gateset(4) == max3
+        assert get_controlled_gateset() == unlimited
 
 
 class TestFromBraket(TestCase):

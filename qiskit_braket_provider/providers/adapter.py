@@ -1,5 +1,6 @@
 """Util function for provider."""
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from collections.abc import Callable, Iterable
+from typing import Optional, Union
 import warnings
 
 from braket.aws import AwsDevice
@@ -30,15 +31,51 @@ from numpy import pi
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import Measure, Parameter
+from qiskit.circuit import ControlledGate, Measure, Parameter
 import qiskit.circuit.library as qiskit_gates
 
 from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
+BRAKET_TO_QISKIT_NAMES = {
+    "u": "u",
+    "phaseshift": "p",
+    "cnot": "cx",
+    "x": "x",
+    "y": "y",
+    "z": "z",
+    "t": "t",
+    "ti": "tdg",
+    "s": "s",
+    "si": "sdg",
+    "v": "sx",
+    "vi": "sxdg",
+    "swap": "swap",
+    "rx": "rx",
+    "ry": "ry",
+    "rz": "rz",
+    "xx": "rxx",
+    "yy": "ryy",
+    "zz": "rzz",
+    "i": "id",
+    "h": "h",
+    "cy": "cy",
+    "cz": "cz",
+    "ccnot": "ccx",
+    "cswap": "cswap",
+    "cphaseshift": "cp",
+    "ecr": "ecr",
+}
+
+_CONTROLLED_GATES_BY_QUBIT_COUNT = {
+    1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"},
+    3: {"c3sx"},
+}
+_ARBITRARY_CONTROLLED_GATES = {"mcx"}
+
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
-GATE_NAME_TO_BRAKET_GATE: Dict[str, Callable] = {
+GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "u1": lambda lam: [braket_gates.PhaseShift(lam)],
     "u2": lambda phi, lam: [
         braket_gates.PhaseShift(lam),
@@ -84,12 +121,26 @@ GATE_NAME_TO_BRAKET_GATE: Dict[str, Callable] = {
     "iswap": lambda: [braket_gates.ISwap()],
 }
 
+_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
+    "ch": braket_gates.H,
+    "cs": braket_gates.S,
+    "csdg": braket_gates.Si,
+    "csx": braket_gates.V,
+    "ccz": braket_gates.CZ,
+    "c3sx": braket_gates.V,
+    "mcx": braket_gates.CNot,
+    "crx": braket_gates.Rx,
+    "cry": braket_gates.Ry,
+    "crz": braket_gates.Rz,
+}
 
-_TRANSLATABLE_QISKIT_GATE_NAMES = set(GATE_NAME_TO_BRAKET_GATE.keys()).union(
-    {"measure", "barrier", "reset"}
+_TRANSLATABLE_QISKIT_GATE_NAMES = (
+    set(GATE_NAME_TO_BRAKET_GATE.keys())
+    .union(set(_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES))
+    .union({"measure", "barrier", "reset"})
 )
 
-GATE_NAME_TO_QISKIT_GATE: Dict[str, Optional[QiskitInstruction]] = {
+GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "u": qiskit_gates.UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "u1": qiskit_gates.U1Gate(Parameter("theta")),
     "u2": qiskit_gates.U2Gate(Parameter("theta"), Parameter("lam")),
@@ -124,6 +175,28 @@ GATE_NAME_TO_QISKIT_GATE: Dict[str, Optional[QiskitInstruction]] = {
 }
 
 
+def get_controlled_gateset(max_qubits: Optional[int] = None) -> set[str]:
+    """Returns the Qiskit gates expressible as controlled versions of existing Braket gates
+
+    This set can be filtered by the maximum number of control qubits.
+
+    Args:
+        max_qubits (Optional[int]): The maximum number of control qubits that can be used to express
+            the Qiskit gate as a controlled Braket gate. If `None`, then there is no limit to the
+            number of control qubits. Default: `None`.
+
+    Returns:
+        set[str]: The names of the controlled gates.
+    """
+    if max_qubits is None:
+        gateset = set().union(*[g for _, g in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()])
+        gateset.update(_ARBITRARY_CONTROLLED_GATES)
+        return gateset
+    return set().union(
+        *[g for q, g in _CONTROLLED_GATES_BY_QUBIT_COUNT.items() if q <= max_qubits]
+    )
+
+
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:
     """Converts properties of LocalSimulator into Qiskit Target object.
 
@@ -146,7 +219,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
 
     for instruction in instructions:
         instruction_props: Optional[
-            Dict[Union[Tuple[int], Tuple[int, int]], Optional[InstructionProperties]]
+            dict[Union[tuple[int], tuple[int, int]], Optional[InstructionProperties]]
         ] = {}
 
         if instruction.num_qubits == 1:
@@ -189,7 +262,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         )
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
         connectivity = paradigm.connectivity
-        instructions: List[QiskitInstruction] = []
+        instructions: list[QiskitInstruction] = []
 
         for operation in action_properties.supportedOperations:
             instruction = GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
@@ -205,8 +278,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 
         for instruction in instructions:
             instruction_props: Optional[
-                Dict[
-                    Union[Tuple[int], Tuple[int, int]], Optional[InstructionProperties]
+                dict[
+                    Union[tuple[int], tuple[int, int]], Optional[InstructionProperties]
                 ]
             ] = {}
             # adding 1 qubit instructions
@@ -303,8 +376,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 
         for instruction in instructions:
             simulator_instruction_props: Optional[
-                Dict[
-                    Union[Tuple[int], Tuple[int, int]],
+                dict[
+                    Union[tuple[int], tuple[int, int]],
                     Optional[InstructionProperties],
                 ]
             ] = {}
@@ -331,26 +404,26 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     return target
 
 
-def to_braket(circuit: QuantumCircuit) -> Circuit:
+def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
-            circuit (QuantumCircuit): Qiskit Quantum Circuit
+            circuit (QuantumCircuit): Qiskit quantum circuit
+            gateset (Iterable[str]): The gateset to transpile to
 
     Returns:
         Circuit: Braket circuit
     """
+    gateset = gateset or _TRANSLATABLE_QISKIT_GATE_NAMES
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
 
-    quantum_circuit = Circuit()
+    braket_circuit = Circuit()
     if not (
         {gate.name for gate, _, _ in circuit.data}.issubset(
             _TRANSLATABLE_QISKIT_GATE_NAMES
         )
     ):
-        circuit = transpile(
-            circuit, basis_gates=_TRANSLATABLE_QISKIT_GATE_NAMES, optimization_level=0
-        )
+        circuit = transpile(circuit, basis_gates=gateset, optimization_level=0)
 
     # handle qiskit to braket conversion
     for circuit_instruction in circuit.data:
@@ -362,7 +435,7 @@ def to_braket(circuit: QuantumCircuit) -> Circuit:
         if gate_name == "measure":
             qubit = qubits[0]  # qubit count = 1 for measure
             qubit_index = circuit.find_bit(qubit).index
-            quantum_circuit.sample(
+            braket_circuit.sample(
                 observable=observables.Z(),
                 target=[
                     qubit_index,
@@ -377,23 +450,44 @@ def to_braket(circuit: QuantumCircuit) -> Circuit:
                 "reset operation not supported by qiskit to braket adapter"
             )
         else:
-            params = operation.params if hasattr(operation, "params") else []
-
-            for i, param in enumerate(params):
-                if isinstance(param, Parameter):
-                    params[i] = FreeParameter(param.name)
-
-            for gate in GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
+            params = _create_free_parameters(operation)
+            if (
+                isinstance(operation, ControlledGate)
+                and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
+            ):
+                raise ValueError("Negative control is not supported")
+            if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
+                gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
+                qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
+                gate_qubit_count = gate.qubit_count
+                target_indices = qubit_indices[-gate_qubit_count:]
                 instruction = Instruction(
+                    # Getting the index from the bit mapping
                     operator=gate,
-                    target=[circuit.find_bit(qubit).index for qubit in qubits],
+                    target=target_indices,
+                    control=qubit_indices[:-gate_qubit_count],
                 )
-                quantum_circuit += instruction
+                braket_circuit += instruction
+            else:
+                for gate in GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
+                    instruction = Instruction(
+                        operator=gate,
+                        target=[circuit.find_bit(qubit).index for qubit in qubits],
+                    )
+                    braket_circuit += instruction
 
     if circuit.global_phase > _EPS:
-        quantum_circuit.gphase(circuit.global_phase)
+        braket_circuit.gphase(circuit.global_phase)
 
-    return quantum_circuit
+    return braket_circuit
+
+
+def _create_free_parameters(operation):
+    params = operation.params if hasattr(operation, "params") else []
+    for i, param in enumerate(params):
+        if isinstance(param, Parameter):
+            params[i] = FreeParameter(param.name)
+    return params
 
 
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
@@ -414,11 +508,12 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
 
 
 def convert_qiskit_to_braket_circuits(
-    circuits: List[QuantumCircuit],
+    circuits: list[QuantumCircuit],
 ) -> Iterable[Circuit]:
     """Converts all Qiskit circuits to Braket circuits.
+
      Args:
-            circuits (List(QuantumCircuit)): Qiskit Quantum Cricuit
+            circuits (List(QuantumCircuit)): Qiskit quantum circuit
 
     Returns:
         Circuit (Iterable[Circuit]): Braket circuit
@@ -436,7 +531,7 @@ def convert_qiskit_to_braket_circuits(
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
      Args:
-            circuit (Circuit): Braket Quantum Cricuit
+            circuit (Circuit): Braket quantum circuit
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
@@ -489,7 +584,7 @@ def _create_gate(
     return gate_cls(*gate_params)
 
 
-def wrap_circuits_in_verbatim_box(circuits: List[Circuit]) -> Iterable[Circuit]:
+def wrap_circuits_in_verbatim_box(circuits: list[Circuit]) -> Iterable[Circuit]:
     """Convert each Braket circuit an equivalent one wrapped in verbatim box.
 
     Args:
