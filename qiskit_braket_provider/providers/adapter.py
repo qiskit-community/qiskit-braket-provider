@@ -121,7 +121,7 @@ GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "iswap": lambda: [braket_gates.ISwap()],
 }
 
-_qiskit_controlled_gate_names_to_braket_gates: dict[str, Callable] = {
+_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
     "ch": braket_gates.H,
     "cs": braket_gates.S,
     "csdg": braket_gates.Si,
@@ -136,7 +136,7 @@ _qiskit_controlled_gate_names_to_braket_gates: dict[str, Callable] = {
 
 _TRANSLATABLE_QISKIT_GATE_NAMES = (
     set(GATE_NAME_TO_BRAKET_GATE.keys())
-    .union(set(_qiskit_controlled_gate_names_to_braket_gates))
+    .union(set(_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES))
     .union({"measure", "barrier", "reset"})
 )
 
@@ -427,29 +427,27 @@ def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit
             raise NotImplementedError(
                 "reset operation not supported by qiskit to braket adapter"
             )
-        elif gate_name in _qiskit_controlled_gate_names_to_braket_gates:
-            params = _create_free_parameters(operation)
-
-            gate = _qiskit_controlled_gate_names_to_braket_gates[gate_name](*params)
-            qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
-            gate_qubit_count = gate.qubit_count
-            target_indices = qubit_indices[-gate_qubit_count:]
-            instruction = Instruction(
-                # Getting the index from the bit mapping
-                operator=gate,
-                target=target_indices,
-                control=qubit_indices[:-gate_qubit_count],
-            )
-            braket_circuit += instruction
-
         else:
             params = _create_free_parameters(operation)
-            for gate in GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
+            if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
+                gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
+                qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
+                gate_qubit_count = gate.qubit_count
+                target_indices = qubit_indices[-gate_qubit_count:]
                 instruction = Instruction(
+                    # Getting the index from the bit mapping
                     operator=gate,
-                    target=[circuit.find_bit(qubit).index for qubit in qubits],
+                    target=target_indices,
+                    control=qubit_indices[:-gate_qubit_count],
                 )
                 braket_circuit += instruction
+            else:
+                for gate in GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
+                    instruction = Instruction(
+                        operator=gate,
+                        target=[circuit.find_bit(qubit).index for qubit in qubits],
+                    )
+                    braket_circuit += instruction
 
     if circuit.global_phase > _EPS:
         braket_circuit.gphase(circuit.global_phase)
@@ -483,12 +481,12 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
 
 
 def convert_qiskit_to_braket_circuits(
-    circuits: list[QuantumCircuit], gateset: Iterable[str] = None
+    circuits: list[QuantumCircuit],
 ) -> Iterable[Circuit]:
     """Converts all Qiskit circuits to Braket circuits.
+
      Args:
             circuits (List(QuantumCircuit)): Qiskit quantum circuit
-            gateset (Iterable[str]): The gateset to transpile to
 
     Returns:
         Circuit (Iterable[Circuit]): Braket circuit
@@ -500,7 +498,7 @@ def convert_qiskit_to_braket_circuits(
         DeprecationWarning,
     )
     for circuit in circuits:
-        yield to_braket(circuit, gateset)
+        yield to_braket(circuit)
 
 
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
