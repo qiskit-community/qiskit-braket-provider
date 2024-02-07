@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 from botocore import errorfactory
 from braket.aws.queue_information import QueueDepthInfo, QueueType
-from qiskit import QuantumCircuit, transpile, BasicAer
+from qiskit import QuantumCircuit, transpile
 
 from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
 
@@ -15,12 +15,13 @@ from qiskit.algorithms.optimizers import (
 )
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
+from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Result
 from qiskit.transpiler import Target
 from qiskit.primitives import BackendEstimator
 
-from qiskit_braket_provider import AWSBraketProvider, version
+from qiskit_braket_provider import AWSBraketProvider, version, exception
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import (
@@ -141,6 +142,23 @@ class TestAWSBraketBackend(TestCase):
         self.assertEqual(statevector[2], 0.0 + 0.0j)
         self.assertEqual(statevector[3], 1.0 + 0.0j)
 
+    def test_meas_level_2(self):
+        """Check that there's no error for asking for classified measurement results."""
+        backend = BraketLocalBackend(name="default")
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        circuit.measure(0, 0)
+        backend.run(circuit, shots=10, meas_level=2)
+
+    def test_meas_level_1(self):
+        """Check that there's an exception for asking for raw measurement results."""
+        backend = BraketLocalBackend(name="default")
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        circuit.measure(0, 0)
+        with self.assertRaises(exception.QiskitBraketException):
+            backend.run(circuit, shots=10, meas_level=1)
+
     def test_vqe(self):
         """Tests VQE."""
         local_simulator = BraketLocalBackend(name="default")
@@ -241,7 +259,7 @@ class TestAWSBraketBackend(TestCase):
         """
         device = AWSBraketProvider().get_backend("Aspen-M-2")
         circuit = QuantumCircuit(2)
-        circuit.cnot(0, 1)
+        circuit.cx(0, 1)
 
         with self.assertRaises(errorfactory.ClientError):
             device.run(circuit, verbatim=True, disable_qubit_rewiring=True)
