@@ -37,6 +37,8 @@ import qiskit.circuit.library as qiskit_gates
 from qiskit.transpiler import InstructionProperties, Target
 from qiskit_braket_provider.exception import QiskitBraketException
 
+import qiskit_ionq.ionq_gates as ionq_gates
+
 BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
     "phaseshift": "p",
@@ -65,6 +67,9 @@ BRAKET_TO_QISKIT_NAMES = {
     "cswap": "cswap",
     "cphaseshift": "cp",
     "ecr": "ecr",
+    "gpi": "gpi",
+    "gpi2": "gpi2",
+    "ms": "ms",
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
@@ -119,6 +124,11 @@ GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "ryy": lambda angle: [braket_gates.YY(angle)],
     "ecr": lambda: [braket_gates.ECR()],
     "iswap": lambda: [braket_gates.ISwap()],
+    "gpi": lambda angle: [braket_gates.GPi(angle)],
+    "gpi2": lambda angle: [braket_gates.GPi2(angle)],
+    "ms": lambda angle_1, angle_2, angle_3: [
+        braket_gates.MS(angle_1, angle_2, angle_3)
+    ],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
@@ -172,6 +182,9 @@ GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "zz": qiskit_gates.RZZGate(Parameter("theta")),
     "ecr": qiskit_gates.ECRGate(),
     "iswap": qiskit_gates.iSwapGate(),
+    "gpi": ionq_gates.GPIGate(Parameter("phi")),
+    "gpi2": ionq_gates.GPI2Gate(Parameter("phi")),
+    "ms": ionq_gates.MSGate(Parameter("phi0"), Parameter("phi1"), Parameter("theta")),
 }
 
 
