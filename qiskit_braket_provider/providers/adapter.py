@@ -31,7 +31,7 @@ from numpy import pi
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import Measure, Parameter
+from qiskit.circuit import ControlledGate, Measure, Parameter
 import qiskit.circuit.library as qiskit_gates
 
 from qiskit.transpiler import InstructionProperties, Target
@@ -451,6 +451,11 @@ def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit
             )
         else:
             params = _create_free_parameters(operation)
+            if (
+                isinstance(operation, ControlledGate)
+                and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
+            ):
+                raise ValueError("Negative control is not supported")
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
                 qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
