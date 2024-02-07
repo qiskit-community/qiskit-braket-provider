@@ -283,6 +283,9 @@ class TestAdapter(TestCase):
                 "cz",
                 "cswap",
                 "ecr",
+                "gpi",
+                "gpi2",
+                "ms",
             ]
         }
 

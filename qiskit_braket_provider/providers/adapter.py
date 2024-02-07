@@ -35,9 +35,8 @@ from qiskit.circuit import ControlledGate, Measure, Parameter
 import qiskit.circuit.library as qiskit_gates
 
 from qiskit.transpiler import InstructionProperties, Target
+from qiskit_ionq import ionq_gates
 from qiskit_braket_provider.exception import QiskitBraketException
-
-import qiskit_ionq.ionq_gates as ionq_gates
 
 BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
