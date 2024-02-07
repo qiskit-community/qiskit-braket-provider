@@ -404,11 +404,15 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     return target
 
 
-def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit:
+def to_braket(
+    circuit: QuantumCircuit, gateset: Optional[Iterable[str]] = None
+) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
             circuit (QuantumCircuit): Qiskit quantum circuit
-            gateset (Iterable[str]): The gateset to transpile to
+            gateset (Optional[Iterable[str]]): The gateset to transpile to.
+                If `None`, the transpiler will use all gates defined in the Braket SDK.
+                Default: `None`.
 
     Returns:
         Circuit: Braket circuit
