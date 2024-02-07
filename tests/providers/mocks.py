@@ -41,7 +41,6 @@ RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON = {
             "actionType": "braket.ir.openqasm.program",
             "version": ["1"],
             "supportedOperations": ["H"],
-            "supportedModifiers": [{"name": "ctrl", "max_qubits": None}],
         }
     },
     "paradigm": {

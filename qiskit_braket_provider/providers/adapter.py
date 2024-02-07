@@ -67,11 +67,11 @@ BRAKET_TO_QISKIT_NAMES = {
     "ecr": "ecr",
 }
 
-CONTROLLED_GATE_QUBIT_COUNTS = {
+_CONTROLLED_GATES_BY_QUBIT_COUNT = {
     1: {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"},
     3: {"c3sx"},
 }
-ARBITRARY_CONTROLLED_GATES = {"mcx"}
+_ARBITRARY_CONTROLLED_GATES = {"mcx"}
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
@@ -173,6 +173,28 @@ GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "ecr": qiskit_gates.ECRGate(),
     "iswap": qiskit_gates.iSwapGate(),
 }
+
+
+def get_controlled_gateset(max_qubits: Optional[int] = None) -> set[str]:
+    """Returns the Qiskit gates expressible as controlled versions of existing Braket gates
+
+    This set can be filtered by the maximum number of control qubits.
+
+    Args:
+        max_qubits (Optional[int]): The maximum number of control qubits that can be used to express
+            the Qiskit gate as a controlled Braket gate. If `None`, then there is no limit to the
+            number of control qubits. Default: `None`.
+
+    Returns:
+        set[str]: The names of the controlled gates.
+    """
+    if max_qubits is None:
+        gateset = set().union(*[g for _, g in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()])
+        gateset.update(_ARBITRARY_CONTROLLED_GATES)
+        return gateset
+    return set().union(
+        *[g for q, g in _CONTROLLED_GATES_BY_QUBIT_COUNT.items() if q <= max_qubits]
+    )
 
 
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:

@@ -23,8 +23,7 @@ from .adapter import (
     local_simulator_to_target,
     to_braket,
     wrap_circuits_in_verbatim_box,
-    CONTROLLED_GATE_QUBIT_COUNTS,
-    ARBITRARY_CONTROLLED_GATES,
+    get_controlled_gateset,
 )
 from .braket_job import AmazonBraketTask
 from .. import version
@@ -131,21 +130,7 @@ class BraketLocalBackend(BraketBackend):
             if isinstance(modifier, Control):
                 max_control = modifier.max_qubits
                 break
-        if max_control is None:
-            gateset.update(
-                set().union(*[g for _, g in CONTROLLED_GATE_QUBIT_COUNTS.items()])
-            )
-            gateset.update(ARBITRARY_CONTROLLED_GATES)
-        elif max_control > 0:
-            gateset.update(
-                set().union(
-                    *[
-                        g
-                        for q, g in CONTROLLED_GATE_QUBIT_COUNTS.items()
-                        if q <= max_control
-                    ]
-                )
-            )
+        gateset.update(get_controlled_gateset(max_control))
         circuits: list[Circuit] = [to_braket(circ, gateset) for circ in convert_input]
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
