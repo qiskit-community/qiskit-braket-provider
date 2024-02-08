@@ -404,11 +404,19 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     return target
 
 
-def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit:
+def to_braket(
+    circuit: QuantumCircuit,
+    gateset: Optional[Iterable[str]] = None,
+    verbatim: bool = False,
+) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
      Args:
             circuit (QuantumCircuit): Qiskit quantum circuit
-            gateset (Iterable[str]): The gateset to transpile to
+            gateset (Optional[Iterable[str]]): The gateset to transpile to.
+                If `None`, the transpiler will use all gates defined in the Braket SDK.
+                Default: `None`.
+            verbatim (bool): Whether to translate the circuit without any modification, in other
+                words without transpiling it. Default: False.
 
     Returns:
         Circuit: Braket circuit
@@ -418,10 +426,8 @@ def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
 
     braket_circuit = Circuit()
-    if not (
-        {gate.name for gate, _, _ in circuit.data}.issubset(
-            _TRANSLATABLE_QISKIT_GATE_NAMES
-        )
+    if not verbatim and not {gate.name for gate, _, _ in circuit.data}.issubset(
+        gateset
     ):
         circuit = transpile(circuit, basis_gates=gateset, optimization_level=0)
 
@@ -478,6 +484,11 @@ def to_braket(circuit: QuantumCircuit, gateset: Iterable[str] = None) -> Circuit
 
     if circuit.global_phase > _EPS:
         braket_circuit.gphase(circuit.global_phase)
+
+    if verbatim:
+        return Circuit(braket_circuit.result_types).add_verbatim_box(
+            Circuit(braket_circuit.instructions)
+        )
 
     return braket_circuit
 
@@ -582,18 +593,3 @@ def _create_gate(
     else:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     return gate_cls(*gate_params)
-
-
-def wrap_circuits_in_verbatim_box(circuits: list[Circuit]) -> Iterable[Circuit]:
-    """Convert each Braket circuit an equivalent one wrapped in verbatim box.
-
-    Args:
-           circuits (List(Circuit): circuits to be wrapped in verbatim box.
-    Returns:
-           Circuits wrapped in verbatim box, comprising the same instructions
-           as the original one and with result types preserved.
-    """
-    return [
-        Circuit(circuit.result_types).add_verbatim_box(Circuit(circuit.instructions))
-        for circuit in circuits
-    ]

@@ -29,7 +29,6 @@ from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuits,
     GATE_NAME_TO_BRAKET_GATE,
     GATE_NAME_TO_QISKIT_GATE,
-    wrap_circuits_in_verbatim_box,
     get_controlled_gateset,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
@@ -413,18 +412,26 @@ class TestAdapter(TestCase):
         )
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
-    def test_invalid_ctrl_state(self):
+    def test_verbatim(self):
+        """Tests that transpilation is skipped for verbatim circuits."""
+        qiskit_circuit = QuantumCircuit(2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+
+        assert to_braket(qiskit_circuit, {"x"}, True) == Circuit().add_verbatim_box(
+            Circuit().h(0).cnot(0, 1)
+        )
+
+    @patch("qiskit_braket_provider.providers.adapter.transpile")
+    def test_invalid_ctrl_state(self, mock_transpile):
         """Tests that control states other than all 1s are rejected."""
         qiskit_circuit = QuantumCircuit(2)
-        qiskit_circuit.x(0)
+        qiskit_circuit.h(0)
         qiskit_circuit.cx(0, 1, ctrl_state=0)
 
-        with patch(
-            "qiskit_braket_provider.providers.adapter.transpile"
-        ) as mock_transpile:
-            mock_transpile.return_value = qiskit_circuit
-            with pytest.raises(ValueError):
-                to_braket(qiskit_circuit)
+        mock_transpile.return_value = qiskit_circuit
+        with pytest.raises(ValueError):
+            to_braket(qiskit_circuit)
 
     def test_get_controlled_gateset(self):
         """Tests that the correct controlled gateset is returned for all maximum qubit counts."""
@@ -555,40 +562,3 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure_all()
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
-
-
-class TestVerbatimBoxWrapper(TestCase):
-    """Test wrapping in Verbatim box."""
-
-    def test_wrapped_circuits_have_one_instruction_equivalent_to_original_one(self):
-        """Test circuits wrapped in verbatim box have correct instructions."""
-        circuits = [
-            Circuit().rz(1, 0.1).cz(0, 1).rx(0, 0.1),
-            Circuit().cz(0, 1).cz(1, 2),
-        ]
-
-        wrapped_circuits = wrap_circuits_in_verbatim_box(circuits)
-
-        # Verify circuits comprise of verbatim box
-        self.assertTrue(
-            all(
-                wrapped.instructions[0].operator.name == "StartVerbatimBox"
-                for wrapped in wrapped_circuits
-            )
-        )
-
-        self.assertTrue(
-            all(
-                wrapped.instructions[-1].operator.name == "EndVerbatimBox"
-                for wrapped in wrapped_circuits
-            )
-        )
-
-        # verify that the contents of the verbatim box are identical
-        # to the original circuit
-        self.assertTrue(
-            all(
-                wrapped.instructions[1:-1] == original.instructions
-                for wrapped, original in zip(wrapped_circuits, circuits)
-            )
-        )
