@@ -586,7 +586,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                 else:
                     gate_params.append(value)
 
-        gate = _create_gate(gate_name, gate_params)
+        gate = _create_qiskit_gate(gate_name, gate_params)
 
         if instruction.power != 1:
             gate = gate**instruction.power
@@ -602,7 +602,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     return qiskit_circuit
 
 
-def _create_gate(
+def _create_qiskit_gate(
     gate_name: str, gate_params: list[Union[float, Parameter]]
 ) -> Instruction:
     gate_instance = GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
