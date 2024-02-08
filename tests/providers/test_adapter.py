@@ -22,6 +22,8 @@ from qiskit.quantum_info import SparsePauliOp
 
 from qiskit.circuit.library import standard_gates as qiskit_gates
 
+from qiskit_ionq import ionq_gates
+
 from qiskit_braket_provider.providers.adapter import (
     to_qiskit,
     to_braket,
@@ -88,6 +90,14 @@ standard_gates = [
     qiskit_gates.U3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
     qiskit_gates.YGate(),
     qiskit_gates.ZGate(),
+]
+
+
+qiskit_ionq_gates = [
+    ionq_gates.GPIGate(Parameter("φ")),
+    ionq_gates.GPI2Gate(Parameter("φ")),
+    ionq_gates.MSGate(Parameter("φ0"), Parameter("φ1"), Parameter("ϴ")),
+    ionq_gates.ZZGate(Parameter("ϴ")),
 ]
 
 
@@ -177,6 +187,49 @@ class TestAdapter(TestCase):
 
                 transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
                 qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
+                qiskit_result = qiskit_job.result().get_counts()
+
+                combined_results = combine_dicts(
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
+                    qiskit_result,
+                )
+
+                for key, values in combined_results.items():
+                    percent_diff = abs(
+                        ((float(values[0]) - values[1]) / values[0]) * 100
+                    )
+                    abs_diff = abs(values[0] - values[1])
+                    self.assertTrue(
+                        percent_diff < 10 or abs_diff < 0.05,
+                        f"Key {key} with percent difference {percent_diff} "
+                        f"and absolute difference {abs_diff}. Original values {values}",
+                    )
+
+    def test_ionq_gates(self):
+        """Tests adapter decomposition of all standard gates to forms that can be translated"""
+        aer_backend = BasicAer.get_backend("statevector_simulator")
+        backend = BraketLocalBackend()
+
+        for gate in qiskit_ionq_gates:
+            qiskit_circuit = QuantumCircuit(gate.num_qubits)
+            qiskit_circuit.append(gate, range(gate.num_qubits))
+
+            parameters = gate.params
+            parameter_values = [
+                (137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)
+            ]
+            parameter_bindings = dict(zip(parameters, parameter_values))
+            qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
+
+            circuit_from_gate_unitary = QuantumCircuit(gate.num_qubits)
+            gate_unitary = gate.__class__(*parameter_values)
+            circuit_from_gate_unitary.unitary(gate_unitary, range(gate.num_qubits))
+
+            with self.subTest(f"Circuit with {gate.name} gate."):
+                braket_job = backend.run(qiskit_circuit, shots=1000, verbatim=True)
+                braket_result = braket_job.result().get_counts()
+
+                qiskit_job = aer_backend.run(circuit_from_gate_unitary, shots=1000)
                 qiskit_result = qiskit_job.result().get_counts()
 
                 combined_results = combine_dicts(
