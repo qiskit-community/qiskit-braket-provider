@@ -22,7 +22,6 @@ from .adapter import (
     BRAKET_TO_QISKIT_NAMES,
     local_simulator_to_target,
     to_braket,
-    wrap_circuits_in_verbatim_box,
     get_controlled_gateset,
 )
 from .braket_job import AmazonBraketTask
@@ -333,8 +332,6 @@ class AWSBraketBackend(BraketBackend):
 
         verbatim = options.pop("verbatim", False)
         braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
-        if verbatim:
-            braket_circuits = wrap_circuits_in_verbatim_box(braket_circuits)
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
             braket_circuits, **options

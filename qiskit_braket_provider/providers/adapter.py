@@ -485,6 +485,11 @@ def to_braket(
     if circuit.global_phase > _EPS:
         braket_circuit.gphase(circuit.global_phase)
 
+    if verbatim:
+        return Circuit(braket_circuit.result_types).add_verbatim_box(
+            Circuit(braket_circuit.instructions)
+        )
+
     return braket_circuit
 
 
@@ -588,18 +593,3 @@ def _create_gate(
     else:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     return gate_cls(*gate_params)
-
-
-def wrap_circuits_in_verbatim_box(circuits: list[Circuit]) -> Iterable[Circuit]:
-    """Convert each Braket circuit an equivalent one wrapped in verbatim box.
-
-    Args:
-           circuits (List(Circuit): circuits to be wrapped in verbatim box.
-    Returns:
-           Circuits wrapped in verbatim box, comprising the same instructions
-           as the original one and with result types preserved.
-    """
-    return [
-        Circuit(circuit.result_types).add_verbatim_box(Circuit(circuit.instructions))
-        for circuit in circuits
-    ]
