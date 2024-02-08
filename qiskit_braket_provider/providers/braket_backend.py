@@ -128,8 +128,8 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        gateset = self._get_gateset()
         verbatim = options.pop("verbatim", False)
+        gateset = self._get_gateset() if not verbatim else None
         circuits: list[Circuit] = [
             to_braket(circ, gateset, verbatim) for circ in convert_input
         ]
@@ -313,13 +313,12 @@ class AWSBraketBackend(BraketBackend):
         else:
             raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
 
-        gateset = self._get_gateset()
-
         if "meas_level" in options:
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
         verbatim = options.pop("verbatim", False)
+        gateset = self._get_gateset() if not verbatim else None
         braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
