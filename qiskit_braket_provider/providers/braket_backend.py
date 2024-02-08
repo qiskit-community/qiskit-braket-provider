@@ -92,7 +92,7 @@ class BraketLocalBackend(BraketBackend):
         self.backend_name = name
         self._local_device = LocalSimulator(backend=self.backend_name)
         self._target = local_simulator_to_target(self._local_device)
-        self.status = self._device.status
+        self.status = self._local_device.status
 
     @property
     def target(self):
