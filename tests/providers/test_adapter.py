@@ -554,7 +554,9 @@ class TestFromBraket(TestCase):
 
     def test_all_ionq_gates(self):
         """
-        Tests braket to qiskit conversion with standard gates.
+        Tests braket to qiskit conversion with ionq gates.
+
+        Note: Braket gate angles are in radians while Qiskit IonQ gates expect turns.
         """
 
         gate_set = ["GPi", "GPi2", "MS"]
