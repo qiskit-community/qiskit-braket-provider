@@ -606,8 +606,16 @@ def _create_gate(
     gate_name: str, gate_params: list[Union[float, Parameter]]
 ) -> Instruction:
     gate_instance = GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
+    new_gate_params = []
+    for param_expression, value in zip(gate_instance.params, gate_params):
+        param = list(param_expression.parameters)[0]
+        if isinstance(value, Parameter):
+            new_gate_params.append(value)
+        else:
+            bound_param_expression = param_expression.bind({param: value})
+            new_gate_params.append(bound_param_expression)
     if gate_instance is not None:
         gate_cls = gate_instance.__class__
     else:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
-    return gate_cls(*gate_params)
+    return gate_cls(*new_gate_params)
