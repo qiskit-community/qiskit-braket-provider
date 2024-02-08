@@ -129,7 +129,11 @@ class BraketLocalBackend(BraketBackend):
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         gateset = self._get_gateset()
-        circuits: list[Circuit] = [to_braket(circ, gateset) for circ in convert_input]
+        verbatim = options.pop("verbatim", False)
+        circuits: list[Circuit] = [
+            to_braket(circ, gateset, verbatim) for circ in convert_input
+        ]
+
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))

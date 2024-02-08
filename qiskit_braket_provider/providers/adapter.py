@@ -36,6 +36,7 @@ from qiskit.circuit import ControlledGate, Measure, Parameter
 import qiskit.circuit.library as qiskit_gates
 
 from qiskit.transpiler import InstructionProperties, Target
+from qiskit_ionq import ionq_gates
 from qiskit_braket_provider.exception import QiskitBraketException
 
 _BRAKET_TO_QISKIT_NAMES = {
@@ -66,6 +67,9 @@ _BRAKET_TO_QISKIT_NAMES = {
     "cswap": "cswap",
     "cphaseshift": "cp",
     "ecr": "ecr",
+    "gpi": "gpi",
+    "gpi2": "gpi2",
+    "ms": "ms",
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
@@ -120,6 +124,13 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "ryy": lambda angle: [braket_gates.YY(angle)],
     "ecr": lambda: [braket_gates.ECR()],
     "iswap": lambda: [braket_gates.ISwap()],
+    # IonQ gates
+    "gpi": lambda angle: [braket_gates.GPi(2 * pi * angle)],
+    "gpi2": lambda angle: [braket_gates.GPi2(2 * pi * angle)],
+    "ms": lambda angle_1, angle_2, angle_3: [
+        braket_gates.MS(2 * pi * angle_1, 2 * pi * angle_2, 2 * pi * angle_3)
+    ],
+    "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
@@ -173,6 +184,13 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "zz": qiskit_gates.RZZGate(Parameter("theta")),
     "ecr": qiskit_gates.ECRGate(),
     "iswap": qiskit_gates.iSwapGate(),
+    "gpi": ionq_gates.GPIGate(Parameter("phi") / (2 * pi)),
+    "gpi2": ionq_gates.GPI2Gate(Parameter("phi") / (2 * pi)),
+    "ms": ionq_gates.MSGate(
+        Parameter("phi0") / (2 * pi),
+        Parameter("phi1") / (2 * pi),
+        Parameter("theta") / (2 * pi),
+    ),
 }
 
 
@@ -594,7 +612,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                 else:
                     gate_params.append(value)
 
-        gate = _create_gate(gate_name, gate_params)
+        gate = _create_qiskit_gate(gate_name, gate_params)
 
         if instruction.power != 1:
             gate = gate**instruction.power
@@ -610,12 +628,20 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     return qiskit_circuit
 
 
-def _create_gate(
+def _create_qiskit_gate(
     gate_name: str, gate_params: list[Union[float, Parameter]]
 ) -> Instruction:
     gate_instance = _GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
+    new_gate_params = []
+    for param_expression, value in zip(gate_instance.params, gate_params):
+        param = list(param_expression.parameters)[0]
+        if isinstance(value, Parameter):
+            new_gate_params.append(value)
+        else:
+            bound_param_expression = param_expression.bind({param: value})
+            new_gate_params.append(bound_param_expression)
     if gate_instance is not None:
         gate_cls = gate_instance.__class__
     else:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
-    return gate_cls(*gate_params)
+    return gate_cls(*new_gate_params)
