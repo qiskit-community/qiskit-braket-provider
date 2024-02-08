@@ -29,9 +29,9 @@ from qiskit_braket_provider.providers.adapter import (
     to_braket,
     convert_qiskit_to_braket_circuit,
     convert_qiskit_to_braket_circuits,
-    GATE_NAME_TO_BRAKET_GATE,
-    GATE_NAME_TO_QISKIT_GATE,
-    get_controlled_gateset,
+    _GATE_NAME_TO_BRAKET_GATE,
+    _GATE_NAME_TO_QISKIT_GATE,
+    _get_controlled_gateset,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
 
@@ -345,12 +345,12 @@ class TestAdapter(TestCase):
 
         self.assertEqual(
             set(qiskit_to_braket_gate_names.keys()),
-            set(GATE_NAME_TO_BRAKET_GATE.keys()),
+            set(_GATE_NAME_TO_BRAKET_GATE.keys()),
         )
 
         self.assertEqual(
             set(qiskit_to_braket_gate_names.values()),
-            set(GATE_NAME_TO_QISKIT_GATE.keys()),
+            set(_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
     def test_type_error_on_bad_input(self):
@@ -495,12 +495,12 @@ class TestAdapter(TestCase):
         max1 = {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}
         max3 = max1.union({"c3sx"})
         unlimited = max3.union({"mcx"})
-        assert get_controlled_gateset(0) == set()
-        assert get_controlled_gateset(1) == max1
-        assert get_controlled_gateset(2) == max1
-        assert get_controlled_gateset(3) == max3
-        assert get_controlled_gateset(4) == max3
-        assert get_controlled_gateset() == unlimited
+        assert _get_controlled_gateset(0) == set()
+        assert _get_controlled_gateset(1) == max1
+        assert _get_controlled_gateset(2) == max1
+        assert _get_controlled_gateset(3) == max3
+        assert _get_controlled_gateset(4) == max3
+        assert _get_controlled_gateset() == unlimited
 
 
 class TestFromBraket(TestCase):
@@ -523,7 +523,7 @@ class TestFromBraket(TestCase):
 
         for gate_name in gate_set:
             if (
-                gate_name.lower() not in GATE_NAME_TO_QISKIT_GATE
+                gate_name.lower() not in _GATE_NAME_TO_QISKIT_GATE
                 or gate_name.lower() in ["gpi", "gpi2", "ms"]
             ):
                 continue
@@ -543,7 +543,7 @@ class TestFromBraket(TestCase):
 
             expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
             expected_qiskit_circuit.append(
-                GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()), target
+                _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()), target
             )
             expected_qiskit_circuit.measure_all()
             expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
@@ -564,7 +564,7 @@ class TestFromBraket(TestCase):
         for gate_name in gate_set:
             gate = getattr(Gate, gate_name)
             value = 0.1
-            qiskit_gate_cls = GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()).__class__
+            qiskit_gate_cls = _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()).__class__
             qiskit_value = 0.1 / (2 * np.pi)
             if issubclass(gate, AngledGate):
                 op = gate(value)
