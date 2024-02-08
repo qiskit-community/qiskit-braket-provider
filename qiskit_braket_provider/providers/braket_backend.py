@@ -331,9 +331,9 @@ class AWSBraketBackend(BraketBackend):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        braket_circuits = [to_braket(circ, gateset) for circ in circuits]
-
-        if options.pop("verbatim", False):
+        verbatim = options.pop("verbatim", False)
+        braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
+        if verbatim:
             braket_circuits = wrap_circuits_in_verbatim_box(braket_circuits)
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
