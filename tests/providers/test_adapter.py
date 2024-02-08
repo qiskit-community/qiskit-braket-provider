@@ -350,7 +350,7 @@ class TestAdapter(TestCase):
 
         self.assertEqual(
             set(qiskit_to_braket_gate_names.values()),
-            set(_GATE_NAME_TO_BRAKET_GATE.keys()),
+            set(_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
     def test_type_error_on_bad_input(self):
@@ -564,7 +564,7 @@ class TestFromBraket(TestCase):
         for gate_name in gate_set:
             gate = getattr(Gate, gate_name)
             value = 0.1
-            qiskit_gate_cls = GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()).__class__
+            qiskit_gate_cls = _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()).__class__
             qiskit_value = 0.1 / (2 * np.pi)
             if issubclass(gate, AngledGate):
                 op = gate(value)
