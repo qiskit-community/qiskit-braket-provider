@@ -22,6 +22,8 @@ from qiskit.quantum_info import SparsePauliOp
 
 from qiskit.circuit.library import standard_gates as qiskit_gates
 
+from qiskit_ionq import ionq_gates
+
 from qiskit_braket_provider.providers.adapter import (
     to_qiskit,
     to_braket,
@@ -29,7 +31,6 @@ from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuits,
     GATE_NAME_TO_BRAKET_GATE,
     GATE_NAME_TO_QISKIT_GATE,
-    wrap_circuits_in_verbatim_box,
     get_controlled_gateset,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
@@ -89,6 +90,14 @@ standard_gates = [
     qiskit_gates.U3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
     qiskit_gates.YGate(),
     qiskit_gates.ZGate(),
+]
+
+
+qiskit_ionq_gates = [
+    ionq_gates.GPIGate(Parameter("φ")),
+    ionq_gates.GPI2Gate(Parameter("φ")),
+    ionq_gates.MSGate(Parameter("φ0"), Parameter("φ1"), Parameter("ϴ")),
+    ionq_gates.ZZGate(Parameter("ϴ")),
 ]
 
 
@@ -196,6 +205,49 @@ class TestAdapter(TestCase):
                         f"and absolute difference {abs_diff}. Original values {values}",
                     )
 
+    def test_ionq_gates(self):
+        """Tests adapter decomposition of all standard gates to forms that can be translated"""
+        aer_backend = BasicAer.get_backend("statevector_simulator")
+        backend = BraketLocalBackend()
+
+        for gate in qiskit_ionq_gates:
+            qiskit_circuit = QuantumCircuit(gate.num_qubits)
+            qiskit_circuit.append(gate, range(gate.num_qubits))
+
+            parameters = gate.params
+            parameter_values = [
+                (137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)
+            ]
+            parameter_bindings = dict(zip(parameters, parameter_values))
+            qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
+
+            circuit_from_gate_unitary = QuantumCircuit(gate.num_qubits)
+            gate_unitary = gate.__class__(*parameter_values)
+            circuit_from_gate_unitary.unitary(gate_unitary, range(gate.num_qubits))
+
+            with self.subTest(f"Circuit with {gate.name} gate."):
+                braket_job = backend.run(qiskit_circuit, shots=1000, verbatim=True)
+                braket_result = braket_job.result().get_counts()
+
+                qiskit_job = aer_backend.run(circuit_from_gate_unitary, shots=1000)
+                qiskit_result = qiskit_job.result().get_counts()
+
+                combined_results = combine_dicts(
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
+                    qiskit_result,
+                )
+
+                for key, values in combined_results.items():
+                    percent_diff = abs(
+                        ((float(values[0]) - values[1]) / values[0]) * 100
+                    )
+                    abs_diff = abs(values[0] - values[1])
+                    self.assertTrue(
+                        percent_diff < 10 or abs_diff < 0.05,
+                        f"Key {key} with percent difference {percent_diff} "
+                        f"and absolute difference {abs_diff}. Original values {values}",
+                    )
+
     def test_global_phase(self):
         """Tests conversion when transpiler generates a global phase"""
         qiskit_circuit = QuantumCircuit(1, global_phase=np.pi / 2)
@@ -260,6 +312,7 @@ class TestAdapter(TestCase):
             "cp": "cphaseshift",
             "rxx": "xx",
             "ryy": "yy",
+            "zz": "zz",
         }
 
         qiskit_to_braket_gate_names |= {
@@ -284,17 +337,20 @@ class TestAdapter(TestCase):
                 "cz",
                 "cswap",
                 "ecr",
+                "gpi",
+                "gpi2",
+                "ms",
             ]
         }
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_names.keys())),
-            list(sorted(GATE_NAME_TO_BRAKET_GATE.keys())),
+            set(qiskit_to_braket_gate_names.keys()),
+            set(GATE_NAME_TO_BRAKET_GATE.keys()),
         )
 
         self.assertEqual(
-            list(sorted(qiskit_to_braket_gate_names.values())),
-            list(sorted(GATE_NAME_TO_QISKIT_GATE.keys())),
+            set(qiskit_to_braket_gate_names.values()),
+            set(GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
     def test_type_error_on_bad_input(self):
@@ -409,18 +465,26 @@ class TestAdapter(TestCase):
         )
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
-    def test_invalid_ctrl_state(self):
+    def test_verbatim(self):
+        """Tests that transpilation is skipped for verbatim circuits."""
+        qiskit_circuit = QuantumCircuit(2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+
+        assert to_braket(qiskit_circuit, {"x"}, True) == Circuit().add_verbatim_box(
+            Circuit().h(0).cnot(0, 1)
+        )
+
+    @patch("qiskit_braket_provider.providers.adapter.transpile")
+    def test_invalid_ctrl_state(self, mock_transpile):
         """Tests that control states other than all 1s are rejected."""
         qiskit_circuit = QuantumCircuit(2)
-        qiskit_circuit.x(0)
+        qiskit_circuit.h(0)
         qiskit_circuit.cx(0, 1, ctrl_state=0)
 
-        with patch(
-            "qiskit_braket_provider.providers.adapter.transpile"
-        ) as mock_transpile:
-            mock_transpile.return_value = qiskit_circuit
-            with pytest.raises(ValueError):
-                to_braket(qiskit_circuit)
+        mock_transpile.return_value = qiskit_circuit
+        with pytest.raises(ValueError):
+            to_braket(qiskit_circuit)
 
     def test_get_controlled_gateset(self):
         """Tests that the correct controlled gateset is returned for all maximum qubit counts."""
@@ -454,14 +518,17 @@ class TestFromBraket(TestCase):
         gate_set = [attr for attr in dir(Gate) if attr[0].isupper()]
 
         for gate_name in gate_set:
-            if gate_name.lower() not in GATE_NAME_TO_QISKIT_GATE:
+            if (
+                gate_name.lower() not in GATE_NAME_TO_QISKIT_GATE
+                or gate_name.lower() in ["gpi", "gpi2", "ms"]
+            ):
                 continue
 
             gate = getattr(Gate, gate_name)
             if issubclass(gate, AngledGate):
-                op = gate(0)
+                op = gate(0.1)
             elif issubclass(gate, TripleAngledGate):
-                op = gate(0, 0, 0)
+                op = gate(0.1, 0.1, 0.1)
             else:
                 op = gate()
             target = range(op.qubit_count)
@@ -476,8 +543,46 @@ class TestFromBraket(TestCase):
             )
             expected_qiskit_circuit.measure_all()
             expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
-                {p: 0 for p in expected_qiskit_circuit.parameters}
+                {p: 0.1 for p in expected_qiskit_circuit.parameters}
             )
+
+            self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_all_ionq_gates(self):
+        """
+        Tests braket to qiskit conversion with ionq gates.
+
+        Note: Braket gate angles are in radians while Qiskit IonQ gates expect turns.
+        """
+
+        gate_set = ["GPi", "GPi2", "MS"]
+
+        for gate_name in gate_set:
+            gate = getattr(Gate, gate_name)
+            value = 0.1
+            qiskit_gate_cls = GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()).__class__
+            qiskit_value = 0.1 / (2 * np.pi)
+            if issubclass(gate, AngledGate):
+                op = gate(value)
+                qiskit_gate = qiskit_gate_cls(qiskit_value)
+            elif issubclass(gate, TripleAngledGate):
+                args = [value] * 3
+                qiskit_args = [qiskit_value] * 3
+                op = gate(*args)
+                qiskit_gate = qiskit_gate_cls(*qiskit_args)
+            else:
+                op = gate()
+                qiskit_gate = qiskit_gate_cls()
+
+            target = range(op.qubit_count)
+            instr = Instruction(op, target)
+
+            braket_circuit = Circuit().add_instruction(instr)
+            qiskit_circuit = to_qiskit(braket_circuit)
+
+            expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
+            expected_qiskit_circuit.append(qiskit_gate, target)
+            expected_qiskit_circuit.measure_all()
 
             self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
@@ -551,40 +656,3 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure_all()
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
-
-
-class TestVerbatimBoxWrapper(TestCase):
-    """Test wrapping in Verbatim box."""
-
-    def test_wrapped_circuits_have_one_instruction_equivalent_to_original_one(self):
-        """Test circuits wrapped in verbatim box have correct instructions."""
-        circuits = [
-            Circuit().rz(1, 0.1).cz(0, 1).rx(0, 0.1),
-            Circuit().cz(0, 1).cz(1, 2),
-        ]
-
-        wrapped_circuits = wrap_circuits_in_verbatim_box(circuits)
-
-        # Verify circuits comprise of verbatim box
-        self.assertTrue(
-            all(
-                wrapped.instructions[0].operator.name == "StartVerbatimBox"
-                for wrapped in wrapped_circuits
-            )
-        )
-
-        self.assertTrue(
-            all(
-                wrapped.instructions[-1].operator.name == "EndVerbatimBox"
-                for wrapped in wrapped_circuits
-            )
-        )
-
-        # verify that the contents of the verbatim box are identical
-        # to the original circuit
-        self.assertTrue(
-            all(
-                wrapped.instructions[1:-1] == original.instructions
-                for wrapped, original in zip(wrapped_circuits, circuits)
-            )
-        )
