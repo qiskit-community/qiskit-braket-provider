@@ -448,9 +448,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 
 def to_braket(
     circuit: QuantumCircuit,
-    basis_gates: Optional[
-        Iterable[str]
-    ] = None,  # TODO: Use backend instead of basis_gates
+    basis_gates: Optional[Iterable[str]] = None,
     verbatim: bool = False,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
