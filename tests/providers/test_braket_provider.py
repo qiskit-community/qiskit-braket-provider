@@ -1,20 +1,20 @@
 """Tests for AWS Braket provider."""
 
+import uuid
 from unittest import TestCase
 from unittest.mock import Mock, patch
-import uuid
 
+from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from braket.circuits import Circuit
-from braket.aws import AwsSession, AwsQuantumTaskBatch
-from braket.aws import AwsDevice, AwsDeviceType
-from qiskit import circuit as qiskit_circuit, QuantumCircuit
+from qiskit import QuantumCircuit
+from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
 
 from qiskit_braket_provider.providers import AWSBraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
-    BraketBackend,
     AWSBraketBackend,
+    BraketBackend,
 )
 from tests.providers.mocks import (
     MOCK_GATE_MODEL_SIMULATOR_SV,

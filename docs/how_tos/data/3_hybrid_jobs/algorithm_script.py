@@ -1,9 +1,8 @@
 """Example of usage of Qiskit-Braket provider."""
-from qiskit import QuantumCircuit
-from qiskit_braket_provider import AWSBraketProvider
-
 from braket.jobs import save_job_result
+from qiskit import QuantumCircuit
 
+from qiskit_braket_provider import AWSBraketProvider
 
 provider = AWSBraketProvider()
 backend = provider.get_backend("SV1")

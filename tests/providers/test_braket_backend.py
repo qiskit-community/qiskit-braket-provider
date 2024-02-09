@@ -8,21 +8,17 @@ from unittest.mock import Mock, patch
 from botocore import errorfactory
 from braket.aws.queue_information import QueueDepthInfo, QueueType
 from qiskit import QuantumCircuit, transpile
-
 from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
-
-from qiskit.algorithms.optimizers import (
-    SLSQP,
-)
+from qiskit.algorithms.optimizers import SLSQP
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
+from qiskit.primitives import BackendEstimator
 from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Result
 from qiskit.transpiler import Target
-from qiskit.primitives import BackendEstimator
 
-from qiskit_braket_provider import AWSBraketProvider, version, exception
+from qiskit_braket_provider import AWSBraketProvider, exception, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import (

@@ -1,19 +1,14 @@
 """Util function for provider."""
 
+import warnings
 from collections.abc import Callable, Iterable
 from math import pi
 from typing import Optional, Union
-import warnings
 
-from braket.aws import AwsDevice
-from braket.circuits import (
-    Circuit,
-    FreeParameter,
-    Instruction,
-    observables,
-)
 import braket.circuits.gates as braket_gates
-
+import qiskit.circuit.library as qiskit_gates
+from braket.aws import AwsDevice
+from braket.circuits import Circuit, FreeParameter, Instruction, observables
 from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
@@ -21,14 +16,13 @@ from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
-
 from qiskit import QuantumCircuit, transpile
+from qiskit.circuit import ControlledGate
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import ControlledGate, Measure, Parameter
-import qiskit.circuit.library as qiskit_gates
-
+from qiskit.circuit import Measure, Parameter
 from qiskit.transpiler import Target
 from qiskit_ionq import ionq_gates
+
 from qiskit_braket_provider.exception import QiskitBraketException
 
 _BRAKET_TO_QISKIT_NAMES = {

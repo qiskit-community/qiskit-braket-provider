@@ -1,21 +1,23 @@
 """AWS Braket backends."""
 
 import datetime
-import logging
 import enum
+import logging
 from abc import ABC
 from collections.abc import Iterable
 from typing import Optional, Union
 
-from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
+from braket.aws import AwsDevice, AwsQuantumTask, AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
 from braket.devices import Device, LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
-from qiskit.providers import BackendV2, QubitProperties, Options, Provider
+from qiskit.providers import BackendV2, Options, Provider, QubitProperties
 
+from .. import version
+from ..exception import QiskitBraketException
 from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
@@ -23,8 +25,6 @@ from .adapter import (
     to_braket,
 )
 from .braket_job import AmazonBraketTask
-from .. import version
-from ..exception import QiskitBraketException
 
 logger = logging.getLogger(__name__)
 

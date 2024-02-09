@@ -18,7 +18,7 @@ Sphinx documentation builder
 
 # General options:
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Optional
 
 project = "Qiskit-Braket provider"
 copyright = "2022"  # pylint: disable=redefined-builtin
@@ -31,7 +31,7 @@ version_path = os.path.join(
     "qiskit_braket_provider",
     "version.py",
 )
-version_dict: Optional[Dict[str, Any]] = {}
+version_dict: Optional[dict[str, Any]] = {}
 with open(version_path) as fp:
     exec(fp.read(), version_dict)
 version = version_dict["__version__"]
