@@ -533,7 +533,10 @@ def to_braket(
 def _create_free_parameters(operation):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
-        if isinstance(param, Parameter):
+        if isinstance(param, ParameterVectorElement):
+            cleaned_param_name = param.name.replace("[", "").replace("]", "")
+            params[i] = FreeParameter(cleaned_param_name)
+        elif isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
             params[i] = FreeParameterExpression(sympify(param._symbol_expr))
