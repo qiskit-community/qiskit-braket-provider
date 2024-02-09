@@ -1,4 +1,5 @@
 """Tests for AWS Braket backends."""
+
 import unittest
 from typing import Dict, List
 from unittest import TestCase

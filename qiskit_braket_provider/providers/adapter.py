@@ -1,5 +1,7 @@
 """Util function for provider."""
+
 from collections.abc import Callable, Iterable
+from math import pi
 from typing import Optional, Union
 import warnings
 
@@ -12,19 +14,13 @@ from braket.circuits import (
 )
 import braket.circuits.gates as braket_gates
 
-from braket.device_schema import (
-    DeviceActionType,
-    GateModelQpuParadigmProperties,
-    OpenQASMDeviceActionProperties,
-)
+from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
-
-from numpy import pi
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
@@ -267,58 +263,32 @@ def aws_device_to_target(device: AwsDevice) -> Target:
             if properties.action.get(DeviceActionType.OPENQASM)
             else properties.action.get(DeviceActionType.JAQCD)
         )
-        paradigm: GateModelQpuParadigmProperties = properties.paradigm
-        target.num_qubits = paradigm.qubitCount
-        instructions = []
+        qubit_count = properties.paradigm.qubitCount
+        target.num_qubits = qubit_count
+        connectivity = properties.paradigm.connectivity
+
         for operation in action_properties.supportedOperations:
             instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-            if instruction is not None:
-                # TODO: remove when target will be supporting > 2 qubit gates  # pylint:disable=fixme
-                if instruction.num_qubits <= 2:
-                    instructions.append(instruction)
+            if instruction:
+                instruction_props: Optional[
+                    dict[
+                        Union[tuple[int], tuple[int, int]],
+                        Optional[InstructionProperties],
+                    ]
+                ] = None
+                # adding 1 qubit instructions
+                if instruction.num_qubits == 1:
+                    instruction_props = {(i,): None for i in range(qubit_count)}
+                # adding 2 qubit instructions
+                elif instruction.num_qubits == 2:
+                    instruction_props = _build_2q_instruction_properties(
+                        connectivity, qubit_count, properties
+                    )
+                # instruction_properties is None if num_qubits > 2
+                target.add_instruction(instruction, instruction_props)
 
         # add measurement instructions
-        target.add_instruction(
-            Measure(), {(i,): None for i in range(paradigm.qubitCount)}
-        )
-
-        connectivity = paradigm.connectivity
-        for instruction in instructions:
-            instruction_props: Optional[
-                dict[
-                    Union[tuple[int], tuple[int, int]], Optional[InstructionProperties]
-                ]
-            ] = {}
-            # adding 1 qubit instructions
-            if instruction.num_qubits == 1:
-                for i in range(paradigm.qubitCount):
-                    instruction_props[(i,)] = None
-            # adding 2 qubit instructions
-            elif instruction.num_qubits == 2:
-                # building coupling map for fully connected device
-                if connectivity.fullyConnected:
-                    for src in range(paradigm.qubitCount):
-                        for dst in range(paradigm.qubitCount):
-                            if src != dst:
-                                instruction_props[(src, dst)] = None
-                                instruction_props[(dst, src)] = None
-                # building coupling map for device with connectivity graph
-                else:
-                    if isinstance(properties, RigettiDeviceCapabilities):
-                        connectivity.connectivityGraph = (
-                            _convert_continuous_qubit_indices(
-                                connectivity.connectivityGraph
-                            )
-                        )
-
-                    for src, connections in connectivity.connectivityGraph.items():
-                        for dst in connections:
-                            instruction_props[(int(src), int(dst))] = None
-            # for more than 2 qubits
-            else:
-                instruction_props = None
-
-            target.add_instruction(instruction, instruction_props)
+        target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
         return target
 
     # Simulators
@@ -329,6 +299,31 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         f"Cannot convert to target. "
         f"{properties.__class__} device capabilities are not supported yet."
     )
+
+
+def _build_2q_instruction_properties(connectivity, qubit_count, properties):
+    instruction_props = {}
+
+    # building coupling map for fully connected device
+    if connectivity.fullyConnected:
+        for src in range(qubit_count):
+            for dst in range(qubit_count):
+                if src != dst:
+                    instruction_props[(src, dst)] = None
+                    instruction_props[(dst, src)] = None
+
+    # building coupling map for device with connectivity graph
+    else:
+        if isinstance(properties, RigettiDeviceCapabilities):
+            connectivity.connectivityGraph = _convert_aspen_qubit_indices(
+                connectivity.connectivityGraph
+            )
+
+        for src, connections in connectivity.connectivityGraph.items():
+            for dst in connections:
+                instruction_props[(int(src), int(dst))] = None
+
+    return instruction_props
 
 
 def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabilities):
@@ -346,7 +341,7 @@ def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabi
     return target
 
 
-def _convert_continuous_qubit_indices(connectivity_graph: dict) -> dict:
+def _convert_aspen_qubit_indices(connectivity_graph: dict) -> dict:
     """Aspen qubit indices are discontinuous (label between x0 and x7, x being
     the number of the octagon) while the Qiskit transpiler creates and/or
     handles coupling maps with continuous indices. This function converts the
@@ -354,9 +349,9 @@ def _convert_continuous_qubit_indices(connectivity_graph: dict) -> dict:
 
     Args:
         connectivity_graph (dict): connectivity graph from Aspen. For example
-        4 qubit system, the connectivity graph will be:
-            {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
-            "7": ["0","1","2"]}
+            4 qubit system, the connectivity graph will be:
+                {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+                "7": ["0","1","2"]}
 
     Returns:
         dict: Connectivity graph with continuous indices. For example for an
