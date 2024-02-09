@@ -1,5 +1,5 @@
 """Tests for Qiskit to Braket adapter."""
-from unittest import TestCase, expectedFailure
+from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
@@ -484,7 +484,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit().rx(0, FreeParameter("v0")).ry(0, FreeParameter("v1"))
+            Circuit().rx(0, FreeParameter("v_0")).ry(0, FreeParameter("v_1"))
         )
         assert braket_circuit == expected_braket_circuit
 
@@ -499,7 +499,7 @@ class TestAdapter(TestCase):
         expected_braket_circuit = (
             Circuit()
             .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
-            .ry(0, FreeParameter("v0") - 2 * FreeParameter("v1"))
+            .ry(0, FreeParameter("v_0") - 2 * FreeParameter("v_1"))
         )
         assert braket_circuit == expected_braket_circuit
 
@@ -507,11 +507,12 @@ class TestAdapter(TestCase):
         """Tests ParameterExpression translation."""
         qiskit_circuit = QuantumCircuit(1)
         v = ParameterVector("v", 1)
-        v0 = Parameter("v0")
+        v0 = Parameter("v_0")
         qiskit_circuit.rx(v0, 0)
         qiskit_circuit.ry(v[0], 0)
 
-        to_braket(qiskit_circuit)
+        with pytest.raises(ValueError, match="Please rename your parameters."):
+            to_braket(qiskit_circuit)
 
     @patch("qiskit_braket_provider.providers.adapter.transpile")
     def test_invalid_ctrl_state(self, mock_transpile):

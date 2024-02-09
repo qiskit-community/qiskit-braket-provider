@@ -23,7 +23,6 @@ from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
 
-from numpy import pi
 from sympy import sympify
 
 from qiskit import QuantumCircuit, transpile
@@ -412,7 +411,10 @@ def to_braket(
     ):
         circuit = transpile(circuit, basis_gates=basis_gates, optimization_level=0)
 
-    # handle qiskit to braket conversion
+    # Verify that ParameterVector do not collide with scalar variables after renaming.
+    _validate_name_conflicts(circuit.parameters)
+
+    # Handle qiskit to braket conversion
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         gate_name = operation.name
@@ -437,7 +439,7 @@ def to_braket(
                 "reset operation not supported by qiskit to braket adapter"
             )
         else:
-            params = _create_free_parameters(operation, braket_circuit.parameters)
+            params = _create_free_parameters(operation)
             if (
                 isinstance(operation, ControlledGate)
                 and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
@@ -474,35 +476,32 @@ def to_braket(
     return braket_circuit
 
 
-def _create_free_parameters(operation, parameters):
+def _create_free_parameters(operation):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
         if isinstance(param, ParameterVectorElement):
-            _validate_name_conflict(param, parameters)
-            cleaned_param_name = param.name.replace("[", "").replace("]", "")
+            cleaned_param_name = _rename_param_vector_element(param)
             params[i] = FreeParameter(cleaned_param_name)
         elif isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
-            for p in param.parameters:
-                if isinstance(p, ParameterVectorElement):
-                    _validate_name_conflict(p, parameters)
-            cleaned_param_name = (
-                str(param._symbol_expr).replace("[", "").replace("]", "")
-            )
+            cleaned_param_name = _rename_param_vector_element(param)
             params[i] = FreeParameterExpression(sympify(cleaned_param_name))
 
     return params
 
 
-def _validate_name_conflict(
-    param: ParameterVectorElement, parameters: Iterable[FreeParameter]
-):
-    cleaned_param_name = param.name.replace("[", "").replace("]", "")
-    parameter_names = [p.name for p in parameters]
-    if cleaned_param_name in parameter_names:
-        raise NameError(
-            f"Cannot translate {param} to {cleaned_param_name} because of a name conflict."
+def _rename_param_vector_element(parameter):
+    param_name = str(parameter._symbol_expr)
+    return f"{param_name.replace('[', '_').replace(']', '')}"
+
+
+def _validate_name_conflicts(parameters):
+    renamed_parameters = {_rename_param_vector_element(param) for param in parameters}
+    if len(renamed_parameters) != len(parameters):
+        raise ValueError(
+            "ParameterVector elements are renamed from v[i] to v_i, which resulted "
+            "in a conflict with another parameter. Please rename your parameters."
         )
 
 
