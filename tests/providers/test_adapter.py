@@ -503,6 +503,16 @@ class TestAdapter(TestCase):
         )
         assert braket_circuit == expected_braket_circuit
 
+    def test_name_conflict_with_parameter_vector(self):
+        """Tests ParameterExpression translation."""
+        qiskit_circuit = QuantumCircuit(1)
+        v = ParameterVector("v", 1)
+        v0 = Parameter("v0")
+        qiskit_circuit.rx(v0, 0)
+        qiskit_circuit.ry(v[0], 0)
+
+        to_braket(qiskit_circuit)
+
     @patch("qiskit_braket_provider.providers.adapter.transpile")
     def test_invalid_ctrl_state(self, mock_transpile):
         """Tests that control states other than all 1s are rejected."""

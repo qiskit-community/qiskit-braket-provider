@@ -493,7 +493,7 @@ def to_braket(
                 "reset operation not supported by qiskit to braket adapter"
             )
         else:
-            params = _create_free_parameters(operation)
+            params = _create_free_parameters(operation, braket_circuit.parameters)
             if (
                 isinstance(operation, ControlledGate)
                 and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
@@ -530,21 +530,36 @@ def to_braket(
     return braket_circuit
 
 
-def _create_free_parameters(operation):
+def _create_free_parameters(operation, parameters):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
         if isinstance(param, ParameterVectorElement):
+            _validate_name_conflict(param, parameters)
             cleaned_param_name = param.name.replace("[", "").replace("]", "")
             params[i] = FreeParameter(cleaned_param_name)
         elif isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
+            for p in param.parameters:
+                if isinstance(p, ParameterVectorElement):
+                    _validate_name_conflict(p, parameters)
             cleaned_param_name = (
                 str(param._symbol_expr).replace("[", "").replace("]", "")
             )
             params[i] = FreeParameterExpression(sympify(cleaned_param_name))
 
     return params
+
+
+def _validate_name_conflict(
+    param: ParameterVectorElement, parameters: Iterable[FreeParameter]
+):
+    cleaned_param_name = param.name.replace("[", "").replace("]", "")
+    parameter_names = [p.name for p in parameters]
+    if cleaned_param_name in parameter_names:
+        raise NameError(
+            f"Cannot translate {param} to {cleaned_param_name} because of a name conflict."
+        )
 
 
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
