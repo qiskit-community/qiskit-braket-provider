@@ -80,10 +80,10 @@ _ARBITRARY_CONTROLLED_GATES = {"mcx"}
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
-    "u1": lambda lam: [gates.U(0, 0, lam)],
-    "u2": lambda phi, lam: [gates.U(pi / 2, phi, lam)],
-    "u3": lambda theta, phi, lam: [gates.U(theta, phi, lam)],
-    "u": lambda theta, phi, lam: [gates.U(theta, phi, lam)],
+    "u1": lambda lam: [braket_gates.U(0, 0, lam)],
+    "u2": lambda phi, lam: [braket_gates.U(pi / 2, phi, lam)],
+    "u3": lambda theta, phi, lam: [braket_gates.U(theta, phi, lam)],
+    "u": lambda theta, phi, lam: [braket_gates.U(theta, phi, lam)],
     "p": lambda angle: [braket_gates.PhaseShift(angle)],
     "cp": lambda angle: [braket_gates.CPhaseShift(angle)],
     "cx": lambda: [braket_gates.CNot()],
