@@ -491,6 +491,20 @@ def _create_free_parameters(operation):
     return params
 
 
+def _rename_param_vector_element(parameter):
+    param_name = str(parameter._symbol_expr)
+    return f"{param_name.replace('[', '_').replace(']', '')}"
+
+
+def _validate_name_conflicts(parameters):
+    renamed_parameters = {_rename_param_vector_element(param) for param in parameters}
+    if len(renamed_parameters) != len(parameters):
+        raise ValueError(
+            "ParameterVector elements are renamed from v[i] to v_i, which resulted "
+            "in a conflict with another parameter. Please rename your parameters."
+        )
+
+
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
      Args:
