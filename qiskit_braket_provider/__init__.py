@@ -6,4 +6,6 @@ from .providers import (
     AWSBraketBackend,
     AWSBraketJob,
     BraketLocalBackend,
+    to_braket,
+    to_qiskit,
 )
