@@ -12,17 +12,15 @@ from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
 from braket.devices import Device, LocalSimulator
-from braket.ir.openqasm.modifiers import Control
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 
 from .adapter import (
     aws_device_to_target,
-    BRAKET_TO_QISKIT_NAMES,
+    gateset_from_properties,
     local_simulator_to_target,
     to_braket,
-    get_controlled_gateset,
 )
 from .braket_job import AmazonBraketTask
 from .. import version
@@ -31,7 +29,7 @@ from ..exception import QiskitBraketException
 logger = logging.getLogger(__name__)
 
 
-TASK_ID_DIVIDER = ";"
+_TASK_ID_DIVIDER = ";"
 
 
 class BraketBackend(BackendV2, ABC):
@@ -55,20 +53,7 @@ class BraketBackend(BackendV2, ABC):
 
     def _get_gateset(self) -> Optional[set[str]]:
         action = self._device.properties.action.get(DeviceActionType.OPENQASM)
-        if not action:
-            return None
-        gateset = {
-            BRAKET_TO_QISKIT_NAMES[op.lower()]
-            for op in action.supportedOperations
-            if op.lower() in BRAKET_TO_QISKIT_NAMES
-        }
-        max_control = 0
-        for modifier in action.supportedModifiers:
-            if isinstance(modifier, Control):
-                max_control = modifier.max_qubits
-                break
-        gateset.update(get_controlled_gateset(max_control))
-        return gateset
+        return gateset_from_properties(action) if action else None
 
 
 class BraketLocalBackend(BraketBackend):
@@ -143,8 +128,8 @@ class BraketLocalBackend(BraketBackend):
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        gateset = self._get_gateset()
         verbatim = options.pop("verbatim", False)
+        gateset = self._get_gateset() if not verbatim else None
         circuits: list[Circuit] = [
             to_braket(circ, gateset, verbatim) for circ in convert_input
         ]
@@ -172,7 +157,7 @@ class BraketLocalBackend(BraketBackend):
                 logger.error("State of %s: %s.", task.id, task.state())
             raise ex
 
-        task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+        task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(
             task_id=task_id,
@@ -235,7 +220,7 @@ class AWSBraketBackend(BraketBackend):
         Returns:
             The job with the given ID.
         """
-        task_ids = task_id.split(TASK_ID_DIVIDER)
+        task_ids = task_id.split(_TASK_ID_DIVIDER)
 
         return AmazonBraketTask(
             task_id=task_id,
@@ -328,20 +313,19 @@ class AWSBraketBackend(BraketBackend):
         else:
             raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
 
-        gateset = self._get_gateset()
-
         if "meas_level" in options:
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
         verbatim = options.pop("verbatim", False)
+        gateset = self._get_gateset() if not verbatim else None
         braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
             braket_circuits, **options
         )
         tasks: list[AwsQuantumTask] = batch_task.tasks
-        task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+        task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(
             task_id=task_id, tasks=tasks, backend=self, shots=options.get("shots")
