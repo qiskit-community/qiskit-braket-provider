@@ -300,7 +300,7 @@ def _qpu_target(
     for operation in action_properties.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
 
-        # TODO: Add 3+ qubit gates when target supports them  # pylint:disable=fixme
+        # TODO: Add 3+ qubit gates when Target supports them  # pylint:disable=fixme
         if instruction and instruction.num_qubits <= 2:
             if instruction.num_qubits == 1:
                 target.add_instruction(
