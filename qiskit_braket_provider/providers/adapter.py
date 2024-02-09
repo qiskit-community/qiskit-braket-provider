@@ -7,6 +7,7 @@ from braket.aws import AwsDevice
 from braket.circuits import (
     Circuit,
     FreeParameter,
+    FreeParameterExpression,
     Instruction,
     observables,
 )
@@ -33,7 +34,8 @@ from sympy import sympify
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import ControlledGate, Measure, Parameter
+from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
+from qiskit.circuit.parametervector import ParameterVectorElement
 import qiskit.circuit.library as qiskit_gates
 
 from qiskit.transpiler import InstructionProperties, Target
@@ -533,6 +535,9 @@ def _create_free_parameters(operation):
     for i, param in enumerate(params):
         if isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
+        elif isinstance(param, ParameterExpression):
+            params[i] = FreeParameterExpression(sympify(param._symbol_expr))
+
     return params
 
 

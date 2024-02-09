@@ -1,5 +1,5 @@
 """Tests for Qiskit to Braket adapter."""
-from unittest import TestCase
+from unittest import TestCase, expectedFailure
 from unittest.mock import Mock, patch
 
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
@@ -15,7 +15,7 @@ from qiskit import (
     ClassicalRegister,
     transpile,
 )
-from qiskit.circuit import Parameter
+from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
@@ -474,6 +474,36 @@ class TestAdapter(TestCase):
         assert to_braket(qiskit_circuit, {"x"}, True) == Circuit().add_verbatim_box(
             Circuit().h(0).cnot(0, 1)
         )
+
+    @expectedFailure
+    def test_parameter_vector(self):
+        """Tests ParameterExpression translation."""
+        qiskit_circuit = QuantumCircuit(1)
+        v = ParameterVector("v")
+        qiskit_circuit.rx(v[0], 0)
+        qiskit_circuit.ry(v[1], 0)
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit().rx(0, FreeParameter("v0")).ry(FreeParameter("v1"))
+        )
+        assert braket_circuit == expected_braket_circuit
+
+    @expectedFailure
+    def test_parameter_expression(self):
+        """Tests ParameterExpression translation."""
+        qiskit_circuit = QuantumCircuit(1)
+        v = ParameterVector("v")
+        qiskit_circuit.rx(Parameter("a") + 2 * Parameter("b"), 0)
+        qiskit_circuit.ry(v[0] - 2 * v[1], 0)
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()
+            .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
+            .rx(0, FreeParameter("v0") - 2 * FreeParameter("v1"))
+        )
+        assert braket_circuit == expected_braket_circuit
 
     @patch("qiskit_braket_provider.providers.adapter.transpile")
     def test_invalid_ctrl_state(self, mock_transpile):
