@@ -1,4 +1,5 @@
 """Tests for AWS Braket provider."""
+
 from unittest import TestCase
 from unittest.mock import Mock, patch
 import uuid
