@@ -237,9 +237,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
         Target: Target for Qiskit backend
     """
     return _simulator_target(
-        Target(
-            description=f"Target for Amazon Braket local simulator: {simulator.name}"
-        ),
+        f"Target for Amazon Braket local simulator: {simulator.name}",
         simulator.properties,
     )
 
@@ -253,17 +251,16 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     Returns:
         Target: Target for Qiskit backend
     """
-    # building target
-    target = Target(description=f"Target for Amazon Braket device: {device.name}")
     properties = device.properties
-
     if isinstance(properties, GateModelSimulatorDeviceCapabilities):
-        return _simulator_target(target, properties)
+        return _simulator_target(
+            f"Target for Amazon Braket simulator: {device.name}", properties
+        )
     elif isinstance(
         properties,
         (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
     ):
-        return _qpu_target(target, properties)
+        return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", properties)
 
     raise QiskitBraketException(
         f"Cannot convert to target. "
@@ -271,8 +268,10 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     )
 
 
-def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabilities):
-    target.num_qubits = properties.paradigm.qubitCount
+def _simulator_target(
+    description: str, properties: GateModelSimulatorDeviceCapabilities
+):
+    target = Target(description=description, num_qubits=properties.paradigm.qubitCount)
     action = (
         properties.action.get(DeviceActionType.OPENQASM)
         if properties.action.get(DeviceActionType.OPENQASM)
@@ -287,18 +286,18 @@ def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabi
 
 
 def _qpu_target(
-    target: Target,
+    description: str,
     properties: Union[
         IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities
     ],
 ):
+    qubit_count = properties.paradigm.qubitCount
+    target = Target(description=description, num_qubits=qubit_count)
     action_properties = (
         properties.action.get(DeviceActionType.OPENQASM)
         if properties.action.get(DeviceActionType.OPENQASM)
         else properties.action.get(DeviceActionType.JAQCD)
     )
-    qubit_count = properties.paradigm.qubitCount
-    target.num_qubits = qubit_count
     connectivity = properties.paradigm.connectivity
 
     for operation in action_properties.supportedOperations:
@@ -390,13 +389,14 @@ def to_braket(
     verbatim: bool = False,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
-     Args:
-            circuit (QuantumCircuit): Qiskit quantum circuit
-            basis_gates (Optional[Iterable[str]]): The gateset to transpile to.
-                If `None`, the transpiler will use all gates defined in the Braket SDK.
-                Default: `None`.
-            verbatim (bool): Whether to translate the circuit without any modification, in other
-                words without transpiling it. Default: False.
+
+    Args:
+        circuit (QuantumCircuit): Qiskit quantum circuit
+        basis_gates (Optional[Iterable[str]]): The gateset to transpile to.
+            If `None`, the transpiler will use all gates defined in the Braket SDK.
+            Default: `None`.
+        verbatim (bool): Whether to translate the circuit without any modification, in other
+            words without transpiling it. Default: False.
 
     Returns:
         Circuit: Braket circuit
@@ -491,58 +491,6 @@ def _create_free_parameters(operation):
     return params
 
 
-def _rename_param_vector_element(parameter):
-    param_name = str(parameter._symbol_expr)
-    return f"{param_name.replace('[', '_').replace(']', '')}"
-
-
-def _validate_name_conflicts(parameters):
-    renamed_parameters = {_rename_param_vector_element(param) for param in parameters}
-    if len(renamed_parameters) != len(parameters):
-        raise ValueError(
-            "ParameterVector elements are renamed from v[i] to v_i, which resulted "
-            "in a conflict with another parameter. Please rename your parameters."
-        )
-
-
-def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
-    """Return a Braket quantum circuit from a Qiskit quantum circuit.
-     Args:
-            circuit (QuantumCircuit): Qiskit Quantum Cricuit
-
-    Returns:
-        Circuit: Braket circuit
-    """
-    warnings.warn(
-        "convert_qiskit_to_braket_circuit() is deprecated and "
-        "will be removed in a future release. "
-        "Use to_braket() instead.",
-        DeprecationWarning,
-    )
-    return to_braket(circuit)
-
-
-def convert_qiskit_to_braket_circuits(
-    circuits: list[QuantumCircuit],
-) -> Iterable[Circuit]:
-    """Converts all Qiskit circuits to Braket circuits.
-
-     Args:
-            circuits (List(QuantumCircuit)): Qiskit quantum circuit
-
-    Returns:
-        Circuit (Iterable[Circuit]): Braket circuit
-    """
-    warnings.warn(
-        "convert_qiskit_to_braket_circuits() is deprecated and "
-        "will be removed in a future release. "
-        "Use to_braket() instead.",
-        DeprecationWarning,
-    )
-    for circuit in circuits:
-        yield to_braket(circuit)
-
-
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
      Args:
@@ -605,3 +553,42 @@ def _create_qiskit_gate(
     else:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     return gate_cls(*new_gate_params)
+
+
+def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
+    """Return a Braket quantum circuit from a Qiskit quantum circuit.
+
+    Args:
+        circuit (QuantumCircuit): Qiskit Quantum Cricuit
+
+    Returns:
+        Circuit: Braket circuit
+    """
+    warnings.warn(
+        "convert_qiskit_to_braket_circuit() is deprecated and "
+        "will be removed in a future release. "
+        "Use to_braket() instead.",
+        DeprecationWarning,
+    )
+    return to_braket(circuit)
+
+
+def convert_qiskit_to_braket_circuits(
+    circuits: list[QuantumCircuit],
+) -> Iterable[Circuit]:
+    """Converts all Qiskit circuits to Braket circuits.
+
+    Args:
+        circuits (List(QuantumCircuit)): Qiskit quantum circuit
+
+    Returns:
+        Iterable[Circuit]: Braket circuit
+    """
+    warnings.warn(
+        "convert_qiskit_to_braket_circuits() is deprecated and "
+        "will be removed in a future release. "
+        "Use to_braket() instead.",
+        DeprecationWarning,
+    )
+    for circuit in circuits:
+        yield to_braket(circuit)
