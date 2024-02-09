@@ -542,8 +542,9 @@ def _create_qiskit_gate(
 
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
-     Args:
-            circuit (QuantumCircuit): Qiskit Quantum Cricuit
+
+    Args:
+        circuit (QuantumCircuit): Qiskit Quantum Cricuit
 
     Returns:
         Circuit: Braket circuit
@@ -562,8 +563,8 @@ def convert_qiskit_to_braket_circuits(
 ) -> Iterable[Circuit]:
     """Converts all Qiskit circuits to Braket circuits.
 
-     Args:
-            circuits (List(QuantumCircuit)): Qiskit quantum circuit
+    Args:
+        circuits (List(QuantumCircuit)): Qiskit quantum circuit
 
     Returns:
         Circuit (Iterable[Circuit]): Braket circuit
