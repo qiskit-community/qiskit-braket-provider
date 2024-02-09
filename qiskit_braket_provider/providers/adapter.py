@@ -302,7 +302,7 @@ def _qpu_target(
         if instruction:
             target.add_instruction(
                 instruction,
-                _build_instruction_properties(
+                _qpu_instruction_properties(
                     instruction, qubit_count, connectivity, properties
                 ),
             )
@@ -311,7 +311,7 @@ def _qpu_target(
     return target
 
 
-def _build_instruction_properties(instruction, qubit_count, connectivity, properties):
+def _qpu_instruction_properties(instruction, qubit_count, connectivity, properties):
     if instruction.num_qubits == 1:
         return {(i,): None for i in range(qubit_count)}
     elif instruction.num_qubits == 2:
