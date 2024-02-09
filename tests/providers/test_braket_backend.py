@@ -318,4 +318,4 @@ class TestAWSBackendTarget(TestCase):
         self.assertEqual(target.num_qubits, 30)
         self.assertEqual(len(target.operations), 2)
         self.assertEqual(len(target.instructions), 60)
-        self.assertIn("Target for AWS Device", target.description)
+        self.assertIn("Target for Amazon Braket device", target.description)

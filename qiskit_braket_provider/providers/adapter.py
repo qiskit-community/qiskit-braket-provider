@@ -15,16 +15,12 @@ import braket.circuits.gates as braket_gates
 from braket.device_schema import (
     DeviceActionType,
     GateModelQpuParadigmProperties,
-    JaqcdDeviceActionProperties,
     OpenQASMDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
-from braket.device_schema.simulators import (
-    GateModelSimulatorDeviceCapabilities,
-    GateModelSimulatorParadigmProperties,
-)
+from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
 
@@ -232,72 +228,48 @@ def _get_controlled_gateset(max_qubits: Optional[int] = None) -> set[str]:
 
 
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:
-    """Converts properties of LocalSimulator into Qiskit Target object.
+    """Converts properties of a Braket LocalSimulator into a Qiskit Target object.
 
     Args:
-        simulator: AWS LocalSimulator
+        simulator (LocalSimulator): Amazon Braket LocalSimulator
 
     Returns:
-        target for Qiskit backend
+        Target: Target for Qiskit backend
     """
-    target = Target()
-
-    instructions = [
-        inst for inst in _GATE_NAME_TO_QISKIT_GATE.values() if inst is not None
-    ]
-    properties = simulator.properties
-    paradigm: GateModelSimulatorParadigmProperties = properties.paradigm
-
-    # add measurement instruction
-    target.add_instruction(Measure(), {(i,): None for i in range(paradigm.qubitCount)})
-
-    for instruction in instructions:
-        instruction_props: Optional[
-            dict[Union[tuple[int], tuple[int, int]], Optional[InstructionProperties]]
-        ] = {}
-
-        if instruction.num_qubits == 1:
-            for i in range(paradigm.qubitCount):
-                instruction_props[(i,)] = None
-            target.add_instruction(instruction, instruction_props)
-        elif instruction.num_qubits == 2:
-            for src in range(paradigm.qubitCount):
-                for dst in range(paradigm.qubitCount):
-                    if src != dst:
-                        instruction_props[(src, dst)] = None
-                        instruction_props[(dst, src)] = None
-            target.add_instruction(instruction, instruction_props)
-
-    return target
+    return _simulator_target(
+        Target(
+            description=f"Target for Amazon Braket local simulator: {simulator.name}"
+        ),
+        simulator.properties,
+    )
 
 
 def aws_device_to_target(device: AwsDevice) -> Target:
-    """Converts properties of Braket device into Qiskit Target object.
+    """Converts properties of Braket AwsDevice into a Qiskit Target object.
 
     Args:
-        device: AWS Braket device
+        device (AwsDevice): Amazon Braket AwsDevice
 
     Returns:
-        target for Qiskit backend
+        Target: Target for Qiskit backend
     """
     # building target
-    target = Target(description=f"Target for AWS Device: {device.name}")
-
+    target = Target(description=f"Target for Amazon Braket device: {device.name}")
     properties = device.properties
-    # gate model devices
+
+    # QPUs
     if isinstance(
         properties,
         (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
     ):
-        action_properties: OpenQASMDeviceActionProperties = (
+        action_properties = (
             properties.action.get(DeviceActionType.OPENQASM)
             if properties.action.get(DeviceActionType.OPENQASM)
             else properties.action.get(DeviceActionType.JAQCD)
         )
         paradigm: GateModelQpuParadigmProperties = properties.paradigm
-        connectivity = paradigm.connectivity
-        instructions: list[QiskitInstruction] = []
-
+        target.num_qubits = paradigm.qubitCount
+        instructions = []
         for operation in action_properties.supportedOperations:
             instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
             if instruction is not None:
@@ -310,6 +282,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
             Measure(), {(i,): None for i in range(paradigm.qubitCount)}
         )
 
+        connectivity = paradigm.connectivity
         for instruction in instructions:
             instruction_props: Optional[
                 dict[
@@ -332,49 +305,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                 # building coupling map for device with connectivity graph
                 else:
                     if isinstance(properties, RigettiDeviceCapabilities):
-
-                        def convert_continuous_qubit_indices(
-                            connectivity_graph: dict,
-                        ) -> dict:
-                            """Aspen qubit indices are discontinuous (label between x0 and x7, x being
-                            the number of the octagon) while the Qiskit transpiler creates and/or
-                            handles coupling maps with continuous indices. This function converts the
-                            discontinous connectivity graph from Aspen to a continuous one.
-
-                            Args:
-                                connectivity_graph (dict): connectivity graph from Aspen. For example
-                                4 qubit system, the connectivity graph will be:
-                                    {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
-                                    "7": ["0","1","2"]}
-
-                            Returns:
-                                dict: Connectivity graph with continuous indices. For example for an
-                                input connectivity graph with discontinuous indices (qubit 0, 1, 2 and
-                                then qubit 7) as shown here:
-                                    {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
-                                    "7": ["0","1","2"]}
-                                the qubit index 7 will be mapped to qubit index 3 for the qiskit
-                                transpilation step. Thereby the resultant continous qubit indices
-                                output will be:
-                                    {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
-                                    "3": ["0","1","2"]}
-                            """
-                            # Creates list of existing qubit indices which are discontinuous.
-                            indices = [int(key) for key in connectivity_graph.keys()]
-                            indices.sort()
-                            # Creates a list of continuous indices for number of qubits.
-                            map_list = list(range(len(indices)))
-                            # Creates a dictionary to remap the discountinous indices to continuous.
-                            mapper = dict(zip(indices, map_list))
-                            # Performs the remapping from the discontinous to the continuous indices.
-                            continous_connectivity_graph = {
-                                mapper[int(k)]: [mapper[int(v)] for v in val]
-                                for k, val in connectivity_graph.items()
-                            }
-                            return continous_connectivity_graph
-
                         connectivity.connectivityGraph = (
-                            convert_continuous_qubit_indices(
+                            _convert_continuous_qubit_indices(
                                 connectivity.connectivityGraph
                             )
                         )
@@ -387,55 +319,70 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                 instruction_props = None
 
             target.add_instruction(instruction, instruction_props)
+        return target
 
-    # gate model simulators
+    # Simulators
     elif isinstance(properties, GateModelSimulatorDeviceCapabilities):
-        simulator_action_properties: JaqcdDeviceActionProperties = (
-            properties.action.get(DeviceActionType.JAQCD)
-        )
-        simulator_paradigm: GateModelSimulatorParadigmProperties = properties.paradigm
-        instructions = []
+        return _simulator_target(target, properties)
 
-        for operation in simulator_action_properties.supportedOperations:
-            instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-            if instruction is not None:
-                # TODO: remove when target will be supporting > 2 qubit gates  # pylint:disable=fixme
-                if instruction.num_qubits <= 2:
-                    instructions.append(instruction)
+    raise QiskitBraketException(
+        f"Cannot convert to target. "
+        f"{properties.__class__} device capabilities are not supported yet."
+    )
 
-        # add measurement instructions
-        target.add_instruction(
-            Measure(), {(i,): None for i in range(simulator_paradigm.qubitCount)}
-        )
 
-        for instruction in instructions:
-            simulator_instruction_props: Optional[
-                dict[
-                    Union[tuple[int], tuple[int, int]],
-                    Optional[InstructionProperties],
-                ]
-            ] = {}
-            # adding 1 qubit instructions
-            if instruction.num_qubits == 1:
-                for i in range(simulator_paradigm.qubitCount):
-                    simulator_instruction_props[(i,)] = None
-            # adding 2 qubit instructions
-            elif instruction.num_qubits == 2:
-                # building coupling map for fully connected device
-                for src in range(simulator_paradigm.qubitCount):
-                    for dst in range(simulator_paradigm.qubitCount):
-                        if src != dst:
-                            simulator_instruction_props[(src, dst)] = None
-                            simulator_instruction_props[(dst, src)] = None
-            target.add_instruction(instruction, simulator_instruction_props)
-
-    else:
-        raise QiskitBraketException(
-            f"Cannot convert to target. "
-            f"{properties.__class__} device capabilities are not supported yet."
-        )
-
+def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabilities):
+    target.num_qubits = properties.paradigm.qubitCount
+    action = (
+        properties.action.get(DeviceActionType.OPENQASM)
+        if properties.action.get(DeviceActionType.OPENQASM)
+        else properties.action.get(DeviceActionType.JAQCD)
+    )
+    for operation in action.supportedOperations:
+        instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
+        if instruction:
+            target.add_instruction(instruction)
+    target.add_instruction(Measure())
     return target
+
+
+def _convert_continuous_qubit_indices(connectivity_graph: dict) -> dict:
+    """Aspen qubit indices are discontinuous (label between x0 and x7, x being
+    the number of the octagon) while the Qiskit transpiler creates and/or
+    handles coupling maps with continuous indices. This function converts the
+    discontinuous connectivity graph from Aspen to a continuous one.
+
+    Args:
+        connectivity_graph (dict): connectivity graph from Aspen. For example
+        4 qubit system, the connectivity graph will be:
+            {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+            "7": ["0","1","2"]}
+
+    Returns:
+        dict: Connectivity graph with continuous indices. For example for an
+        input connectivity graph with discontinuous indices (qubit 0, 1, 2 and
+        then qubit 7) as shown here:
+            {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
+            "7": ["0","1","2"]}
+        the qubit index 7 will be mapped to qubit index 3 for the qiskit
+        transpilation step. Thereby the resultant continous qubit indices
+        output will be:
+            {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
+            "3": ["0","1","2"]}
+    """
+    # Creates list of existing qubit indices which are discontinuous.
+    indices = [int(key) for key in connectivity_graph.keys()]
+    indices.sort()
+    # Creates a list of continuous indices for number of qubits.
+    map_list = list(range(len(indices)))
+    # Creates a dictionary to remap the discontinuous indices to continuous.
+    mapper = dict(zip(indices, map_list))
+    # Performs the remapping from the discontinuous to the continuous indices.
+    continous_connectivity_graph = {
+        mapper[int(k)]: [mapper[int(v)] for v in val]
+        for k, val in connectivity_graph.items()
+    }
+    return continous_connectivity_graph
 
 
 def to_braket(
