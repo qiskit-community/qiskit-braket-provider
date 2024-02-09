@@ -1,24 +1,26 @@
 """AWS Braket backends."""
 
-
 import datetime
 import logging
+import enum
 from abc import ABC
-from typing import Iterable, Union, List
+from collections.abc import Iterable
+from typing import Optional, Union
 
 from braket.aws import AwsDevice, AwsQuantumTaskBatch, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
-from braket.devices import LocalSimulator
+from braket.device_schema import DeviceActionType
+from braket.devices import Device, LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, QubitProperties, Options, Provider
 
 from .adapter import (
     aws_device_to_target,
+    gateset_from_properties,
     local_simulator_to_target,
-    convert_qiskit_to_braket_circuits,
-    wrap_circuits_in_verbatim_box,
+    to_braket,
 )
 from .braket_job import AmazonBraketTask
 from .. import version
@@ -27,7 +29,7 @@ from ..exception import QiskitBraketException
 logger = logging.getLogger(__name__)
 
 
-TASK_ID_DIVIDER = ";"
+_TASK_ID_DIVIDER = ";"
 
 
 class BraketBackend(BackendV2, ABC):
@@ -35,6 +37,23 @@ class BraketBackend(BackendV2, ABC):
 
     def __repr__(self):
         return f"BraketBackend[{self.name}]"
+
+    @property
+    def _device(self) -> Device:
+        raise NotImplementedError
+
+    def _validate_meas_level(self, meas_level: Union[enum.Enum, int]):
+        if isinstance(meas_level, enum.Enum):
+            meas_level = meas_level.value
+        if meas_level != 2:
+            raise QiskitBraketException(
+                f"Device {self.name} only supports classified measurement "
+                f"results, received meas_level={meas_level}."
+            )
+
+    def _get_gateset(self) -> Optional[set[str]]:
+        action = self._device.properties.action.get(DeviceActionType.OPENQASM)
+        return gateset_from_properties(action) if action else None
 
 
 class BraketLocalBackend(BraketBackend):
@@ -56,9 +75,9 @@ class BraketLocalBackend(BraketBackend):
         """
         super().__init__(name=name, **fields)
         self.backend_name = name
-        self._aws_device = LocalSimulator(backend=self.backend_name)
-        self._target = local_simulator_to_target(self._aws_device)
-        self.status = self._aws_device.status
+        self._local_device = LocalSimulator(backend=self.backend_name)
+        self._target = local_simulator_to_target(self._local_device)
+        self.status = self._local_device.status
 
     @property
     def target(self):
@@ -79,12 +98,16 @@ class BraketLocalBackend(BraketBackend):
         )
 
     @property
-    def meas_map(self) -> List[List[int]]:
+    def meas_map(self) -> list[list[int]]:
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
+    @property
+    def _device(self) -> Device:
+        return self._local_device
+
     def qubit_properties(
-        self, qubit: Union[int, List[int]]
-    ) -> Union[QubitProperties, List[QubitProperties]]:
+        self, qubit: Union[int, list[int]]
+    ) -> Union[QubitProperties, list[QubitProperties]]:
         raise NotImplementedError
 
     def drive_channel(self, qubit: int):
@@ -100,19 +123,27 @@ class BraketLocalBackend(BraketBackend):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
     def run(
-        self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options
+        self, run_input: Union[QuantumCircuit, list[QuantumCircuit]], **options
     ) -> AmazonBraketTask:
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
-        circuits: List[Circuit] = list(convert_qiskit_to_braket_circuits(convert_input))
+        verbatim = options.pop("verbatim", False)
+        gateset = self._get_gateset() if not verbatim else None
+        circuits: list[Circuit] = [
+            to_braket(circ, gateset, verbatim) for circ in convert_input
+        ]
+
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
+        if "meas_level" in options:
+            self._validate_meas_level(options["meas_level"])
+            del options["meas_level"]
         tasks = []
         try:
             for circuit in circuits:
-                task: LocalQuantumTask = self._aws_device.run(
+                task: LocalQuantumTask = self._device.run(
                     task_specification=circuit, shots=shots
                 )
                 tasks.append(task)
@@ -126,7 +157,7 @@ class BraketLocalBackend(BraketBackend):
                 logger.error("State of %s: %s.", task.id, task.state())
             raise ex
 
-        task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+        task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(
             task_id=task_id,
@@ -177,7 +208,7 @@ class AWSBraketBackend(BraketBackend):
         )
         user_agent = f"QiskitBraketProvider/{version.__version__}"
         device.aws_session.add_braket_user_agent(user_agent)
-        self._device = device
+        self._aws_device = device
         self._target = aws_device_to_target(device=device)
 
     def retrieve_job(self, task_id: str) -> AmazonBraketTask:
@@ -189,7 +220,7 @@ class AWSBraketBackend(BraketBackend):
         Returns:
             The job with the given ID.
         """
-        task_ids = task_id.split(TASK_ID_DIVIDER)
+        task_ids = task_id.split(_TASK_ID_DIVIDER)
 
         return AmazonBraketTask(
             task_id=task_id,
@@ -205,13 +236,17 @@ class AWSBraketBackend(BraketBackend):
     def max_circuits(self):
         return None
 
+    @property
+    def _device(self) -> Device:
+        return self._aws_device
+
     @classmethod
     def _default_options(cls):
         return Options()
 
     def qubit_properties(
-        self, qubit: Union[int, List[int]]
-    ) -> Union[QubitProperties, List[QubitProperties]]:
+        self, qubit: Union[int, list[int]]
+    ) -> Union[QubitProperties, list[QubitProperties]]:
         # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
         raise NotImplementedError
 
@@ -255,7 +290,7 @@ class AWSBraketBackend(BraketBackend):
         )
 
     @property
-    def meas_map(self) -> List[List[int]]:
+    def meas_map(self) -> list[list[int]]:
         raise NotImplementedError(f"Measurement map is not supported by {self.name}.")
 
     def drive_channel(self, qubit: int):
@@ -278,16 +313,19 @@ class AWSBraketBackend(BraketBackend):
         else:
             raise QiskitBraketException(f"Unsupported input type: {type(run_input)}")
 
-        braket_circuits = list(convert_qiskit_to_braket_circuits(circuits))
+        if "meas_level" in options:
+            self._validate_meas_level(options["meas_level"])
+            del options["meas_level"]
 
-        if options.pop("verbatim", False):
-            braket_circuits = wrap_circuits_in_verbatim_box(braket_circuits)
+        verbatim = options.pop("verbatim", False)
+        gateset = self._get_gateset() if not verbatim else None
+        braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
             braket_circuits, **options
         )
-        tasks: List[AwsQuantumTask] = batch_task.tasks
-        task_id = TASK_ID_DIVIDER.join(task.id for task in tasks)
+        tasks: list[AwsQuantumTask] = batch_task.tasks
+        task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
         return AmazonBraketTask(
             task_id=task_id, tasks=tasks, backend=self, shots=options.get("shots")
