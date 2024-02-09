@@ -299,46 +299,46 @@ def _qpu_target(
 
     for operation in action_properties.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-        if instruction:
-            target.add_instruction(
-                instruction,
-                _qpu_instruction_properties(
-                    instruction, qubit_count, connectivity, properties
-                ),
-            )
+
+        # TODO: Add 3+ qubit gates when target supports them  # pylint:disable=fixme
+        if instruction and instruction.num_qubits <= 2:
+            if instruction.num_qubits == 1:
+                target.add_instruction(
+                    instruction, {(i,): None for i in range(qubit_count)}
+                )
+            elif instruction.num_qubits == 2:
+                target.add_instruction(
+                    instruction,
+                    _2q_instruction_properties(qubit_count, connectivity, properties),
+                )
 
     target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
     return target
 
 
-def _qpu_instruction_properties(instruction, qubit_count, connectivity, properties):
-    if instruction.num_qubits == 1:
-        return {(i,): None for i in range(qubit_count)}
-    elif instruction.num_qubits == 2:
-        instruction_props = {}
+def _2q_instruction_properties(qubit_count, connectivity, properties):
+    instruction_props = {}
 
-        # building coupling map for fully connected device
-        if connectivity.fullyConnected:
-            for src in range(qubit_count):
-                for dst in range(qubit_count):
-                    if src != dst:
-                        instruction_props[(src, dst)] = None
-                        instruction_props[(dst, src)] = None
+    # building coupling map for fully connected device
+    if connectivity.fullyConnected:
+        for src in range(qubit_count):
+            for dst in range(qubit_count):
+                if src != dst:
+                    instruction_props[(src, dst)] = None
+                    instruction_props[(dst, src)] = None
 
-        # building coupling map for device with connectivity graph
-        else:
-            if isinstance(properties, RigettiDeviceCapabilities):
-                connectivity.connectivityGraph = _convert_aspen_qubit_indices(
-                    connectivity.connectivityGraph
-                )
+    # building coupling map for device with connectivity graph
+    else:
+        if isinstance(properties, RigettiDeviceCapabilities):
+            connectivity.connectivityGraph = _convert_aspen_qubit_indices(
+                connectivity.connectivityGraph
+            )
 
-            for src, connections in connectivity.connectivityGraph.items():
-                for dst in connections:
-                    instruction_props[(int(src), int(dst))] = None
+        for src, connections in connectivity.connectivityGraph.items():
+            for dst in connections:
+                instruction_props[(int(src), int(dst))] = None
 
-        return instruction_props
-    # None if num_qubits > 2
-    return None
+    return instruction_props
 
 
 def _convert_aspen_qubit_indices(connectivity_graph: dict) -> dict:
