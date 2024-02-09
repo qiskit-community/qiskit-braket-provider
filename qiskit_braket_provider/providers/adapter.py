@@ -301,6 +301,21 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     )
 
 
+def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabilities):
+    target.num_qubits = properties.paradigm.qubitCount
+    action = (
+        properties.action.get(DeviceActionType.OPENQASM)
+        if properties.action.get(DeviceActionType.OPENQASM)
+        else properties.action.get(DeviceActionType.JAQCD)
+    )
+    for operation in action.supportedOperations:
+        instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
+        if instruction:
+            target.add_instruction(instruction)
+    target.add_instruction(Measure())
+    return target
+
+
 def _build_2q_instruction_properties(connectivity, qubit_count, properties):
     instruction_props = {}
 
@@ -324,21 +339,6 @@ def _build_2q_instruction_properties(connectivity, qubit_count, properties):
                 instruction_props[(int(src), int(dst))] = None
 
     return instruction_props
-
-
-def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabilities):
-    target.num_qubits = properties.paradigm.qubitCount
-    action = (
-        properties.action.get(DeviceActionType.OPENQASM)
-        if properties.action.get(DeviceActionType.OPENQASM)
-        else properties.action.get(DeviceActionType.JAQCD)
-    )
-    for operation in action.supportedOperations:
-        instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-        if instruction:
-            target.add_instruction(instruction)
-    target.add_instruction(Measure())
-    return target
 
 
 def _convert_aspen_qubit_indices(connectivity_graph: dict) -> dict:
