@@ -488,7 +488,6 @@ class TestAdapter(TestCase):
         )
         assert braket_circuit == expected_braket_circuit
 
-    @expectedFailure
     def test_parameter_expression(self):
         """Tests ParameterExpression translation."""
         qiskit_circuit = QuantumCircuit(1)
@@ -500,7 +499,7 @@ class TestAdapter(TestCase):
         expected_braket_circuit = (
             Circuit()
             .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
-            .rx(0, FreeParameter("v0") - 2 * FreeParameter("v1"))
+            .ry(0, FreeParameter("v0") - 2 * FreeParameter("v1"))
         )
         assert braket_circuit == expected_braket_circuit
 

@@ -539,7 +539,10 @@ def _create_free_parameters(operation):
         elif isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
-            params[i] = FreeParameterExpression(sympify(param._symbol_expr))
+            cleaned_param_name = (
+                str(param._symbol_expr).replace("[", "").replace("]", "")
+            )
+            params[i] = FreeParameterExpression(sympify(cleaned_param_name))
 
     return params
 
