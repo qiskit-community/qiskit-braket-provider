@@ -27,7 +27,7 @@ from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import ControlledGate, Measure, Parameter
 import qiskit.circuit.library as qiskit_gates
 
-from qiskit.transpiler import InstructionProperties, Target
+from qiskit.transpiler import Target
 from qiskit_ionq import ionq_gates
 from qiskit_braket_provider.exception import QiskitBraketException
 
@@ -253,47 +253,13 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     target = Target(description=f"Target for Amazon Braket device: {device.name}")
     properties = device.properties
 
-    # QPUs
-    if isinstance(
+    if isinstance(properties, GateModelSimulatorDeviceCapabilities):
+        return _simulator_target(target, properties)
+    elif isinstance(
         properties,
         (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
     ):
-        action_properties = (
-            properties.action.get(DeviceActionType.OPENQASM)
-            if properties.action.get(DeviceActionType.OPENQASM)
-            else properties.action.get(DeviceActionType.JAQCD)
-        )
-        qubit_count = properties.paradigm.qubitCount
-        target.num_qubits = qubit_count
-        connectivity = properties.paradigm.connectivity
-
-        for operation in action_properties.supportedOperations:
-            instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-            if instruction:
-                instruction_props: Optional[
-                    dict[
-                        Union[tuple[int], tuple[int, int]],
-                        Optional[InstructionProperties],
-                    ]
-                ] = None
-                # adding 1 qubit instructions
-                if instruction.num_qubits == 1:
-                    instruction_props = {(i,): None for i in range(qubit_count)}
-                # adding 2 qubit instructions
-                elif instruction.num_qubits == 2:
-                    instruction_props = _build_2q_instruction_properties(
-                        connectivity, qubit_count, properties
-                    )
-                # instruction_properties is None if num_qubits > 2
-                target.add_instruction(instruction, instruction_props)
-
-        # add measurement instructions
-        target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
-        return target
-
-    # Simulators
-    elif isinstance(properties, GateModelSimulatorDeviceCapabilities):
-        return _simulator_target(target, properties)
+        return _qpu_target(target, properties)
 
     raise QiskitBraketException(
         f"Cannot convert to target. "
@@ -316,29 +282,63 @@ def _simulator_target(target: Target, properties: GateModelSimulatorDeviceCapabi
     return target
 
 
-def _build_2q_instruction_properties(connectivity, qubit_count, properties):
-    instruction_props = {}
+def _qpu_target(
+    target: Target,
+    properties: Union[
+        IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities
+    ],
+):
+    action_properties = (
+        properties.action.get(DeviceActionType.OPENQASM)
+        if properties.action.get(DeviceActionType.OPENQASM)
+        else properties.action.get(DeviceActionType.JAQCD)
+    )
+    qubit_count = properties.paradigm.qubitCount
+    target.num_qubits = qubit_count
+    connectivity = properties.paradigm.connectivity
 
-    # building coupling map for fully connected device
-    if connectivity.fullyConnected:
-        for src in range(qubit_count):
-            for dst in range(qubit_count):
-                if src != dst:
-                    instruction_props[(src, dst)] = None
-                    instruction_props[(dst, src)] = None
-
-    # building coupling map for device with connectivity graph
-    else:
-        if isinstance(properties, RigettiDeviceCapabilities):
-            connectivity.connectivityGraph = _convert_aspen_qubit_indices(
-                connectivity.connectivityGraph
+    for operation in action_properties.supportedOperations:
+        instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
+        if instruction:
+            target.add_instruction(
+                instruction,
+                _build_instruction_properties(
+                    instruction, qubit_count, connectivity, properties
+                ),
             )
 
-        for src, connections in connectivity.connectivityGraph.items():
-            for dst in connections:
-                instruction_props[(int(src), int(dst))] = None
+    target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
+    return target
 
-    return instruction_props
+
+def _build_instruction_properties(instruction, qubit_count, connectivity, properties):
+    if instruction.num_qubits == 1:
+        return {(i,): None for i in range(qubit_count)}
+    elif instruction.num_qubits == 2:
+        instruction_props = {}
+
+        # building coupling map for fully connected device
+        if connectivity.fullyConnected:
+            for src in range(qubit_count):
+                for dst in range(qubit_count):
+                    if src != dst:
+                        instruction_props[(src, dst)] = None
+                        instruction_props[(dst, src)] = None
+
+        # building coupling map for device with connectivity graph
+        else:
+            if isinstance(properties, RigettiDeviceCapabilities):
+                connectivity.connectivityGraph = _convert_aspen_qubit_indices(
+                    connectivity.connectivityGraph
+                )
+
+            for src, connections in connectivity.connectivityGraph.items():
+                for dst in connections:
+                    instruction_props[(int(src), int(dst))] = None
+
+        return instruction_props
+    # None if num_qubits > 2
+    return None
 
 
 def _convert_aspen_qubit_indices(connectivity_graph: dict) -> dict:
