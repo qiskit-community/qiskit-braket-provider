@@ -78,25 +78,15 @@ _CONTROLLED_GATES_BY_QUBIT_COUNT = {
 }
 _ARBITRARY_CONTROLLED_GATES = {"mcx"}
 
+_ADDITIONAL_U_GATES = {"u1", "u2", "u3"}
+
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
-    "u1": lambda lam: [braket_gates.PhaseShift(lam)],
-    "u2": lambda phi, lam: [
-        braket_gates.PhaseShift(lam),
-        braket_gates.Ry(pi / 2),
-        braket_gates.PhaseShift(phi),
-    ],
-    "u3": lambda theta, phi, lam: [
-        braket_gates.PhaseShift(lam),
-        braket_gates.Ry(theta),
-        braket_gates.PhaseShift(phi),
-    ],
-    "u": lambda theta, phi, lam: [
-        braket_gates.PhaseShift(lam),
-        braket_gates.Ry(theta),
-        braket_gates.PhaseShift(phi),
-    ],
+    "u1": lambda lam: [braket_gates.U(0, 0, lam)],
+    "u2": lambda phi, lam: [braket_gates.U(pi / 2, phi, lam)],
+    "u3": lambda theta, phi, lam: [braket_gates.U(theta, phi, lam)],
+    "u": lambda theta, phi, lam: [braket_gates.U(theta, phi, lam)],
     "p": lambda angle: [braket_gates.PhaseShift(angle)],
     "cp": lambda angle: [braket_gates.CPhaseShift(angle)],
     "cx": lambda: [braket_gates.CNot()],
@@ -214,6 +204,8 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
             max_control = modifier.max_qubits
             break
     gateset.update(_get_controlled_gateset(max_control))
+    if "u" in gateset:
+        gateset.update(_ADDITIONAL_U_GATES)
     return gateset
 
 

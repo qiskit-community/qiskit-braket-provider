@@ -376,12 +376,8 @@ class TestAdapter(TestCase):
         expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .rz(0, FreeParameter("θ"))
-            .phaseshift(0, FreeParameter("λ"))
-            .ry(0, FreeParameter("θ"))
-            .phaseshift(0, FreeParameter("φ"))
-            .phaseshift(0, np.pi)
-            .ry(0, FreeParameter("θ"))
-            .phaseshift(0, FreeParameter("φ"))
+            .u(0, FreeParameter("θ"), FreeParameter("φ"), FreeParameter("λ"))
+            .u(0, FreeParameter("θ"), FreeParameter("φ"), np.pi)
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
