@@ -385,13 +385,14 @@ def to_braket(
     verbatim: bool = False,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
-     Args:
-            circuit (QuantumCircuit): Qiskit quantum circuit
-            basis_gates (Optional[Iterable[str]]): The gateset to transpile to.
-                If `None`, the transpiler will use all gates defined in the Braket SDK.
-                Default: `None`.
-            verbatim (bool): Whether to translate the circuit without any modification, in other
-                words without transpiling it. Default: False.
+
+    Args:
+        circuit (QuantumCircuit): Qiskit quantum circuit
+        basis_gates (Optional[Iterable[str]]): The gateset to transpile to.
+            If `None`, the transpiler will use all gates defined in the Braket SDK.
+            Default: `None`.
+        verbatim (bool): Whether to translate the circuit without any modification, in other
+            words without transpiling it. Default: False.
 
     Returns:
         Circuit: Braket circuit
@@ -567,7 +568,7 @@ def convert_qiskit_to_braket_circuits(
         circuits (List(QuantumCircuit)): Qiskit quantum circuit
 
     Returns:
-        Circuit (Iterable[Circuit]): Braket circuit
+        Iterable[Circuit]: Braket circuit
     """
     warnings.warn(
         "convert_qiskit_to_braket_circuits() is deprecated and "
