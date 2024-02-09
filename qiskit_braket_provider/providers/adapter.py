@@ -78,6 +78,8 @@ _CONTROLLED_GATES_BY_QUBIT_COUNT = {
 }
 _ARBITRARY_CONTROLLED_GATES = {"mcx"}
 
+_ADDITIONAL_U_GATES = {"u1", "u2", "u3"}
+
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
@@ -202,6 +204,8 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
             max_control = modifier.max_qubits
             break
     gateset.update(_get_controlled_gateset(max_control))
+    if "u" in gateset:
+        gateset.update(_ADDITIONAL_U_GATES)
     return gateset
 
 
