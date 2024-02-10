@@ -493,8 +493,7 @@ def _create_free_parameters(operation, circuit_parameter_names):
 
 
 def _rename_param_vector_element(parameter, circuit_parameter_names):
-    param_name = str(parameter._symbol_expr)
-    renamed_parameter = f"{param_name.replace('[', '_').replace(']', '')}"
+    renamed_parameter = str(parameter).replace("[", "_").replace("]", "")
     if renamed_parameter in circuit_parameter_names:
         raise ValueError(
             "ParameterVector elements are renamed from v[i] to v_i, which resulted "
