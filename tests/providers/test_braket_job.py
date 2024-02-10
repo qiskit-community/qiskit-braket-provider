@@ -9,8 +9,8 @@ from qiskit.providers import JobStatus
 
 from qiskit_braket_provider.providers import (
     AmazonBraketTask,
-    BraketLocalBackend,
     AWSBraketJob,
+    BraketLocalBackend,
 )
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 

@@ -2,8 +2,8 @@
 
 from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
-from braket.device_schema.xanadu import XanaduDeviceCapabilities
 from braket.device_schema.quera import QueraDeviceCapabilities
+from braket.device_schema.xanadu import XanaduDeviceCapabilities
 from qiskit.providers import ProviderV1
 
 from .braket_backend import AWSBraketBackend, BraketLocalBackend
