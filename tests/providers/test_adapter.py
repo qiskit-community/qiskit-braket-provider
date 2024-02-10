@@ -501,7 +501,10 @@ class TestAdapter(TestCase):
         qiskit_circuit.rx(v0, 0)
         qiskit_circuit.ry(v[0], 0)
 
-        with pytest.raises(ValueError, match="Please rename your parameters."):
+        with pytest.raises(
+            ValueError,
+            match=r"Please check parameter\(s\): v_0.",
+        ):
             to_braket(qiskit_circuit)
 
     @patch("qiskit_braket_provider.providers.adapter.transpile")
