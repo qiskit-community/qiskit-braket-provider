@@ -2,39 +2,29 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
-
-import numpy as np
-import pytest
-
-from qiskit import (
-    QuantumCircuit,
-    QuantumRegister,
-    ClassicalRegister,
-    transpile,
-)
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
-
-from qiskit.circuit.library import standard_gates as qiskit_gates
-
 from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
-    to_qiskit,
-    to_braket,
-    convert_qiskit_to_braket_circuit,
-    convert_qiskit_to_braket_circuits,
     _GATE_NAME_TO_BRAKET_GATE,
     _GATE_NAME_TO_QISKIT_GATE,
     _get_controlled_gateset,
+    convert_qiskit_to_braket_circuit,
+    convert_qiskit_to_braket_circuits,
+    to_braket,
+    to_qiskit,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
-
 from tests.providers.test_braket_backend import combine_dicts
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero

@@ -1,10 +1,10 @@
 """Example of Hybrid Job payload with VQE."""
 from braket.jobs import save_job_result
-from qiskit.quantum_info import SparsePauliOp
 from qiskit.algorithms.minimum_eigensolvers import VQE
 from qiskit.algorithms.optimizers import SLSQP
 from qiskit.circuit.library import TwoLocal
 from qiskit.primitives import BackendEstimator
+from qiskit.quantum_info import SparsePauliOp
 
 from qiskit_braket_provider import AWSBraketProvider
 

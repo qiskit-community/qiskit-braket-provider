@@ -14,3 +14,4 @@ reno>=3.5.0
 # Black's formatting rules can change between major versions, so we use
 # the ~= specifier for it.
 black[jupyter]~=22.1
+isort>=5.12.0
