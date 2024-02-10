@@ -29,7 +29,6 @@ from qiskit.circuit import Measure, Parameter, ParameterExpression
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
 from qiskit_ionq import ionq_gates
-from sympy import sympify
 
 from qiskit_braket_provider.exception import QiskitBraketException
 
@@ -478,17 +477,17 @@ def _create_free_parameters(operation, circuit_parameter_names):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
         if isinstance(param, ParameterVectorElement):
-            cleaned_param_name = _rename_param_vector_element(
+            renamed_param_name = _rename_param_vector_element(
                 param, circuit_parameter_names
             )
-            params[i] = FreeParameter(cleaned_param_name)
+            params[i] = FreeParameter(renamed_param_name)
         elif isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
-            cleaned_param_name = _rename_param_vector_element(
+            renamed_param_name = _rename_param_vector_element(
                 param, circuit_parameter_names
             )
-            params[i] = FreeParameterExpression(sympify(cleaned_param_name))
+            params[i] = FreeParameterExpression(renamed_param_name)
 
     return params
 
