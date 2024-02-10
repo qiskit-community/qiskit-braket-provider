@@ -408,8 +408,8 @@ def to_braket(
     ):
         circuit = transpile(circuit, basis_gates=basis_gates, optimization_level=0)
 
-    # Verify that ParameterVector do not collide with scalar variables after renaming.
-    circuit_parameter_names = [p.name for p in circuit.parameters]
+    # Verify that ParameterVector would not collide with scalar variables after renaming.
+    _validate_name_conflicts(circuit.parameters)
 
     # Handle qiskit to braket conversion
     for circuit_instruction in circuit.data:
@@ -436,7 +436,7 @@ def to_braket(
                 "reset operation not supported by qiskit to braket adapter"
             )
         else:
-            params = _create_free_parameters(operation, circuit_parameter_names)
+            params = _create_free_parameters(operation)
             if (
                 isinstance(operation, ControlledGate)
                 and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
@@ -473,33 +473,32 @@ def to_braket(
     return braket_circuit
 
 
-def _create_free_parameters(operation, circuit_parameter_names):
+def _create_free_parameters(operation):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
         if isinstance(param, ParameterVectorElement):
-            renamed_param_name = _rename_param_vector_element(
-                param, circuit_parameter_names
-            )
+            renamed_param_name = _rename_param_vector_element(param)
             params[i] = FreeParameter(renamed_param_name)
         elif isinstance(param, Parameter):
             params[i] = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
-            renamed_param_name = _rename_param_vector_element(
-                param, circuit_parameter_names
-            )
+            renamed_param_name = _rename_param_vector_element(param)
             params[i] = FreeParameterExpression(renamed_param_name)
 
     return params
 
 
-def _rename_param_vector_element(parameter, circuit_parameter_names):
-    renamed_parameter = str(parameter).replace("[", "_").replace("]", "")
-    if renamed_parameter in circuit_parameter_names:
+def _rename_param_vector_element(parameter):
+    return str(parameter).replace("[", "_").replace("]", "")
+
+
+def _validate_name_conflicts(parameters):
+    renamed_parameters = {_rename_param_vector_element(param) for param in parameters}
+    if len(renamed_parameters) != len(parameters):
         raise ValueError(
             "ParameterVector elements are renamed from v[i] to v_i, which resulted "
-            f"in a conflict with another parameter. Please check parameter(s): {renamed_parameter}."
+            "in a conflict with another parameter. Please rename your parameters."
         )
-    return renamed_parameter
 
 
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
