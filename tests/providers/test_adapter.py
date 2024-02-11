@@ -503,79 +503,60 @@ class TestFromBraket(TestCase):
 
     def test_all_standard_gates(self):
         """
-        Tests braket to qiskit conversion with standard gates.
+        Tests Braket to Qiskit conversion with standard gates.
         """
 
-        gate_set = [attr for attr in dir(Gate) if attr[0].isupper()]
+        gate_set = [
+            attr
+            for attr in dir(Gate)
+            if attr[0].isupper() and attr.lower() in _GATE_NAME_TO_QISKIT_GATE
+        ]
+
+        # pytest.mark.parametrize is incompatible with TestCase
+        param_sets = [
+            [0.1, 0.2, 0.3],
+            [FreeParameter("a"), FreeParameter("b"), FreeParameter("c")],
+        ]
 
         for gate_name in gate_set:
-            if (
-                gate_name.lower() not in _GATE_NAME_TO_QISKIT_GATE
-                or gate_name.lower() in ["gpi", "gpi2", "ms"]
-            ):
-                continue
+            for params_braket in param_sets:
+                gate = getattr(Gate, gate_name)
+                if issubclass(gate, AngledGate):
+                    op = gate(params_braket[0])
+                elif issubclass(gate, TripleAngledGate):
+                    op = gate(*params_braket)
+                else:
+                    op = gate()
+                target = range(op.qubit_count)
+                instr = Instruction(op, target)
 
-            gate = getattr(Gate, gate_name)
-            if issubclass(gate, AngledGate):
-                op = gate(0.1)
-            elif issubclass(gate, TripleAngledGate):
-                op = gate(0.1, 0.1, 0.1)
-            else:
-                op = gate()
-            target = range(op.qubit_count)
-            instr = Instruction(op, target)
+                braket_circuit = Circuit().add_instruction(instr)
+                qiskit_circuit = to_qiskit(braket_circuit)
+                param_uuids = {
+                    param.name: param._uuid for param in qiskit_circuit.parameters
+                }
+                params_qiskit = [
+                    Parameter(param.name, uuid=param_uuids.get(param.name))
+                    if isinstance(param, FreeParameter)
+                    else param
+                    for param in params_braket
+                ]
 
-            braket_circuit = Circuit().add_instruction(instr)
-            qiskit_circuit = to_qiskit(braket_circuit)
-
-            expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
-            expected_qiskit_circuit.append(
-                _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()), target
-            )
-            expected_qiskit_circuit.measure_all()
-            expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
-                {p: 0.1 for p in expected_qiskit_circuit.parameters}
-            )
-
-            self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
-
-    def test_all_ionq_gates(self):
-        """
-        Tests braket to qiskit conversion with ionq gates.
-
-        Note: Braket gate angles are in radians while Qiskit IonQ gates expect turns.
-        """
-
-        gate_set = ["GPi", "GPi2", "MS"]
-
-        for gate_name in gate_set:
-            gate = getattr(Gate, gate_name)
-            value = 0.1
-            qiskit_gate_cls = _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower()).__class__
-            qiskit_value = 0.1 / (2 * np.pi)
-            if issubclass(gate, AngledGate):
-                op = gate(value)
-                qiskit_gate = qiskit_gate_cls(qiskit_value)
-            elif issubclass(gate, TripleAngledGate):
-                args = [value] * 3
-                qiskit_args = [qiskit_value] * 3
-                op = gate(*args)
-                qiskit_gate = qiskit_gate_cls(*qiskit_args)
-            else:
-                op = gate()
-                qiskit_gate = qiskit_gate_cls()
-
-            target = range(op.qubit_count)
-            instr = Instruction(op, target)
-
-            braket_circuit = Circuit().add_instruction(instr)
-            qiskit_circuit = to_qiskit(braket_circuit)
-
-            expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
-            expected_qiskit_circuit.append(qiskit_gate, target)
-            expected_qiskit_circuit.measure_all()
-
-            self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+                expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
+                qiskit_gate = _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower())
+                expected_qiskit_circuit.append(qiskit_gate, target)
+                expected_qiskit_circuit.measure_all()
+                expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
+                    dict(
+                        zip(
+                            # Need to use gate parameters because
+                            # circuit parameters are sorted alphabetically
+                            [list(expr.parameters)[0] for expr in qiskit_gate.params],
+                            params_qiskit[: len(qiskit_gate.params)],
+                        )
+                    )
+                )
+                self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_parametric_gates(self):
         """
