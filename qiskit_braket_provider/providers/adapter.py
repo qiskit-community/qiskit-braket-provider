@@ -526,7 +526,7 @@ def _create_qiskit_gate(
     gate_cls = gate_instance.__class__
     new_gate_params = []
     for param_expression, value in zip(gate_instance.params, gate_params):
-        # Assumes that each Qiksit gate has one free parameter per expression
+        # Assumes that each Qiskit gate has one free parameter per expression
         param = list(param_expression.parameters)[0]
         assigned = param_expression.assign(param, value)
         new_gate_params.append(assigned)
