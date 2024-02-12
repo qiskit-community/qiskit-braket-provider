@@ -504,7 +504,7 @@ def _validate_name_conflicts(parameters):
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
      Args:
-            circuit (Circuit): Braket quantum circuit
+        circuit (Circuit): Braket quantum circuit
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
