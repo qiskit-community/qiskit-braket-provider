@@ -549,8 +549,8 @@ class TestFromBraket(TestCase):
                 expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
                     dict(
                         zip(
-                            # Need to use gate parameters because
-                            # circuit parameters are sorted alphabetically
+                            # Need to use qiskit_gate.parameters because
+                            # qiskit_circuit.parameters is sorted alphabetically
                             [list(expr.parameters)[0] for expr in qiskit_gate.params],
                             params_qiskit[: len(qiskit_gate.params)],
                         )
