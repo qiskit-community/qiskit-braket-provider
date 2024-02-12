@@ -436,31 +436,29 @@ def to_braket(
                 "reset operation not supported by qiskit to braket adapter"
             )
         else:
-            params = _create_free_parameters(operation)
             if (
                 isinstance(operation, ControlledGate)
                 and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
             ):
                 raise ValueError("Negative control is not supported")
+
+            # Getting the index from the bit mapping
+            qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
+            params = _create_free_parameters(operation)
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
-                qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
                 gate_qubit_count = gate.qubit_count
-                target_indices = qubit_indices[-gate_qubit_count:]
-                instruction = Instruction(
-                    # Getting the index from the bit mapping
+                braket_circuit += Instruction(
                     operator=gate,
-                    target=target_indices,
+                    target=qubit_indices[-gate_qubit_count:],
                     control=qubit_indices[:-gate_qubit_count],
                 )
-                braket_circuit += instruction
             else:
                 for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
-                    instruction = Instruction(
+                    braket_circuit += Instruction(
                         operator=gate,
-                        target=[circuit.find_bit(qubit).index for qubit in qubits],
+                        target=qubit_indices,
                     )
-                    braket_circuit += instruction
 
     if circuit.global_phase > _EPS:
         braket_circuit.gphase(circuit.global_phase)
