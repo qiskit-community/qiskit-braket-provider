@@ -1,5 +1,4 @@
 """Tests for Qiskit to Braket adapter."""
-
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -9,7 +8,7 @@ from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observabl
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
-from qiskit.circuit import Parameter
+from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.providers.basicaer import BasicAer
@@ -465,6 +464,45 @@ class TestAdapter(TestCase):
         assert to_braket(qiskit_circuit, {"x"}, True) == Circuit().add_verbatim_box(
             Circuit().h(0).cnot(0, 1)
         )
+
+    def test_parameter_vector(self):
+        """Tests ParameterExpression translation."""
+        qiskit_circuit = QuantumCircuit(1)
+        v = ParameterVector("v", 2)
+        qiskit_circuit.rx(v[0], 0)
+        qiskit_circuit.ry(v[1], 0)
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit().rx(0, FreeParameter("v_0")).ry(0, FreeParameter("v_1"))
+        )
+        assert braket_circuit == expected_braket_circuit
+
+    def test_parameter_expression(self):
+        """Tests ParameterExpression translation."""
+        qiskit_circuit = QuantumCircuit(1)
+        v = ParameterVector("v", 2)
+        qiskit_circuit.rx(Parameter("a") + 2 * Parameter("b"), 0)
+        qiskit_circuit.ry(v[0] - 2 * v[1], 0)
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()
+            .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
+            .ry(0, FreeParameter("v_0") - 2 * FreeParameter("v_1"))
+        )
+        assert braket_circuit == expected_braket_circuit
+
+    def test_name_conflict_with_parameter_vector(self):
+        """Tests ParameterExpression translation."""
+        qiskit_circuit = QuantumCircuit(1)
+        v = ParameterVector("v", 1)
+        v0 = Parameter("v_0")
+        qiskit_circuit.rx(v0, 0)
+        qiskit_circuit.ry(v[0] + 1, 0)
+
+        with pytest.raises(ValueError, match="Please rename your parameters."):
+            to_braket(qiskit_circuit)
 
     @patch("qiskit_braket_provider.providers.adapter.transpile")
     def test_invalid_ctrl_state(self, mock_transpile):
