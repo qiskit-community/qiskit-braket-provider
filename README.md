@@ -38,9 +38,8 @@ For information on how to contribute to this project, please take a look at our 
 ----------------------------------------------------------------------------------------------------
 
 ## References and Acknowledgements
-[1] Qiskit https://qiskit.org/ \
-[2] Qiskit-terra https://github.com/Qiskit/qiskit-terra \
-[3] Amazon Braket Python SDK https://github.com/aws/amazon-braket-sdk-python
+[1] Qiskit https://www.ibm.com/quantum/qiskit \
+[2] Amazon Braket Python SDK https://github.com/aws/amazon-braket-sdk-python
 
 
 ----------------------------------------------------------------------------------------------------
