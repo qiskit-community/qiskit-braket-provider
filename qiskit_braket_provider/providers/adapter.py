@@ -503,7 +503,8 @@ def _validate_name_conflicts(parameters):
 
 def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
-     Args:
+
+    Args:
         circuit (Circuit): Braket quantum circuit
 
     Returns:
@@ -550,18 +551,15 @@ def _create_qiskit_gate(
     gate_name: str, gate_params: list[Union[float, Parameter]]
 ) -> Instruction:
     gate_instance = _GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
+    if gate_instance is None:
+        raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
+    gate_cls = gate_instance.__class__
     new_gate_params = []
     for param_expression, value in zip(gate_instance.params, gate_params):
+        # Assumes that each Qiskit gate has one free parameter per expression
         param = list(param_expression.parameters)[0]
-        if isinstance(value, Parameter):
-            new_gate_params.append(value)
-        else:
-            bound_param_expression = param_expression.bind({param: value})
-            new_gate_params.append(bound_param_expression)
-    if gate_instance is not None:
-        gate_cls = gate_instance.__class__
-    else:
-        raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
+        assigned = param_expression.assign(param, value)
+        new_gate_params.append(assigned)
     return gate_cls(*new_gate_params)
 
 
