@@ -408,11 +408,6 @@ def to_braket(
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
 
     basis_gates = set(basis_gates or _TRANSLATABLE_QISKIT_GATE_NAMES)
-    gphase_supported = _GPHASE_GATE_NAME in basis_gates
-
-    # Force global phase to come only from the global_phase property,
-    # rather than global phase gates
-    basis_gates.discard(_GPHASE_GATE_NAME)
 
     braket_circuit = Circuit()
     if not verbatim and not {gate.name for gate, _, _ in circuit.data}.issubset(
@@ -474,7 +469,7 @@ def to_braket(
 
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
-        if gphase_supported:
+        if _GPHASE_GATE_NAME in basis_gates:
             braket_circuit.gphase(global_phase)
         else:
             warnings.warn(
