@@ -32,6 +32,8 @@ from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.exception import QiskitBraketException
 
+_GPHASE_GATE_NAME = "global_phase"
+
 _BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
     "phaseshift": "p",
@@ -63,6 +65,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi": "gpi",
     "gpi2": "gpi2",
     "ms": "ms",
+    "gphase": _GPHASE_GATE_NAME,
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
@@ -108,12 +111,14 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "ecr": lambda: [braket_gates.ECR()],
     "iswap": lambda: [braket_gates.ISwap()],
     # IonQ gates
-    "gpi": lambda angle: [braket_gates.GPi(2 * pi * angle)],
-    "gpi2": lambda angle: [braket_gates.GPi2(2 * pi * angle)],
-    "ms": lambda angle_1, angle_2, angle_3: [
-        braket_gates.MS(2 * pi * angle_1, 2 * pi * angle_2, 2 * pi * angle_3)
+    "gpi": lambda turns: [braket_gates.GPi(2 * pi * turns)],
+    "gpi2": lambda turns: [braket_gates.GPi2(2 * pi * turns)],
+    "ms": lambda turns_1, turns_2, turns_3: [
+        braket_gates.MS(2 * pi * turns_1, 2 * pi * turns_2, 2 * pi * turns_3)
     ],
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
+    # Global phase
+    _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
@@ -174,6 +179,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
         Parameter("phi1") / (2 * pi),
         Parameter("theta") / (2 * pi),
     ),
+    "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
 }
 
 
@@ -398,9 +404,15 @@ def to_braket(
     Returns:
         Circuit: Braket circuit
     """
-    basis_gates = basis_gates or _TRANSLATABLE_QISKIT_GATE_NAMES
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
+
+    basis_gates = set(basis_gates or _TRANSLATABLE_QISKIT_GATE_NAMES)
+    gphase_supported = _GPHASE_GATE_NAME in basis_gates
+
+    # Force global phase to come only from the global_phase property,
+    # rather than global phase gates
+    basis_gates.discard(_GPHASE_GATE_NAME)
 
     braket_circuit = Circuit()
     if not verbatim and not {gate.name for gate, _, _ in circuit.data}.issubset(
@@ -460,8 +472,15 @@ def to_braket(
                         target=qubit_indices,
                     )
 
-    if circuit.global_phase > _EPS:
-        braket_circuit.gphase(circuit.global_phase)
+    global_phase = circuit.global_phase
+    if abs(global_phase) > _EPS:
+        if gphase_supported:
+            braket_circuit.gphase(global_phase)
+        else:
+            warnings.warn(
+                f"Device does not support global phase; "
+                f"global phase of {global_phase} will not be included in Braket circuit"
+            )
 
     if verbatim:
         return Circuit(braket_circuit.result_types).add_verbatim_box(
