@@ -9,7 +9,7 @@ from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import Parameter, ParameterVector
-from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.providers.basicaer import BasicAer
 from qiskit.quantum_info import SparsePauliOp
@@ -242,13 +242,19 @@ class TestAdapter(TestCase):
         """Tests conversion when transpiler generates a global phase"""
         qiskit_circuit = QuantumCircuit(1, global_phase=np.pi / 2)
         qiskit_circuit.h(0)
+        gate = GlobalPhaseGate(1.23)
+        qiskit_circuit.append(gate, [])
 
         braket_circuit = to_braket(qiskit_circuit)
-
-        expected_braket_circuit = Circuit().h(0).gphase(np.pi / 2)
-
-        self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase)
+        expected_braket_circuit = Circuit().h(0).gphase(1.23).gphase(np.pi / 2)
+        self.assertEqual(
+            braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0]
+        )
         self.assertEqual(braket_circuit, expected_braket_circuit)
+
+        braket_circuit_no_gphase = to_braket(qiskit_circuit, basis_gates={"h"})
+        self.assertEqual(braket_circuit_no_gphase.global_phase, 0)
+        self.assertEqual(braket_circuit_no_gphase, Circuit().h(0))
 
     def test_exponential_gate_decomp(self):
         """Tests adapter translation of exponential gates"""
@@ -303,6 +309,7 @@ class TestAdapter(TestCase):
             "rxx": "xx",
             "ryy": "yy",
             "zz": "zz",
+            "global_phase": "gphase",
         }
 
         qiskit_to_braket_gate_names |= {
