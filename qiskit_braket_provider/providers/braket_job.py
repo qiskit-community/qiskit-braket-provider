@@ -4,9 +4,8 @@ from datetime import datetime
 from typing import List, Optional, Union
 from warnings import warn
 
-from braket.aws import AwsQuantumTask
+from braket.aws import AwsQuantumTask, AwsQuantumTaskBatch
 from braket.aws.queue_information import QuantumTaskQueueInfo
-from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.result import Result
@@ -19,7 +18,7 @@ def retry_if_result_none(result):
 
 
 def _get_result_from_aws_tasks(
-    tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]]
+    tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
 ) -> Optional[List[ExperimentResult]]:
     """Returns experiment results of AWS tasks.
 
@@ -32,9 +31,12 @@ def _get_result_from_aws_tasks(
     """
     experiment_results: List[ExperimentResult] = []
 
+    results = AwsQuantumTaskBatch._retrieve_results(
+        tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
+    )
+
     # For each task the results is get and filled into an ExperimentResult object
-    for task in tasks:
-        result: GateModelQuantumTaskResult = task.result()
+    for task, result in zip(tasks, results):
         if not result:
             return None
 
@@ -63,7 +65,9 @@ def _get_result_from_aws_tasks(
         experiment_result = ExperimentResult(
             shots=result.task_metadata.shots,
             success=True,
-            status=task.state(),
+            status=task.state()
+            if isinstance(task, LocalQuantumTask)
+            else result.task_metadata.status,
             data=data,
         )
         experiment_results.append(experiment_result)
@@ -154,22 +158,29 @@ class AmazonBraketTask(JobV1):
 
     def result(self) -> Result:
         experiment_results = _get_result_from_aws_tasks(tasks=self._tasks)
+        status = self.status(use_cached_value=True)
+
         return Result(
             backend_name=self._backend,
             backend_version=self._backend.version,
             job_id=self._task_id,
             qobj_id=0,
-            success=self.status() not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
+            success=status not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
             results=experiment_results,
-            status=self.status(),
+            status=status,
         )
 
     def cancel(self):
         for task in self._tasks:
             task.cancel()
 
-    def status(self):
-        braket_tasks_states = [task.state() for task in self._tasks]
+    def status(self, use_cached_value: bool = False):
+        braket_tasks_states = [
+            task.state()
+            if isinstance(task, LocalQuantumTask)
+            else task.state(use_cached_value=use_cached_value)
+            for task in self._tasks
+        ]
 
         if "FAILED" in braket_tasks_states:
             status = JobStatus.ERROR
