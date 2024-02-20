@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Tutorial: Variational algorithms on Hybrid jobs" href="2_tutorial_hybrid_jobs.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Running variational quantum algorithms with Amazon Braket Hybrid Jobs" href="2_tutorial_hybrid_jobs.html" />
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2023.08.19 -->
-        <title>Tutorial: Minimum Eigen Optimizer - Qiskit-Braket provider 0.1.1</title>
+        <title>Minimum Eigen Optimizer - Qiskit-Braket provider 0.1.1</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=82a976d7" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -203,10 +203,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="0_tutorial_qiskit-braket-provider_overview.html">Tutorial: Qiskit-Braket provider overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Tutorial: Runing VQE on Braket backend</a></li>
-<li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Tutorial: Variational algorithms on Hybrid jobs</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Tutorial: Minimum Eigen Optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Minimum Eigen Optimizer</a></li>
 </ul>
 
 </div></div>
@@ -239,30 +239,58 @@
           </label>
         </div>
         <article role="main">
-          <section id="Tutorial:-Minimum-Eigen-Optimizer">
-<h1>Tutorial: Minimum Eigen Optimizer<a class="headerlink" href="#Tutorial:-Minimum-Eigen-Optimizer" title="Link to this heading">#</a></h1>
-<p>For original tutorial refer to <a class="reference external" href="https://qiskit-community.github.io/qiskit-optimization/tutorials/03_minimum_eigen_optimizer">https://qiskit-community.github.io/qiskit-optimization/tutorials/03_minimum_eigen_optimizer</a>.html#</p>
+          <section id="Minimum-Eigen-Optimizer">
+<h1>Minimum Eigen Optimizer<a class="headerlink" href="#Minimum-Eigen-Optimizer" title="Link to this heading">#</a></h1>
+<section id="About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend">
+<h2>About this notebook and the adaptation to Amazon Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend" title="Link to this heading">#</a></h2>
+<p>The original version of this notebook is accessible at <a class="reference external" href="https://github.com/qiskit-community/qiskit-optimization/blob/stable/0.6/docs/tutorials/03_minimum_eigen_optimizer.ipynb">docs/tutorials/03_minimum_eigen_optimizer.ipynb</a>. The only changes made to the original notebook are contained in the first cell and in cell #6 where we pass the <code class="docutils literal notranslate"><span class="pre">BackendSampler</span></code> object to execute the tasks on Amazon Braket SV1 simulator.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>qiskit_optimization
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">BackendSampler</span>
+<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSampler</span><span class="p">(</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">AWSBraketProvider</span><span class="p">()</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">),</span>
+    <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shots&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">},</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
+</section>
+<section id="Introduction">
+<h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">#</a></h2>
+<p>An interesting class of optimization problems to be addressed by quantum computing are Quadratic Unconstrained Binary Optimization (QUBO) problems. Finding the solution to a QUBO is equivalent to finding the ground state of a corresponding Ising Hamiltonian, which is an important problem not only in optimization, but also in quantum chemistry and physics. For this translation, the binary variables taking values in <span class="math notranslate nohighlight">\(\{0, 1\}\)</span> are replaced by spin variables taking values in
+<span class="math notranslate nohighlight">\(\{-1, +1\}\)</span>, which allows one to replace the resulting spin variables by Pauli Z matrices, and thus, an Ising Hamiltonian. For more details on this mapping we refer to [1].</p>
+<p>Qiskit optimization provides automatic conversion from a suitable <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> to an Ising Hamiltonian, which then allows leveraging all the <code class="docutils literal notranslate"><span class="pre">SamplingMinimumEigensolver</span></code> implementations, such as</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SamplingVQE</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">QAOA</span></code>, or</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NumpyMinimumEigensolver</span></code> (classical exact method).</p></li>
+</ul>
+<p>Note 1: <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> does not support <code class="docutils literal notranslate"><span class="pre">qiskit_algorithms.VQE</span></code>. But <code class="docutils literal notranslate"><span class="pre">qiskit_algorithms.SamplingVQE</span></code> can be used instead.</p>
+<p>Note 2: <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> can use <code class="docutils literal notranslate"><span class="pre">NumpyMinimumEigensolver</span></code> as an exception case though it inherits <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code> (not <code class="docutils literal notranslate"><span class="pre">SamplingMinimumEigensolver</span></code>).</p>
+<p>Qiskit optimization provides a the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> class, which wraps the translation to an Ising Hamiltonian (in Qiskit Terra also called <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code>), the call to a <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code>, and the translation of the results back to an <code class="docutils literal notranslate"><span class="pre">OptimizationResult</span></code>.</p>
+<p>In the following we first illustrate the conversion from a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> to a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> and then show how to use the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> with different <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code>s to solve a given <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code>. The algorithms in Qiskit optimization automatically try to convert a given problem to the supported problem class if possible, for instance, the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> will automatically translate integer variables to binary variables or add linear equality
+constraints as a quadratic penalty term to the objective. It should be mentioned that a <code class="docutils literal notranslate"><span class="pre">QiskitOptimizationError</span></code> will be thrown if conversion of a quadratic program with integer variables is attempted.</p>
+<p>The circuit depth of <code class="docutils literal notranslate"><span class="pre">QAOA</span></code> potentially has to be increased with the problem size, which might be prohibitive for near-term quantum devices. A possible workaround is Recursive QAOA, as introduced in [2]. Qiskit optimization generalizes this concept to the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code>, which is introduced at the end of this tutorial.</p>
+<section id="References">
+<h3>References<a class="headerlink" href="#References" title="Link to this heading">#</a></h3>
+<p>[1] <a class="reference external" href="https://arxiv.org/abs/1302.5843">A. Lucas, Ising formulations of many NP problems, Front. Phys., 12 (2014).</a></p>
+<p>[2] <a class="reference external" href="https://arxiv.org/abs/1910.08980">S. Bravyi, A. Kliesch, R. Koenig, E. Tang, Obstacles to State Preparation and Variational Optimization from Symmetry Protection, arXiv preprint arXiv:1910.08980 (2019).</a></p>
+</section>
+</section>
+<section id="Converting-a-QUBO-to-a-SparsePauliOp">
+<h2>Converting a QUBO to a SparsePauliOp<a class="headerlink" href="#Converting-a-QUBO-to-a-SparsePauliOp" title="Link to this heading">#</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
-
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
-<span class="kn">from</span> <span class="nn">qiskit.utils</span> <span class="kn">import</span> <span class="n">algorithm_globals</span>
-<span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">BackendSampler</span>
-<span class="kn">from</span> <span class="nn">qiskit.algorithms.minimum_eigensolvers</span> <span class="kn">import</span> <span class="n">QAOA</span><span class="p">,</span> <span class="n">NumPyMinimumEigensolver</span>
-<span class="kn">from</span> <span class="nn">qiskit.algorithms.optimizers</span> <span class="kn">import</span> <span class="n">COBYLA</span>
-<span class="kn">from</span> <span class="nn">qiskit.visualization</span> <span class="kn">import</span> <span class="n">plot_histogram</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_algorithms.utils</span> <span class="kn">import</span> <span class="n">algorithm_globals</span>
+<span class="kn">from</span> <span class="nn">qiskit_algorithms</span> <span class="kn">import</span> <span class="n">QAOA</span><span class="p">,</span> <span class="n">NumPyMinimumEigensolver</span>
+<span class="kn">from</span> <span class="nn">qiskit_algorithms.optimizers</span> <span class="kn">import</span> <span class="n">COBYLA</span>
+<span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">Sampler</span>
 <span class="kn">from</span> <span class="nn">qiskit_optimization.algorithms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MinimumEigenOptimizer</span><span class="p">,</span>
     <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">,</span>
@@ -270,15 +298,14 @@
     <span class="n">OptimizationResultStatus</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qiskit_optimization</span> <span class="kn">import</span> <span class="n">QuadraticProgram</span>
-
-<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+<span class="kn">from</span> <span class="nn">qiskit.visualization</span> <span class="kn">import</span> <span class="n">plot_histogram</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 </pre></div>
 </div>
 </div>
-<section id="Converting-a-QUBO-to-an-Operator">
-<h2>Converting a QUBO to an Operator<a class="headerlink" href="#Converting-a-QUBO-to-an-Operator" title="Link to this heading">#</a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a QUBO</span>
@@ -289,7 +316,7 @@
 <span class="n">qubo</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
     <span class="n">linear</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">quadratic</span><span class="o">=</span><span class="p">{(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">):</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">):</span> <span class="mi">2</span><span class="p">}</span>
 <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">qubo</span><span class="o">.</span><span class="n">export_as_lp_string</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">qubo</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -298,31 +325,26 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-\ This file has been generated by DOcplex
-\ ENCODING=ISO-8859-1
-\Problem name: CPLEX
+Problem name:
 
 Minimize
- obj: x - 2 y + 3 z + [ 2 x*y - 2 x*z + 4 y*z ]/2
-Subject To
+  x*y - x*z + 2*y*z + x - 2*y + 3*z
 
-Bounds
- 0 &lt;= x &lt;= 1
- 0 &lt;= y &lt;= 1
- 0 &lt;= z &lt;= 1
+Subject to
+  No constraints
 
-Binaries
- x y z
-End
+  Binary variables (3)
+    x y z
 
 </pre></div></div>
 </div>
+<p>Next we translate this QUBO into an Ising operator. This results not only in a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> but also in a constant offset to be taken into account to shift the resulting value.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">op</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">qubo</span><span class="o">.</span><span class="n">to_ising</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;offset: </span><span class="si">{</span><span class="n">offset</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;offset: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">offset</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;operator:&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
 </pre></div>
@@ -335,21 +357,18 @@ End
 <div class="highlight"><pre>
 offset: 1.5
 operator:
--0.5 * IIZ
-+ 0.25 * IZI
-- 1.75 * ZII
-+ 0.25 * IZZ
-- 0.25 * ZIZ
-+ 0.5 * ZZI
+SparsePauliOp([&#39;IIZ&#39;, &#39;IZI&#39;, &#39;ZII&#39;, &#39;IZZ&#39;, &#39;ZIZ&#39;, &#39;ZZI&#39;],
+              coeffs=[-0.5 +0.j,  0.25+0.j, -1.75+0.j,  0.25+0.j, -0.25+0.j,  0.5 +0.j])
 </pre></div></div>
 </div>
+<p>Sometimes a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> might also directly be given in the form of a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code>. For such cases, Qiskit optimization also provides a translator from a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> back to a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code>, which we illustrate in the following.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qp</span> <span class="o">=</span> <span class="n">QuadraticProgram</span><span class="p">()</span>
 <span class="n">qp</span><span class="o">.</span><span class="n">from_ising</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">linear</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">qp</span><span class="o">.</span><span class="n">export_as_lp_string</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">qp</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -358,49 +377,37 @@ operator:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-\ This file has been generated by DOcplex
-\ ENCODING=ISO-8859-1
-\Problem name: CPLEX
+Problem name:
 
 Minimize
- obj: x0 - 2 x1 + 3 x2 + [ 2 x0*x1 - 2 x0*x2 + 4 x1*x2 ]/2
-Subject To
+  x0*x1 - x0*x2 + 2*x1*x2 + x0 - 2*x1 + 3*x2
 
-Bounds
- 0 &lt;= x0 &lt;= 1
- 0 &lt;= x1 &lt;= 1
- 0 &lt;= x2 &lt;= 1
+Subject to
+  No constraints
 
-Binaries
- x0 x1 x2
-End
+  Binary variables (3)
+    x0 x1 x2
 
 </pre></div></div>
 </div>
+<p>This translator allows, for instance, one to translate a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> to a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> and then solve the problem with other algorithms that are not based on the Ising Hamiltonian representation, such as the <code class="docutils literal notranslate"><span class="pre">GroverOptimizer</span></code>.</p>
 </section>
 <section id="Solving-a-QUBO-with-the-MinimumEigenOptimizer">
 <h2>Solving a QUBO with the MinimumEigenOptimizer<a class="headerlink" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer" title="Link to this heading">#</a></h2>
+<p>We start by initializing the <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code> we want to use.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="mi">10598</span>
-
-<span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSampler</span><span class="p">(</span>
-    <span class="n">backend</span><span class="o">=</span><span class="n">AWSBraketProvider</span><span class="p">()</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">local</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="n">options</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;seed_simulator&quot;</span><span class="p">:</span> <span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span><span class="p">,</span>
-        <span class="s2">&quot;seed_transpiler&quot;</span><span class="p">:</span> <span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="n">skip_transpilation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="n">qaoa_mes</span> <span class="o">=</span> <span class="n">QAOA</span><span class="p">(</span><span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">COBYLA</span><span class="p">(),</span> <span class="n">initial_point</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
 <span class="n">exact_mes</span> <span class="o">=</span> <span class="n">NumPyMinimumEigensolver</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
+<p>Then, we use the <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code> to create <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code>.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa</span> <span class="o">=</span> <span class="n">MinimumEigenOptimizer</span><span class="p">(</span><span class="n">qaoa_mes</span><span class="p">)</span>  <span class="c1"># using QAOA</span>
@@ -410,12 +417,13 @@ End
 </pre></div>
 </div>
 </div>
+<p>We first use the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> based on the classical exact <code class="docutils literal notranslate"><span class="pre">NumPyMinimumEigensolver</span></code> to get the optimal benchmark solution for this small example.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exact_result</span> <span class="o">=</span> <span class="n">exact</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">exact_result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">exact_result</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -424,15 +432,18 @@ End
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
+objective function value: -2.0
+variable values: x=0.0, y=1.0, z=0.0
+status: SUCCESS
 </pre></div></div>
 </div>
+<p>Next we apply the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> based on <code class="docutils literal notranslate"><span class="pre">QAOA</span></code> to the same problem.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa_result</span> <span class="o">=</span> <span class="n">qaoa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">qaoa_result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">qaoa_result</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -441,19 +452,22 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
+objective function value: -2.0
+variable values: x=0.0, y=1.0, z=0.0
+status: SUCCESS
 </pre></div></div>
 </div>
-</section>
 <section id="Analysis-of-Samples">
-<h2>Analysis of Samples<a class="headerlink" href="#Analysis-of-Samples" title="Link to this heading">#</a></h2>
+<h3>Analysis of Samples<a class="headerlink" href="#Analysis-of-Samples" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">OptimizationResult</span></code> provides useful information in the form of <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code>s (here denoted as <em>samples</em>). Each <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code> contains information about the input values (<code class="docutils literal notranslate"><span class="pre">x</span></code>), the corresponding objective function value (<code class="docutils literal notranslate"><span class="pre">fval</span></code>), the fraction of samples corresponding to that input (<code class="docutils literal notranslate"><span class="pre">probability</span></code>), and the solution <code class="docutils literal notranslate"><span class="pre">status</span></code> (<code class="docutils literal notranslate"><span class="pre">SUCCESS</span></code>, <code class="docutils literal notranslate"><span class="pre">FAILURE</span></code>, <code class="docutils literal notranslate"><span class="pre">INFEASIBLE</span></code>). Multiple samples corresponding to the same input are consolidated into a single <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code> (with its
+<code class="docutils literal notranslate"><span class="pre">probability</span></code> attribute being the aggregate fraction of samples represented by that <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code>).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;variable order:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">])</span>
-<span class="k">for</span> <span class="n">smpl</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">samples</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">smpl</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">samples</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -463,18 +477,19 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 variable order: [&#39;x&#39;, &#39;y&#39;, &#39;z&#39;]
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.4013671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.162109375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.2216796875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.1376953125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0146484375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.0322265625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.001953125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.457, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.128, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.172, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.136, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.039, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.05, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.005, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
+<p>We may also want to filter samples according to their status or probabilities.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_filtered_samples</span><span class="p">(</span>
@@ -484,18 +499,17 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.001953125, status=
         <span class="n">OptimizationResultStatus</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns filtered samples.&quot;&quot;&quot;</span>
     <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">sample</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">allowed_status</span> <span class="ow">and</span> <span class="n">sample</span><span class="o">.</span><span class="n">probability</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">allowed_status</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">res</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_samples</span> <span class="o">=</span> <span class="n">get_filtered_samples</span><span class="p">(</span>
@@ -513,17 +527,18 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.001953125, status=
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.4013671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.162109375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.2216796875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.1376953125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0146484375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.0322265625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.457, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.128, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.172, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.136, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.039, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.05, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
+<p>If we want to obtain a better perspective of the results, statistics is very helpful, both with respect to the objective function values and their respective probabilities. Thus, mean and standard deviation are the very basics for understanding the results.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[31]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">fval</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">samples</span><span class="p">]</span>
@@ -532,7 +547,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
@@ -540,7 +555,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[32]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -549,7 +564,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
@@ -557,7 +572,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[33]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -565,37 +580,38 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 1.9364916731037085
 </pre></div></div>
 </div>
+<p>Finally, despite all the number-crunching, visualization is usually the best early-analysis approach.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">smpl</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
-    <span class="p">):</span> <span class="n">smpl</span><span class="o">.</span><span class="n">probability</span>
-    <span class="k">for</span> <span class="n">smpl</span> <span class="ow">in</span> <span class="n">filtered_samples</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+    <span class="p">):</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">filtered_samples</span>
 <span class="p">}</span>
 <span class="n">samples_for_plot</span>
 </pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[34]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;x=0 y=1 z=0&#39;: 0.4013671875,
- &#39;x=1 y=1 z=0&#39;: 0.162109375,
- &#39;x=0 y=0 z=0&#39;: 0.2216796875,
- &#39;x=1 y=0 z=0&#39;: 0.1376953125,
- &#39;x=0 y=1 z=1&#39;: 0.0146484375,
- &#39;x=1 y=0 z=1&#39;: 0.0322265625,
- &#39;x=0 y=0 z=1&#39;: 0.0283203125}
+{&#39;x=0 y=1 z=0&#39;: 0.457,
+ &#39;x=1 y=1 z=0&#39;: 0.128,
+ &#39;x=0 y=0 z=0&#39;: 0.172,
+ &#39;x=1 y=0 z=0&#39;: 0.136,
+ &#39;x=0 y=0 z=1&#39;: 0.039,
+ &#39;x=1 y=0 z=1&#39;: 0.05,
+ &#39;x=0 y=1 z=1&#39;: 0.013}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">samples_for_plot</span><span class="p">)</span>
@@ -603,18 +619,22 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[35]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_20_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_20_0.png" />
+<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_33_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_33_0.png" />
 </div>
 </div>
 </section>
+</section>
 <section id="RecursiveMinimumEigenOptimizer">
 <h2>RecursiveMinimumEigenOptimizer<a class="headerlink" href="#RecursiveMinimumEigenOptimizer" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> takes a <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> as input and applies the recursive optimization scheme to reduce the size of the problem one variable at a time. Once the size of the generated intermediate problem is below a given threshold (<code class="docutils literal notranslate"><span class="pre">min_num_vars</span></code>), the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> uses another solver (<code class="docutils literal notranslate"><span class="pre">min_num_vars_optimizer</span></code>), e.g., an exact classical solver such as CPLEX or the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> based on the <code class="docutils literal notranslate"><span class="pre">NumPyMinimumEigensolver</span></code>.</p>
+<p>In the following, we show how to use the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> using the two <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code>s introduced before.</p>
+<p>First, we construct the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> such that it reduces the problem size from 3 variables to 1 variable and then uses the exact solver for the last variable. Then we call <code class="docutils literal notranslate"><span class="pre">solve</span></code> to optimize the considered problem.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[36]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa</span> <span class="o">=</span> <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">(</span>
@@ -624,11 +644,11 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[37]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa_result</span> <span class="o">=</span> <span class="n">rqaoa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">rqaoa_result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rqaoa_result</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -637,11 +657,13 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
+objective function value: -2.0
+variable values: x=0.0, y=1.0, z=0.0
+status: SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[38]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_samples</span> <span class="o">=</span> <span class="n">get_filtered_samples</span><span class="p">(</span>
@@ -653,7 +675,7 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
@@ -667,7 +689,7 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[39]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -676,7 +698,7 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">samples_for_plot</span><span class="p">)</span>
@@ -684,12 +706,35 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[40]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_26_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_26_0.png" />
+<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_41_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_41_0.png" />
 </div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qiskit.tools.jupyter</span>
+
+<span class="o">%</span><span class="k">qiskit_version_table</span>
+<span class="o">%</span><span class="k">qiskit_copyright</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<h3>Version Information</h3><table><tr><th>Software</th><th>Version</th></tr><tr><td><code>qiskit</code></td><td>0.45.2</td></tr><tr><td><code>qiskit_ibm_provider</code></td><td>0.8.0</td></tr><tr><td><code>qiskit_optimization</code></td><td>0.6.0</td></tr><tr><td><code>qiskit_aer</code></td><td>0.13.2</td></tr><tr><td><code>qiskit_algorithms</code></td><td>0.2.2</td></tr><tr><td><code>qiskit_ionq</code></td><td>0.4.7</td></tr><tr><td><code>qiskit_ibm_runtime</code></td><td>0.17.0</td></tr><tr><th colspan='2'>System information</th></tr><tr><td>Python version</td><td>3.10.13</td></tr><tr><td>Python compiler</td><td>Clang 15.0.0 (clang-1500.1.0.2.5)</td></tr><tr><td>Python build</td><td>main, Aug 24 2023 12:59:26</td></tr><tr><td>OS</td><td>Darwin</td></tr><tr><td>CPUs</td><td>8</td></tr><tr><td>Memory (Gb)</td><td>16.0</td></tr><tr><td colspan='2'>Tue Feb 13 17:28:51 2024 EST</td></tr></table></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div style='width: 100%; background-color:#d5d9e0;padding-left: 10px; padding-bottom: 10px; padding-right: 10px; padding-top: 5px'><h3>This code is a part of Qiskit</h3><p>&copy; Copyright IBM 2017, 2024.</p><p>This code is licensed under the Apache License, Version 2.0. You may<br>obtain a copy of this license in the LICENSE.txt file in the root directory<br> of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.<p>Any modifications or derivative works of this code must retain this<br>copyright notice, and modified files need to carry a notice indicating<br>that they have been altered from the originals.</p></div></div>
 </div>
 </section>
 </section>
@@ -706,7 +751,7 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Tutorial: Variational algorithms on Hybrid jobs</div>
+                <div class="title">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</div>
                 
               </div>
             </a>
@@ -740,10 +785,17 @@ fval=-2.0, x=0.0, y=1.0, z=0.0, status=SUCCESS
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Tutorial: Minimum Eigen Optimizer</a><ul>
-<li><a class="reference internal" href="#Converting-a-QUBO-to-an-Operator">Converting a QUBO to an Operator</a></li>
-<li><a class="reference internal" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer">Solving a QUBO with the MinimumEigenOptimizer</a></li>
+<li><a class="reference internal" href="#">Minimum Eigen Optimizer</a><ul>
+<li><a class="reference internal" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend">About this notebook and the adaptation to Amazon Braket backend</a></li>
+<li><a class="reference internal" href="#Introduction">Introduction</a><ul>
+<li><a class="reference internal" href="#References">References</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Converting-a-QUBO-to-a-SparsePauliOp">Converting a QUBO to a SparsePauliOp</a></li>
+<li><a class="reference internal" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer">Solving a QUBO with the MinimumEigenOptimizer</a><ul>
 <li><a class="reference internal" href="#Analysis-of-Samples">Analysis of Samples</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#RecursiveMinimumEigenOptimizer">RecursiveMinimumEigenOptimizer</a></li>
 </ul>
 </li>
