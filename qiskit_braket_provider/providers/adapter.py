@@ -76,8 +76,6 @@ _ARBITRARY_CONTROLLED_GATES = {"mcx"}
 
 _ADDITIONAL_U_GATES = {"u1", "u2", "u3"}
 
-_EPS = 1e-10  # global variable used to chop very small numbers to zero
-
 _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "u1": lambda lam: [braket_gates.U(0, 0, lam)],
     "u2": lambda phi, lam: [braket_gates.U(pi / 2, phi, lam)],
@@ -468,7 +466,7 @@ def to_braket(
                     )
 
     global_phase = circuit.global_phase
-    if abs(global_phase) > _EPS:
+    if global_phase:
         if _GPHASE_GATE_NAME in basis_gates:
             braket_circuit.gphase(global_phase)
         else:
