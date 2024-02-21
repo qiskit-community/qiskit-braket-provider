@@ -255,9 +255,9 @@ class TestAdapter(TestCase):
             )
             self.assertEqual(braket_circuit, expected_braket_circuit)
 
-            braket_circuit_no_gphase = to_braket(qiskit_circuit, basis_gates={"h"})
-            self.assertEqual(braket_circuit_no_gphase.global_phase, 0)
-            self.assertEqual(braket_circuit_no_gphase, Circuit().h(0))
+        braket_circuit_no_gphase = to_braket(qiskit_circuit, basis_gates={"h"})
+        self.assertEqual(braket_circuit_no_gphase.global_phase, 0)
+        self.assertEqual(braket_circuit_no_gphase, Circuit().h(0))
 
     def test_exponential_gate_decomp(self):
         """Tests adapter translation of exponential gates"""
