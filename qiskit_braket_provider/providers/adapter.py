@@ -449,7 +449,8 @@ def to_braket(
 
             # Getting the index from the bit mapping
             qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
-            params = _create_free_parameters(operation)
+            qiskit_params = operation.params if hasattr(operation, "params") else []
+            params = _create_free_parameters(qiskit_params)
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
                 gate_qubit_count = gate.qubit_count
@@ -465,14 +466,15 @@ def to_braket(
                         target=qubit_indices,
                     )
 
-    global_phase = circuit.global_phase
-    if global_phase:
+    qiskit_global_phase = circuit.global_phase
+    if qiskit_global_phase:
         if _GPHASE_GATE_NAME in basis_gates:
-            braket_circuit.gphase(global_phase)
+            braket_global_phase = _create_free_parameters(qiskit_global_phase)
+            braket_circuit.gphase(braket_global_phase)
         else:
             warnings.warn(
                 f"Device does not support global phase; "
-                f"global phase of {global_phase} will not be included in Braket circuit"
+                f"global phase of {qiskit_global_phase} will not be included in Braket circuit"
             )
 
     if verbatim:
@@ -483,8 +485,12 @@ def to_braket(
     return braket_circuit
 
 
-def _create_free_parameters(operation):
-    params = operation.params if hasattr(operation, "params") else []
+def _create_free_parameters(params):
+    was_params_singleton = False
+    if not isinstance(params, list):
+        params = [params]
+        was_params_singleton = True
+
     for i, param in enumerate(params):
         if isinstance(param, ParameterVectorElement):
             renamed_param_name = _rename_param_vector_element(param)
@@ -498,7 +504,7 @@ def _create_free_parameters(operation):
                 renamed_param_name = _rename_param_vector_element(param)
                 params[i] = FreeParameterExpression(renamed_param_name)
 
-    return params
+    return params[0] if was_params_singleton else params
 
 
 def _rename_param_vector_element(parameter):
