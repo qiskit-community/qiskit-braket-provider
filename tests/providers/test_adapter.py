@@ -27,8 +27,6 @@ from qiskit_braket_provider.providers.adapter import (
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
 from tests.providers.test_braket_backend import combine_dicts
 
-_EPS = 1e-10  # global variable used to chop very small numbers to zero
-
 standard_gates = [
     qiskit_gates.IGate(),
     qiskit_gates.SXGate(),
@@ -106,9 +104,7 @@ class TestAdapter(TestCase):
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
-        self.assertTrue(
-            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
-        )
+        self.assertTrue(np.allclose(input_state_vector, output_state_vector))
 
     def test_state_preparation_00(self):
         """Tests state_preparation handling of Adapter"""
@@ -122,9 +118,7 @@ class TestAdapter(TestCase):
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
-        self.assertTrue(
-            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
-        )
+        self.assertTrue(np.allclose(input_state_vector, output_state_vector))
 
     def test_convert_parametric_qiskit_to_braket_circuit_warning(self):
         """Tests that a warning is raised when converting a parametric circuit to a Braket circuit."""
@@ -152,7 +146,7 @@ class TestAdapter(TestCase):
         braket_output = device.run(braket_circuit).result().values[0]
         qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
 
-        self.assertTrue(np.linalg.norm(braket_output - qiskit_output) < _EPS)
+        self.assertTrue(np.allclose(braket_output, qiskit_output))
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
