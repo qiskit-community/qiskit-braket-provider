@@ -35,7 +35,7 @@ def _get_result_from_aws_tasks(
         tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
     )
 
-    # For each task the results is get and filled into an ExperimentResult object
+    # For each task we create an ExperimentResult object with the downloaded results.
     for task, result in zip(tasks, results):
         if not result:
             return None
