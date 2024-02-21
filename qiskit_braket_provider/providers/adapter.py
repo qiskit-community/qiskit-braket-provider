@@ -450,7 +450,7 @@ def to_braket(
             # Getting the index from the bit mapping
             qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
             qiskit_params = operation.params if hasattr(operation, "params") else []
-            params = _create_free_parameters(qiskit_params)
+            params = [_create_free_parameter(p) for p in qiskit_params]
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
                 gate_qubit_count = gate.qubit_count
@@ -469,7 +469,7 @@ def to_braket(
     qiskit_global_phase = circuit.global_phase
     if qiskit_global_phase:
         if _GPHASE_GATE_NAME in basis_gates:
-            braket_global_phase = _create_free_parameters(qiskit_global_phase)
+            braket_global_phase = _create_free_parameter(qiskit_global_phase)
             braket_circuit.gphase(braket_global_phase)
         else:
             warnings.warn(
@@ -485,29 +485,20 @@ def to_braket(
     return braket_circuit
 
 
-def _create_free_parameters(params):
-    braket_params = []
-    was_params_singleton = False
-    if not isinstance(params, list):
-        params = [params]
-        was_params_singleton = True
-
-    for param in params:
-        if isinstance(param, ParameterVectorElement):
+def _create_free_parameter(param):
+    if isinstance(param, ParameterVectorElement):
+        renamed_param_name = _rename_param_vector_element(param)
+        param = FreeParameter(renamed_param_name)
+    elif isinstance(param, Parameter):
+        param = FreeParameter(param.name)
+    elif isinstance(param, ParameterExpression):
+        if param.is_real():
+            param = float(param)
+        else:
             renamed_param_name = _rename_param_vector_element(param)
-            param = FreeParameter(renamed_param_name)
-        elif isinstance(param, Parameter):
-            param = FreeParameter(param.name)
-        elif isinstance(param, ParameterExpression):
-            if param.is_real():
-                param = float(param)
-            else:
-                renamed_param_name = _rename_param_vector_element(param)
-                param = FreeParameterExpression(renamed_param_name)
+            param = FreeParameterExpression(renamed_param_name)
 
-        braket_params.append(param)
-
-    return braket_params[0] if was_params_singleton else braket_params
+    return param
 
 
 def _rename_param_vector_element(parameter):
