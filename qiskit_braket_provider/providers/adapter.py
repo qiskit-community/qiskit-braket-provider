@@ -486,25 +486,28 @@ def to_braket(
 
 
 def _create_free_parameters(params):
+    braket_params = []
     was_params_singleton = False
     if not isinstance(params, list):
         params = [params]
         was_params_singleton = True
 
-    for i, param in enumerate(params):
+    for param in params:
         if isinstance(param, ParameterVectorElement):
             renamed_param_name = _rename_param_vector_element(param)
-            params[i] = FreeParameter(renamed_param_name)
+            param = FreeParameter(renamed_param_name)
         elif isinstance(param, Parameter):
-            params[i] = FreeParameter(param.name)
+            param = FreeParameter(param.name)
         elif isinstance(param, ParameterExpression):
             if param.is_real():
-                params[i] = float(param)
+                param = float(param)
             else:
                 renamed_param_name = _rename_param_vector_element(param)
-                params[i] = FreeParameterExpression(renamed_param_name)
+                param = FreeParameterExpression(renamed_param_name)
 
-    return params[0] if was_params_singleton else params
+        braket_params.append(param)
+
+    return braket_params[0] if was_params_singleton else braket_params
 
 
 def _rename_param_vector_element(parameter):

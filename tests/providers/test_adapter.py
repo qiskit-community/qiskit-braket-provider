@@ -242,12 +242,15 @@ class TestAdapter(TestCase):
         ):
             qiskit_circuit = QuantumCircuit(1, global_phase=qiskit_global_phase)
             qiskit_circuit.h(0)
-            gate = GlobalPhaseGate(1.23)
+            gate = GlobalPhaseGate(1.23 * qiskit_global_phase)
             qiskit_circuit.append(gate, [])
 
             braket_circuit = to_braket(qiskit_circuit)
             expected_braket_circuit = (
-                Circuit().h(0).gphase(1.23).gphase(braket_global_phase)
+                Circuit()
+                .h(0)
+                .gphase(1.23 * braket_global_phase)
+                .gphase(braket_global_phase)
             )
             self.assertEqual(
                 str(braket_circuit.global_phase),
