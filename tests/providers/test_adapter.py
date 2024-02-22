@@ -4,9 +4,10 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
+from braket.circuits import Circuit, Gate, Instruction, observables
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
+from braket.parametric import FreeParameter, FreeParameterExpression
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
@@ -26,8 +27,6 @@ from qiskit_braket_provider.providers.adapter import (
 )
 from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
 from tests.providers.test_braket_backend import combine_dicts
-
-_EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 standard_gates = [
     qiskit_gates.IGate(),
@@ -106,9 +105,7 @@ class TestAdapter(TestCase):
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
-        self.assertTrue(
-            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
-        )
+        self.assertTrue(np.allclose(input_state_vector, output_state_vector))
 
     def test_state_preparation_00(self):
         """Tests state_preparation handling of Adapter"""
@@ -122,9 +119,7 @@ class TestAdapter(TestCase):
         result = LocalSimulator().run(braket_circuit)
         output_state_vector = np.array(result.result().values[0])
 
-        self.assertTrue(
-            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
-        )
+        self.assertTrue(np.allclose(input_state_vector, output_state_vector))
 
     def test_convert_parametric_qiskit_to_braket_circuit_warning(self):
         """Tests that a warning is raised when converting a parametric circuit to a Braket circuit."""
@@ -152,7 +147,7 @@ class TestAdapter(TestCase):
         braket_output = device.run(braket_circuit).result().values[0]
         qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
 
-        self.assertTrue(np.linalg.norm(braket_output - qiskit_output) < _EPS)
+        self.assertTrue(np.allclose(braket_output, qiskit_output))
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
@@ -240,17 +235,29 @@ class TestAdapter(TestCase):
 
     def test_global_phase(self):
         """Tests conversion when transpiler generates a global phase"""
-        qiskit_circuit = QuantumCircuit(1, global_phase=np.pi / 2)
-        qiskit_circuit.h(0)
-        gate = GlobalPhaseGate(1.23)
-        qiskit_circuit.append(gate, [])
+        qiskit_global_phases = [np.pi / 2, Parameter("θ")]
+        braket_global_phases = [np.pi / 2, FreeParameter("θ")]
 
-        braket_circuit = to_braket(qiskit_circuit)
-        expected_braket_circuit = Circuit().h(0).gphase(1.23).gphase(np.pi / 2)
-        self.assertEqual(
-            braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0]
-        )
-        self.assertEqual(braket_circuit, expected_braket_circuit)
+        for qiskit_global_phase, braket_global_phase in zip(
+            qiskit_global_phases, braket_global_phases
+        ):
+            qiskit_circuit = QuantumCircuit(1, global_phase=qiskit_global_phase)
+            qiskit_circuit.h(0)
+            gate = GlobalPhaseGate(1.23 * qiskit_global_phase)
+            qiskit_circuit.append(gate, [])
+
+            braket_circuit = to_braket(qiskit_circuit)
+            expected_braket_circuit = (
+                Circuit()
+                .h(0)
+                .gphase(1.23 * braket_global_phase)
+                .gphase(braket_global_phase)
+            )
+            self.assertEqual(
+                str(braket_circuit.global_phase),
+                str(qiskit_circuit.global_phase + gate.params[0]),
+            )
+            self.assertEqual(braket_circuit, expected_braket_circuit)
 
         braket_circuit_no_gphase = to_braket(qiskit_circuit, basis_gates={"h"})
         self.assertEqual(braket_circuit_no_gphase.global_phase, 0)
@@ -491,12 +498,14 @@ class TestAdapter(TestCase):
         v = ParameterVector("v", 2)
         qiskit_circuit.rx(Parameter("a") + 2 * Parameter("b"), 0)
         qiskit_circuit.ry(v[0] - 2 * v[1], 0)
+        qiskit_circuit.rz(2 * Parameter("1.2"), 0)
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
             Circuit()
             .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
             .ry(0, FreeParameter("v_0") - 2 * FreeParameter("v_1"))
+            .rz(0, FreeParameterExpression("2.4"))
         )
         assert braket_circuit == expected_braket_circuit
 

@@ -76,8 +76,6 @@ _ARBITRARY_CONTROLLED_GATES = {"mcx"}
 
 _ADDITIONAL_U_GATES = {"u1", "u2", "u3"}
 
-_EPS = 1e-10  # global variable used to chop very small numbers to zero
-
 _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "u1": lambda lam: [braket_gates.U(0, 0, lam)],
     "u2": lambda phi, lam: [braket_gates.U(pi / 2, phi, lam)],
@@ -451,7 +449,8 @@ def to_braket(
 
             # Getting the index from the bit mapping
             qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
-            params = _create_free_parameters(operation)
+            qiskit_params = operation.params if hasattr(operation, "params") else []
+            params = [_create_free_parameter(p) for p in qiskit_params]
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 gate = _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params)
                 gate_qubit_count = gate.qubit_count
@@ -467,14 +466,15 @@ def to_braket(
                         target=qubit_indices,
                     )
 
-    global_phase = circuit.global_phase
-    if abs(global_phase) > _EPS:
+    qiskit_global_phase = circuit.global_phase
+    if qiskit_global_phase:
         if _GPHASE_GATE_NAME in basis_gates:
-            braket_circuit.gphase(global_phase)
+            braket_global_phase = _create_free_parameter(qiskit_global_phase)
+            braket_circuit.gphase(braket_global_phase)
         else:
             warnings.warn(
                 f"Device does not support global phase; "
-                f"global phase of {global_phase} will not be included in Braket circuit"
+                f"global phase of {qiskit_global_phase} will not be included in Braket circuit"
             )
 
     if verbatim:
@@ -485,19 +485,17 @@ def to_braket(
     return braket_circuit
 
 
-def _create_free_parameters(operation):
-    params = operation.params if hasattr(operation, "params") else []
-    for i, param in enumerate(params):
-        if isinstance(param, ParameterVectorElement):
-            renamed_param_name = _rename_param_vector_element(param)
-            params[i] = FreeParameter(renamed_param_name)
-        elif isinstance(param, Parameter):
-            params[i] = FreeParameter(param.name)
-        elif isinstance(param, ParameterExpression):
-            renamed_param_name = _rename_param_vector_element(param)
-            params[i] = FreeParameterExpression(renamed_param_name)
-
-    return params
+def _create_free_parameter(param):
+    if isinstance(param, ParameterVectorElement):
+        renamed_param_name = _rename_param_vector_element(param)
+        return FreeParameter(renamed_param_name)
+    elif isinstance(param, Parameter):
+        return FreeParameter(param.name)
+    elif isinstance(param, ParameterExpression):
+        renamed_param_name = _rename_param_vector_element(param)
+        return FreeParameterExpression(renamed_param_name)
+    else:
+        return param
 
 
 def _rename_param_vector_element(parameter):
