@@ -492,11 +492,8 @@ def _create_free_parameter(param):
     elif isinstance(param, Parameter):
         return FreeParameter(param.name)
     elif isinstance(param, ParameterExpression):
-        if param.is_real():
-            return float(param)
-        else:
-            renamed_param_name = _rename_param_vector_element(param)
-            return FreeParameterExpression(renamed_param_name)
+        renamed_param_name = _rename_param_vector_element(param)
+        return FreeParameterExpression(renamed_param_name)
     else:
         return param
 

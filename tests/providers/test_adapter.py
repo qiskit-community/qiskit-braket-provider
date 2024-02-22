@@ -4,9 +4,10 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
+from braket.circuits import Circuit, Gate, Instruction, observables
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
+from braket.parametric import FreeParameter, FreeParameterExpression
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
@@ -497,12 +498,14 @@ class TestAdapter(TestCase):
         v = ParameterVector("v", 2)
         qiskit_circuit.rx(Parameter("a") + 2 * Parameter("b"), 0)
         qiskit_circuit.ry(v[0] - 2 * v[1], 0)
+        qiskit_circuit.rz(2 * Parameter("1.2"), 0)
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
             Circuit()
             .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
             .ry(0, FreeParameter("v_0") - 2 * FreeParameter("v_1"))
+            .rz(0, FreeParameterExpression("2.4"))
         )
         assert braket_circuit == expected_braket_circuit
 
