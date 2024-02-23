@@ -10,6 +10,7 @@ from typing import Optional, Union
 from braket.aws import AwsDevice, AwsQuantumTask, AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
+from braket.circuits.noise_model import NoiseModel as BraketNoiseModel
 from braket.device_schema import DeviceActionType
 from braket.devices import Device, LocalSimulator
 from braket.tasks.local_quantum_task import LocalQuantumTask
@@ -59,7 +60,12 @@ class BraketBackend(BackendV2, ABC):
 class BraketLocalBackend(BraketBackend):
     """BraketLocalBackend."""
 
-    def __init__(self, name: str = "default", **fields):
+    def __init__(
+        self,
+        name: str = "default",
+        noise_model: Optional[BraketNoiseModel] = None,
+        **fields,
+    ):
         """AWSBraketLocalBackend for local execution of circuits.
 
         Example:
@@ -71,11 +77,15 @@ class BraketLocalBackend(BraketBackend):
 
         Args:
             name: name of backend
+            noise_model (Optional[NoiseModel]): The Braket noise model to apply to the circuit
+                before execution. Noise model can only be added to the devices that support
+                noise simulation.
             **fields: extra fields
         """
         super().__init__(name=name, **fields)
         self.backend_name = name
         self._local_device = LocalSimulator(backend=self.backend_name)
+        self._local_device.set_noise_model(noise_model)
         self._target = local_simulator_to_target(self._local_device)
         self.status = self._local_device.status
 
@@ -178,6 +188,7 @@ class AWSBraketBackend(BraketBackend):
         description: str = None,
         online_date: datetime.datetime = None,
         backend_version: str = None,
+        noise_model: Optional[BraketNoiseModel] = None,
         **fields,
     ):
         """AWSBraketBackend for execution circuits against AWS Braket devices.
@@ -196,6 +207,9 @@ class AWSBraketBackend(BraketBackend):
             description: description of backend
             online_date: online date
             backend_version: backend version
+            noise_model (Optional[NoiseModel]): The Braket noise model to apply to the circuit
+                before execution. Noise model can only be added to the devices that support
+                noise simulation.
             **fields: other arguments
         """
         super().__init__(
@@ -208,6 +222,7 @@ class AWSBraketBackend(BraketBackend):
         )
         user_agent = f"QiskitBraketProvider/{version.__version__}"
         device.aws_session.add_braket_user_agent(user_agent)
+        device.set_noise_model(noise_model)
         self._aws_device = device
         self._target = aws_device_to_target(device=device)
 

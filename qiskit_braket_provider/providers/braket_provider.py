@@ -1,6 +1,9 @@
 """AWS Braket provider."""
 
+from typing import Optional
+
 from braket.aws import AwsDevice
+from braket.circuits.noise_model import NoiseModel as BraketNoiseModel
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.quera import QueraDeviceCapabilities
 from braket.device_schema.xanadu import XanaduDeviceCapabilities
@@ -28,7 +31,9 @@ class AWSBraketProvider(ProviderV1):
          BraketBackend[dm1]]
     """
 
-    def backends(self, name=None, **kwargs):
+    def backends(
+        self, name=None, noise_model: Optional[BraketNoiseModel] = None, **kwargs
+    ):
         if kwargs.get("local"):
             return [BraketLocalBackend(name="default")]
         names = [name] if name else None
@@ -57,6 +62,7 @@ class AWSBraketProvider(ProviderV1):
                     description=f"AWS Device: {device.provider_name} {device.name}.",
                     online_date=device.properties.service.updatedAt,
                     backend_version="2",
+                    noise_model=noise_model,
                 )
             )
         return backends

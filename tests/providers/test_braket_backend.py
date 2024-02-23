@@ -22,6 +22,7 @@ from qiskit_braket_provider import AWSBraketProvider, exception, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import (
+    MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES,
     RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES,
     RIGETTI_MOCK_M_3_QPU_CAPABILITIES,
 )
@@ -75,6 +76,16 @@ class TestAWSBraketBackend(TestCase):
         with self.assertRaises(NotImplementedError):
             backend.control_channel([0, 1])
 
+    def test_aws_backend_noise_model(self):
+        """Tests local backend."""
+        mock_noise_model = Mock()
+        mock_set_noise_model = Mock()
+        device = Mock()
+        device.properties = MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES
+        device.set_noise_model = mock_set_noise_model
+        _ = AWSBraketBackend(device, noise_model=mock_noise_model)
+        self.assertEqual(mock_set_noise_model.call_args[0][0], mock_noise_model)
+
     def test_local_backend(self):
         """Tests local backend."""
         backend = BraketLocalBackend(name="default")
@@ -89,6 +100,13 @@ class TestAWSBraketBackend(TestCase):
             backend.measure_channel(0)
         with self.assertRaises(NotImplementedError):
             backend.control_channel([0, 1])
+
+    @patch("braket.devices.LocalSimulator.set_noise_model")
+    def test_local_backend_noise_model(self, mock_set_noise_model):
+        """Tests local backend."""
+        mock_noise_model = Mock()
+        _ = BraketLocalBackend(name="default", noise_model=mock_noise_model)
+        self.assertEqual(mock_set_noise_model.call_args[0][0], mock_noise_model)
 
     def test_local_backend_output(self):
         """Test local backend output"""
