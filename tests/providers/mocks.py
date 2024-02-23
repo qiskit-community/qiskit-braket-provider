@@ -15,6 +15,7 @@ from braket.tasks.local_quantum_task import LocalQuantumTask
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
 RIGETTI_ASPEN_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-M-3"
 SV1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
+DM1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/dm1"
 TN1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/tn1"
 RIGETTI_REGION = "us-west-1"
 SIMULATOR_REGION = "us-west-1"
@@ -133,6 +134,15 @@ MOCK_GATE_MODEL_SIMULATOR_SV = {
     "providerName": "provider1",
     "deviceStatus": "ONLINE",
     "deviceArn": SV1_ARN,
+    "deviceCapabilities": MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES.json(),
+}
+
+MOCK_GATE_MODEL_SIMULATOR_DM = {
+    "deviceName": "dm1",
+    "deviceType": "SIMULATOR",
+    "providerName": "provider1",
+    "deviceStatus": "ONLINE",
+    "deviceArn": DM1_ARN,
     "deviceCapabilities": MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES.json(),
 }
 

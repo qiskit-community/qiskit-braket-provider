@@ -17,6 +17,7 @@ from qiskit_braket_provider.providers.braket_backend import (
     BraketBackend,
 )
 from tests.providers.mocks import (
+    MOCK_GATE_MODEL_SIMULATOR_DM,
     MOCK_GATE_MODEL_SIMULATOR_SV,
     MOCK_GATE_MODEL_SIMULATOR_TN,
     MOCK_RIGETTI_GATE_MODEL_M_3_QPU,
@@ -30,7 +31,11 @@ class TestAWSBraketProvider(TestCase):
 
     def setUp(self):
         self.mock_session = Mock()
-        simulators = [MOCK_GATE_MODEL_SIMULATOR_SV, MOCK_GATE_MODEL_SIMULATOR_TN]
+        simulators = [
+            MOCK_GATE_MODEL_SIMULATOR_SV,
+            MOCK_GATE_MODEL_SIMULATOR_DM,
+            MOCK_GATE_MODEL_SIMULATOR_TN,
+        ]
         self.mock_session.get_device.side_effect = simulators
         self.mock_session.region = SIMULATOR_REGION
         self.mock_session.boto_session.region_name = SIMULATOR_REGION
@@ -70,6 +75,18 @@ class TestAWSBraketProvider(TestCase):
             for backend in online_simulators_backends:
                 with self.subTest(f"{backend.name}"):
                     self.assertIsInstance(backend, AWSBraketBackend)
+
+    @patch("qiskit_braket_provider.providers.braket_provider.AWSBraketBackend")
+    @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
+    def test_get_backend_noise_model(self, mock_get_devices, mock_aws_braket_backend):
+        """Tests qiskit circuit transpilation."""
+        mock_noise_model = Mock()
+        mock_get_devices.return_value = [Mock()]
+        provider = AWSBraketProvider()
+        _ = provider.get_backend(name="dm1", noise_model=mock_noise_model)
+        self.assertEqual(
+            mock_aws_braket_backend.call_args[1]["noise_model"], mock_noise_model
+        )
 
     @patch("qiskit_braket_provider.providers.braket_backend.AWSBraketBackend")
     @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
