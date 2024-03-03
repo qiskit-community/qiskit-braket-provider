@@ -8,15 +8,14 @@ from unittest.mock import Mock, patch
 from botocore import errorfactory
 from braket.aws.queue_information import QueueDepthInfo, QueueType
 from qiskit import QuantumCircuit, transpile
-from qiskit.algorithms.minimum_eigensolvers import VQE, VQEResult
-from qiskit.algorithms.optimizers import SLSQP
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BackendEstimator
-from qiskit.providers.basicaer import BasicAer
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit.result import Result
 from qiskit.transpiler import Target
+from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
+from qiskit_algorithms.optimizers import SLSQP
 
 from qiskit_braket_provider import AWSBraketProvider, exception, version
 from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
@@ -186,24 +185,17 @@ class TestAWSBraketBackend(TestCase):
     def test_random_circuits(self):
         """Tests with random circuits."""
         backend = BraketLocalBackend(name="braket_sv")
-        aer_backend = BasicAer.get_backend("statevector_simulator")
 
         for i in range(1, 10):
             with self.subTest(f"Random circuit with {i} qubits."):
                 circuit = random_circuit(i, 5, seed=42)
+                qiskit_result = Statevector(circuit).probabilities_dict()
+                circuit.measure_all()
                 braket_result = backend.run(circuit, shots=1000).result().get_counts()
 
-                transpiled_aer_circuit = transpile(
-                    circuit, backend=aer_backend, seed_transpiler=42
-                )
-                aer_result = (
-                    aer_backend.run(transpiled_aer_circuit, shots=1000)
-                    .result()
-                    .get_counts()
-                )
-
                 combined_results = combine_dicts(
-                    {k: float(v) / 1000.0 for k, v in braket_result.items()}, aer_result
+                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
+                    qiskit_result,
                 )
 
                 for key, values in combined_results.items():

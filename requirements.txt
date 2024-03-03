@@ -1,5 +1,5 @@
 certifi>=2021.5.30
-qiskit>=0.34.2, <1.0
+qiskit>=0.34.2
 qiskit-ionq>=0.4.7
 amazon-braket-sdk>=1.65.0
 

@@ -7,12 +7,11 @@ import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from braket.devices import LocalSimulator
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
-from qiskit.providers.basicaer import BasicAer
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
@@ -140,23 +139,19 @@ class TestAdapter(TestCase):
     def test_u_gate(self):
         """Tests adapter conversion of u gate"""
         qiskit_circuit = QuantumCircuit(1)
-        backend = BasicAer.get_backend("statevector_simulator")
         device = LocalSimulator()
         qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
-
-        job = backend.run(qiskit_circuit)
 
         braket_circuit = to_braket(qiskit_circuit)
         braket_circuit.state_vector()  # pylint: disable=no-member
 
         braket_output = device.run(braket_circuit).result().values[0]
-        qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
+        qiskit_output = np.array(Statevector(qiskit_circuit))
 
         self.assertTrue(np.linalg.norm(braket_output - qiskit_output) < _EPS)
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
-        aer_backend = BasicAer.get_backend("statevector_simulator")
         backend = BraketLocalBackend()
 
         for standard_gate in standard_gates:
@@ -174,10 +169,7 @@ class TestAdapter(TestCase):
             with self.subTest(f"Circuit with {standard_gate.name} gate."):
                 braket_job = backend.run(qiskit_circuit, shots=1000)
                 braket_result = braket_job.result().get_counts()
-
-                transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
-                qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
-                qiskit_result = qiskit_job.result().get_counts()
+                qiskit_result = Statevector(qiskit_circuit).probabilities_dict()
 
                 combined_results = combine_dicts(
                     {k: float(v) / 1000.0 for k, v in braket_result.items()},
@@ -197,7 +189,6 @@ class TestAdapter(TestCase):
 
     def test_ionq_gates(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
-        aer_backend = BasicAer.get_backend("statevector_simulator")
         backend = BraketLocalBackend()
 
         for gate in qiskit_ionq_gates:
@@ -218,9 +209,9 @@ class TestAdapter(TestCase):
             with self.subTest(f"Circuit with {gate.name} gate."):
                 braket_job = backend.run(qiskit_circuit, shots=1000, verbatim=True)
                 braket_result = braket_job.result().get_counts()
-
-                qiskit_job = aer_backend.run(circuit_from_gate_unitary, shots=1000)
-                qiskit_result = qiskit_job.result().get_counts()
+                qiskit_result = Statevector(
+                    circuit_from_gate_unitary
+                ).probabilities_dict()
 
                 combined_results = combine_dicts(
                     {k: float(v) / 1000.0 for k, v in braket_result.items()},
@@ -258,7 +249,6 @@ class TestAdapter(TestCase):
 
     def test_exponential_gate_decomp(self):
         """Tests adapter translation of exponential gates"""
-        aer_backend = BasicAer.get_backend("statevector_simulator")
         backend = BraketLocalBackend()
         qiskit_circuit = QuantumCircuit(2)
 
@@ -270,15 +260,11 @@ class TestAdapter(TestCase):
             ],
         )
         evo = PauliEvolutionGate(operator, time=2)
-
         qiskit_circuit.append(evo, range(2))
 
         braket_job = backend.run(qiskit_circuit, shots=1000)
         braket_result = braket_job.result().get_counts()
-
-        transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
-        qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
-        qiskit_result = qiskit_job.result().get_counts()
+        qiskit_result = Statevector(qiskit_circuit).probabilities_dict()
 
         combined_results = combine_dicts(
             {k: float(v) / 1000.0 for k, v in braket_result.items()}, qiskit_result
