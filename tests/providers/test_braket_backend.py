@@ -189,9 +189,8 @@ class TestAWSBraketBackend(TestCase):
         for i in range(1, 10):
             with self.subTest(f"Random circuit with {i} qubits."):
                 circuit = random_circuit(i, 5, seed=42)
-                qiskit_result = Statevector(circuit).probabilities_dict()
-                circuit.measure_all()
                 braket_result = backend.run(circuit, shots=1000).result().get_counts()
+                qiskit_result = Statevector(circuit).probabilities_dict()
 
                 combined_results = combine_dicts(
                     {k: float(v) / 1000.0 for k, v in braket_result.items()},
