@@ -88,7 +88,7 @@ qiskit_ionq_gates = [
 ]
 
 
-def compare_braket_qiskit_unitaries(qiskit_circuit: QuantumCircuit) -> bool:
+def check_to_braket_unitary_correct(qiskit_circuit: QuantumCircuit) -> bool:
     """Checks if endianness-reversed Qiskit circuit matrix matches Braket counterpart"""
     return np.allclose(
         to_braket(qiskit_circuit).to_unitary(),
@@ -106,7 +106,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        self.assertTrue(compare_braket_qiskit_unitaries(qiskit_circuit))
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_state_preparation_00(self):
         """Tests state_preparation handling of Adapter"""
@@ -115,7 +115,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        self.assertTrue(compare_braket_qiskit_unitaries(qiskit_circuit))
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_convert_parametric_qiskit_to_braket_circuit_warning(self):
         """Tests that a warning is raised when converting a parametric circuit to a Braket circuit."""
@@ -133,7 +133,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
 
-        self.assertTrue(compare_braket_qiskit_unitaries(qiskit_circuit))
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
@@ -150,7 +150,7 @@ class TestAdapter(TestCase):
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
             with self.subTest(f"Circuit with {standard_gate.name} gate."):
-                self.assertTrue(compare_braket_qiskit_unitaries(qiskit_circuit))
+                self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_ionq_gates(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
@@ -167,7 +167,7 @@ class TestAdapter(TestCase):
 
             with self.subTest(f"Circuit with {gate.name} gate."):
                 self.assertTrue(
-                    # TODO: use compare_braket_qiskit_unitaries once
+                    # TODO: use check_to_braket_unitary_correct once
                     # MS gate implementation in qiskit-ionq has been corrected
                     np.allclose(
                         to_braket(qiskit_circuit).to_unitary(),
@@ -207,7 +207,7 @@ class TestAdapter(TestCase):
         evo = PauliEvolutionGate(operator, time=2)
         qiskit_circuit.append(evo, range(2))
 
-        self.assertTrue(compare_braket_qiskit_unitaries(qiskit_circuit))
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_mappers(self):
         """Tests mappers."""
