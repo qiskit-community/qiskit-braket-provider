@@ -1,4 +1,5 @@
 """Tests for Qiskit to Braket adapter."""
+
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -6,13 +7,11 @@ import numpy as np
 import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
-from braket.devices import LocalSimulator
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
-from qiskit.providers.basicaer import BasicAer
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import Operator, SparsePauliOp
 from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
@@ -24,8 +23,6 @@ from qiskit_braket_provider.providers.adapter import (
     to_braket,
     to_qiskit,
 )
-from qiskit_braket_provider.providers.braket_backend import BraketLocalBackend
-from tests.providers.test_braket_backend import combine_dicts
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
@@ -91,6 +88,14 @@ qiskit_ionq_gates = [
 ]
 
 
+def check_to_braket_unitary_correct(qiskit_circuit: QuantumCircuit) -> bool:
+    """Checks if endianness-reversed Qiskit circuit matrix matches Braket counterpart"""
+    return np.allclose(
+        to_braket(qiskit_circuit).to_unitary(),
+        Operator(qiskit_circuit).reverse_qargs().to_matrix(),
+    )
+
+
 class TestAdapter(TestCase):
     """Tests adapter."""
 
@@ -101,14 +106,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        braket_circuit = to_braket(qiskit_circuit)
-        braket_circuit.state_vector()  # pylint: disable=no-member
-        result = LocalSimulator().run(braket_circuit)
-        output_state_vector = np.array(result.result().values[0])
-
-        self.assertTrue(
-            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
-        )
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_state_preparation_00(self):
         """Tests state_preparation handling of Adapter"""
@@ -117,14 +115,7 @@ class TestAdapter(TestCase):
         qiskit_circuit = QuantumCircuit(1)
         qiskit_circuit.prepare_state(input_state_vector, 0)
 
-        braket_circuit = to_braket(qiskit_circuit)
-        braket_circuit.state_vector()  # pylint: disable=no-member
-        result = LocalSimulator().run(braket_circuit)
-        output_state_vector = np.array(result.result().values[0])
-
-        self.assertTrue(
-            (np.linalg.norm(input_state_vector - output_state_vector)) < _EPS
-        )
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_convert_parametric_qiskit_to_braket_circuit_warning(self):
         """Tests that a warning is raised when converting a parametric circuit to a Braket circuit."""
@@ -140,25 +131,12 @@ class TestAdapter(TestCase):
     def test_u_gate(self):
         """Tests adapter conversion of u gate"""
         qiskit_circuit = QuantumCircuit(1)
-        backend = BasicAer.get_backend("statevector_simulator")
-        device = LocalSimulator()
         qiskit_circuit.u(np.pi / 2, np.pi / 3, np.pi / 4, 0)
 
-        job = backend.run(qiskit_circuit)
-
-        braket_circuit = to_braket(qiskit_circuit)
-        braket_circuit.state_vector()  # pylint: disable=no-member
-
-        braket_output = device.run(braket_circuit).result().values[0]
-        qiskit_output = np.array(job.result().get_statevector(qiskit_circuit))
-
-        self.assertTrue(np.linalg.norm(braket_output - qiskit_output) < _EPS)
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
-        aer_backend = BasicAer.get_backend("statevector_simulator")
-        backend = BraketLocalBackend()
-
         for standard_gate in standard_gates:
             qiskit_circuit = QuantumCircuit(standard_gate.num_qubits)
             qiskit_circuit.append(standard_gate, range(standard_gate.num_qubits))
@@ -172,34 +150,10 @@ class TestAdapter(TestCase):
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
             with self.subTest(f"Circuit with {standard_gate.name} gate."):
-                braket_job = backend.run(qiskit_circuit, shots=1000)
-                braket_result = braket_job.result().get_counts()
-
-                transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
-                qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
-                qiskit_result = qiskit_job.result().get_counts()
-
-                combined_results = combine_dicts(
-                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
-                    qiskit_result,
-                )
-
-                for key, values in combined_results.items():
-                    percent_diff = abs(
-                        ((float(values[0]) - values[1]) / values[0]) * 100
-                    )
-                    abs_diff = abs(values[0] - values[1])
-                    self.assertTrue(
-                        percent_diff < 10 or abs_diff < 0.05,
-                        f"Key {key} with percent difference {percent_diff} "
-                        f"and absolute difference {abs_diff}. Original values {values}",
-                    )
+                self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_ionq_gates(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
-        aer_backend = BasicAer.get_backend("statevector_simulator")
-        backend = BraketLocalBackend()
-
         for gate in qiskit_ionq_gates:
             qiskit_circuit = QuantumCircuit(gate.num_qubits)
             qiskit_circuit.append(gate, range(gate.num_qubits))
@@ -211,32 +165,15 @@ class TestAdapter(TestCase):
             parameter_bindings = dict(zip(parameters, parameter_values))
             qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
-            circuit_from_gate_unitary = QuantumCircuit(gate.num_qubits)
-            gate_unitary = gate.__class__(*parameter_values)
-            circuit_from_gate_unitary.unitary(gate_unitary, range(gate.num_qubits))
-
             with self.subTest(f"Circuit with {gate.name} gate."):
-                braket_job = backend.run(qiskit_circuit, shots=1000, verbatim=True)
-                braket_result = braket_job.result().get_counts()
-
-                qiskit_job = aer_backend.run(circuit_from_gate_unitary, shots=1000)
-                qiskit_result = qiskit_job.result().get_counts()
-
-                combined_results = combine_dicts(
-                    {k: float(v) / 1000.0 for k, v in braket_result.items()},
-                    qiskit_result,
+                self.assertTrue(
+                    # TODO: use check_to_braket_unitary_correct once
+                    # MS gate implementation in qiskit-ionq has been corrected
+                    np.allclose(
+                        to_braket(qiskit_circuit).to_unitary(),
+                        Operator(qiskit_circuit).to_matrix(),
+                    )
                 )
-
-                for key, values in combined_results.items():
-                    percent_diff = abs(
-                        ((float(values[0]) - values[1]) / values[0]) * 100
-                    )
-                    abs_diff = abs(values[0] - values[1])
-                    self.assertTrue(
-                        percent_diff < 10 or abs_diff < 0.05,
-                        f"Key {key} with percent difference {percent_diff} "
-                        f"and absolute difference {abs_diff}. Original values {values}",
-                    )
 
     def test_global_phase(self):
         """Tests conversion when transpiler generates a global phase"""
@@ -258,8 +195,6 @@ class TestAdapter(TestCase):
 
     def test_exponential_gate_decomp(self):
         """Tests adapter translation of exponential gates"""
-        aer_backend = BasicAer.get_backend("statevector_simulator")
-        backend = BraketLocalBackend()
         qiskit_circuit = QuantumCircuit(2)
 
         operator = SparsePauliOp(
@@ -270,28 +205,9 @@ class TestAdapter(TestCase):
             ],
         )
         evo = PauliEvolutionGate(operator, time=2)
-
         qiskit_circuit.append(evo, range(2))
 
-        braket_job = backend.run(qiskit_circuit, shots=1000)
-        braket_result = braket_job.result().get_counts()
-
-        transpiled_circuit = transpile(qiskit_circuit, backend=aer_backend)
-        qiskit_job = aer_backend.run(transpiled_circuit, shots=1000)
-        qiskit_result = qiskit_job.result().get_counts()
-
-        combined_results = combine_dicts(
-            {k: float(v) / 1000.0 for k, v in braket_result.items()}, qiskit_result
-        )
-
-        for key, values in combined_results.items():
-            percent_diff = abs(((float(values[0]) - values[1]) / values[0]) * 100)
-            abs_diff = abs(values[0] - values[1])
-            self.assertTrue(
-                percent_diff < 10 or abs_diff < 0.05,
-                f"Key {key} with percent difference {percent_diff} "
-                f"and absolute difference {abs_diff}. Original values {values}",
-            )
+        self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_mappers(self):
         """Tests mappers."""
