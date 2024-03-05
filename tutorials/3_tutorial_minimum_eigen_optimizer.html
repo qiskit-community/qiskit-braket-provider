@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Running variational quantum algorithms with Amazon Braket Hybrid Jobs" href="2_tutorial_hybrid_jobs.html" />
 
-    <!-- Generated with Sphinx 7.2.6 and Furo 2023.08.19 -->
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
         <title>Minimum Eigen Optimizer - Qiskit-Braket provider 0.1.1</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=82a976d7" />
@@ -335,7 +335,6 @@ Subject to
 
   Binary variables (3)
     x y z
-
 </pre></div></div>
 </div>
 <p>Next we translate this QUBO into an Ising operator. This results not only in a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> but also in a constant offset to be taken into account to shift the resulting value.</p>
@@ -387,7 +386,6 @@ Subject to
 
   Binary variables (3)
     x0 x1 x2
-
 </pre></div></div>
 </div>
 <p>This translator allows, for instance, one to translate a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> to a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> and then solve the problem with other algorithms that are not based on the Ising Hamiltonian representation, such as the <code class="docutils literal notranslate"><span class="pre">GroverOptimizer</span></code>.</p>
@@ -712,29 +710,6 @@ status: SUCCESS
 <div class="output_area docutils container">
 <img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_41_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_41_0.png" />
 </div>
-</div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qiskit.tools.jupyter</span>
-
-<span class="o">%</span><span class="k">qiskit_version_table</span>
-<span class="o">%</span><span class="k">qiskit_copyright</span>
-</pre></div>
-</div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area rendered_html docutils container">
-<h3>Version Information</h3><table><tr><th>Software</th><th>Version</th></tr><tr><td><code>qiskit</code></td><td>0.45.2</td></tr><tr><td><code>qiskit_ibm_provider</code></td><td>0.8.0</td></tr><tr><td><code>qiskit_optimization</code></td><td>0.6.0</td></tr><tr><td><code>qiskit_aer</code></td><td>0.13.2</td></tr><tr><td><code>qiskit_algorithms</code></td><td>0.2.2</td></tr><tr><td><code>qiskit_ionq</code></td><td>0.4.7</td></tr><tr><td><code>qiskit_ibm_runtime</code></td><td>0.17.0</td></tr><tr><th colspan='2'>System information</th></tr><tr><td>Python version</td><td>3.10.13</td></tr><tr><td>Python compiler</td><td>Clang 15.0.0 (clang-1500.1.0.2.5)</td></tr><tr><td>Python build</td><td>main, Aug 24 2023 12:59:26</td></tr><tr><td>OS</td><td>Darwin</td></tr><tr><td>CPUs</td><td>8</td></tr><tr><td>Memory (Gb)</td><td>16.0</td></tr><tr><td colspan='2'>Tue Feb 13 17:28:51 2024 EST</td></tr></table></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area rendered_html docutils container">
-<div style='width: 100%; background-color:#d5d9e0;padding-left: 10px; padding-bottom: 10px; padding-right: 10px; padding-top: 5px'><h3>This code is a part of Qiskit</h3><p>&copy; Copyright IBM 2017, 2024.</p><p>This code is licensed under the Apache License, Version 2.0. You may<br>obtain a copy of this license in the LICENSE.txt file in the root directory<br> of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.<p>Any modifications or derivative works of this code must retain this<br>copyright notice, and modified files need to carry a notice indicating<br>that they have been altered from the originals.</p></div></div>
 </div>
 </section>
 </section>
