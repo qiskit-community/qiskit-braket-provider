@@ -440,7 +440,7 @@ class TestAdapter(TestCase):
 
     def test_get_controlled_gateset(self):
         """Tests that the correct controlled gateset is returned for all maximum qubit counts."""
-        full_gateset = {"h", "s", "sdg", "sx", "rx", "ry", "rz", "cz"}
+        full_gateset = {"h", "s", "sdg", "sx", "rx", "ry", "rz", "cx", "cz"}
         restricted_gateset = {"rx", "cx", "sx"}
         max1 = {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}
         max3 = max1.union({"c3sx"})
