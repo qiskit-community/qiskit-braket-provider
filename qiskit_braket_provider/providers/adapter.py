@@ -2,7 +2,7 @@
 
 import warnings
 from collections.abc import Callable, Iterable
-from math import pi
+from math import inf, pi
 from typing import Optional, Union
 
 import braket.circuits.gates as braket_gates
@@ -80,8 +80,8 @@ _CONTROLLED_GATES_BY_QUBIT_COUNT = {
         "ccz": "cz",
     },
     3: {"c3sx": "sx"},
+    inf: {"mcx": "cx"},
 }
-_ARBITRARY_CONTROLLED_GATES = {"mcx": "cx"}
 
 _ADDITIONAL_U_GATES = {"u1", "u2", "u3"}
 
@@ -206,8 +206,7 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
         if isinstance(modifier, Control):
             max_control = modifier.max_qubits
             break
-    gateset.update(_get_controlled_gateset(gateset, max_control))
-    return gateset
+    return gateset.union(_get_controlled_gateset(gateset, max_control))
 
 
 def _get_controlled_gateset(
@@ -226,32 +225,13 @@ def _get_controlled_gateset(
     Returns:
         set[str]: The names of the controlled gates.
     """
-    if max_qubits is None:
-        gateset = set().union(
-            [
-                controlled_gate
-                for gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.values()
-                for controlled_gate, base_gate in gate_map.items()
-                if base_gate in base_gateset
-            ]
-        )
-        gateset.update(
-            [
-                controlled_gate
-                for controlled_gate, base_gate in _ARBITRARY_CONTROLLED_GATES.items()
-                if base_gate in base_gateset
-            ]
-        )
-        gateset.update(_ARBITRARY_CONTROLLED_GATES)
-        return gateset
-    return set().union(
-        [
-            controlled_gate
-            for control_count, gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()
-            for controlled_gate, base_gate in gate_map.items()
-            if control_count <= max_qubits and base_gate in base_gateset
-        ]
-    )
+    max_control = max_qubits if max_qubits is not None else inf
+    return {
+        controlled_gate
+        for control_count, gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()
+        for controlled_gate, base_gate in gate_map.items()
+        if control_count <= max_control and base_gate in base_gateset
+    }
 
 
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:
