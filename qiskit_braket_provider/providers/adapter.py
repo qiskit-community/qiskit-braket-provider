@@ -132,7 +132,7 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
     controlled_gate: _GATE_NAME_TO_BRAKET_GATE[base_gate]
-    for control_count, gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()
+    for gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.values()
     for controlled_gate, base_gate in gate_map.items()
 }
 
