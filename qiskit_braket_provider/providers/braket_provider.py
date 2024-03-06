@@ -27,7 +27,7 @@ class BraketProvider(ProviderV1):
          BraketBackend[Lucy],
          BraketBackend[SV1],
          BraketBackend[TN1],
-         BraketBackend[DM1]]
+         BraketBackend[dm1]]
     """
 
     def backends(self, name=None, **kwargs):
