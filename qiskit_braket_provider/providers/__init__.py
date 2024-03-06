@@ -21,6 +21,6 @@ Provider classes and functions
 """
 
 from .adapter import to_braket, to_qiskit
-from .braket_backend import AWSBraketBackend, BraketLocalBackend
+from .braket_backend import AWSBraketBackend, BraketAwsBackend, BraketLocalBackend
 from .braket_job import AmazonBraketTask, AWSBraketJob
-from .braket_provider import AWSBraketProvider
+from .braket_provider import AWSBraketProvider, BraketProvider

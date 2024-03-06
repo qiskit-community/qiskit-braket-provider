@@ -92,8 +92,8 @@ class TestAWSBraketJob(TestCase):
             job.queue_position()
 
 
-class TestBracketJobStatus:
-    """Tests for AWS Braket job status."""
+class TestBraketJobStatus:
+    """Tests for Amazon Braket job status."""
 
     def _get_mock_aws_quantum_task(self, status: str) -> AwsQuantumTask:
         """

@@ -11,9 +11,9 @@ from qiskit import QuantumCircuit
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
 
-from qiskit_braket_provider.providers import AWSBraketProvider
+from qiskit_braket_provider.providers import BraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
-    AWSBraketBackend,
+    BraketAwsBackend,
     BraketBackend,
 )
 from tests.providers.mocks import (
@@ -25,8 +25,8 @@ from tests.providers.mocks import (
 )
 
 
-class TestAWSBraketProvider(TestCase):
-    """Tests AWSBraketProvider."""
+class TestBraketProvider(TestCase):
+    """Tests BraketProvider."""
 
     def setUp(self):
         self.mock_session = Mock()
@@ -38,7 +38,7 @@ class TestAWSBraketProvider(TestCase):
 
     def test_provider_backends(self):
         """Tests provider."""
-        provider = AWSBraketProvider()
+        provider = BraketProvider()
         backends = provider.backends(
             aws_session=self.mock_session, types=[AwsDeviceType.SIMULATOR]
         )
@@ -57,21 +57,21 @@ class TestAWSBraketProvider(TestCase):
                 AwsDevice(MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"], self.mock_session),
                 AwsDevice(MOCK_GATE_MODEL_SIMULATOR_TN["deviceArn"], self.mock_session),
             ]
-            provider = AWSBraketProvider()
+            provider = BraketProvider()
             backends = provider.backends()
             self.assertTrue(len(backends) > 0)
             for backend in backends:
                 with self.subTest(f"{backend.name}"):
-                    self.assertIsInstance(backend, AWSBraketBackend)
+                    self.assertIsInstance(backend, BraketAwsBackend)
 
             online_simulators_backends = provider.backends(
                 statuses=["ONLINE"], types=["SIMULATOR"]
             )
             for backend in online_simulators_backends:
                 with self.subTest(f"{backend.name}"):
-                    self.assertIsInstance(backend, AWSBraketBackend)
+                    self.assertIsInstance(backend, BraketAwsBackend)
 
-    @patch("qiskit_braket_provider.providers.braket_backend.AWSBraketBackend")
+    @patch("qiskit_braket_provider.providers.braket_backend.BraketAwsBackend")
     @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
     def test_qiskit_circuit_transpilation_run(
         self, mock_get_devices, mock_aws_braket_backend
@@ -86,7 +86,7 @@ class TestAWSBraketProvider(TestCase):
         q_circuit.cx(0, 1)
         braket_circuit = Circuit().h(0).cnot(0, 1)
 
-        mock_aws_braket_backend = Mock(spec=AWSBraketBackend)
+        mock_aws_braket_backend = Mock(spec=BraketAwsBackend)
         mock_aws_braket_backend._device = Mock(spec=AwsDevice)
         task = AwsQuantumTaskBatch(
             Mock(),
@@ -102,7 +102,7 @@ class TestAWSBraketProvider(TestCase):
         task = Mock(spec=AwsQuantumTaskBatch, return_value=task)
         task.tasks = [task_mock]
 
-        provider = AWSBraketProvider()
+        provider = BraketProvider()
         state_vector_backend = provider.get_backend(
             "SV1", aws_session=self.mock_session
         )
@@ -135,7 +135,7 @@ class TestAWSBraketProvider(TestCase):
         mock_m_3_device.properties = mock_m_3_device_properties
         mock_get_devices.return_value = [mock_m_3_device]
 
-        provider = AWSBraketProvider()
+        provider = BraketProvider()
         device = provider.get_backend("Aspen-M-3")
 
         circ = qiskit_circuit.QuantumCircuit(3)
@@ -146,7 +146,7 @@ class TestAWSBraketProvider(TestCase):
         result = transpile(circ, device)
         self.assertTrue(result)
 
-    @patch("qiskit_braket_provider.providers.braket_backend.AWSBraketBackend.run")
+    @patch("qiskit_braket_provider.providers.braket_backend.BraketAwsBackend.run")
     @patch(
         "qiskit_braket_provider.providers.braket_job.AmazonBraketTask.queue_position"
     )
@@ -165,7 +165,7 @@ class TestAWSBraketProvider(TestCase):
         mock_run.return_value = mock_task
 
         mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
-        device = AWSBraketBackend(device=mocked_device)
+        device = BraketAwsBackend(device=mocked_device)
         circuit = QuantumCircuit(3)
         circuit.h(0)
         circuit.cx(0, 1)
