@@ -206,8 +206,7 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
         if isinstance(modifier, Control):
             max_control = modifier.max_qubits
             break
-    gateset.update(_get_controlled_gateset(gateset, max_control))
-    return gateset
+    return gateset.union(_get_controlled_gateset(gateset, max_control))
 
 
 def _get_controlled_gateset(
