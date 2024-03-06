@@ -5,6 +5,7 @@ from typing import Dict, List
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import numpy as np
 from botocore import errorfactory
 from braket.aws.queue_information import QueueDepthInfo, QueueType
 from qiskit import QuantumCircuit, transpile
@@ -127,16 +128,17 @@ class TestAWSBraketBackend(TestCase):
         backend = BraketLocalBackend(name="default")
 
         circuit = QuantumCircuit(2)
-        circuit.x(0)
-        circuit.cx(0, 1)
+        circuit.h(0)
+        circuit.x(1)
 
         result = backend.run(circuit, shots=0).result()
 
-        statevector = result.get_statevector()
-        self.assertEqual(statevector[0], 0.0 + 0.0j)
-        self.assertEqual(statevector[1], 0.0 + 0.0j)
-        self.assertEqual(statevector[2], 0.0 + 0.0j)
-        self.assertEqual(statevector[3], 1.0 + 0.0j)
+        inv_sqrt_2 = 1 / np.sqrt(2)
+        self.assertTrue(
+            np.allclose(
+                result.get_statevector(), np.array([0, 0, inv_sqrt_2, inv_sqrt_2])
+            )
+        )
 
     def test_meas_level_2(self):
         """Check that there's no error for asking for classified measurement results."""
@@ -185,13 +187,22 @@ class TestAWSBraketBackend(TestCase):
     def test_random_circuits(self):
         """Tests with random circuits."""
         backend = BraketLocalBackend(name="braket_sv")
-        shots = 10000
 
         for i in range(1, 10):
-            with self.subTest(f"Random circuit with {i} qubits."):
-                circuit = random_circuit(i, 5, seed=42)
+            circuit = random_circuit(i, 5, seed=42)
+            qiskit_sv = Statevector(circuit)
+            with self.subTest(f"Random circuit with {i} qubits and 0 shots."):
+                self.assertTrue(
+                    np.allclose(
+                        backend.run(circuit, shots=0).result().get_statevector(),
+                        qiskit_sv.data,
+                    )
+                )
+            with self.subTest(
+                f"Random circuit with {i} qubits and {(shots := 10000)} shots."
+            ):
                 braket_result = backend.run(circuit, shots=shots).result().get_counts()
-                qiskit_result = Statevector(circuit).probabilities_dict()
+                qiskit_result = qiskit_sv.probabilities_dict()
 
                 combined_results = combine_dicts(
                     {k: float(v) / shots for k, v in braket_result.items()},

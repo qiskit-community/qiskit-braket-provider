@@ -8,6 +8,7 @@ from braket.aws import AwsQuantumTask, AwsQuantumTaskBatch
 from braket.aws.queue_information import QuantumTaskQueueInfo
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2, JobStatus, JobV1
+from qiskit.quantum_info import Statevector
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 
@@ -41,13 +42,13 @@ def _get_result_from_aws_tasks(
             return None
 
         if result.task_metadata.shots == 0:
-            statevector = result.values[
+            braket_statevector = result.values[
                 result._result_types_indices[
                     "{'type': <Type.statevector: 'statevector'>}"
                 ]
             ]
             data = ExperimentResultData(
-                statevector=statevector,
+                statevector=Statevector(braket_statevector).reverse_qargs().data,
             )
         else:
             counts = {
