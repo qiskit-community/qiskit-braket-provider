@@ -227,14 +227,12 @@ def _get_controlled_gateset(
         set[str]: The names of the controlled gates.
     """
     max_control = max_qubits if max_qubits is not None else inf
-    return set().union(
-        [
-            controlled_gate
-            for control_count, gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()
-            for controlled_gate, base_gate in gate_map.items()
-            if control_count <= max_control and base_gate in base_gateset
-        ]
-    )
+    return {
+        controlled_gate
+        for control_count, gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.items()
+        for controlled_gate, base_gate in gate_map.items()
+        if control_count <= max_control and base_gate in base_gateset
+    }
 
 
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:
