@@ -255,7 +255,7 @@
 
 <span class="kn">from</span> <span class="nn">braket.tracking</span> <span class="kn">import</span> <span class="n">Tracker</span>
 
-<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span><span class="p">,</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">to_braket</span>
+<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">BraketProvider</span><span class="p">,</span> <span class="n">to_braket</span>
 
 <span class="c1"># Use Braket SDK Cost Tracking to estimate the cost to run this example</span>
 <span class="n">t</span> <span class="o">=</span> <span class="n">Tracker</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -265,13 +265,13 @@
 </section>
 <section id="Access-Braket-devices-from-Qiskit">
 <h2>Access Braket devices from Qiskit<a class="headerlink" href="#Access-Braket-devices-from-Qiskit" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through Braket SDK.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through Braket SDK.</p>
 <p>Let’s get available devices to use by Qiskit</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -286,7 +286,7 @@
 </div>
 <p>If you want to explore what is available by specific contraints, you can specify query arguments to <code class="docutils literal notranslate"><span class="pre">backends</span></code> method of provider. Arguments are fully compatible with Braket’s <code class="docutils literal notranslate"><span class="pre">get_device</span></code> method. See the documentation at <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/stable/_apidoc/braket.aws.aws_device.html#braket.aws.aws_device.AwsDevice.get_devices">braket.aws.aws_device.AwsDevice.get_devices</a>. For example, you can retrieve the list of online simulators via:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
@@ -295,7 +295,7 @@
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -305,7 +305,7 @@
 </div>
 <p>For prototyping it is usually a good practice to use simulators to set up workflow of your program and then change it to real device. We can access local simulator by creating instance of class <code class="docutils literal notranslate"><span class="pre">BraketLocalBackend</span></code></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
@@ -314,7 +314,7 @@
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -324,7 +324,7 @@ BraketBackend[default]
 </div>
 <p>Any backend can be instantiated via the <code class="docutils literal notranslate"><span class="pre">get_backend</span></code> method of the provider. Here is an example where we create a Backend object for the IonQ <code class="docutils literal notranslate"><span class="pre">Aria</span> <span class="pre">1</span></code> device.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Aria_1</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aria 1&quot;</span><span class="p">)</span>
@@ -336,7 +336,7 @@ BraketBackend[default]
 <h2>Running circuits on Braket devices<a class="headerlink" href="#Running-circuits-on-Braket-devices" title="Link to this heading">#</a></h2>
 <p>Let’s first create Qiskit circuit. We will start with a Bell circuit.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -347,7 +347,7 @@ BraketBackend[default]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -361,7 +361,7 @@ q_1: ─────┤ X ├
 Job</a> for more details.</p>
 <p>Here, quantum tasks are analogous to Qiskit jobs, which is why tasks have a <code class="docutils literal notranslate"><span class="pre">job_id</span></code> property. If a task has been submitted to Braket managed device, <code class="docutils literal notranslate"><span class="pre">job_id</span></code> will return a Task ARN (Amazon Resource number) which identifies the task and allows to retrieve it in the Braket Console and in your notebooks.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="n">local_simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">qc</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -370,7 +370,7 @@ Job</a> for more details.</p>
 </div>
 <p>Results are returned via a <code class="docutils literal notranslate"><span class="pre">Result</span></code> object, from which you can extract counts and plot them in a histogram.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
@@ -379,7 +379,7 @@ Job</a> for more details.</p>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -388,7 +388,7 @@ Job</a> for more details.</p>
 </div>
 <p>Each single shot measurements are also retrievable.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">get_memory</span><span class="p">()</span>
@@ -396,18 +396,18 @@ Job</a> for more details.</p>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[&#39;00&#39;, &#39;00&#39;, &#39;11&#39;, &#39;00&#39;, &#39;11&#39;, &#39;11&#39;, &#39;00&#39;, &#39;00&#39;, &#39;00&#39;, &#39;00&#39;]
+[&#39;00&#39;, &#39;00&#39;, &#39;00&#39;, &#39;00&#39;, &#39;00&#39;, &#39;11&#39;, &#39;00&#39;, &#39;11&#39;, &#39;00&#39;, &#39;11&#39;]
 </pre></div></div>
 </div>
 <p>More complex circuits on devices can be submitted to the Braket devices and simulators. Behind the scenes, the qiskit transpiler will adapt the circuits such that they are executable on all devices. In the following, we will focus on running circuit in the IonQ Aria-1 device.</p>
 <p>We will start with generating random circuit and printing it out.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qiskit_random_circuit</span> <span class="o">=</span> <span class="n">random_circuit</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
@@ -416,7 +416,7 @@ Job</a> for more details.</p>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -432,7 +432,7 @@ q_3: ─────────────────────┤1        
 </div>
 <p>Each device has a set of supported operations which are accessible via the backend.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aria_supported_gates</span> <span class="o">=</span> <span class="n">Aria_1</span><span class="o">.</span><span class="n">_get_gateset</span><span class="p">()</span>
@@ -445,11 +445,11 @@ q_3: ─────────────────────┤1        
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;x&#39;, &#39;t&#39;, &#39;h&#39;, &#39;ry&#39;, &#39;s&#39;, &#39;sx&#39;, &#39;rz&#39;, &#39;ryy&#39;, &#39;y&#39;, &#39;rzz&#39;, &#39;rxx&#39;, &#39;rx&#39;, &#39;sxdg&#39;, &#39;sdg&#39;, &#39;cx&#39;, &#39;swap&#39;, &#39;z&#39;, &#39;tdg&#39;}
+{&#39;tdg&#39;, &#39;rx&#39;, &#39;h&#39;, &#39;s&#39;, &#39;x&#39;, &#39;y&#39;, &#39;sdg&#39;, &#39;ry&#39;, &#39;rxx&#39;, &#39;cx&#39;, &#39;rzz&#39;, &#39;sxdg&#39;, &#39;z&#39;, &#39;sx&#39;, &#39;ryy&#39;, &#39;rz&#39;, &#39;t&#39;, &#39;swap&#39;}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">braket_random_circuit</span> <span class="o">=</span> <span class="n">to_braket</span><span class="p">(</span>
@@ -459,7 +459,7 @@ q_3: ─────────────────────┤1        
 </pre></div>
 </div>
 </div>
-<div class="nboutput nblast docutils container">
+<div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
@@ -477,9 +477,18 @@ q3 : -Rz(-1.57)-V-Rz(1.57)---C-Ry(-3.07)-C-Rz(-1.57)-Vi--------Rz(1.57)-Ry(2.02)
 T  : |    0    |1|   2    | 3 |    4    |5|    6    |    7    |   8    |   9    |10|   11    |12|13|14|   15   |16|   17    |18|   19   |20|    21    |   22   |23|24|25|26|27|28|29|30|31|32|
 </pre></div></div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:475: UserWarning: Device does not support global phase; global phase of 5.105088062083414 will not be included in Braket circuit
+  warnings.warn(
+</pre></div></div>
+</div>
 <p>We printed the Braket Circuit object that will be used to create the quantum task on the Aria-1 device. To submit the task, you do not have to create a Braket circuit, this is done internal when you submit the Qiskit circuit to the Backend.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aria_task</span> <span class="o">=</span> <span class="n">Aria_1</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">qiskit_random_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
@@ -488,7 +497,7 @@ T  : |    0    |1|   2    | 3 |    4    |5|    6    |    7    |   8    |   9    
 </div>
 <p>If you do not want to wait for the task completion and return to it later, you can use <code class="docutils literal notranslate"><span class="pre">retrieve_job</span></code> method on device to get job object. For this, you will need to know the job_id (which is the task ARN that identifies the task in the AWS cloud).</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">task_arn</span> <span class="o">=</span> <span class="n">aria_task</span><span class="o">.</span><span class="n">job_id</span><span class="p">()</span>
@@ -498,7 +507,7 @@ T  : |    0    |1|   2    | 3 |    4    |5|    6    |    7    |   8    |   9    
 </div>
 <p>From the task, you can check its status:</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">retrieved_task</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
@@ -506,7 +515,7 @@ T  : |    0    |1|   2    | 3 |    4    |5|    6    |    7    |   8    |   9    
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">

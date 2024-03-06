@@ -238,11 +238,12 @@
         </div>
         <article role="main">
           <h1>Source code for qiskit_braket_provider.providers.braket_backend</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;AWS Braket backends.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Amazon Braket backends.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">enum</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
@@ -304,7 +305,7 @@
 <div class="viewcode-block" id="BraketLocalBackend.__init__">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.BraketLocalBackend.html#qiskit_braket_provider.providers.BraketLocalBackend.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;AWSBraketLocalBackend for local execution of circuits.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketLocalBackend for local execution of circuits.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; device = LocalSimulator()                         #Local State Vector Simulator</span>
@@ -413,41 +414,44 @@
 
 
 
-<div class="viewcode-block" id="AWSBraketBackend">
-<a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html#qiskit_braket_provider.providers.AWSBraketBackend">[docs]</a>
-<span class="k">class</span> <span class="nc">AWSBraketBackend</span><span class="p">(</span><span class="n">BraketBackend</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;AWSBraketBackend.&quot;&quot;&quot;</span>
+<span class="k">class</span> <span class="nc">BraketAwsBackend</span><span class="p">(</span><span class="n">BraketBackend</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;BraketAwsBackend.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="AWSBraketBackend.__init__">
-<a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html#qiskit_braket_provider.providers.AWSBraketBackend.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">device</span><span class="p">:</span> <span class="n">AwsDevice</span><span class="p">,</span>
+        <span class="n">arn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">backend_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AwsDevice</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;AWSBraketBackend for execution circuits against AWS Braket devices.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketAwsBackend for execution circuits against AWS Braket devices.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; provider = AWSBraketProvider()</span>
+<span class="sd">            &gt;&gt;&gt; provider = BraketProvider()</span>
 <span class="sd">            &gt;&gt;&gt; backend = provider.get_backend(&quot;SV1&quot;)</span>
 <span class="sd">            &gt;&gt;&gt; transpiled_circuit = transpile(circuit, backend=backend)</span>
 <span class="sd">            &gt;&gt;&gt; backend.run(transpiled_circuit, shots=10).result().get_counts()</span>
 <span class="sd">            {&quot;100&quot;: 10, &quot;001&quot;: 10}</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device: Braket device class</span>
+<span class="sd">            arn: ARN of the Braket device</span>
 <span class="sd">            provider: Qiskit provider for this backend</span>
 <span class="sd">            name: name of backend</span>
 <span class="sd">            description: description of backend</span>
 <span class="sd">            online_date: online date</span>
 <span class="sd">            backend_version: backend version</span>
+<span class="sd">            device: Braket device instance</span>
 <span class="sd">            **fields: other arguments</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">arn</span> <span class="ow">or</span> <span class="n">device</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify either arn or device&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arn</span> <span class="ow">and</span> <span class="n">device</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can only specify one of arn and device&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -456,11 +460,11 @@
             <span class="n">backend_version</span><span class="o">=</span><span class="n">backend_version</span><span class="p">,</span>
             <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">user_agent</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;QiskitBraketProvider/</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">device</span><span class="o">.</span><span class="n">aws_session</span><span class="o">.</span><span class="n">add_braket_user_agent</span><span class="p">(</span><span class="n">user_agent</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span> <span class="o">=</span> <span class="n">device</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span></div>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span> <span class="o">=</span> <span class="n">AwsDevice</span><span class="p">(</span><span class="n">arn</span><span class="p">)</span> <span class="k">if</span> <span class="n">arn</span> <span class="k">else</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">aws_session</span><span class="o">.</span><span class="n">add_braket_user_agent</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;QiskitBraketProvider/</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">retrieve_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AmazonBraketTask</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a single job submitted to AWS backend.</span>
@@ -521,13 +525,13 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            Queue depth information for a running hybrid job.</span>
-<span class="sd">            &gt;&gt;&gt; device = AWSBraketProvider().get_backend(&quot;SV1&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; device = BraketProvider().get_backend(&quot;SV1&quot;)</span>
 <span class="sd">            &gt;&gt;&gt; print(device.queue_depth())</span>
 <span class="sd">            QueueDepthInfo(quantum_tasks={&lt;QueueType.NORMAL: &#39;Normal&#39;&gt;: &#39;0&#39;,</span>
 <span class="sd">            &lt;QueueType.PRIORITY: &#39;Priority&#39;&gt;: &#39;1&#39;}, jobs=&#39;0 (1 prioritized job(s) running)&#39;)</span>
 
 <span class="sd">            If more than 4000 quantum jobs queued on a device.</span>
-<span class="sd">            &gt;&gt;&gt; device = AWSBraketProvider().get_backend(&quot;SV1&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; device = BraketProvider().get_backend(&quot;SV1&quot;)</span>
 <span class="sd">            &gt;&gt;&gt; print(device.queue_depth())</span>
 <span class="sd">            QueueDepthInfo(quantum_tasks={&lt;QueueType.NORMAL: &#39;Normal&#39;&gt;: &#39;&gt;4000&#39;,</span>
 <span class="sd">            &lt;QueueType.PRIORITY: &#39;Priority&#39;&gt;: &#39;2000&#39;}, jobs=&#39;100&#39;)</span>
@@ -580,7 +584,49 @@
 
         <span class="k">return</span> <span class="n">AmazonBraketTask</span><span class="p">(</span>
             <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shots&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="AWSBraketBackend">
+<a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html#qiskit_braket_provider.providers.AWSBraketBackend">[docs]</a>
+<span class="k">class</span> <span class="nc">AWSBraketBackend</span><span class="p">(</span><span class="n">BraketAwsBackend</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;AWSBraketBackend.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on subclassing.&quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AWSBraketBackend.__init__">
+<a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html#qiskit_braket_provider.providers.AWSBraketBackend.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">AwsDevice</span><span class="p">,</span>
+        <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">backend_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on initialization.&quot;&quot;&quot;</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated. Use BraketAwsBackend instead&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">online_date</span><span class="o">=</span><span class="n">online_date</span><span class="p">,</span>
+            <span class="n">backend_version</span><span class="o">=</span><span class="n">backend_version</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
         <span class="p">)</span></div>
+</div>
 
 </pre></div>
         </article>

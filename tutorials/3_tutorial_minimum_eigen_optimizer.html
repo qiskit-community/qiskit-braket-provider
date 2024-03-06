@@ -249,10 +249,10 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">BackendSampler</span>
-<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+<span class="kn">from</span> <span class="nn">qiskit_braket_provider</span> <span class="kn">import</span> <span class="n">BraketProvider</span>
 
 <span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSampler</span><span class="p">(</span>
-    <span class="n">backend</span><span class="o">=</span><span class="n">AWSBraketProvider</span><span class="p">()</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">),</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">BraketProvider</span><span class="p">()</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">),</span>
     <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shots&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">},</span>
 <span class="p">)</span>
 </pre></div>
@@ -290,7 +290,6 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_algorithms.utils</span> <span class="kn">import</span> <span class="n">algorithm_globals</span>
 <span class="kn">from</span> <span class="nn">qiskit_algorithms</span> <span class="kn">import</span> <span class="n">QAOA</span><span class="p">,</span> <span class="n">NumPyMinimumEigensolver</span>
 <span class="kn">from</span> <span class="nn">qiskit_algorithms.optimizers</span> <span class="kn">import</span> <span class="n">COBYLA</span>
-<span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">Sampler</span>
 <span class="kn">from</span> <span class="nn">qiskit_optimization.algorithms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MinimumEigenOptimizer</span><span class="p">,</span>
     <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">,</span>
@@ -445,6 +444,15 @@ status: SUCCESS
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:438: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
@@ -475,14 +483,13 @@ status: SUCCESS
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 variable order: [&#39;x&#39;, &#39;y&#39;, &#39;z&#39;]
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.457, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.128, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.172, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.136, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.039, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.05, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.005, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.446, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.141, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.24, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.093, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.02, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.042, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <p>We may also want to filter samples according to their status or probabilities.</p>
@@ -525,13 +532,13 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.005, status=&lt;Op
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.457, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.128, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.172, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.136, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.039, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.05, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.446, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.141, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.24, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.093, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.02, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.042, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <p>If we want to obtain a better perspective of the results, statistics is very helpful, both with respect to the objective function values and their respective probabilities. Thus, mean and standard deviation are the very basics for understanding the results.</p>
@@ -558,7 +565,7 @@ SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;Op
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-1.5
+1.1428571428571428
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -575,7 +582,7 @@ SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;Op
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-1.9364916731037085
+1.8070158058105026
 </pre></div></div>
 </div>
 <p>Finally, despite all the number-crunching, visualization is usually the best early-analysis approach.</p>
@@ -599,13 +606,13 @@ SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;Op
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;x=0 y=1 z=0&#39;: 0.457,
- &#39;x=1 y=1 z=0&#39;: 0.128,
- &#39;x=0 y=0 z=0&#39;: 0.172,
- &#39;x=1 y=0 z=0&#39;: 0.136,
- &#39;x=0 y=0 z=1&#39;: 0.039,
- &#39;x=1 y=0 z=1&#39;: 0.05,
- &#39;x=0 y=1 z=1&#39;: 0.013}
+{&#39;x=0 y=1 z=0&#39;: 0.446,
+ &#39;x=1 y=1 z=0&#39;: 0.141,
+ &#39;x=0 y=0 z=0&#39;: 0.24,
+ &#39;x=1 y=0 z=0&#39;: 0.093,
+ &#39;x=1 y=0 z=1&#39;: 0.02,
+ &#39;x=0 y=1 z=1&#39;: 0.042,
+ &#39;x=0 y=0 z=1&#39;: 0.018}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -649,6 +656,15 @@ SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.013, status=&lt;Op
 <span class="nb">print</span><span class="p">(</span><span class="n">rqaoa_result</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:438: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
