@@ -1,4 +1,4 @@
-"""AWS Braket provider."""
+"""Amazon Braket provider."""
 
 import warnings
 
@@ -12,7 +12,7 @@ from .braket_backend import BraketAwsBackend, BraketLocalBackend
 
 
 class BraketProvider(ProviderV1):
-    """BraketProvider class for accessing AWS Braket backends.
+    """BraketProvider class for accessing Amazon Braket backends.
 
     Example:
         >>> provider = BraketProvider()
@@ -66,7 +66,7 @@ class BraketProvider(ProviderV1):
 
 
 class AWSBraketProvider(BraketProvider):
-    """AWSBraketProvider class for accessing AWS Braket backends."""
+    """AWSBraketProvider class for accessing Amazon Braket backends."""
 
     def __init_subclass__(cls, **kwargs):
         """This throws a deprecation warning on subclassing."""
