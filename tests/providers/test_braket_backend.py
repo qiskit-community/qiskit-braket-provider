@@ -19,7 +19,7 @@ from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 from qiskit_algorithms.optimizers import SLSQP
 
 from qiskit_braket_provider import AWSBraketProvider, exception, version
-from qiskit_braket_provider.providers import AWSBraketBackend, BraketLocalBackend
+from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from tests.providers.mocks import (
     RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES,
@@ -53,14 +53,14 @@ def combine_dicts(
     return combined_dict
 
 
-class TestAWSBraketBackend(TestCase):
+class TestBraketAwsBackend(TestCase):
     """Tests BraketBackend."""
 
     def test_device_backend(self):
         """Tests device backend."""
         device = Mock()
         device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
-        backend = AWSBraketBackend(device)
+        backend = BraketAwsBackend(device=device)
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
@@ -298,7 +298,7 @@ class TestAWSBraketBackend(TestCase):
         )
         mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
         mocked_device.queue_depth.return_value = mock_return_value
-        backend = AWSBraketBackend(device=mocked_device)
+        backend = BraketAwsBackend(device=mocked_device)
         result = backend.queue_depth()
 
         mocked_device.queue_depth.assert_called_once()

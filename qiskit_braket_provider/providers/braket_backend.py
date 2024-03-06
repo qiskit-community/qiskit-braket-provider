@@ -1,8 +1,9 @@
-"""AWS Braket backends."""
+"""Amazon Braket backends."""
 
 import datetime
 import enum
 import logging
+import warnings
 from abc import ABC
 from collections.abc import Iterable
 from typing import Optional, Union
@@ -60,7 +61,7 @@ class BraketLocalBackend(BraketBackend):
     """BraketLocalBackend."""
 
     def __init__(self, name: str = "default", **fields):
-        """AWSBraketLocalBackend for local execution of circuits.
+        """BraketLocalBackend for local execution of circuits.
 
         Example:
             >>> device = LocalSimulator()                         #Local State Vector Simulator
@@ -167,37 +168,44 @@ class BraketLocalBackend(BraketBackend):
         )
 
 
-class AWSBraketBackend(BraketBackend):
-    """AWSBraketBackend."""
+class BraketAwsBackend(BraketBackend):
+    """BraketAwsBackend."""
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        device: AwsDevice,
+        arn: Optional[str] = None,
         provider: Provider = None,
         name: str = None,
         description: str = None,
         online_date: datetime.datetime = None,
         backend_version: str = None,
+        *,
+        device: Optional[AwsDevice] = None,
         **fields,
     ):
-        """AWSBraketBackend for execution circuits against AWS Braket devices.
+        """BraketAwsBackend for execution circuits against AWS Braket devices.
 
         Example:
-            >>> provider = AWSBraketProvider()
+            >>> provider = BraketProvider()
             >>> backend = provider.get_backend("SV1")
             >>> transpiled_circuit = transpile(circuit, backend=backend)
             >>> backend.run(transpiled_circuit, shots=10).result().get_counts()
             {"100": 10, "001": 10}
 
         Args:
-            device: Braket device class
+            arn: ARN of the Braket device
             provider: Qiskit provider for this backend
             name: name of backend
             description: description of backend
             online_date: online date
             backend_version: backend version
+            device: Braket device instance
             **fields: other arguments
         """
+        if not (arn or device):
+            raise ValueError("Must specify either arn or device")
+        if arn and device:
+            raise ValueError("Can only specify one of arn and device")
         super().__init__(
             provider=provider,
             name=name,
@@ -206,9 +214,10 @@ class AWSBraketBackend(BraketBackend):
             backend_version=backend_version,
             **fields,
         )
-        user_agent = f"QiskitBraketProvider/{version.__version__}"
-        device.aws_session.add_braket_user_agent(user_agent)
-        self._aws_device = device
+        self._aws_device = AwsDevice(arn) if arn else device
+        self._aws_device.aws_session.add_braket_user_agent(
+            f"QiskitBraketProvider/{version.__version__}"
+        )
         self._target = aws_device_to_target(device=device)
 
     def retrieve_job(self, task_id: str) -> AmazonBraketTask:
@@ -270,13 +279,13 @@ class AWSBraketBackend(BraketBackend):
 
         Example:
             Queue depth information for a running hybrid job.
-            >>> device = AWSBraketProvider().get_backend("SV1")
+            >>> device = BraketProvider().get_backend("SV1")
             >>> print(device.queue_depth())
             QueueDepthInfo(quantum_tasks={<QueueType.NORMAL: 'Normal'>: '0',
             <QueueType.PRIORITY: 'Priority'>: '1'}, jobs='0 (1 prioritized job(s) running)')
 
             If more than 4000 quantum jobs queued on a device.
-            >>> device = AWSBraketProvider().get_backend("SV1")
+            >>> device = BraketProvider().get_backend("SV1")
             >>> print(device.queue_depth())
             QueueDepthInfo(quantum_tasks={<QueueType.NORMAL: 'Normal'>: '>4000',
             <QueueType.PRIORITY: 'Priority'>: '2000'}, jobs='100')
@@ -329,4 +338,41 @@ class AWSBraketBackend(BraketBackend):
 
         return AmazonBraketTask(
             task_id=task_id, tasks=tasks, backend=self, shots=options.get("shots")
+        )
+
+
+class AWSBraketBackend(BraketAwsBackend):
+    """AWSBraketBackend."""
+
+    def __init_subclass__(cls, **kwargs):
+        """This throws a deprecation warning on subclassing."""
+        warnings.warn(
+            f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2
+        )
+        super().__init_subclass__(**kwargs)
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        device: AwsDevice,
+        provider: Provider = None,
+        name: str = None,
+        description: str = None,
+        online_date: datetime.datetime = None,
+        backend_version: str = None,
+        **fields,
+    ):
+        """This throws a deprecation warning on initialization."""
+        warnings.warn(
+            f"{self.__class__.__name__} is deprecated. Use BraketAwsBackend instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(
+            device=device,
+            provider=provider,
+            name=name,
+            description=description,
+            online_date=online_date,
+            backend_version=backend_version,
+            **fields,
         )
