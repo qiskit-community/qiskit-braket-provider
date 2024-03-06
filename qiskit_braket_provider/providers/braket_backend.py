@@ -186,7 +186,7 @@ class BraketAwsBackend(BraketBackend):
         """BraketAwsBackend for execution circuits against AWS Braket devices.
 
         Example:
-            >>> provider = AWSBraketProvider()
+            >>> provider = BraketProvider()
             >>> backend = provider.get_backend("SV1")
             >>> transpiled_circuit = transpile(circuit, backend=backend)
             >>> backend.run(transpiled_circuit, shots=10).result().get_counts()
@@ -279,13 +279,13 @@ class BraketAwsBackend(BraketBackend):
 
         Example:
             Queue depth information for a running hybrid job.
-            >>> device = AWSBraketProvider().get_backend("SV1")
+            >>> device = BraketProvider().get_backend("SV1")
             >>> print(device.queue_depth())
             QueueDepthInfo(quantum_tasks={<QueueType.NORMAL: 'Normal'>: '0',
             <QueueType.PRIORITY: 'Priority'>: '1'}, jobs='0 (1 prioritized job(s) running)')
 
             If more than 4000 quantum jobs queued on a device.
-            >>> device = AWSBraketProvider().get_backend("SV1")
+            >>> device = BraketProvider().get_backend("SV1")
             >>> print(device.queue_depth())
             QueueDepthInfo(quantum_tasks={<QueueType.NORMAL: 'Normal'>: '>4000',
             <QueueType.PRIORITY: 'Priority'>: '2000'}, jobs='100')

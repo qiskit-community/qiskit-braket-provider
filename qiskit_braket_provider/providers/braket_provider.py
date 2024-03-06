@@ -12,10 +12,10 @@ from .braket_backend import BraketAwsBackend, BraketLocalBackend
 
 
 class BraketProvider(ProviderV1):
-    """AWSBraketProvider class for accessing AWS Braket backends.
+    """BraketProvider class for accessing AWS Braket backends.
 
     Example:
-        >>> provider = AWSBraketProvider()
+        >>> provider = BraketProvider()
         >>> backends = provider.backends()
         >>> backends
         [BraketBackend[Aspen-10],
