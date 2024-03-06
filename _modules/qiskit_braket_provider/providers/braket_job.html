@@ -248,6 +248,7 @@
 <span class="kn">from</span> <span class="nn">braket.aws.queue_information</span> <span class="kn">import</span> <span class="n">QuantumTaskQueueInfo</span>
 <span class="kn">from</span> <span class="nn">braket.tasks.local_quantum_task</span> <span class="kn">import</span> <span class="n">LocalQuantumTask</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobV1</span>
+<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">Statevector</span>
 <span class="kn">from</span> <span class="nn">qiskit.result</span> <span class="kn">import</span> <span class="n">Result</span>
 <span class="kn">from</span> <span class="nn">qiskit.result.models</span> <span class="kn">import</span> <span class="n">ExperimentResult</span><span class="p">,</span> <span class="n">ExperimentResultData</span>
 
@@ -281,13 +282,13 @@
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">task_metadata</span><span class="o">.</span><span class="n">shots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">statevector</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+            <span class="n">braket_statevector</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">_result_types_indices</span><span class="p">[</span>
                     <span class="s2">&quot;{&#39;type&#39;: &lt;Type.statevector: &#39;statevector&#39;&gt;}&quot;</span>
                 <span class="p">]</span>
             <span class="p">]</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span>
-                <span class="n">statevector</span><span class="o">=</span><span class="n">statevector</span><span class="p">,</span>
+                <span class="n">statevector</span><span class="o">=</span><span class="n">Statevector</span><span class="p">(</span><span class="n">braket_statevector</span><span class="p">)</span><span class="o">.</span><span class="n">reverse_qargs</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
