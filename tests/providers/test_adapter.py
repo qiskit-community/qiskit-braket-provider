@@ -440,15 +440,24 @@ class TestAdapter(TestCase):
 
     def test_get_controlled_gateset(self):
         """Tests that the correct controlled gateset is returned for all maximum qubit counts."""
+        full_gateset = {"h", "s", "sdg", "sx", "rx", "ry", "rz", "cz"}
+        restricted_gateset = {"rx", "cx", "sx"}
         max1 = {"ch", "cs", "csdg", "csx", "crx", "cry", "crz", "ccz"}
         max3 = max1.union({"c3sx"})
         unlimited = max3.union({"mcx"})
-        assert _get_controlled_gateset(0) == set()
-        assert _get_controlled_gateset(1) == max1
-        assert _get_controlled_gateset(2) == max1
-        assert _get_controlled_gateset(3) == max3
-        assert _get_controlled_gateset(4) == max3
-        assert _get_controlled_gateset() == unlimited
+        assert _get_controlled_gateset(full_gateset, 0) == set()
+        assert _get_controlled_gateset(full_gateset, 1) == max1
+        assert _get_controlled_gateset(full_gateset, 2) == max1
+        assert _get_controlled_gateset(full_gateset, 3) == max3
+        assert _get_controlled_gateset(full_gateset, 4) == max3
+        assert _get_controlled_gateset(full_gateset) == unlimited
+        assert _get_controlled_gateset(restricted_gateset, 3) == {"crx", "csx", "c3sx"}
+        assert _get_controlled_gateset(restricted_gateset) == {
+            "crx",
+            "csx",
+            "c3sx",
+            "mcx",
+        }
 
 
 class TestFromBraket(TestCase):
