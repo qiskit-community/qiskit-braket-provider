@@ -1,4 +1,4 @@
-"""AWS Braket job."""
+"""Amazon Braket task."""
 
 from datetime import datetime
 from typing import List, Optional, Union
