@@ -67,7 +67,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi2": "gpi2",
     "ms": "ms",
     "gphase": _GPHASE_GATE_NAME,
-    "measure": "measure"
+    "measure": "measure",
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
@@ -130,7 +130,7 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
-    "measure": lambda: [measure.Measure()]
+    "measure": lambda: [measure.Measure()],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
@@ -185,7 +185,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
         Parameter("theta") / (2 * pi),
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
-    "measure": qiskit_gates.Measure()
+    "measure": qiskit_gates.Measure(),
 }
 
 
@@ -530,8 +530,10 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
-    num_measurements = sum(instr.operator.name.lower() == "measure" for instr in circuit.instructions)
-    qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements) 
+    num_measurements = sum(
+        instr.operator.name.lower() == "measure" for instr in circuit.instructions
+    )
+    qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements)
     qubit_map = {
         int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))
     }

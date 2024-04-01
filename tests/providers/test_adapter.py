@@ -253,7 +253,7 @@ class TestAdapter(TestCase):
                 "gpi",
                 "gpi2",
                 "ms",
-                "measure"
+                "measure",
             ]
         }
 
@@ -320,10 +320,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
-            .h(0)
-            .cnot(0, 1)
-            .measure(0)
+            Circuit().h(0).cnot(0, 1).measure(0)  # pylint: disable=no-member
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -344,10 +341,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
-            .h(0)
-            .cnot(0, 1)
-            .measure(0)
+            Circuit().h(0).cnot(0, 1).measure(0)  # pylint: disable=no-member
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -699,4 +693,3 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure(0, 1)
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
-
