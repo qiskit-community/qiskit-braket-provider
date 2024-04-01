@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
+from braket.circuits import Circuit, FreeParameter, Gate, Instruction
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector

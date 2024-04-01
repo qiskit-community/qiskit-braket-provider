@@ -6,7 +6,6 @@ from math import inf, pi
 from typing import Optional, Union
 
 import braket.circuits.gates as braket_gates
-import braket.circuits.measure as measure
 import qiskit.circuit.library as qiskit_gates
 from braket.aws import AwsDevice
 from braket.circuits import (
@@ -14,7 +13,7 @@ from braket.circuits import (
     FreeParameter,
     FreeParameterExpression,
     Instruction,
-    observables,
+    measure,
 )
 from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
 from braket.device_schema.ionq import IonqDeviceCapabilities
