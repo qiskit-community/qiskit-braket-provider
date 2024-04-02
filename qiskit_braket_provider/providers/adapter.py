@@ -529,7 +529,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
     num_measurements = sum(
-        instr.operator.name.lower() == "measure" for instr in circuit.instructions
+        isinstance(instr.operator, measure.Measure) for instr in circuit.instructions
     )
     qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements)
     qubit_map = {
