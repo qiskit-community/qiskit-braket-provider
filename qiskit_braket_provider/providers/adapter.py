@@ -66,7 +66,6 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi2": "gpi2",
     "ms": "ms",
     "gphase": _GPHASE_GATE_NAME,
-    "measure": "measure",
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
