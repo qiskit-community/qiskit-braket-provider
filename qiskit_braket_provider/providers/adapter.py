@@ -128,7 +128,6 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
-    "measure": lambda: [measure.Measure()],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {

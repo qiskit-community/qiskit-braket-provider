@@ -253,8 +253,12 @@ class TestAdapter(TestCase):
                 "gpi",
                 "gpi2",
                 "ms",
-                "measure",
             ]
+        }
+
+        braket_to_qiskit_gate_names = {
+            **qiskit_to_braket_gate_names,
+            **{"measure": "measure"},
         }
 
         self.assertEqual(
@@ -263,7 +267,7 @@ class TestAdapter(TestCase):
         )
 
         self.assertEqual(
-            set(qiskit_to_braket_gate_names.values()),
+            set(braket_to_qiskit_gate_names.values()),
             set(_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
