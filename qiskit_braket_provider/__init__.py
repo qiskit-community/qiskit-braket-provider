@@ -8,6 +8,7 @@ from .providers import (
     BraketAwsBackend,
     BraketLocalBackend,
     BraketProvider,
+    BraketTask,
     to_braket,
     to_qiskit,
 )

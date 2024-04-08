@@ -11,8 +11,53 @@ from qiskit_braket_provider.providers import (
     AmazonBraketTask,
     AWSBraketJob,
     BraketLocalBackend,
+    BraketTask,
 )
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
+
+
+class TestBraketTask(TestCase):
+    """Tests BraketTask."""
+
+    def _get_task(self):
+        return BraketTask(
+            backend=BraketLocalBackend(name="default"),
+            task_id="AwesomeId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK],
+            shots=10,
+        )
+
+    def test_task(self):
+        """Tests task."""
+        task = self._get_task()
+
+        self.assertTrue(isinstance(task, BraketTask))
+        self.assertEqual(task.shots, 10)
+
+        self.assertEqual(task.status(), JobStatus.DONE)
+
+    def test_result(self):
+        """Tests result."""
+        task = self._get_task()
+
+        self.assertEqual(task.result().job_id, "AwesomeId")
+        self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
+        self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
+        self.assertEqual(task.result().results[0].status, "COMPLETED")
+        self.assertEqual(task.result().results[0].shots, 3)
+        self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
+
+    def test_queue_position_for_local_quantum_task(self):
+        """Tests job status when multiple task status is present."""
+        task = BraketTask(
+            backend=BraketLocalBackend(name="default"),
+            task_id="MockId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK],
+            shots=100,
+        )
+        message = "We don't provide queue information for the LocalQuantumTask."
+        with pytest.raises(NotImplementedError, match=message):
+            task.queue_position()
 
 
 class TestAmazonBraketTask(TestCase):
@@ -79,18 +124,6 @@ class TestAWSBraketJob(TestCase):
         self.assertEqual(job.result().results[0].shots, 3)
         self.assertEqual(job.result().get_memory(), ["10", "10", "01"])
 
-    def test_queue_position_for_local_quantum_task(self):
-        """Tests job status when multiple task status is present."""
-        job = AWSBraketJob(
-            backend=BraketLocalBackend(name="default"),
-            job_id="MockId",
-            tasks=[MOCK_LOCAL_QUANTUM_TASK],
-            shots=100,
-        )
-        message = "We don't provide queue information for the LocalQuantumTask."
-        with pytest.raises(NotImplementedError, match=message):
-            job.queue_position()
-
 
 class TestBraketJobStatus:
     """Tests for Amazon Braket job status."""
@@ -123,7 +156,7 @@ class TestBraketJobStatus:
             tasks=[MOCK_LOCAL_QUANTUM_TASK],
             shots=100,
         )
-        job._tasks = Mock(spec=AmazonBraketTask)
+        job._tasks = Mock(spec=BraketTask)
         job._tasks = [self._get_mock_aws_quantum_task(state) for state in task_states]
 
         assert job.status() == expected_status
