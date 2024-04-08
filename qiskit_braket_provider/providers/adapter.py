@@ -13,7 +13,7 @@ from braket.circuits import (
     FreeParameter,
     FreeParameterExpression,
     Instruction,
-    observables,
+    measure,
 )
 from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
 from braket.device_schema.ionq import IonqDeviceCapabilities
@@ -182,6 +182,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
         Parameter("theta") / (2 * pi),
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
+    "measure": qiskit_gates.Measure(),
 }
 
 
@@ -432,12 +433,7 @@ def to_braket(
         if gate_name == "measure":
             qubit = qubits[0]  # qubit count = 1 for measure
             qubit_index = circuit.find_bit(qubit).index
-            braket_circuit.sample(
-                observable=observables.Z(),
-                target=[
-                    qubit_index,
-                ],
-            )
+            braket_circuit.measure(qubit_index)
         elif gate_name == "barrier":
             warnings.warn(
                 "The Qiskit circuit contains barrier instructions that are ignored."
@@ -531,14 +527,17 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
-    qiskit_circuit = QuantumCircuit(circuit.qubit_count)
+    num_measurements = sum(
+        isinstance(instr.operator, measure.Measure) for instr in circuit.instructions
+    )
+    qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements)
     qubit_map = {
         int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))
     }
     dict_param = {}
+    cbit = 0
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
-
         gate_params = []
         if hasattr(instruction.operator, "parameters"):
             for value in instruction.operator.parameters:
@@ -560,8 +559,13 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
         target = [qiskit_circuit.qubits[qubit_map[i]] for i in control_qubits]
         target += [qiskit_circuit.qubits[qubit_map[i]] for i in instruction.target]
 
-        qiskit_circuit.append(gate, target)
-    qiskit_circuit.measure_all()
+        if gate_name == "measure":
+            qiskit_circuit.append(gate, target, [cbit])
+            cbit += 1
+        else:
+            qiskit_circuit.append(gate, target)
+    if num_measurements == 0:
+        qiskit_circuit.measure_all()
     return qiskit_circuit
 
 

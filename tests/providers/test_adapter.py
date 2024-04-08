@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from braket.circuits import Circuit, FreeParameter, Gate, Instruction, observables
+from braket.circuits import Circuit, FreeParameter, Gate, Instruction
 from braket.circuits.angled_gate import AngledGate, TripleAngledGate
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
@@ -256,13 +256,18 @@ class TestAdapter(TestCase):
             ]
         }
 
+        braket_to_qiskit_gate_names = {
+            **qiskit_to_braket_gate_names,
+            **{"measure": "measure"},
+        }
+
         self.assertEqual(
             set(qiskit_to_braket_gate_names.keys()),
             set(_GATE_NAME_TO_BRAKET_GATE.keys()),
         )
 
         self.assertEqual(
-            set(qiskit_to_braket_gate_names.values()),
+            set(braket_to_qiskit_gate_names.values()),
             set(_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
@@ -309,8 +314,8 @@ class TestAdapter(TestCase):
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
-    def test_sample_result_type(self):
-        """Tests sample result type with observables Z"""
+    def test_measure(self):
+        """Tests the translation of a measure instruction"""
 
         qiskit_circuit = QuantumCircuit(2, 2)
         qiskit_circuit.h(0)
@@ -319,15 +324,12 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
-            .h(0)
-            .cnot(0, 1)
-            .sample(observable=observables.Z(), target=0)
+            Circuit().h(0).cnot(0, 1).measure(0)  # pylint: disable=no-member
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
-    def test_sample_result_type_different_indices(self):
+    def test_measure_different_indices(self):
         """
         Tests the translation of a measure instruction.
 
@@ -343,10 +345,61 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
+            Circuit().h(0).cnot(0, 1).measure(0)  # pylint: disable=no-member
+        )
+
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_measure_subset_indices(self):
+        """
+        Tests the translation of a measure instruction on
+        a subset of qubits.
+        """
+
+        qiskit_circuit = QuantumCircuit(4, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+        qiskit_circuit.cx(1, 2)
+        qiskit_circuit.cx(2, 3)
+        qiskit_circuit.measure(0, 0)
+        qiskit_circuit.measure(2, 1)
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .h(0)
             .cnot(0, 1)
-            .sample(observable=observables.Z(), target=0)
+            .cnot(1, 2)
+            .cnot(2, 3)
+            .measure(0)
+            .measure(2)
+        )
+
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_measure_all(self):
+        """
+        Tests the translation of a measure_all instruction
+        """
+
+        qiskit_circuit = QuantumCircuit(4, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+        qiskit_circuit.cx(1, 2)
+        qiskit_circuit.cx(2, 3)
+        qiskit_circuit.measure_all()
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()  # pylint: disable=no-member
+            .h(0)
+            .cnot(0, 1)
+            .cnot(1, 2)
+            .cnot(2, 3)
+            .measure(0)
+            .measure(1)
+            .measure(2)
+            .measure(3)
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -373,8 +426,8 @@ class TestAdapter(TestCase):
             .h(0)
             .cnot(0, 2)
             .x(1)
-            .sample(observable=observables.Z(), target=0)
-            .sample(observable=observables.Z(), target=2)
+            .measure(0)
+            .measure(2)
         )
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -596,5 +649,51 @@ class TestFromBraket(TestCase):
         sx = qiskit_gates.XGate().power(0.5)
         expected_qiskit_circuit.append(sx, [0])
         expected_qiskit_circuit.measure_all()
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_measure_subset(self):
+        """Tests the measure instruction conversion from braket to qiskit"""
+        braket_circuit = Circuit().h(0).cnot(0, 1).measure(0)
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(2, 1)
+        expected_qiskit_circuit.h(0)
+        expected_qiskit_circuit.cx(0, 1)
+        expected_qiskit_circuit.measure(0, 0)
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_measure_multiple_indices(self):
+        """
+        Tests the measure instruction conversion with multiple
+        indices in the braket measure target.
+        """
+        braket_circuit = Circuit().h(0).cnot(0, 1).cnot(1, 2).measure([0, 1, 2])
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(3, 3)
+        expected_qiskit_circuit.h(0)
+        expected_qiskit_circuit.cx(0, 1)
+        expected_qiskit_circuit.cx(1, 2)
+        expected_qiskit_circuit.measure(0, 0)
+        expected_qiskit_circuit.measure(1, 1)
+        expected_qiskit_circuit.measure(2, 2)
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_measure_different_indices(self):
+        """
+        Tests the measure instruction conversion from with
+        the ordering of the targets unsorted.
+        """
+        braket_circuit = Circuit().h(0).cnot(0, 1).measure([1, 0])
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(2, 2)
+        expected_qiskit_circuit.h(0)
+        expected_qiskit_circuit.cx(0, 1)
+        expected_qiskit_circuit.measure(1, 0)
+        expected_qiskit_circuit.measure(0, 1)
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
