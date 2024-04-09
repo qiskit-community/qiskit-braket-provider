@@ -238,88 +238,27 @@
         </div>
         <article role="main">
           <h1>Source code for qiskit_braket_provider.providers.braket_job</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Amazon Braket task.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Deprecated Amazon Braket Qiskit Job classes&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
-<span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumTask</span><span class="p">,</span> <span class="n">AwsQuantumTaskBatch</span>
-<span class="kn">from</span> <span class="nn">braket.aws.queue_information</span> <span class="kn">import</span> <span class="n">QuantumTaskQueueInfo</span>
+<span class="kn">from</span> <span class="nn">braket.aws</span> <span class="kn">import</span> <span class="n">AwsQuantumTask</span>
 <span class="kn">from</span> <span class="nn">braket.tasks.local_quantum_task</span> <span class="kn">import</span> <span class="n">LocalQuantumTask</span>
-<span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobV1</span>
-<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">Statevector</span>
-<span class="kn">from</span> <span class="nn">qiskit.result</span> <span class="kn">import</span> <span class="n">Result</span>
-<span class="kn">from</span> <span class="nn">qiskit.result.models</span> <span class="kn">import</span> <span class="n">ExperimentResult</span><span class="p">,</span> <span class="n">ExperimentResultData</span>
+<span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">BackendV2</span>
 
-
-<span class="k">def</span> <span class="nf">retry_if_result_none</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retry on result function.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span>
-
-
-<span class="k">def</span> <span class="nf">_get_result_from_aws_tasks</span><span class="p">(</span>
-    <span class="n">tasks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">LocalQuantumTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ExperimentResult</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns experiment results of AWS tasks.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        tasks: AWS Quantum tasks</span>
-<span class="sd">        shots: number of shots</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List of experiment results.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">experiment_results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExperimentResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="n">results</span> <span class="o">=</span> <span class="n">AwsQuantumTaskBatch</span><span class="o">.</span><span class="n">_retrieve_results</span><span class="p">(</span>
-        <span class="n">tasks</span><span class="p">,</span> <span class="n">AwsQuantumTaskBatch</span><span class="o">.</span><span class="n">MAX_CONNECTIONS_DEFAULT</span>
-    <span class="p">)</span>
-
-    <span class="c1"># For each task we create an ExperimentResult object with the downloaded results.</span>
-    <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">task_metadata</span><span class="o">.</span><span class="n">shots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">braket_statevector</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
-                <span class="n">result</span><span class="o">.</span><span class="n">_result_types_indices</span><span class="p">[</span>
-                    <span class="s2">&quot;{&#39;type&#39;: &lt;Type.statevector: &#39;statevector&#39;&gt;}&quot;</span>
-                <span class="p">]</span>
-            <span class="p">]</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span>
-                <span class="n">statevector</span><span class="o">=</span><span class="n">Statevector</span><span class="p">(</span><span class="n">braket_statevector</span><span class="p">)</span><span class="o">.</span><span class="n">reverse_qargs</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">k</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurement_counts</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="p">}</span>  <span class="c1"># convert to little-endian</span>
-
-            <span class="n">data</span> <span class="o">=</span> <span class="n">ExperimentResultData</span><span class="p">(</span>
-                <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span>
-                <span class="n">memory</span><span class="o">=</span><span class="p">[</span>
-                    <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">shot_result</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
-                    <span class="k">for</span> <span class="n">shot_result</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">measurements</span>
-                <span class="p">],</span>
-            <span class="p">)</span>
-
-        <span class="n">experiment_result</span> <span class="o">=</span> <span class="n">ExperimentResult</span><span class="p">(</span>
-            <span class="n">shots</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">task_metadata</span><span class="o">.</span><span class="n">shots</span><span class="p">,</span>
-            <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">status</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">LocalQuantumTask</span><span class="p">)</span>
-            <span class="k">else</span> <span class="n">result</span><span class="o">.</span><span class="n">task_metadata</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">experiment_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">experiment_result</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">experiment_results</span>
+<span class="kn">from</span> <span class="nn">.braket_task</span> <span class="kn">import</span> <span class="n">BraketTask</span>
 
 
 <div class="viewcode-block" id="AmazonBraketTask">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask">[docs]</a>
-<span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">JobV1</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">BraketTask</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;AmazonBraketTask.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on subclassing.&quot;&quot;&quot;</span>
+        <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AmazonBraketTask.__init__">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask.__init__">[docs]</a>
@@ -330,120 +269,18 @@
         <span class="n">tasks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">LocalQuantumTask</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]],</span>
         <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;AmazonBraketTask for local execution of circuits.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            task_id: id of the task</span>
-<span class="sd">            backend: Local simulator</span>
-<span class="sd">            tasks: Executed tasks</span>
-<span class="sd">            **metadata:</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span> <span class="o">=</span> <span class="n">task_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">tasks</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_date_of_creation</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></div>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">shots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of shots.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            shots: int with the number of shots.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;shots&quot;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="s2">&quot;shots&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span>
-            <span class="k">else</span> <span class="mi">0</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on initialization.&quot;&quot;&quot;</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span>
-
-    <span class="k">def</span> <span class="nf">queue_position</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumTaskQueueInfo</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The queue position details for the quantum job.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            QuantumTaskQueueInfo: Instance of QuantumTaskQueueInfo class</span>
-<span class="sd">            representing the queue position information for the quantum job.</span>
-<span class="sd">            The queue_position is only returned when quantum job is not in</span>
-<span class="sd">            RUNNING/CANCELLING/TERMINAL states, else queue_position is returned as None.</span>
-<span class="sd">            The normal tasks refers to the quantum jobs not submitted via Hybrid Jobs.</span>
-<span class="sd">            Whereas, the priority tasks refers to the total number of quantum jobs waiting to run</span>
-<span class="sd">            submitted through Amazon Braket Hybrid Jobs. These tasks run before the normal tasks.</span>
-<span class="sd">            If the queue position for normal or priority quantum tasks is greater than 2000,</span>
-<span class="sd">            we display their respective queue position as &#39;&gt;2000&#39;.</span>
-
-<span class="sd">            Note: We don&#39;t provide queue information for the LocalQuantumTasks.</span>
-
-<span class="sd">        Examples:</span>
-<span class="sd">            job status = QUEUED and queue position is 2050</span>
-<span class="sd">            &gt;&gt;&gt; task.queue_position()</span>
-<span class="sd">            QuantumTaskQueueInfo(queue_type=&lt;QueueType.NORMAL: &#39;Normal&#39;&gt;,</span>
-<span class="sd">            queue_position=&#39;&gt;2000&#39;, message=None)</span>
-
-<span class="sd">            job status = COMPLETED</span>
-<span class="sd">            &gt;&gt;&gt; task.queue_position()</span>
-<span class="sd">            QuantumTaskQueueInfo(queue_type=&lt;QueueType.NORMAL: &#39;Normal&#39;&gt;,</span>
-<span class="sd">            queue_position=None, message=&#39;Task is in COMPLETED status. AmazonBraket does</span>
-<span class="sd">            not show queue position for this status.&#39;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">LocalQuantumTask</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                    <span class="s2">&quot;We don&#39;t provide queue information for the LocalQuantumTask.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">return</span> <span class="n">AwsQuantumTask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">())</span><span class="o">.</span><span class="n">queue_position</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">task_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a unique id identifying the task.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span>
-
-    <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
-        <span class="n">experiment_results</span> <span class="o">=</span> <span class="n">_get_result_from_aws_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">)</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">use_cached_value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">Result</span><span class="p">(</span>
-            <span class="n">backend_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="p">,</span>
-            <span class="n">backend_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span><span class="p">,</span>
-            <span class="n">qobj_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">success</span><span class="o">=</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AwsQuantumTask</span><span class="o">.</span><span class="n">NO_RESULT_TERMINAL_STATES</span><span class="p">,</span>
-            <span class="n">results</span><span class="o">=</span><span class="n">experiment_results</span><span class="p">,</span>
-            <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">cancel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">:</span>
-            <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cached_value</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="n">braket_tasks_states</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">LocalQuantumTask</span><span class="p">)</span>
-            <span class="k">else</span> <span class="n">task</span><span class="o">.</span><span class="n">state</span><span class="p">(</span><span class="n">use_cached_value</span><span class="o">=</span><span class="n">use_cached_value</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span>
-        <span class="p">]</span>
-
-        <span class="k">if</span> <span class="s2">&quot;FAILED&quot;</span> <span class="ow">in</span> <span class="n">braket_tasks_states</span><span class="p">:</span>
-            <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">ERROR</span>
-        <span class="k">elif</span> <span class="s2">&quot;CANCELLED&quot;</span> <span class="ow">in</span> <span class="n">braket_tasks_states</span><span class="p">:</span>
-            <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">CANCELLED</span>
-        <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;COMPLETED&quot;</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">braket_tasks_states</span><span class="p">):</span>
-            <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">DONE</span>
-        <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="s2">&quot;RUNNING&quot;</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">braket_tasks_states</span><span class="p">):</span>
-            <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">RUNNING</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">QUEUED</span>
-
-        <span class="k">return</span> <span class="n">status</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span></div>
+</div>
 
 
 
-<span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">AmazonBraketTask</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">BraketTask</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;AWSBraketJob.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -466,10 +303,6 @@
         <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_job_id</span> <span class="o">=</span> <span class="n">job_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span> <span class="o">=</span> <span class="n">tasks</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_date_of_creation</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
 </pre></div>
         </article>
       </div>
