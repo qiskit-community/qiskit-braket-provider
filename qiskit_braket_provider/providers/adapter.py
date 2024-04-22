@@ -120,7 +120,7 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "ryy": lambda angle: [braket_gates.YY(angle)],
     "ecr": lambda: [braket_gates.ECR()],
     "iswap": lambda: [braket_gates.ISwap()],
-    "prx": lambda turns_1, turns_2: [
+    "r": lambda turns_1, turns_2: [
         braket_gates.PRx(2 * pi * turns_1, 2 * pi * turns_2)
     ],
     # IonQ gates
