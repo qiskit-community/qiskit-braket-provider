@@ -175,9 +175,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "z": qiskit_gates.ZGate(),
     "zz": qiskit_gates.RZZGate(Parameter("theta")),
     "ecr": qiskit_gates.ECRGate(),
-    "prx": qiskit_gates.RGate(
-        Parameter("theta") / (2 * pi), Parameter("phi") / (2 * pi)
-    ),
+    "prx": qiskit_gates.RGate(Parameter("theta"), Parameter("phi")),
     "iswap": qiskit_gates.iSwapGate(),
     "gpi": ionq_gates.GPIGate(Parameter("phi") / (2 * pi)),
     "gpi2": ionq_gates.GPI2Gate(Parameter("phi") / (2 * pi)),
