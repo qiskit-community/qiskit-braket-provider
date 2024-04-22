@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction
-from braket.circuits.angled_gate import AngledGate, TripleAngledGate
+from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
@@ -250,6 +250,7 @@ class TestAdapter(TestCase):
                 "cz",
                 "cswap",
                 "ecr",
+                "prx",
                 "gpi",
                 "gpi2",
                 "ms",
@@ -546,6 +547,8 @@ class TestFromBraket(TestCase):
                 gate = getattr(Gate, gate_name)
                 if issubclass(gate, AngledGate):
                     op = gate(params_braket[0])
+                elif issubclass(gate, DoubleAngledGate):
+                    op = gate(params_braket[0], params_braket[1])
                 elif issubclass(gate, TripleAngledGate):
                     op = gate(*params_braket)
                 else:
@@ -559,9 +562,11 @@ class TestFromBraket(TestCase):
                     param.name: param._uuid for param in qiskit_circuit.parameters
                 }
                 params_qiskit = [
-                    Parameter(param.name, uuid=param_uuids.get(param.name))
-                    if isinstance(param, FreeParameter)
-                    else param
+                    (
+                        Parameter(param.name, uuid=param_uuids.get(param.name))
+                        if isinstance(param, FreeParameter)
+                        else param
+                    )
                     for param in params_braket
                 ]
 

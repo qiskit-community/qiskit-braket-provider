@@ -1,4 +1,5 @@
 """Example of usage of Qiskit-Braket provider."""
+
 from braket.jobs import save_job_result
 from qiskit import QuantumCircuit
 
