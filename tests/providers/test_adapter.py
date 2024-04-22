@@ -250,7 +250,7 @@ class TestAdapter(TestCase):
                 "cz",
                 "cswap",
                 "ecr",
-                "prx",
+                "r",
                 "gpi",
                 "gpi2",
                 "ms",
