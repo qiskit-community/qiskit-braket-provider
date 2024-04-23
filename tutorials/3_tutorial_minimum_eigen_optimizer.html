@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Running variational quantum algorithms with Amazon Braket Hybrid Jobs" href="2_tutorial_hybrid_jobs.html" />
 
-    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2024.01.29 -->
         <title>Minimum Eigen Optimizer - Qiskit-Braket provider 0.2.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=82a976d7" />
@@ -240,9 +240,9 @@
         </div>
         <article role="main">
           <section id="Minimum-Eigen-Optimizer">
-<h1>Minimum Eigen Optimizer<a class="headerlink" href="#Minimum-Eigen-Optimizer" title="Link to this heading">#</a></h1>
+<h1>Minimum Eigen Optimizer<a class="headerlink" href="#Minimum-Eigen-Optimizer" title="Link to this heading">¶</a></h1>
 <section id="About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend">
-<h2>About this notebook and the adaptation to Amazon Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend" title="Link to this heading">#</a></h2>
+<h2>About this notebook and the adaptation to Amazon Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend" title="Link to this heading">¶</a></h2>
 <p>The original version of this notebook is accessible at <a class="reference external" href="https://github.com/qiskit-community/qiskit-optimization/blob/stable/0.6/docs/tutorials/03_minimum_eigen_optimizer.ipynb">docs/tutorials/03_minimum_eigen_optimizer.ipynb</a>. The only changes made to the original notebook are contained in the first cell and in cell #6 where we pass the <code class="docutils literal notranslate"><span class="pre">BackendSampler</span></code> object to execute the tasks on Amazon Braket SV1 simulator.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -260,7 +260,7 @@
 </div>
 </section>
 <section id="Introduction">
-<h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">#</a></h2>
+<h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">¶</a></h2>
 <p>An interesting class of optimization problems to be addressed by quantum computing are Quadratic Unconstrained Binary Optimization (QUBO) problems. Finding the solution to a QUBO is equivalent to finding the ground state of a corresponding Ising Hamiltonian, which is an important problem not only in optimization, but also in quantum chemistry and physics. For this translation, the binary variables taking values in <span class="math notranslate nohighlight">\(\{0, 1\}\)</span> are replaced by spin variables taking values in
 <span class="math notranslate nohighlight">\(\{-1, +1\}\)</span>, which allows one to replace the resulting spin variables by Pauli Z matrices, and thus, an Ising Hamiltonian. For more details on this mapping we refer to [1].</p>
 <p>Qiskit optimization provides automatic conversion from a suitable <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> to an Ising Hamiltonian, which then allows leveraging all the <code class="docutils literal notranslate"><span class="pre">SamplingMinimumEigensolver</span></code> implementations, such as</p>
@@ -276,13 +276,13 @@
 constraints as a quadratic penalty term to the objective. It should be mentioned that a <code class="docutils literal notranslate"><span class="pre">QiskitOptimizationError</span></code> will be thrown if conversion of a quadratic program with integer variables is attempted.</p>
 <p>The circuit depth of <code class="docutils literal notranslate"><span class="pre">QAOA</span></code> potentially has to be increased with the problem size, which might be prohibitive for near-term quantum devices. A possible workaround is Recursive QAOA, as introduced in [2]. Qiskit optimization generalizes this concept to the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code>, which is introduced at the end of this tutorial.</p>
 <section id="References">
-<h3>References<a class="headerlink" href="#References" title="Link to this heading">#</a></h3>
+<h3>References<a class="headerlink" href="#References" title="Link to this heading">¶</a></h3>
 <p>[1] <a class="reference external" href="https://arxiv.org/abs/1302.5843">A. Lucas, Ising formulations of many NP problems, Front. Phys., 12 (2014).</a></p>
 <p>[2] <a class="reference external" href="https://arxiv.org/abs/1910.08980">S. Bravyi, A. Kliesch, R. Koenig, E. Tang, Obstacles to State Preparation and Variational Optimization from Symmetry Protection, arXiv preprint arXiv:1910.08980 (2019).</a></p>
 </section>
 </section>
 <section id="Converting-a-QUBO-to-a-SparsePauliOp">
-<h2>Converting a QUBO to a SparsePauliOp<a class="headerlink" href="#Converting-a-QUBO-to-a-SparsePauliOp" title="Link to this heading">#</a></h2>
+<h2>Converting a QUBO to a SparsePauliOp<a class="headerlink" href="#Converting-a-QUBO-to-a-SparsePauliOp" title="Link to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -390,7 +390,7 @@ Subject to
 <p>This translator allows, for instance, one to translate a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> to a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> and then solve the problem with other algorithms that are not based on the Ising Hamiltonian representation, such as the <code class="docutils literal notranslate"><span class="pre">GroverOptimizer</span></code>.</p>
 </section>
 <section id="Solving-a-QUBO-with-the-MinimumEigenOptimizer">
-<h2>Solving a QUBO with the MinimumEigenOptimizer<a class="headerlink" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer" title="Link to this heading">#</a></h2>
+<h2>Solving a QUBO with the MinimumEigenOptimizer<a class="headerlink" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer" title="Link to this heading">¶</a></h2>
 <p>We start by initializing the <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code> we want to use.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -464,7 +464,7 @@ status: SUCCESS
 </pre></div></div>
 </div>
 <section id="Analysis-of-Samples">
-<h3>Analysis of Samples<a class="headerlink" href="#Analysis-of-Samples" title="Link to this heading">#</a></h3>
+<h3>Analysis of Samples<a class="headerlink" href="#Analysis-of-Samples" title="Link to this heading">¶</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">OptimizationResult</span></code> provides useful information in the form of <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code>s (here denoted as <em>samples</em>). Each <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code> contains information about the input values (<code class="docutils literal notranslate"><span class="pre">x</span></code>), the corresponding objective function value (<code class="docutils literal notranslate"><span class="pre">fval</span></code>), the fraction of samples corresponding to that input (<code class="docutils literal notranslate"><span class="pre">probability</span></code>), and the solution <code class="docutils literal notranslate"><span class="pre">status</span></code> (<code class="docutils literal notranslate"><span class="pre">SUCCESS</span></code>, <code class="docutils literal notranslate"><span class="pre">FAILURE</span></code>, <code class="docutils literal notranslate"><span class="pre">INFEASIBLE</span></code>). Multiple samples corresponding to the same input are consolidated into a single <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code> (with its
 <code class="docutils literal notranslate"><span class="pre">probability</span></code> attribute being the aggregate fraction of samples represented by that <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code>).</p>
 <div class="nbinput docutils container">
@@ -634,7 +634,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </section>
 </section>
 <section id="RecursiveMinimumEigenOptimizer">
-<h2>RecursiveMinimumEigenOptimizer<a class="headerlink" href="#RecursiveMinimumEigenOptimizer" title="Link to this heading">#</a></h2>
+<h2>RecursiveMinimumEigenOptimizer<a class="headerlink" href="#RecursiveMinimumEigenOptimizer" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> takes a <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> as input and applies the recursive optimization scheme to reduce the size of the problem one variable at a time. Once the size of the generated intermediate problem is below a given threshold (<code class="docutils literal notranslate"><span class="pre">min_num_vars</span></code>), the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> uses another solver (<code class="docutils literal notranslate"><span class="pre">min_num_vars_optimizer</span></code>), e.g., an exact classical solver such as CPLEX or the <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code> based on the <code class="docutils literal notranslate"><span class="pre">NumPyMinimumEigensolver</span></code>.</p>
 <p>In the following, we show how to use the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> using the two <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code>s introduced before.</p>
 <p>First, we construct the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> such that it reduces the problem size from 3 variables to 1 variable and then uses the exact solver for the last variable. Then we call <code class="docutils literal notranslate"><span class="pre">solve</span></code> to optimize the considered problem.</p>
@@ -802,7 +802,7 @@ status: SUCCESS
 </div><script src="../_static/jquery.js?v=5d32c60e"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
     <script src="../_static/documentation_options.js?v=938c9ccc"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/qiskit-sphinx-theme.js?v=4d77b8ca"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
