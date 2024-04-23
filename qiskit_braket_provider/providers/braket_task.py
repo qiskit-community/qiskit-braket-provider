@@ -65,9 +65,11 @@ def _get_result_from_aws_tasks(
         experiment_result = ExperimentResult(
             shots=result.task_metadata.shots,
             success=True,
-            status=task.state()
-            if isinstance(task, LocalQuantumTask)
-            else result.task_metadata.status,
+            status=(
+                task.state()
+                if isinstance(task, LocalQuantumTask)
+                else result.task_metadata.status
+            ),
             data=data,
         )
         experiment_results.append(experiment_result)
@@ -176,9 +178,11 @@ class BraketTask(JobV1):
 
     def status(self, use_cached_value: bool = False):
         braket_tasks_states = [
-            task.state()
-            if isinstance(task, LocalQuantumTask)
-            else task.state(use_cached_value=use_cached_value)
+            (
+                task.state()
+                if isinstance(task, LocalQuantumTask)
+                else task.state(use_cached_value=use_cached_value)
+            )
             for task in self._tasks
         ]
 

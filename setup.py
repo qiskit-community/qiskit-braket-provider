@@ -1,4 +1,5 @@
 """Setup file for Qiskit-Braket provider."""
+
 import os
 from typing import Any, Dict, Optional
 

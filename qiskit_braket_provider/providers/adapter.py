@@ -62,6 +62,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "cswap": "cswap",
     "cphaseshift": "cp",
     "ecr": "ecr",
+    "prx": "r",
     "gpi": "gpi",
     "gpi2": "gpi2",
     "ms": "ms",
@@ -119,6 +120,7 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "ryy": lambda angle: [braket_gates.YY(angle)],
     "ecr": lambda: [braket_gates.ECR()],
     "iswap": lambda: [braket_gates.ISwap()],
+    "r": lambda angle_1, angle_2: [braket_gates.PRx(angle_1, angle_2)],
     # IonQ gates
     "gpi": lambda turns: [braket_gates.GPi(2 * pi * turns)],
     "gpi2": lambda turns: [braket_gates.GPi2(2 * pi * turns)],
@@ -173,6 +175,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "z": qiskit_gates.ZGate(),
     "zz": qiskit_gates.RZZGate(Parameter("theta")),
     "ecr": qiskit_gates.ECRGate(),
+    "prx": qiskit_gates.RGate(Parameter("theta"), Parameter("phi")),
     "iswap": qiskit_gates.iSwapGate(),
     "gpi": ionq_gates.GPIGate(Parameter("phi") / (2 * pi)),
     "gpi2": ionq_gates.GPI2Gate(Parameter("phi") / (2 * pi)),
