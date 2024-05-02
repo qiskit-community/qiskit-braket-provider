@@ -305,14 +305,14 @@
 <div class="viewcode-block" id="BraketLocalBackend.__init__">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.BraketLocalBackend.html#qiskit_braket_provider.providers.BraketLocalBackend.__init__">[docs]</a>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketLocalBackend for local execution of circuits.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketLocalBackend for executing circuits locally.</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">            &gt;&gt;&gt; device = LocalSimulator()                         #Local State Vector Simulator</span>
-<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(&quot;default&quot;)                #Local State Vector Simulator</span>
-<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;default&quot;)        #Local State Vector Simulator</span>
-<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;braket_sv&quot;)      #Local State Vector Simulator</span>
-<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;braket_dm&quot;)      #Local Density Matrix Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator()                    #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(&quot;default&quot;)           #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;default&quot;)      #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;braket_sv&quot;)    #Local State Vector Simulator</span>
+<span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;braket_dm&quot;)    #Local Density Matrix Simulator</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name: name of backend</span>
@@ -429,7 +429,7 @@
         <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AwsDevice</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketAwsBackend for execution circuits against AWS Braket devices.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketAwsBackend for executing circuits on Amazon Braket devices.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; provider = BraketProvider()</span>
