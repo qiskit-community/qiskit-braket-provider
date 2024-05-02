@@ -18,12 +18,11 @@ class BraketProvider(ProviderV1):
         >>> provider = BraketProvider()
         >>> backends = provider.backends()
         >>> backends
-        [BraketBackend[Aspen-10],
-         BraketBackend[Aspen-11],
-         BraketBackend[Aspen-8],
-         BraketBackend[Aspen-9],
-         BraketBackend[Aspen-M-1],
-         BraketBackend[IonQ Device],
+        [BraketBackend[Aria 1],
+         BraketBackend[Aria 2],
+         BraketBackend[Aspen-M-3],
+         BraketBackend[Forte 1],
+         BraketBackend[Harmony],
          BraketBackend[Lucy],
          BraketBackend[SV1],
          BraketBackend[TN1],
