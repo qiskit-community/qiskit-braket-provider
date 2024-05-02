@@ -247,12 +247,12 @@
 <span class="kn">from</span> <span class="nn">braket.tasks.local_quantum_task</span> <span class="kn">import</span> <span class="n">LocalQuantumTask</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers</span> <span class="kn">import</span> <span class="n">BackendV2</span>
 
-<span class="kn">from</span> <span class="nn">.braket_task</span> <span class="kn">import</span> <span class="n">BraketTask</span>
+<span class="kn">from</span> <span class="nn">.braket_quantum_task</span> <span class="kn">import</span> <span class="n">BraketQuantumTask</span>
 
 
 <div class="viewcode-block" id="AmazonBraketTask">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask">[docs]</a>
-<span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">BraketTask</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">AmazonBraketTask</span><span class="p">(</span><span class="n">BraketQuantumTask</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;AmazonBraketTask.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -280,7 +280,7 @@
 
 
 
-<span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">BraketTask</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">AWSBraketJob</span><span class="p">(</span><span class="n">BraketQuantumTask</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;AWSBraketJob.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
