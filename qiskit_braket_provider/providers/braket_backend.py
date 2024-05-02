@@ -64,11 +64,11 @@ class BraketLocalBackend(BraketBackend):
         """BraketLocalBackend for executing circuits locally.
 
         Example:
-            >>> device = LocalSimulator()                         #Local State Vector Simulator
-            >>> device = LocalSimulator("default")                #Local State Vector Simulator
-            >>> device = LocalSimulator(name="default")        #Local State Vector Simulator
-            >>> device = LocalSimulator(name="braket_sv")      #Local State Vector Simulator
-            >>> device = LocalSimulator(name="braket_dm")      #Local Density Matrix Simulator
+            >>> device = LocalSimulator()                    #Local State Vector Simulator
+            >>> device = LocalSimulator("default")           #Local State Vector Simulator
+            >>> device = LocalSimulator(name="default")      #Local State Vector Simulator
+            >>> device = LocalSimulator(name="braket_sv")    #Local State Vector Simulator
+            >>> device = LocalSimulator(name="braket_dm")    #Local Density Matrix Simulator
 
         Args:
             name: name of backend
