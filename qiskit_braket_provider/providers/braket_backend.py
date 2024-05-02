@@ -61,14 +61,14 @@ class BraketLocalBackend(BraketBackend):
     """BraketLocalBackend."""
 
     def __init__(self, name: str = "default", **fields):
-        """BraketLocalBackend for local execution of circuits.
+        """BraketLocalBackend for executing circuits locally.
 
         Example:
-            >>> device = LocalSimulator()                         #Local State Vector Simulator
-            >>> device = LocalSimulator("default")                #Local State Vector Simulator
-            >>> device = LocalSimulator(name="default")        #Local State Vector Simulator
-            >>> device = LocalSimulator(name="braket_sv")      #Local State Vector Simulator
-            >>> device = LocalSimulator(name="braket_dm")      #Local Density Matrix Simulator
+            >>> device = LocalSimulator()                    #Local State Vector Simulator
+            >>> device = LocalSimulator("default")           #Local State Vector Simulator
+            >>> device = LocalSimulator(name="default")      #Local State Vector Simulator
+            >>> device = LocalSimulator(name="braket_sv")    #Local State Vector Simulator
+            >>> device = LocalSimulator(name="braket_dm")    #Local Density Matrix Simulator
 
         Args:
             name: name of backend
@@ -183,7 +183,7 @@ class BraketAwsBackend(BraketBackend):
         device: Optional[AwsDevice] = None,
         **fields,
     ):
-        """BraketAwsBackend for execution circuits against AWS Braket devices.
+        """BraketAwsBackend for executing circuits on Amazon Braket devices.
 
         Example:
             >>> provider = BraketProvider()

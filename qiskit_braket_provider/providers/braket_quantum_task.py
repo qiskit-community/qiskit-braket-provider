@@ -17,7 +17,7 @@ def retry_if_result_none(result):
     return result is None
 
 
-def _get_result_from_aws_tasks(
+def _get_result_from_tasks(
     tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
 ) -> Optional[List[ExperimentResult]]:
     """Returns experiment results of AWS tasks.
@@ -78,7 +78,7 @@ def _get_result_from_aws_tasks(
 
 
 class BraketQuantumTask(JobV1):
-    """BraketTask."""
+    """BraketQuantumTask."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class BraketQuantumTask(JobV1):
         tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
         **metadata: Optional[dict],
     ):
-        """BraketTask for execution of circuits on Amazon Braket or locally.
+        """BraketQuantumTask for execution of circuits on Amazon Braket or locally.
 
         Args:
             task_id: Semicolon-separated IDs of the underlying tasks
@@ -159,7 +159,7 @@ class BraketQuantumTask(JobV1):
         return self._task_id
 
     def result(self) -> Result:
-        experiment_results = _get_result_from_aws_tasks(tasks=self._tasks)
+        experiment_results = _get_result_from_tasks(tasks=self._tasks)
         status = self.status(use_cached_value=True)
 
         return Result(
