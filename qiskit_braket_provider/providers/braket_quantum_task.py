@@ -77,7 +77,7 @@ def _get_result_from_aws_tasks(
     return experiment_results
 
 
-class BraketTask(JobV1):
+class BraketQuantumTask(JobV1):
     """BraketTask."""
 
     def __init__(
