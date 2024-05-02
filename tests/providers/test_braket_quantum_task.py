@@ -11,7 +11,7 @@ from qiskit_braket_provider.providers import (
     AmazonBraketTask,
     AWSBraketJob,
     BraketLocalBackend,
-    BraketTask,
+    BraketQuantumTask,
 )
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
@@ -20,7 +20,7 @@ class TestBraketTask(TestCase):
     """Tests BraketTask."""
 
     def _get_task(self):
-        return BraketTask(
+        return BraketQuantumTask(
             backend=BraketLocalBackend(name="default"),
             task_id="AwesomeId",
             tasks=[MOCK_LOCAL_QUANTUM_TASK],
@@ -31,7 +31,7 @@ class TestBraketTask(TestCase):
         """Tests task."""
         task = self._get_task()
 
-        self.assertTrue(isinstance(task, BraketTask))
+        self.assertTrue(isinstance(task, BraketQuantumTask))
         self.assertEqual(task.shots, 10)
 
         self.assertEqual(task.status(), JobStatus.DONE)
@@ -49,7 +49,7 @@ class TestBraketTask(TestCase):
 
     def test_queue_position_for_local_quantum_task(self):
         """Tests job status when multiple task status is present."""
-        task = BraketTask(
+        task = BraketQuantumTask(
             backend=BraketLocalBackend(name="default"),
             task_id="MockId",
             tasks=[MOCK_LOCAL_QUANTUM_TASK],
@@ -156,7 +156,7 @@ class TestBraketJobStatus:
             tasks=[MOCK_LOCAL_QUANTUM_TASK],
             shots=100,
         )
-        job._tasks = Mock(spec=BraketTask)
+        job._tasks = Mock(spec=BraketQuantumTask)
         job._tasks = [self._get_mock_aws_quantum_task(state) for state in task_states]
 
         assert job.status() == expected_status

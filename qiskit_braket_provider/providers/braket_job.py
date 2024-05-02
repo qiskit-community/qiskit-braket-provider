@@ -7,10 +7,10 @@ from braket.aws import AwsQuantumTask
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2
 
-from .braket_task import BraketTask
+from .braket_quantum_task import BraketQuantumTask
 
 
-class AmazonBraketTask(BraketTask):
+class AmazonBraketTask(BraketQuantumTask):
     """AmazonBraketTask."""
 
     def __init_subclass__(cls, **kwargs):
@@ -34,7 +34,7 @@ class AmazonBraketTask(BraketTask):
         super().__init__(task_id=task_id, backend=backend, tasks=tasks, **metadata)
 
 
-class AWSBraketJob(BraketTask):
+class AWSBraketJob(BraketQuantumTask):
     """AWSBraketJob."""
 
     def __init_subclass__(cls, **kwargs):

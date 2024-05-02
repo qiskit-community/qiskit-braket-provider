@@ -24,4 +24,4 @@ from .adapter import to_braket, to_qiskit
 from .braket_backend import AWSBraketBackend, BraketAwsBackend, BraketLocalBackend
 from .braket_job import AmazonBraketTask, AWSBraketJob
 from .braket_provider import AWSBraketProvider, BraketProvider
-from .braket_task import BraketTask
+from .braket_quantum_task import BraketQuantumTask

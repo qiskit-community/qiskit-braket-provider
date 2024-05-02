@@ -25,7 +25,7 @@ from .adapter import (
     local_simulator_to_target,
     to_braket,
 )
-from .braket_task import BraketTask
+from .braket_quantum_task import BraketQuantumTask
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ class BraketLocalBackend(BraketBackend):
 
     def run(
         self, run_input: Union[QuantumCircuit, list[QuantumCircuit]], **options
-    ) -> BraketTask:
+    ) -> BraketQuantumTask:
         convert_input = (
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
@@ -160,7 +160,7 @@ class BraketLocalBackend(BraketBackend):
 
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
-        return BraketTask(
+        return BraketQuantumTask(
             task_id=task_id,
             tasks=tasks,
             backend=self,
@@ -220,7 +220,7 @@ class BraketAwsBackend(BraketBackend):
         )
         self._target = aws_device_to_target(device=device)
 
-    def retrieve_job(self, task_id: str) -> BraketTask:
+    def retrieve_job(self, task_id: str) -> BraketQuantumTask:
         """Return a single job submitted to AWS backend.
 
         Args:
@@ -231,7 +231,7 @@ class BraketAwsBackend(BraketBackend):
         """
         task_ids = task_id.split(_TASK_ID_DIVIDER)
 
-        return BraketTask(
+        return BraketQuantumTask(
             task_id=task_id,
             backend=self,
             tasks=[AwsQuantumTask(arn=task_id) for task_id in task_ids],
@@ -336,7 +336,7 @@ class BraketAwsBackend(BraketBackend):
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
-        return BraketTask(
+        return BraketQuantumTask(
             task_id=task_id, tasks=tasks, backend=self, shots=options.get("shots")
         )
 
