@@ -78,7 +78,7 @@ def _get_result_from_aws_tasks(
 
 
 class BraketQuantumTask(JobV1):
-    """BraketTask."""
+    """BraketQuantumTask."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class BraketQuantumTask(JobV1):
         tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
         **metadata: Optional[dict],
     ):
-        """BraketTask for execution of circuits on Amazon Braket or locally.
+        """BraketQuantumTask for execution of circuits on Amazon Braket or locally.
 
         Args:
             task_id: Semicolon-separated IDs of the underlying tasks
