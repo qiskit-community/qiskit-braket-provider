@@ -17,6 +17,7 @@ from braket.circuits import (
 )
 from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
 from braket.device_schema.ionq import IonqDeviceCapabilities
+from braket.device_schema.iqm import IqmDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
@@ -269,7 +270,12 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         )
     elif isinstance(
         properties,
-        (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities),
+        (
+            IonqDeviceCapabilities,
+            RigettiDeviceCapabilities,
+            OqcDeviceCapabilities,
+            IqmDeviceCapabilities,
+        ),
     ):
         return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", properties)
 
@@ -299,7 +305,10 @@ def _simulator_target(
 def _qpu_target(
     description: str,
     properties: Union[
-        IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities
+        IonqDeviceCapabilities,
+        RigettiDeviceCapabilities,
+        OqcDeviceCapabilities,
+        IqmDeviceCapabilities,
     ],
 ):
     qubit_count = properties.paradigm.qubitCount
