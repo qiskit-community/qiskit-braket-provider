@@ -270,7 +270,12 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         )
     elif isinstance(
         properties,
-        (IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities, IqmDeviceCapabilities),
+        (
+            IonqDeviceCapabilities,
+            RigettiDeviceCapabilities,
+            OqcDeviceCapabilities,
+            IqmDeviceCapabilities,
+        ),
     ):
         return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", properties)
 
@@ -300,7 +305,10 @@ def _simulator_target(
 def _qpu_target(
     description: str,
     properties: Union[
-        IonqDeviceCapabilities, RigettiDeviceCapabilities, OqcDeviceCapabilities, IqmDeviceCapabilities
+        IonqDeviceCapabilities,
+        RigettiDeviceCapabilities,
+        OqcDeviceCapabilities,
+        IqmDeviceCapabilities,
     ],
 ):
     qubit_count = properties.paradigm.qubitCount
