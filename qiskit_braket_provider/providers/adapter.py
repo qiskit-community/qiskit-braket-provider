@@ -17,9 +17,9 @@ from braket.circuits import (
 )
 from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
 from braket.device_schema.ionq import IonqDeviceCapabilities
+from braket.device_schema.iqm import IqmDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
-from braket.device_schema.iqm import IqmDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
