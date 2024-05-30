@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 from botocore import errorfactory
 from braket.aws.queue_information import QueueDepthInfo, QueueType
+from braket.device_schema import DeviceActionType
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
@@ -319,3 +320,40 @@ class TestAWSBackendTarget(TestCase):
         self.assertEqual(len(target.operations), 2)
         self.assertEqual(len(target.instructions), 60)
         self.assertIn("Target for Amazon Braket QPU", target.description)
+
+    def test_target_invalid_device(self):
+        """Tests target."""
+        mock_device = Mock()
+        mock_device.properties = None
+
+        with self.assertRaises(exception.QiskitBraketException):
+            aws_device_to_target(mock_device)
+
+    def test_fully_connected(self):
+        """Tests if instruction_props is correctly populated for fully connected topology."""
+        mock_device = Mock()
+        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.copy(deep=True)
+        mock_device.properties.paradigm.connectivity.fullyConnected = True
+        mock_device.properties.paradigm.qubitCount = 2
+        mock_device.properties.action.get(DeviceActionType.OPENQASM).supportedOperations = ["CNOT"]
+        
+        instruction_props = aws_device_to_target(mock_device)
+
+        from qiskit.circuit import Instruction
+
+        cx_instruction = Instruction(name="cx", num_qubits=2, num_clbits=0, params=[])
+        measure_instruction = Instruction(name="measure", num_qubits=1, num_clbits=1, params=[])
+
+        expected_instruction_props = [
+            (cx_instruction, (0, 1)),
+            (cx_instruction, (1, 0)),
+            (measure_instruction, (0,)),
+            (measure_instruction, (1,))
+        ]
+        for index, instruction in enumerate(instruction_props.instructions):
+            self.assertEqual(instruction[0].num_qubits, expected_instruction_props[index][0].num_qubits)
+            self.assertEqual(instruction[0].num_clbits, expected_instruction_props[index][0].num_clbits)
+            self.assertEqual(instruction[0].params, expected_instruction_props[index][0].params)
+            self.assertEqual(instruction[0].name, expected_instruction_props[index][0].name)
+
+            self.assertEqual(instruction[1], expected_instruction_props[index][1])
