@@ -13,9 +13,13 @@ from qiskit_braket_provider.providers import (
     BraketLocalBackend,
     BraketQuantumTask,
 )
+from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
+from braket.aws import AwsQuantumTask
+from qiskit_braket_provider.providers import BraketQuantumTask
+from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 
 class TestBraketTask(TestCase):
     """Tests BraketTask."""
@@ -55,7 +59,7 @@ class TestBraketTask(TestCase):
     
     @patch('qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results')
     def test_task_result_is_none(self, mock_retrieve_results):
-        """Tests result."""
+        """Tests result when result is None"""
         mock_retrieve_results.return_value = [None, None]
 
         task = BraketQuantumTask(
@@ -67,6 +71,35 @@ class TestBraketTask(TestCase):
         task.result()
 
         mock_retrieve_results.assert_called_once()
+
+    @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
+    def test_queue_position(self, mock_aws_quantum_task):
+        """Tests queue position retrival """
+        task = BraketQuantumTask(
+            backend=Mock(spec=AWSBraketBackend),
+            task_id="arn:aws:braket:::quantum-task/AwesomeId",
+            tasks=[Mock(spec=AwsQuantumTask)],
+            shots=10,
+        )
+        mock_aws_quantum_task.queue_position.return_value = QuantumTaskQueueInfo(
+            queue_type=QueueType.NORMAL,
+            queue_position=1,
+            message=None
+        )
+        task_queue = task.queue_position()
+
+        mock_aws_quantum_task.assert_called_once()
+        assert task_queue
+
+    def test_task_cancellation(self):
+        """Tests task cancellation"""
+        task = BraketQuantumTask(
+            backend=Mock(spec=AWSBraketBackend),
+            task_id="arn:aws:braket:::quantum-task/AwesomeId",
+            tasks=[Mock(spec=AwsQuantumTask)],
+            shots=10,
+        )
+        task.cancel()
 
     def test_queue_position_for_local_quantum_task(self):
         """Tests job status when multiple task status is present."""
