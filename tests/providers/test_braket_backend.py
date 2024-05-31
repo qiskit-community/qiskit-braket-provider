@@ -7,8 +7,11 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 from botocore import errorfactory
+from braket.aws import AwsDevice
+from braket.aws import AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo, QueueType
 from braket.device_schema import DeviceActionType
+from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
@@ -22,9 +25,12 @@ from qiskit_algorithms.optimizers import SLSQP
 from qiskit_braket_provider import AWSBraketProvider, exception, version
 from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
+from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from tests.providers.mocks import (
     RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES,
     RIGETTI_MOCK_M_3_QPU_CAPABILITIES,
+    MockBraketBackend,
+    MockMeasLevelEnum,
 )
 
 
@@ -54,6 +60,15 @@ def combine_dicts(
     return combined_dict
 
 
+class TestBraketBackend(TestCase):
+    def test_repr(self):
+        backend = BraketLocalBackend(name="default")
+        self.assertEqual(repr(backend), "BraketBackend[default]")
+    
+    def test_device(self):
+        with self.assertRaises(NotImplementedError):
+            MockBraketBackend(name="default")._device
+
 class TestBraketAwsBackend(TestCase):
     """Tests BraketBackend."""
 
@@ -68,6 +83,12 @@ class TestBraketAwsBackend(TestCase):
         user_agent = f"QiskitBraketProvider/" f"{version.__version__}"
         device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
         with self.assertRaises(NotImplementedError):
+            backend.dtm()
+        with self.assertRaises(NotImplementedError):
+            backend.meas_map()
+        with self.assertRaises(NotImplementedError):
+            backend.qubit_properties(0)
+        with self.assertRaises(NotImplementedError):
             backend.drive_channel(0)
         with self.assertRaises(NotImplementedError):
             backend.acquire_channel(0)
@@ -76,12 +97,25 @@ class TestBraketAwsBackend(TestCase):
         with self.assertRaises(NotImplementedError):
             backend.control_channel([0, 1])
 
+    def test_invalid_identifiers(self):
+        with self.assertRaises(ValueError):
+            BraketAwsBackend()
+        
+        with self.assertRaises(ValueError):
+            BraketAwsBackend(arn="some_arn", device="some_device")
+
     def test_local_backend(self):
         """Tests local backend."""
         backend = BraketLocalBackend(name="default")
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
+        with self.assertRaises(NotImplementedError):
+            backend.dtm()
+        with self.assertRaises(NotImplementedError):
+            backend.meas_map()
+        with self.assertRaises(NotImplementedError):
+            backend.qubit_properties(0)
         with self.assertRaises(NotImplementedError):
             backend.drive_channel(0)
         with self.assertRaises(NotImplementedError):
@@ -140,6 +174,60 @@ class TestBraketAwsBackend(TestCase):
                 result.get_statevector(), np.array([0, 0, inv_sqrt_2, inv_sqrt_2])
             )
         )
+    
+    def test_deprecation_warning_on_init(self):
+        with self.assertWarns(DeprecationWarning):
+            AWSBraketBackend(device=AwsDevice("arn:aws:braket:::device/quantum-simulator/amazon/sv1"))
+
+    def test_deprecation_warning_on_subclass(self):
+        with self.assertWarns(DeprecationWarning):
+            class SubclassAWSBraketBackend(AWSBraketBackend):
+                pass
+
+    def test_run_multiple_circuits(self):
+        """Tests run with multiple circuits"""
+        device = Mock()
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        backend = BraketAwsBackend(device=device)
+        mock_task_1 = Mock(spec=LocalQuantumTask)
+        mock_task_1.id = '0'
+        mock_task_2 = Mock(spec=LocalQuantumTask)
+        mock_task_2.id = '1'
+        mock_batch = Mock(spec=AwsQuantumTaskBatch)
+        mock_batch.tasks = [mock_task_1, mock_task_2]
+        backend._device.run_batch = Mock(return_value=mock_batch)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+
+        backend.run([circuit, circuit], shots=0, meas_level=2)
+    
+    def test_run_invalid_run_input(self):
+        """Tests run with invalid input to run"""
+        device = Mock()
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        backend = BraketAwsBackend(device=device)
+        with self.assertRaises(exception.QiskitBraketException):
+            backend.run(1, shots=0)
+
+    @patch('braket.devices.LocalSimulator.run', side_effect=[Mock(return_value=Mock(id='0', spec=LocalQuantumTask)), Exception('Mock exception')])
+    def test_local_backend_run_exception(self, braket_devices_run):
+        """Tests local backend with exception thrown during second run"""
+        backend = BraketLocalBackend(name="default")
+
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+
+        with self.assertRaises(Exception):
+            backend.run([circuit, circuit], shots=0)  # First run should pass
+        braket_devices_run.assert_called()
+
+    def test_meas_level_enum(self):
+        """Check that enum meas level can be successfully accessed without error"""
+        backend = BraketLocalBackend(name="default")
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        circuit.measure(0, 0)
+        backend.run(circuit, shots=10, meas_level=MockMeasLevelEnum.LEVEL_TWO)
 
     def test_meas_level_2(self):
         """Check that there's no error for asking for classified measurement results."""
@@ -226,6 +314,27 @@ class TestBraketAwsBackend(TestCase):
                             f"Key {key} with percent difference {percent_diff} "
                             f"and absolute difference {abs_diff}. Original values {values}",
                         )
+
+    @patch('qiskit_braket_provider.providers.braket_backend.AwsQuantumTask')
+    @patch('qiskit_braket_provider.providers.braket_backend.BraketQuantumTask')
+    def test_retrieve_job_task_ids(self, mock_braket_quantum_task, mock_aws_quantum_task):
+        device = Mock()
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        backend = BraketAwsBackend(device=device)
+        task_id = "task1;task2;task3"
+        expected_task_ids = task_id.split(";")
+
+        backend.retrieve_job(task_id)
+
+        # Assert
+        mock_aws_quantum_task.assert_any_call(arn=expected_task_ids[0])
+        mock_aws_quantum_task.assert_any_call(arn=expected_task_ids[1])
+        mock_aws_quantum_task.assert_any_call(arn=expected_task_ids[2])
+        mock_braket_quantum_task.assert_called_once_with(
+            task_id=task_id,
+            backend=backend,
+            tasks=[mock_aws_quantum_task(arn=task_id) for task_id in expected_task_ids]
+        )
 
     @unittest.skip("Call to external resources.")
     def test_retrieve_job(self):

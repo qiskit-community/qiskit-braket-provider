@@ -1,6 +1,7 @@
 """Mocks for testing."""
 
 import copy
+import enum
 import uuid
 from collections import Counter
 from typing import Dict
@@ -11,6 +12,7 @@ from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.task_result import TaskMetadata
 from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
+from qiskit_braket_provider.providers.braket_backend import BraketBackend
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
 RIGETTI_ASPEN_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-M-3"
@@ -158,3 +160,22 @@ MOCK_GATE_MODEL_QUANTUM_TASK_RESULT = GateModelQuantumTaskResult(
 )
 
 MOCK_LOCAL_QUANTUM_TASK = LocalQuantumTask(MOCK_GATE_MODEL_QUANTUM_TASK_RESULT)
+
+class MockBraketBackend(BraketBackend):
+
+    @property
+    def target(self):
+        pass
+
+    @property
+    def max_circuits(self):
+        pass
+
+    def _default_options(self):
+        pass
+
+    def run(self):
+        pass
+
+class MockMeasLevelEnum(enum.Enum):
+    LEVEL_TWO = 2
