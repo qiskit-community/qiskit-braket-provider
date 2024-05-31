@@ -15,7 +15,9 @@ from qiskit_braket_provider.providers import BraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
     BraketAwsBackend,
     BraketBackend,
+    BraketLocalBackend,
 )
+from qiskit_braket_provider.providers.braket_provider import AWSBraketProvider
 from tests.providers.mocks import (
     MOCK_GATE_MODEL_SIMULATOR_SV,
     MOCK_GATE_MODEL_SIMULATOR_TN,
@@ -47,6 +49,23 @@ class TestBraketProvider(TestCase):
         for backend in backends:
             with self.subTest(f"{backend.name}"):
                 self.assertIsInstance(backend, BraketBackend)
+    
+    def test_deprecation_warning_on_init(self):
+        """Check if a DeprecationWarning is raised when AWSBraketProvider is initialized"""
+        with self.assertWarns(DeprecationWarning):
+            AWSBraketProvider()
+
+    def test_deprecation_warning_on_subclass(self):
+        """Check if a DeprecationWarning is raised when a subclass of AWSBraketProvider is created"""
+        with self.assertWarns(DeprecationWarning):
+            class SubclassAWSBraketProvider(AWSBraketProvider):
+                pass
+    
+    def test_provider_backends_kwargs_local(self):
+        """Tests getting local backends using kwargs"""
+        provider = BraketProvider()
+        
+        self.assertIsInstance(provider.backends(name=None, local="sv1")[0], BraketLocalBackend)
 
     def test_real_devices(self):
         """Tests real devices."""
