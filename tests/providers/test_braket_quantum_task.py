@@ -1,7 +1,7 @@
 """Tests for AWS Braket job."""
 
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from braket.aws.aws_quantum_task import AwsQuantumTask
@@ -13,11 +13,16 @@ from qiskit_braket_provider.providers import (
     BraketLocalBackend,
     BraketQuantumTask,
 )
+from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
 
 class TestBraketTask(TestCase):
     """Tests BraketTask."""
+
+    def test_retry_if_result_none(self):
+        """Test when result is None"""
+        assert retry_if_result_none(None) == True
 
     def _get_task(self):
         return BraketQuantumTask(
@@ -32,6 +37,7 @@ class TestBraketTask(TestCase):
         task = self._get_task()
 
         self.assertTrue(isinstance(task, BraketQuantumTask))
+        self.assertEqual(None, task.submit())
         self.assertEqual(task.shots, 10)
 
         self.assertEqual(task.status(), JobStatus.DONE)
@@ -46,6 +52,21 @@ class TestBraketTask(TestCase):
         self.assertEqual(task.result().results[0].status, "COMPLETED")
         self.assertEqual(task.result().results[0].shots, 3)
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
+    
+    @patch('qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results')
+    def test_task_result_is_none(self, mock_retrieve_results):
+        """Tests result."""
+        mock_retrieve_results.return_value = [None, None]
+
+        task = BraketQuantumTask(
+            backend=BraketLocalBackend(name="default"),
+            task_id="AwesomeId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK, MOCK_LOCAL_QUANTUM_TASK],
+            shots=10,
+        )
+        task.result()
+
+        mock_retrieve_results.assert_called_once()
 
     def test_queue_position_for_local_quantum_task(self):
         """Tests job status when multiple task status is present."""
