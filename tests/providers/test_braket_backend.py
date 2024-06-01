@@ -176,8 +176,11 @@ class TestBraketAwsBackend(TestCase):
         )
     
     def test_deprecation_warning_on_init(self):
+        mock_aws_device = Mock(spec=AwsDevice)
+        mock_aws_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+
         with self.assertWarns(DeprecationWarning):
-            AWSBraketBackend(device=AwsDevice("arn:aws:braket:::device/quantum-simulator/amazon/sv1"))
+            AWSBraketBackend(device=mock_aws_device)
 
     def test_deprecation_warning_on_subclass(self):
         with self.assertWarns(DeprecationWarning):
