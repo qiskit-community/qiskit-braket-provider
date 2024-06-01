@@ -55,8 +55,10 @@ class TestBraketTask(TestCase):
         self.assertEqual(task.result().results[0].status, "COMPLETED")
         self.assertEqual(task.result().results[0].shots, 3)
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
-    
-    @patch('qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results')
+
+    @patch(
+        "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results"
+    )
     def test_task_result_is_none(self, mock_retrieve_results):
         """Tests result when result is None"""
         mock_retrieve_results.return_value = [None, None]
@@ -73,7 +75,7 @@ class TestBraketTask(TestCase):
 
     @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
     def test_queue_position(self, mock_aws_quantum_task):
-        """Tests queue position retrival """
+        """Tests queue position retrival"""
         task = BraketQuantumTask(
             backend=Mock(spec=AWSBraketBackend),
             task_id="arn:aws:braket:::quantum-task/AwesomeId",
@@ -81,9 +83,7 @@ class TestBraketTask(TestCase):
             shots=10,
         )
         mock_aws_quantum_task.queue_position.return_value = QuantumTaskQueueInfo(
-            queue_type=QueueType.NORMAL,
-            queue_position=1,
-            message=None
+            queue_type=QueueType.NORMAL, queue_position=1, message=None
         )
         task_queue = task.queue_position()
 

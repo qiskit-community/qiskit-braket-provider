@@ -329,7 +329,7 @@ class TestAdapter(TestCase):
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
-    
+
     def test_measure_(self):
         """Tests if NotImplementedError is raised for reset operation."""
 
@@ -669,14 +669,17 @@ class TestFromBraket(TestCase):
     def test_unsupported_braket_gate(self):
         """Tests if TypeError is raised for unsupported Braket gate."""
 
-        gate = getattr(Gate, "CNot")        
+        gate = getattr(Gate, "CNot")
         op = gate()
         instr = Instruction(op, range(2))
         circuit = Circuit().add_instruction(instr)
-       
+
         with self.assertRaises(TypeError):
-             with patch.dict('qiskit_braket_provider.providers.adapter._GATE_NAME_TO_QISKIT_GATE', {'cnot': None}):
-                    to_qiskit(circuit)
+            with patch.dict(
+                "qiskit_braket_provider.providers.adapter._GATE_NAME_TO_QISKIT_GATE",
+                {"cnot": None},
+            ):
+                to_qiskit(circuit)
 
     def test_measure_subset(self):
         """Tests the measure instruction conversion from braket to qiskit"""

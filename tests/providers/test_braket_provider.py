@@ -49,7 +49,7 @@ class TestBraketProvider(TestCase):
         for backend in backends:
             with self.subTest(f"{backend.name}"):
                 self.assertIsInstance(backend, BraketBackend)
-    
+
     def test_deprecation_warning_on_init(self):
         """Check if a DeprecationWarning is raised when AWSBraketProvider is initialized"""
         with self.assertWarns(DeprecationWarning):
@@ -58,14 +58,17 @@ class TestBraketProvider(TestCase):
     def test_deprecation_warning_on_subclass(self):
         """Check if a DeprecationWarning is raised when a subclass of AWSBraketProvider is created"""
         with self.assertWarns(DeprecationWarning):
+
             class SubclassAWSBraketProvider(AWSBraketProvider):
                 pass
-    
+
     def test_provider_backends_kwargs_local(self):
         """Tests getting local backends using kwargs"""
         provider = BraketProvider()
-        
-        self.assertIsInstance(provider.backends(name=None, local="sv1")[0], BraketLocalBackend)
+
+        self.assertIsInstance(
+            provider.backends(name=None, local="sv1")[0], BraketLocalBackend
+        )
 
     def test_real_devices(self):
         """Tests real devices."""

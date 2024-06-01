@@ -63,10 +63,11 @@ class TestBraketBackend(TestCase):
     def test_repr(self):
         backend = BraketLocalBackend(name="default")
         self.assertEqual(repr(backend), "BraketBackend[default]")
-    
+
     def test_device(self):
         with self.assertRaises(NotImplementedError):
             MockBraketBackend(name="default")._device
+
 
 class TestBraketAwsBackend(TestCase):
     """Tests BraketBackend."""
@@ -99,7 +100,7 @@ class TestBraketAwsBackend(TestCase):
     def test_invalid_identifiers(self):
         with self.assertRaises(ValueError):
             BraketAwsBackend()
-        
+
         with self.assertRaises(ValueError):
             BraketAwsBackend(arn="some_arn", device="some_device")
 
@@ -173,7 +174,7 @@ class TestBraketAwsBackend(TestCase):
                 result.get_statevector(), np.array([0, 0, inv_sqrt_2, inv_sqrt_2])
             )
         )
-    
+
     def test_deprecation_warning_on_init(self):
         mock_aws_device = Mock(spec=AwsDevice)
         mock_aws_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
@@ -183,6 +184,7 @@ class TestBraketAwsBackend(TestCase):
 
     def test_deprecation_warning_on_subclass(self):
         with self.assertWarns(DeprecationWarning):
+
             class SubclassAWSBraketBackend(AWSBraketBackend):
                 pass
 
@@ -192,9 +194,9 @@ class TestBraketAwsBackend(TestCase):
         device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
         backend = BraketAwsBackend(device=device)
         mock_task_1 = Mock(spec=LocalQuantumTask)
-        mock_task_1.id = '0'
+        mock_task_1.id = "0"
         mock_task_2 = Mock(spec=LocalQuantumTask)
-        mock_task_2.id = '1'
+        mock_task_2.id = "1"
         mock_batch = Mock(spec=AwsQuantumTaskBatch)
         mock_batch.tasks = [mock_task_1, mock_task_2]
         backend._device.run_batch = Mock(return_value=mock_batch)
@@ -202,7 +204,7 @@ class TestBraketAwsBackend(TestCase):
         circuit.h(0)
 
         backend.run([circuit, circuit], shots=0, meas_level=2)
-    
+
     def test_run_invalid_run_input(self):
         """Tests run with invalid input to run"""
         device = Mock()
@@ -211,7 +213,13 @@ class TestBraketAwsBackend(TestCase):
         with self.assertRaises(exception.QiskitBraketException):
             backend.run(1, shots=0)
 
-    @patch('braket.devices.LocalSimulator.run', side_effect=[Mock(return_value=Mock(id='0', spec=LocalQuantumTask)), Exception('Mock exception')])
+    @patch(
+        "braket.devices.LocalSimulator.run",
+        side_effect=[
+            Mock(return_value=Mock(id="0", spec=LocalQuantumTask)),
+            Exception("Mock exception"),
+        ],
+    )
     def test_local_backend_run_exception(self, braket_devices_run):
         """Tests local backend with exception thrown during second run"""
         backend = BraketLocalBackend(name="default")
@@ -317,9 +325,11 @@ class TestBraketAwsBackend(TestCase):
                             f"and absolute difference {abs_diff}. Original values {values}",
                         )
 
-    @patch('qiskit_braket_provider.providers.braket_backend.AwsQuantumTask')
-    @patch('qiskit_braket_provider.providers.braket_backend.BraketQuantumTask')
-    def test_retrieve_job_task_ids(self, mock_braket_quantum_task, mock_aws_quantum_task):
+    @patch("qiskit_braket_provider.providers.braket_backend.AwsQuantumTask")
+    @patch("qiskit_braket_provider.providers.braket_backend.BraketQuantumTask")
+    def test_retrieve_job_task_ids(
+        self, mock_braket_quantum_task, mock_aws_quantum_task
+    ):
         device = Mock()
         device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
         backend = BraketAwsBackend(device=device)
@@ -335,7 +345,7 @@ class TestBraketAwsBackend(TestCase):
         mock_braket_quantum_task.assert_called_once_with(
             task_id=task_id,
             backend=backend,
-            tasks=[mock_aws_quantum_task(arn=task_id) for task_id in expected_task_ids]
+            tasks=[mock_aws_quantum_task(arn=task_id) for task_id in expected_task_ids],
         )
 
     @unittest.skip("Call to external resources.")
@@ -443,28 +453,44 @@ class TestAWSBackendTarget(TestCase):
     def test_fully_connected(self):
         """Tests if instruction_props is correctly populated for fully connected topology."""
         mock_device = Mock()
-        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.copy(deep=True)
+        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.copy(
+            deep=True
+        )
         mock_device.properties.paradigm.connectivity.fullyConnected = True
         mock_device.properties.paradigm.qubitCount = 2
-        mock_device.properties.action.get(DeviceActionType.OPENQASM).supportedOperations = ["CNOT"]
-        
+        mock_device.properties.action.get(
+            DeviceActionType.OPENQASM
+        ).supportedOperations = ["CNOT"]
+
         instruction_props = aws_device_to_target(mock_device)
 
         from qiskit.circuit import Instruction
 
         cx_instruction = Instruction(name="cx", num_qubits=2, num_clbits=0, params=[])
-        measure_instruction = Instruction(name="measure", num_qubits=1, num_clbits=1, params=[])
+        measure_instruction = Instruction(
+            name="measure", num_qubits=1, num_clbits=1, params=[]
+        )
 
         expected_instruction_props = [
             (cx_instruction, (0, 1)),
             (cx_instruction, (1, 0)),
             (measure_instruction, (0,)),
-            (measure_instruction, (1,))
+            (measure_instruction, (1,)),
         ]
         for index, instruction in enumerate(instruction_props.instructions):
-            self.assertEqual(instruction[0].num_qubits, expected_instruction_props[index][0].num_qubits)
-            self.assertEqual(instruction[0].num_clbits, expected_instruction_props[index][0].num_clbits)
-            self.assertEqual(instruction[0].params, expected_instruction_props[index][0].params)
-            self.assertEqual(instruction[0].name, expected_instruction_props[index][0].name)
+            self.assertEqual(
+                instruction[0].num_qubits,
+                expected_instruction_props[index][0].num_qubits,
+            )
+            self.assertEqual(
+                instruction[0].num_clbits,
+                expected_instruction_props[index][0].num_clbits,
+            )
+            self.assertEqual(
+                instruction[0].params, expected_instruction_props[index][0].params
+            )
+            self.assertEqual(
+                instruction[0].name, expected_instruction_props[index][0].name
+            )
 
             self.assertEqual(instruction[1], expected_instruction_props[index][1])

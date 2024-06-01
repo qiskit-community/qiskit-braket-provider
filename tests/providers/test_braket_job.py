@@ -10,6 +10,7 @@ class TestAmazonBraketTask(TestCase):
 
     def test_deprecation_warning_on_init(self):
         with self.assertWarns(DeprecationWarning):
+
             class SubAmazonBraketTask(AmazonBraketTask):
                 pass
 
@@ -19,5 +20,6 @@ class TestAWSBraketJob(TestCase):
 
     def test_deprecation_warning_on_init(self):
         with self.assertWarns(DeprecationWarning):
+
             class SubAwsBraketJob(AWSBraketJob):
                 pass
