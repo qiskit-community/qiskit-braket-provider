@@ -164,6 +164,10 @@ MOCK_LOCAL_QUANTUM_TASK = LocalQuantumTask(MOCK_GATE_MODEL_QUANTUM_TASK_RESULT)
 
 
 class MockBraketBackend(BraketBackend):
+    """
+    Mock class for BraketBackend.
+    """
+
     @property
     def target(self):
         pass
@@ -172,12 +176,20 @@ class MockBraketBackend(BraketBackend):
     def max_circuits(self):
         pass
 
-    def _default_options(self):
+    @classmethod
+    def _default_options(cls):
         pass
 
-    def run(self):
+    def run(self, run_input, **kwargs):
+        """
+        Mock method for run.
+        """
         pass
 
 
 class MockMeasLevelEnum(enum.Enum):
+    """
+    Mock class for MeasLevelEnum.
+    """
+
     LEVEL_TWO = 2
