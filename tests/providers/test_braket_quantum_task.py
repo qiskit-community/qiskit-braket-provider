@@ -4,7 +4,9 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import pytest
+from braket.aws import AwsQuantumTask
 from braket.aws.aws_quantum_task import AwsQuantumTask
+from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from qiskit.providers import JobStatus
 
 from qiskit_braket_provider.providers import (
@@ -17,9 +19,6 @@ from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
-from braket.aws import AwsQuantumTask
-from qiskit_braket_provider.providers import BraketQuantumTask
-from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 
 class TestBraketTask(TestCase):
     """Tests BraketTask."""

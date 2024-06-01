@@ -12,6 +12,7 @@ from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.task_result import TaskMetadata
 from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
+
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"

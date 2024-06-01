@@ -2,7 +2,7 @@
 
 from unittest import TestCase
 
-from qiskit_braket_provider.providers.braket_job import AWSBraketJob, AmazonBraketTask
+from qiskit_braket_provider.providers.braket_job import AmazonBraketTask, AWSBraketJob
 
 
 class TestAmazonBraketTask(TestCase):

@@ -7,8 +7,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 from botocore import errorfactory
-from braket.aws import AwsDevice
-from braket.aws import AwsQuantumTaskBatch
+from braket.aws import AwsDevice, AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo, QueueType
 from braket.device_schema import DeviceActionType
 from braket.tasks.local_quantum_task import LocalQuantumTask
