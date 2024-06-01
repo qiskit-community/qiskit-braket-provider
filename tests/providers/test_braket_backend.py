@@ -60,13 +60,17 @@ def combine_dicts(
 
 
 class TestBraketBackend(TestCase):
+    """Test class for BraketBackend."""
+
     def test_repr(self):
+        """Test the repr method of BraketBackend."""
         backend = BraketLocalBackend(name="default")
         self.assertEqual(repr(backend), "BraketBackend[default]")
 
     def test_device(self):
+        """Test the device method of BraketBackend."""
         with self.assertRaises(NotImplementedError):
-            MockBraketBackend(name="default")._device
+            _ = MockBraketBackend(name="default")._device
 
 
 class TestBraketAwsBackend(TestCase):
@@ -98,6 +102,7 @@ class TestBraketAwsBackend(TestCase):
             backend.control_channel([0, 1])
 
     def test_invalid_identifiers(self):
+        """Test the invalid identifiers of BraketAwsBackend."""
         with self.assertRaises(ValueError):
             BraketAwsBackend()
 
@@ -176,6 +181,7 @@ class TestBraketAwsBackend(TestCase):
         )
 
     def test_deprecation_warning_on_init(self):
+        """Test that a deprecation warning is raised when initializing AWSBraketBackend"""
         mock_aws_device = Mock(spec=AwsDevice)
         mock_aws_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
 
@@ -183,9 +189,15 @@ class TestBraketAwsBackend(TestCase):
             AWSBraketBackend(device=mock_aws_device)
 
     def test_deprecation_warning_on_subclass(self):
+        """Test that a deprecation warning is raised when subclassing AWSBraketBackend"""
+
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketBackend(AWSBraketBackend):
+            class SubclassAWSBraketBackend(
+                AWSBraketBackend
+            ):  # pylint: disable=unused-variable
+                """A subclass of AWSBraketBackend for testing purposes"""
+
                 pass
 
     def test_run_multiple_circuits(self):
@@ -330,6 +342,7 @@ class TestBraketAwsBackend(TestCase):
     def test_retrieve_job_task_ids(
         self, mock_braket_quantum_task, mock_aws_quantum_task
     ):
+        """Test method for retrieving job task IDs."""
         device = Mock()
         device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
         backend = BraketAwsBackend(device=device)
