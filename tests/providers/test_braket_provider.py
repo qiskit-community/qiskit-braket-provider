@@ -59,7 +59,11 @@ class TestBraketProvider(TestCase):
         """Check if a DeprecationWarning is raised when a subclass of AWSBraketProvider is created"""
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketProvider(AWSBraketProvider):
+            class SubclassAWSBraketProvider(
+                AWSBraketProvider
+            ):  # pylint: disable=unused-variable
+                """This is a subclass of AWSBraketProvider for testing purposes."""
+
                 pass
 
     def test_provider_backends_kwargs_local(self):
