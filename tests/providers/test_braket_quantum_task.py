@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 from braket.aws import AwsQuantumTask
-from braket.aws.aws_quantum_task import AwsQuantumTask
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from qiskit.providers import JobStatus
 
@@ -25,7 +24,7 @@ class TestBraketTask(TestCase):
 
     def test_retry_if_result_none(self):
         """Test when result is None"""
-        assert retry_if_result_none(None) == True
+        assert retry_if_result_none(None) is True
 
     def _get_task(self):
         return BraketQuantumTask(
@@ -38,7 +37,6 @@ class TestBraketTask(TestCase):
     def test_task(self):
         """Tests task."""
         task = self._get_task()
-
         self.assertTrue(isinstance(task, BraketQuantumTask))
         self.assertEqual(None, task.submit())
         self.assertEqual(task.shots, 10)
