@@ -48,7 +48,7 @@ class BraketProvider(ProviderV1):
             )
 
     def backends(self, name=None, **kwargs):
-        noise_model = kwargs.get("noise_model")
+        noise_model = kwargs.pop("noise_model") if "noise_model" in kwargs else None
         if noise_model:
             self.set_noise_model(noise_model)
 
