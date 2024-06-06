@@ -12,6 +12,7 @@ from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.task_result import TaskMetadata
 from braket.tasks import GateModelQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
+
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
@@ -161,8 +162,8 @@ MOCK_GATE_MODEL_QUANTUM_TASK_RESULT = GateModelQuantumTaskResult(
 
 MOCK_LOCAL_QUANTUM_TASK = LocalQuantumTask(MOCK_GATE_MODEL_QUANTUM_TASK_RESULT)
 
-class MockBraketBackend(BraketBackend):
 
+class MockBraketBackend(BraketBackend):
     @property
     def target(self):
         pass
@@ -176,6 +177,7 @@ class MockBraketBackend(BraketBackend):
 
     def run(self):
         pass
+
 
 class MockMeasLevelEnum(enum.Enum):
     LEVEL_TWO = 2
