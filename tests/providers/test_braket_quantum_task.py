@@ -78,15 +78,20 @@ class TestBraketQuantumTask(TestCase):
         task = BraketQuantumTask(
             backend=Mock(spec=AWSBraketBackend),
             task_id="arn:aws:braket:::quantum-task/AwesomeId",
-            tasks=[Mock(spec=AwsQuantumTask)],
+            tasks=[mock_aws_quantum_task],
             shots=10,
         )
-        mock_aws_quantum_task.queue_position.return_value = QuantumTaskQueueInfo(
-            queue_type=QueueType.NORMAL, queue_position=1, message=None
+        mock_aws_quantum_task.return_value.queue_position.return_value = (
+            QuantumTaskQueueInfo(
+                queue_type=QueueType.NORMAL, queue_position=1, message=None
+            )
         )
         task_queue = task.queue_position()
 
-        mock_aws_quantum_task.assert_called_once()
+        mock_aws_quantum_task.return_value.queue_position.assert_called_once()
+        mock_aws_quantum_task.assert_called_once_with(
+            "arn:aws:braket:::quantum-task/AwesomeId"
+        )
         assert task_queue
 
     @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
