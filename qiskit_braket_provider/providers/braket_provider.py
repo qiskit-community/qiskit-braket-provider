@@ -30,6 +30,10 @@ class BraketProvider(ProviderV1):
          BraketBackend[dm1]]
     """
 
+    def __init__(self):
+        super().__init__()
+        self._noise_model = None
+
     def set_noise_model(self, noise_model: NoiseModel) -> None:
         """Set the noise model of the device.
 

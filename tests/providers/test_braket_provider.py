@@ -73,6 +73,7 @@ class TestBraketProvider(TestCase):
                     self.assertIsInstance(backend, BraketAwsBackend)
 
     def test_add_valid_noise_model(self):
+        """Tests adding a valid noise model to the provider."""
         provider = BraketProvider()
 
         assert provider.backends(
@@ -82,6 +83,7 @@ class TestBraketProvider(TestCase):
         )
 
     def test_add_invalid_noise_model(self):
+        """Tests adding an invalid noise model to the provider."""
         provider = BraketProvider()
         with self.assertRaises(ValueError):
             provider.backends(
