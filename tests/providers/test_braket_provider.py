@@ -71,6 +71,25 @@ class TestBraketProvider(TestCase):
                 with self.subTest(f"{backend.name}"):
                     self.assertIsInstance(backend, BraketAwsBackend)
 
+    def test_add_valid_noise_model(self):
+        provider = BraketProvider()
+        from braket.circuits.noise_model import NoiseModel
+
+        assert provider.backends(
+            aws_session=self.mock_session,
+            types=[AwsDeviceType.SIMULATOR],
+            noise_model=NoiseModel(),
+        )
+
+    def test_add_invalid_noise_model(self):
+        provider = BraketProvider()
+        with self.assertRaises(ValueError):
+            provider.backends(
+                aws_session=self.mock_session,
+                types=[AwsDeviceType.SIMULATOR],
+                noise_model=Mock(),
+            )
+
     @patch("qiskit_braket_provider.providers.braket_backend.BraketAwsBackend")
     @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
     def test_qiskit_circuit_transpilation_run(
