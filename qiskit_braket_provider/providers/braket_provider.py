@@ -3,6 +3,7 @@
 import warnings
 
 from braket.aws import AwsDevice
+from braket.circuits.noise_model import NoiseModel
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.quera import QueraDeviceCapabilities
 from braket.device_schema.xanadu import XanaduDeviceCapabilities
@@ -29,11 +30,32 @@ class BraketProvider(ProviderV1):
          BraketBackend[dm1]]
     """
 
+    def set_noise_model(self, noise_model: NoiseModel) -> None:
+        """Set the noise model of the device.
+
+        Args:
+            noise_model (NoiseModel): The Braket noise model to apply to the circuit before
+                execution. Noise model can only be added to the devices that support noise
+                simulation.
+        """
+        self._validate_noise_model_support(noise_model)
+        self._noise_model = noise_model
+
+    def _validate_noise_model_support(self, noise_model: NoiseModel) -> None:
+        if not isinstance(noise_model, NoiseModel):
+            raise ValueError(
+                "Invalid noise model specified. Should be instance of Braket noise model"
+            )
+
     def backends(self, name=None, **kwargs):
+        noise_model = kwargs.get("noise_model")
+        if noise_model:
+            self.set_noise_model(noise_model)
+
         if kwargs.get("local"):
             return [
-                BraketLocalBackend(name="braket_sv"),
-                BraketLocalBackend(name="braket_dm"),
+                BraketLocalBackend(name="braket_sv", noise_model=noise_model),
+                BraketLocalBackend(name="braket_dm", noise_model=noise_model),
             ]
         names = [name] if name else None
         devices = AwsDevice.get_devices(names=names, **kwargs)

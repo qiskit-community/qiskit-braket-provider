@@ -76,7 +76,9 @@ class BraketLocalBackend(BraketBackend):
         """
         super().__init__(name=name, **fields)
         self.backend_name = name
-        self._local_device = LocalSimulator(backend=self.backend_name)
+        self._local_device = LocalSimulator(
+            backend=self.backend_name, noise_model=fields.get("noise_model")
+        )
         self._target = local_simulator_to_target(self._local_device)
         self.status = self._local_device.status
 
