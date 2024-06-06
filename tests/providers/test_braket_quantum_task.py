@@ -19,7 +19,7 @@ from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
 
 
-class TestBraketTask(TestCase):
+class TestBraketQuantumTask(TestCase):
     """Tests BraketTask."""
 
     def test_retry_if_result_none(self):
@@ -67,8 +67,9 @@ class TestBraketTask(TestCase):
             tasks=[MOCK_LOCAL_QUANTUM_TASK, MOCK_LOCAL_QUANTUM_TASK],
             shots=10,
         )
-        task.result()
+        result = task.result()
 
+        assert result.results is None
         mock_retrieve_results.assert_called_once()
 
     @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
@@ -88,15 +89,17 @@ class TestBraketTask(TestCase):
         mock_aws_quantum_task.assert_called_once()
         assert task_queue
 
-    def test_task_cancellation(self):
+    @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
+    def test_task_cancellation(self, mock_aws_quantum_task):
         """Tests task cancellation"""
         task = BraketQuantumTask(
             backend=Mock(spec=AWSBraketBackend),
             task_id="arn:aws:braket:::quantum-task/AwesomeId",
-            tasks=[Mock(spec=AwsQuantumTask)],
+            tasks=[mock_aws_quantum_task],
             shots=10,
         )
         task.cancel()
+        mock_aws_quantum_task.cancel.assert_called_once()
 
     def test_queue_position_for_local_quantum_task(self):
         """Tests job status when multiple task status is present."""

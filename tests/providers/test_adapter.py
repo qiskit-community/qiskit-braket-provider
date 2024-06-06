@@ -330,7 +330,7 @@ class TestAdapter(TestCase):
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
-    def test_measure_(self):
+    def test_reset(self):
         """Tests if NotImplementedError is raised for reset operation."""
 
         qiskit_circuit = QuantumCircuit(1, 1)

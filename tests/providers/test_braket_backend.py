@@ -12,6 +12,7 @@ from braket.aws.queue_information import QueueDepthInfo, QueueType
 from braket.device_schema import DeviceActionType
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit, transpile
+from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BackendEstimator
@@ -67,7 +68,7 @@ class TestBraketBackend(TestCase):
         backend = BraketLocalBackend(name="default")
         self.assertEqual(repr(backend), "BraketBackend[default]")
 
-    def test_device(self):
+    def test_invalid_device(self):
         """Test the device method of BraketBackend."""
         with self.assertRaises(NotImplementedError):
             _ = MockBraketBackend(name="default")._device
@@ -477,10 +478,10 @@ class TestAWSBackendTarget(TestCase):
 
         instruction_props = aws_device_to_target(mock_device)
 
-        from qiskit.circuit import Instruction
-
-        cx_instruction = Instruction(name="cx", num_qubits=2, num_clbits=0, params=[])
-        measure_instruction = Instruction(
+        cx_instruction = QiskitInstruction(
+            name="cx", num_qubits=2, num_clbits=0, params=[]
+        )
+        measure_instruction = QiskitInstruction(
             name="measure", num_qubits=1, num_clbits=1, params=[]
         )
 
