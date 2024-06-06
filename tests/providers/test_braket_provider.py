@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from braket.circuits import Circuit
+from braket.circuits.noise_model import NoiseModel
 from qiskit import QuantumCircuit
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
@@ -73,7 +74,6 @@ class TestBraketProvider(TestCase):
 
     def test_add_valid_noise_model(self):
         provider = BraketProvider()
-        from braket.circuits.noise_model import NoiseModel
 
         assert provider.backends(
             aws_session=self.mock_session,
