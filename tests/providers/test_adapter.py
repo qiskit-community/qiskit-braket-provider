@@ -548,7 +548,11 @@ class TestFromBraket(TestCase):
         # pytest.mark.parametrize is incompatible with TestCase
         param_sets = [
             [0.1, 0.2, 0.3],
-            [FreeParameter("angle_1"), FreeParameter("angle_2"), FreeParameter("angle_3")],
+            [
+                FreeParameter("angle_1"),
+                FreeParameter("angle_2"),
+                FreeParameter("angle_3"),
+            ],
         ]
 
         for gate_name in gate_set:
