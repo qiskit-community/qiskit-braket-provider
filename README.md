@@ -4,6 +4,9 @@
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/qiskit-braket-provider.svg)](https://pypi.python.org/pypi/qiskit-braket-provider)
 [![Build status](https://github.com/qiskit-community/qiskit-braket-provider/actions/workflows/test_latest_versions.yml/badge.svg?branch=main)](https://github.com/qiskit-community/qiskit-braket-provider/actions/workflows/test_latest_versions.yml)
 
+[![Qiskit compatibility](https://img.shields.io/badge/Qiskit%20compatibility-%3E%3D0.34-blueviolet?logo=Qiskit)](https://github.com/Qiskit/qiskit/releases)
+
+
 Qiskit-Braket provider to execute Qiskit programs on AWS quantum computing hardware devices through Amazon Braket.
 
 ### Table of Contents
