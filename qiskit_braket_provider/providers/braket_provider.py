@@ -6,12 +6,11 @@ from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.quera import QueraDeviceCapabilities
 from braket.device_schema.xanadu import XanaduDeviceCapabilities
-from qiskit.providers import ProviderV1
-
+from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from .braket_backend import BraketAwsBackend, BraketLocalBackend
 
 
-class BraketProvider(ProviderV1):
+class BraketProvider():
     """BraketProvider class for accessing Amazon Braket backends.
 
     Example:
@@ -28,6 +27,14 @@ class BraketProvider(ProviderV1):
          BraketBackend[TN1],
          BraketBackend[dm1]]
     """
+    def get_backend(self, name=None, **kwargs): 
+        backends = self.backends(name=name, **kwargs)
+        if len(backends) > 1:
+            raise QiskitBackendNotFoundError("More than one backend matches the criteria")
+        if not backends:
+            raise QiskitBackendNotFoundError("No backend matches the criteria")
+        return backends[0]
+
 
     def backends(self, name=None, **kwargs):
         if kwargs.get("local"):
