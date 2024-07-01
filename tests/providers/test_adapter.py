@@ -468,13 +468,13 @@ class TestAdapter(TestCase):
         """Tests ParameterExpression translation."""
         qiskit_circuit = QuantumCircuit(1)
         v = ParameterVector("v", 2)
-        qiskit_circuit.rx(Parameter("a") + 2 * Parameter("b"), 0)
+        qiskit_circuit.rx(Parameter("angle_1") + 2 * Parameter("angle_2"), 0)
         qiskit_circuit.ry(v[0] - 2 * v[1], 0)
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
             Circuit()
-            .rx(0, FreeParameter("a") + 2 * FreeParameter("b"))
+            .rx(0, FreeParameter("angle_1") + 2 * FreeParameter("angle_2"))
             .ry(0, FreeParameter("v_0") - 2 * FreeParameter("v_1"))
         )
         assert braket_circuit == expected_braket_circuit
@@ -548,7 +548,11 @@ class TestFromBraket(TestCase):
         # pytest.mark.parametrize is incompatible with TestCase
         param_sets = [
             [0.1, 0.2, 0.3],
-            [FreeParameter("a"), FreeParameter("b"), FreeParameter("c")],
+            [
+                FreeParameter("angle_1"),
+                FreeParameter("angle_2"),
+                FreeParameter("angle_3"),
+            ],
         ]
 
         for gate_name in gate_set:
