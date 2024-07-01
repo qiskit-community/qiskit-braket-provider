@@ -7,10 +7,11 @@ from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.quera import QueraDeviceCapabilities
 from braket.device_schema.xanadu import XanaduDeviceCapabilities
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
+
 from .braket_backend import BraketAwsBackend, BraketLocalBackend
 
 
-class BraketProvider():
+class BraketProvider:
     """BraketProvider class for accessing Amazon Braket backends.
 
     Example:
@@ -27,16 +28,37 @@ class BraketProvider():
          BraketBackend[TN1],
          BraketBackend[dm1]]
     """
-    def get_backend(self, name=None, **kwargs): 
+
+    def get_backend(self, name=None, **kwargs):
+        """Return a single backend matching the specififed filters.
+
+        Args:
+            name (str): name of the selected backend
+            **kwargs: dict with additional options for filitering and storing aws session
+        Returns:
+            BraketAwsBackend: a backend matching the filters.
+        Raises:
+            QiskitBackendNotFoundError: if no backend could be found or
+            more than one backend matches the filters.
+        """
         backends = self.backends(name=name, **kwargs)
         if len(backends) > 1:
-            raise QiskitBackendNotFoundError("More than one backend matches the criteria")
+            raise QiskitBackendNotFoundError(
+                "More than one backend matches the criteria"
+            )
         if not backends:
             raise QiskitBackendNotFoundError("No backend matches the criteria")
         return backends[0]
 
-
     def backends(self, name=None, **kwargs):
+        """Return a list of backends matching the specififed filters.
+
+        Args:
+            name (str): name of the selected backend
+            **kwargs: dict with additional options for filitering and storing aws session
+        Returns:
+            BraketAwsBackend: a list of backends matching the filters.
+        """
         if kwargs.get("local"):
             return [
                 BraketLocalBackend(name="braket_sv"),
