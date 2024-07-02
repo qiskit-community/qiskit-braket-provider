@@ -10,6 +10,7 @@ from braket.circuits import Circuit
 from qiskit import QuantumCircuit
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
+from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
 from qiskit_braket_provider.providers import BraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
@@ -37,6 +38,30 @@ class TestBraketProvider(TestCase):
         self.mock_session.region = SIMULATOR_REGION
         self.mock_session.boto_session.region_name = SIMULATOR_REGION
         self.mock_session.search_devices.return_value = simulators
+
+        self.empty_mock_session = Mock()
+        self.empty_mock_session.get_device.side_effect = []
+        self.empty_mock_session.region = SIMULATOR_REGION
+        self.empty_mock_session.boto_session.region_name = SIMULATOR_REGION
+        self.empty_mock_session.search_devices.return_value = []
+
+    def test_provider_backend(self):
+        """Test QiskitBackendNotFoundError is raised"""
+        provider = BraketProvider()
+
+        # Matches QiskitBackendNotFoundError where multiple backends are found
+        with self.assertRaises(QiskitBackendNotFoundError) as err1:
+            provider.get_backend(
+                aws_session=self.mock_session, types=[AwsDeviceType.SIMULATOR]
+            )
+        self.assertIsInstance(err1.exception, QiskitBackendNotFoundError)
+
+        # Matches QiskitBackendNotFoundError where no backends are found
+        with self.assertRaises(QiskitBackendNotFoundError) as err2:
+            provider.get_backend(
+                aws_session=self.empty_mock_session, types=[AwsDeviceType.SIMULATOR]
+            )
+        self.assertIsInstance(err2.exception, QiskitBackendNotFoundError)
 
     def test_provider_backends(self):
         """Tests provider."""
