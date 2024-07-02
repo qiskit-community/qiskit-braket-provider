@@ -11,6 +11,7 @@ from qiskit import QuantumCircuit
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
+
 from qiskit_braket_provider.providers import BraketProvider
 from qiskit_braket_provider.providers.braket_backend import (
     BraketAwsBackend,
