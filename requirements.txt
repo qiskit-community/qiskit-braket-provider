@@ -1,8 +1,6 @@
 certifi>=2021.5.30
 qiskit>=0.34.2
-# TODO: update to new minimum version >0.5.0 once
-# MS gate implementation in qiskit-ionq has been corrected
-qiskit-ionq>=0.4.7, <=0.5.0
+qiskit-ionq >=0.5.2
 amazon-braket-sdk>=1.76.0
 
 setuptools>=40.1.0
