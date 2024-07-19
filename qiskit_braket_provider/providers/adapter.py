@@ -436,6 +436,7 @@ def to_braket(
     _validate_name_conflicts(circuit.parameters)
 
     # Handle qiskit to braket conversion
+    measured_qubits = set()
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         gate_name = operation.name
@@ -445,7 +446,9 @@ def to_braket(
         if gate_name == "measure":
             qubit = qubits[0]  # qubit count = 1 for measure
             qubit_index = circuit.find_bit(qubit).index
-            braket_circuit.measure(qubit_index)
+            if qubit_index in measured_qubits:
+                raise ValueError(f"Cannot measure previously measured qubit {qubit_index}")
+            measured_qubits.add(qubit_index)
         elif gate_name == "barrier":
             warnings.warn(
                 "The Qiskit circuit contains barrier instructions that are ignored."
@@ -463,6 +466,10 @@ def to_braket(
 
             # Getting the index from the bit mapping
             qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
+            if intersection := measured_qubits.intersection(qubit_indices):
+                raise ValueError(
+                    f"Cannot apply operation {gate_name} to measured qubits {intersection}"
+                )
             params = _create_free_parameters(operation)
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 for gate in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](
@@ -495,6 +502,9 @@ def to_braket(
         return Circuit(braket_circuit.result_types).add_verbatim_box(
             Circuit(braket_circuit.instructions)
         )
+
+    for qubit in sorted(measured_qubits):
+        braket_circuit.measure(qubit)
 
     return braket_circuit
 
