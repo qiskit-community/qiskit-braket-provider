@@ -499,7 +499,7 @@ def to_braket(
             )
 
     if verbatim:
-        return Circuit(braket_circuit.result_types).add_verbatim_box(
+        braket_circuit = Circuit(braket_circuit.result_types).add_verbatim_box(
             Circuit(braket_circuit.instructions)
         )
 
