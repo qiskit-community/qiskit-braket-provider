@@ -29,9 +29,11 @@ from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import Measure, Parameter, ParameterExpression
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
-from qiskit_ionq import ionq_gates
+from qiskit_ionq import add_equivalences, ionq_gates
 
 from qiskit_braket_provider.exception import QiskitBraketException
+
+add_equivalences()
 
 _GPHASE_GATE_NAME = "global_phase"
 

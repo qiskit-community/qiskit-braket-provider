@@ -12,7 +12,7 @@ from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.quantum_info import Operator, SparsePauliOp
-from qiskit_ionq import add_equivalences, ionq_gates
+from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
     _GATE_NAME_TO_BRAKET_GATE,
@@ -23,8 +23,6 @@ from qiskit_braket_provider.providers.adapter import (
     to_braket,
     to_qiskit,
 )
-
-add_equivalences()
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
