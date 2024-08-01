@@ -447,7 +447,9 @@ def to_braket(
             qubit = qubits[0]  # qubit count = 1 for measure
             qubit_index = circuit.find_bit(qubit).index
             if qubit_index in measured_qubits:
-                raise ValueError(f"Cannot measure previously measured qubit {qubit_index}")
+                raise ValueError(
+                    f"Cannot measure previously measured qubit {qubit_index}"
+                )
             measured_qubits.add(qubit_index)
         elif gate_name == "barrier":
             warnings.warn(

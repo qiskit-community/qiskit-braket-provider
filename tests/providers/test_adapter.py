@@ -12,7 +12,7 @@ from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.quantum_info import Operator, SparsePauliOp
-from qiskit_ionq import ionq_gates
+from qiskit_ionq import add_equivalences, ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
     _GATE_NAME_TO_BRAKET_GATE,
@@ -23,6 +23,8 @@ from qiskit_braket_provider.providers.adapter import (
     to_braket,
     to_qiskit,
 )
+
+add_equivalences()
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
@@ -323,6 +325,28 @@ class TestAdapter(TestCase):
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
+    def test_measure_repeated(self):
+        """Tests that repeated measurement on a qubit raises a ValueError."""
+        qiskit_circuit = QuantumCircuit(2, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+        qiskit_circuit.measure(0, 0)
+        qiskit_circuit.measure([0, 1], [0, 1])
+
+        with self.assertRaises(ValueError):
+            to_braket(qiskit_circuit)
+
+    def test_gate_after_measure(self):
+        """Tests that adding a gate to a measured qubit raises a ValueError."""
+        qiskit_circuit = QuantumCircuit(2, 2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+        qiskit_circuit.measure(0, 0)
+        qiskit_circuit.h(0)
+
+        with self.assertRaises(ValueError):
+            to_braket(qiskit_circuit)
+
     def test_reset(self):
         """Tests if NotImplementedError is raised for reset operation."""
 
@@ -436,13 +460,14 @@ class TestAdapter(TestCase):
 
     def test_verbatim(self):
         """Tests that transpilation is skipped for verbatim circuits."""
-        qiskit_circuit = QuantumCircuit(2)
+        qiskit_circuit = QuantumCircuit(2, 1)
         qiskit_circuit.h(0)
         qiskit_circuit.cx(0, 1)
+        qiskit_circuit.measure(1, 0)
 
         assert to_braket(qiskit_circuit, {"x"}, True) == Circuit().add_verbatim_box(
             Circuit().h(0).cnot(0, 1)
-        )
+        ).measure(1)
 
     def test_parameter_vector(self):
         """Tests ParameterExpression translation."""
