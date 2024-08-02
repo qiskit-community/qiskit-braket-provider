@@ -166,14 +166,7 @@ class TestAdapter(TestCase):
             qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
             with self.subTest(f"Circuit with {gate.name} gate."):
-                self.assertTrue(
-                    # TODO: use check_to_braket_unitary_correct once
-                    # MS gate implementation in qiskit-ionq has been corrected
-                    np.allclose(
-                        to_braket(qiskit_circuit).to_unitary(),
-                        Operator(qiskit_circuit).to_matrix(),
-                    )
-                )
+                self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
     def test_global_phase(self):
         """Tests conversion when transpiler generates a global phase"""
