@@ -538,6 +538,44 @@ class TestAdapter(TestCase):
             "mcx",
         }
 
+    def test_connectivity(self):
+        """Tests transpiling with connectivity"""
+        qiskit_circuit = QuantumCircuit(3)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+        qiskit_circuit.rxx(0.1, 0, 2)
+        connectivity = [[0, 1], [1, 0], [1, 2], [2, 1]]
+
+        braket_circuit = to_braket(qiskit_circuit, connectivity=connectivity)
+        braket_circuit_unconnected = to_braket(qiskit_circuit)
+        braket_circuit_verbatim = to_braket(
+            qiskit_circuit, verbatim=True, connectivity=connectivity
+        )
+
+        def gate_matches_connectivity(gate) -> bool:
+            return any(
+                (
+                    gate.target.union(gate.control).issubset(adjacency)
+                    for adjacency in connectivity
+                )
+            )
+
+        assert all(
+            (gate_matches_connectivity(gate) for gate in braket_circuit.instructions)
+        )
+        assert not all(
+            (
+                gate_matches_connectivity(gate)
+                for gate in braket_circuit_unconnected.instructions
+            )
+        )
+        assert not all(
+            (
+                gate_matches_connectivity(gate)
+                for gate in braket_circuit_verbatim.instructions
+            )
+        )
+
 
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""

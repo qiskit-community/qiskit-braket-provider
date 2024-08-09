@@ -409,6 +409,7 @@ def to_braket(
     circuit: QuantumCircuit,
     basis_gates: Optional[Iterable[str]] = None,
     verbatim: bool = False,
+    connectivity: Optional[list[list[int]]] = None,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -419,6 +420,8 @@ def to_braket(
             Default: `None`.
         verbatim (bool): Whether to translate the circuit without any modification, in other
             words without transpiling it. Default: False.
+        connectivity (Optional[list[list[int]]): If provided, will transpile to a circuit
+            with this connectivity. Default: `None`.
 
     Returns:
         Circuit: Braket circuit
@@ -429,10 +432,16 @@ def to_braket(
     basis_gates = set(basis_gates or _TRANSLATABLE_QISKIT_GATE_NAMES)
 
     braket_circuit = Circuit()
-    if not verbatim and not {gate.name for gate, _, _ in circuit.data}.issubset(
-        basis_gates
-    ):
-        circuit = transpile(circuit, basis_gates=basis_gates, optimization_level=0)
+    needs_transpilation = connectivity or not {
+        gate.name for gate, _, _ in circuit.data
+    }.issubset(basis_gates)
+    if not verbatim and needs_transpilation:
+        circuit = transpile(
+            circuit,
+            basis_gates=basis_gates,
+            coupling_map=connectivity,
+            optimization_level=0,
+        )
 
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
