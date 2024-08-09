@@ -430,10 +430,10 @@ def to_braket(
     basis_gates = set(basis_gates or _TRANSLATABLE_QISKIT_GATE_NAMES)
 
     braket_circuit = Circuit()
-    if not verbatim and (
-        not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates)
-        or connectivity
-    ):
+    needs_transpilation = connectivity or not {
+        gate.name for gate, _, _ in circuit.data
+    }.issubset(basis_gates)
+    if not verbatim and needs_transpilation:
         circuit = transpile(
             circuit,
             basis_gates=basis_gates,

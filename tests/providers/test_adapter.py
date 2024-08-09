@@ -523,32 +523,33 @@ class TestAdapter(TestCase):
         qiskit_circuit.rxx(0.1, 0, 2)
         connectivity = [[0, 1], [1, 0], [1, 2], [2, 1]]
 
-        braket_circuit = to_braket(
-            qiskit_circuit, connectivity=[[0, 1], [1, 0], [1, 2], [2, 1]]
-        )
+        braket_circuit = to_braket(qiskit_circuit, connectivity=connectivity)
         braket_circuit_unconnected = to_braket(qiskit_circuit)
+        braket_circuit_verbatim = to_braket(
+            qiskit_circuit, verbatim=True, connectivity=connectivity
+        )
+
+        def gate_matches_connectivity(gate) -> bool:
+            return any(
+                (
+                    gate.target.union(gate.control).issubset(adjacency)
+                    for adjacency in connectivity
+                )
+            )
 
         assert all(
-            (
-                any(
-                    (
-                        gate.target.union(gate.control).issubset(adjacency)
-                        for adjacency in connectivity
-                    )
-                )
-                for gate in braket_circuit.instructions
-            )
+            (gate_matches_connectivity(gate) for gate in braket_circuit.instructions)
         )
-
         assert not all(
             (
-                any(
-                    (
-                        gate.target.union(gate.control).issubset(adjacency)
-                        for adjacency in connectivity
-                    )
-                )
+                gate_matches_connectivity(gate)
                 for gate in braket_circuit_unconnected.instructions
+            )
+        )
+        assert not all(
+            (
+                gate_matches_connectivity(gate)
+                for gate in braket_circuit_verbatim.instructions
             )
         )
 
