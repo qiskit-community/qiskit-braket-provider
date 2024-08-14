@@ -23,7 +23,8 @@ from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
     local_simulator_to_target,
-    native_gate_support,
+    native_gate_connectivity,
+    native_gate_set,
     to_braket,
 )
 from .braket_quantum_task import BraketQuantumTask
@@ -334,9 +335,8 @@ class BraketAwsBackend(BraketBackend):
         if verbatim:
             gateset = None
         elif native:
-            gateset, connectivity = native_gate_support(
-                self._device.properties
-            ).values()
+            gateset = native_gate_set(self._device.properties)
+            connectivity = native_gate_connectivity(self._device.properties)
 
         braket_circuits = [
             to_braket(

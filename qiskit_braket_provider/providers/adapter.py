@@ -196,7 +196,17 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
 }
 
 
-def native_gate_support(properties: DeviceCapabilities) -> dict:
+def native_gate_connectivity(
+    properties: DeviceCapabilities,
+) -> Optional[list[list[int]]]:
+    """Returns the gate set and connectivity natively supported by a Braket device from its properties
+
+    Args:
+        properties (DeviceCapabilities): The device properties of the Braket device.
+
+    Returns:
+        Optional[list[list[int]]]: A list of connected qubit pairs or None if the device is fully connected
+    """
     device_connectivity = properties.paradigm.connectivity
     connectivity = (
         [
@@ -207,15 +217,25 @@ def native_gate_support(properties: DeviceCapabilities) -> dict:
         if not device_connectivity.fullyConnected
         else None
     )
+    return connectivity
 
+
+def native_gate_set(properties: DeviceCapabilities) -> set[str]:
+    """Returns the gate set and connectivity natively supported by a Braket device from its properties
+
+    Args:
+        properties (DeviceCapabilities): The device properties of the Braket device.
+
+
+    Returns:
+        set[str]: The names of qiskit gates natively supported by the Braket device.
+    """
     native_list = properties.paradigm.nativeGateSet
-    gateset = {
+    return {
         _BRAKET_TO_QISKIT_NAMES[op.lower()]
         for op in native_list
         if op.lower() in _BRAKET_TO_QISKIT_NAMES
     }
-
-    return {"native_gates": gateset, "connectivity": connectivity}
 
 
 def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[str]:

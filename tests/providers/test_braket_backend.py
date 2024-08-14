@@ -426,6 +426,7 @@ class TestBraketAwsBackend(TestCase):
 
     @patch("qiskit_braket_provider.providers.braket_backend.to_braket")
     def test_native_transpilation(self, mock_to_braket):
+        """Tests running circuit with native mode"""
         mock_device = Mock()
         mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
         mock_device.properties.paradigm.connectivity.connectivityGraph = {
@@ -456,9 +457,9 @@ class TestBraketAwsBackend(TestCase):
         ]
 
         backend.run(circuit, verbatim=True)
-        assert mock_to_braket.call_args.kwargs["basis_gates"] == None
-        assert mock_to_braket.call_args.kwargs["verbatim"] == True
-        assert mock_to_braket.call_args.kwargs["connectivity"] == None
+        assert mock_to_braket.call_args.kwargs["basis_gates"] is None
+        assert mock_to_braket.call_args.kwargs["verbatim"] is True
+        assert mock_to_braket.call_args.kwargs["connectivity"] is None
 
     @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
     def test_queue_depth(self, mocked_device):
