@@ -17,8 +17,8 @@ from braket.circuits import (
 )
 from braket.device_schema import (
     DeviceActionType,
-    OpenQASMDeviceActionProperties,
     DeviceCapabilities,
+    OpenQASMDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.iqm import IqmDeviceCapabilities
