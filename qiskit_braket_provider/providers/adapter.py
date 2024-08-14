@@ -199,13 +199,14 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
 def native_gate_connectivity(
     properties: DeviceCapabilities,
 ) -> Optional[list[list[int]]]:
-    """Returns the gate set and connectivity natively supported by a Braket device from its properties
+    """Returns the connectivity natively supported by a Braket device from its properties
 
     Args:
         properties (DeviceCapabilities): The device properties of the Braket device.
 
     Returns:
-        Optional[list[list[int]]]: A list of connected qubit pairs or None if the device is fully connected
+        Optional[list[list[int]]]: A list of connected qubit pairs or `None` if the device is fully
+            connected.
     """
     device_connectivity = properties.paradigm.connectivity
     connectivity = (
@@ -221,7 +222,7 @@ def native_gate_connectivity(
 
 
 def native_gate_set(properties: DeviceCapabilities) -> set[str]:
-    """Returns the gate set and connectivity natively supported by a Braket device from its properties
+    """Returns the gate set natively supported by a Braket device from its properties
 
     Args:
         properties (DeviceCapabilities): The device properties of the Braket device.
