@@ -15,7 +15,11 @@ from braket.circuits import (
     Instruction,
     measure,
 )
-from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
+from braket.device_schema import (
+    DeviceActionType,
+    OpenQASMDeviceActionProperties,
+    DeviceCapabilities,
+)
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.iqm import IqmDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
@@ -190,6 +194,28 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
 }
+
+
+def native_gate_support(properties: DeviceCapabilities) -> dict:
+    device_connectivity = properties.paradigm.connectivity
+    connectivity = (
+        [
+            [int(x), int(y)]
+            for x, neighborhood in device_connectivity.connectivityGraph.items()
+            for y in neighborhood
+        ]
+        if not device_connectivity.fullyConnected
+        else None
+    )
+
+    native_list = properties.paradigm.nativeGateSet
+    gateset = {
+        _BRAKET_TO_QISKIT_NAMES[op.lower()]
+        for op in native_list
+        if op.lower() in _BRAKET_TO_QISKIT_NAMES
+    }
+
+    return {"native_gates": gateset, "connectivity": connectivity}
 
 
 def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[str]:

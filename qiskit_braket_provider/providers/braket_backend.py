@@ -23,6 +23,7 @@ from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
     local_simulator_to_target,
+    native_gate_support,
     to_braket,
 )
 from .braket_quantum_task import BraketQuantumTask
@@ -327,8 +328,22 @@ class BraketAwsBackend(BraketBackend):
             del options["meas_level"]
 
         verbatim = options.pop("verbatim", False)
-        gateset = self._get_gateset() if not verbatim else None
-        braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
+        native = options.pop("native", False)
+        gateset = self._get_gateset()
+        connectivity = None
+        if verbatim:
+            gateset = None
+        elif native:
+            gateset, connectivity = native_gate_support(
+                self._device.properties
+            ).values()
+
+        braket_circuits = [
+            to_braket(
+                circ, basis_gates=gateset, verbatim=verbatim, connectivity=connectivity
+            )
+            for circ in circuits
+        ]
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
             braket_circuits, **options
