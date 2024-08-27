@@ -227,7 +227,6 @@ def native_gate_set(properties: DeviceCapabilities) -> set[str]:
     Args:
         properties (DeviceCapabilities): The device properties of the Braket device.
 
-
     Returns:
         set[str]: The names of qiskit gates natively supported by the Braket device.
     """
