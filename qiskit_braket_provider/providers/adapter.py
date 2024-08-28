@@ -15,7 +15,11 @@ from braket.circuits import (
     Instruction,
     measure,
 )
-from braket.device_schema import DeviceActionType, OpenQASMDeviceActionProperties
+from braket.device_schema import (
+    DeviceActionType,
+    DeviceCapabilities,
+    OpenQASMDeviceActionProperties,
+)
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.iqm import IqmDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
@@ -190,6 +194,48 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
 }
+
+
+def native_gate_connectivity(
+    properties: DeviceCapabilities,
+) -> Optional[list[list[int]]]:
+    """Returns the connectivity natively supported by a Braket device from its properties
+
+    Args:
+        properties (DeviceCapabilities): The device properties of the Braket device.
+
+    Returns:
+        Optional[list[list[int]]]: A list of connected qubit pairs or `None` if the device is fully
+            connected.
+    """
+    device_connectivity = properties.paradigm.connectivity
+    connectivity = (
+        [
+            [int(x), int(y)]
+            for x, neighborhood in device_connectivity.connectivityGraph.items()
+            for y in neighborhood
+        ]
+        if not device_connectivity.fullyConnected
+        else None
+    )
+    return connectivity
+
+
+def native_gate_set(properties: DeviceCapabilities) -> set[str]:
+    """Returns the gate set natively supported by a Braket device from its properties
+
+    Args:
+        properties (DeviceCapabilities): The device properties of the Braket device.
+
+    Returns:
+        set[str]: The names of qiskit gates natively supported by the Braket device.
+    """
+    native_list = properties.paradigm.nativeGateSet
+    return {
+        _BRAKET_TO_QISKIT_NAMES[op.lower()]
+        for op in native_list
+        if op.lower() in _BRAKET_TO_QISKIT_NAMES
+    }
 
 
 def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[str]:

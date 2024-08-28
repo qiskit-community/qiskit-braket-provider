@@ -424,6 +424,43 @@ class TestBraketAwsBackend(TestCase):
 
         self.assertEqual(sum(result.get_counts().values()), 10)
 
+    @patch("qiskit_braket_provider.providers.braket_backend.to_braket")
+    def test_native_transpilation(self, mock_to_braket):
+        """Tests running circuit with native mode"""
+        mock_device = Mock()
+        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        mock_device.properties.paradigm.connectivity.connectivityGraph = {
+            "0": ["1"],
+            "1": ["0", "2"],
+            "2": ["1"],
+        }
+        mock_device.properties.paradigm.nativeGateSet = ["rx", "rz", "cnot"]
+
+        mock_batch = Mock()
+        mock_batch.tasks = [Mock(id="abcd1234")]
+        mock_device.run_batch.return_value = mock_batch
+
+        circuit = QuantumCircuit(3)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.cx(0, 2)
+
+        backend = AWSBraketBackend(device=mock_device)
+
+        backend.run(circuit, native=True)
+        assert mock_to_braket.call_args.kwargs["basis_gates"] == {"rx", "rz", "cx"}
+        assert mock_to_braket.call_args.kwargs["connectivity"] == [
+            [0, 1],
+            [1, 0],
+            [1, 2],
+            [2, 1],
+        ]
+
+        backend.run(circuit, verbatim=True)
+        assert mock_to_braket.call_args.kwargs["basis_gates"] is None
+        assert mock_to_braket.call_args.kwargs["verbatim"] is True
+        assert mock_to_braket.call_args.kwargs["connectivity"] is None
+
     @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
     def test_queue_depth(self, mocked_device):
         """Tests queue depth."""

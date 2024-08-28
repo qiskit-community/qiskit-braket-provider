@@ -23,6 +23,8 @@ from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
     local_simulator_to_target,
+    native_gate_connectivity,
+    native_gate_set,
     to_braket,
 )
 from .braket_quantum_task import BraketQuantumTask
@@ -52,9 +54,12 @@ class BraketBackend(BackendV2, ABC):
                 f"results, received meas_level={meas_level}."
             )
 
-    def _get_gateset(self) -> Optional[set[str]]:
-        action = self._device.properties.action.get(DeviceActionType.OPENQASM)
-        return gateset_from_properties(action) if action else None
+    def _get_gateset(self, native=False) -> Optional[set[str]]:
+        if native:
+            return native_gate_set(self._device.properties)
+        else:
+            action = self._device.properties.action.get(DeviceActionType.OPENQASM)
+            return gateset_from_properties(action) if action else None
 
 
 class BraketLocalBackend(BraketBackend):
@@ -314,7 +319,7 @@ class BraketAwsBackend(BraketBackend):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(self, run_input, **options):
+    def run(self, run_input, verbatim: bool = False, native: bool = False, **options):
         if isinstance(run_input, QuantumCircuit):
             circuits = [run_input]
         elif isinstance(run_input, list):
@@ -326,9 +331,17 @@ class BraketAwsBackend(BraketBackend):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        verbatim = options.pop("verbatim", False)
-        gateset = self._get_gateset() if not verbatim else None
-        braket_circuits = [to_braket(circ, gateset, verbatim) for circ in circuits]
+        gateset = self._get_gateset(native) if not verbatim else None
+        connectivity = (
+            native_gate_connectivity(self._device.properties) if native else None
+        )
+
+        braket_circuits = [
+            to_braket(
+                circ, basis_gates=gateset, verbatim=verbatim, connectivity=connectivity
+            )
+            for circ in circuits
+        ]
 
         batch_task: AwsQuantumTaskBatch = self._device.run_batch(
             braket_circuits, **options
