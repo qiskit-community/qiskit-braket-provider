@@ -323,6 +323,30 @@ class TestAdapter(TestCase):
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
+    def test_measure_order_preserved(self):
+        """Tests the translation of measure instructions on multiple qubits"""
+
+        qiskit_circuit = QuantumCircuit(3, 3)
+        qiskit_circuit.h(0)
+        qiskit_circuit.cx(0, 1)
+        qiskit_circuit.cx(1, 2)
+        qiskit_circuit.measure(0, 1)  # measure qubit 0 into classical bit 1
+        qiskit_circuit.measure(1, 2)  # measure qubit 1 into classical bit 2
+        qiskit_circuit.measure(2, 0)  # measure qubit 2 into classical bit 0
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = (
+            Circuit()
+            .h(0)
+            .cnot(0, 1)
+            .cnot(1, 2)
+            .measure(2)
+            .measure(0)
+            .measure(1)  # pylint: disable=no-member
+        )
+
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
     def test_measure_repeated(self):
         """Tests that repeated measurement on a qubit raises a ValueError."""
         qiskit_circuit = QuantumCircuit(2, 2)
@@ -451,8 +475,8 @@ class TestAdapter(TestCase):
             .h(0)
             .cnot(0, 2)
             .x(1)
-            .measure(0)
             .measure(2)
+            .measure(0)
         )
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
