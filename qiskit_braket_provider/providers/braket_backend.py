@@ -169,7 +169,7 @@ class BraketLocalBackend(BraketBackend):
             task_id=task_id,
             tasks=tasks,
             backend=self,
-            shots=shots,
+            shots=shots,  # type: ignore[arg-type]
         )
 
 
