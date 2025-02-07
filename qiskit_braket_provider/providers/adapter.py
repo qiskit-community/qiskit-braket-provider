@@ -493,7 +493,7 @@ def to_braket(
     _validate_name_conflicts(circuit.parameters)
 
     # Handle qiskit to braket conversion
-    measured_qubits = {}
+    measured_qubits: dict[int, int] = {}
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         gate_name = operation.name

@@ -176,7 +176,7 @@ class BraketLocalBackend(BraketBackend):
 class BraketAwsBackend(BraketBackend):
     """BraketAwsBackend."""
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         arn: Optional[str] = None,
         provider: Provider = None,
@@ -364,7 +364,7 @@ class AWSBraketBackend(BraketAwsBackend):
         )
         super().__init_subclass__(**kwargs)
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         device: AwsDevice,
         provider: Provider = None,
