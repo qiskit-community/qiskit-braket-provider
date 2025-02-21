@@ -23,7 +23,10 @@ from braket.device_schema import (
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.iqm import IqmDeviceCapabilities
 from braket.device_schema.oqc import OqcDeviceCapabilities
-from braket.device_schema.rigetti import RigettiDeviceCapabilities
+from braket.device_schema.rigetti import (
+    RigettiDeviceCapabilities,
+    RigettiDeviceCapabilitiesV2,
+)
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
@@ -321,6 +324,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
         (
             IonqDeviceCapabilities,
             RigettiDeviceCapabilities,
+            RigettiDeviceCapabilitiesV2,
             OqcDeviceCapabilities,
             IqmDeviceCapabilities,
         ),
@@ -355,6 +359,7 @@ def _qpu_target(
     properties: Union[
         IonqDeviceCapabilities,
         RigettiDeviceCapabilities,
+        RigettiDeviceCapabilitiesV2,
         OqcDeviceCapabilities,
         IqmDeviceCapabilities,
     ],
@@ -400,7 +405,9 @@ def _2q_instruction_properties(qubit_count, connectivity, properties):
 
     # building coupling map for device with connectivity graph
     else:
-        if isinstance(properties, RigettiDeviceCapabilities):
+        if isinstance(
+            properties, (RigettiDeviceCapabilities, RigettiDeviceCapabilitiesV2)
+        ):
             connectivity.connectivityGraph = _convert_aspen_qubit_indices(
                 connectivity.connectivityGraph
             )
