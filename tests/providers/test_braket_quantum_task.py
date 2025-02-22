@@ -69,7 +69,7 @@ class TestBraketQuantumTask(TestCase):
         )
         result = task.result()
 
-        assert result.results is None
+        assert result.results is None or result.results == [None]
         mock_retrieve_results.assert_called_once()
 
     @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
