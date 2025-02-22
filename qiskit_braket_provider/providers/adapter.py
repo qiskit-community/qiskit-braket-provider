@@ -372,6 +372,11 @@ def _qpu_target(
         else properties.action.get(DeviceActionType.JAQCD)
     )
     connectivity = properties.paradigm.connectivity
+    connectivity_graph = (
+        _contiguous_qubit_indices(connectivity.connectivityGraph)
+        if not connectivity.fullyConnected
+        else None
+    )
 
     for operation in action_properties.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
@@ -385,18 +390,18 @@ def _qpu_target(
             elif instruction.num_qubits == 2:
                 target.add_instruction(
                     instruction,
-                    _2q_instruction_properties(qubit_count, connectivity, properties),
+                    _2q_instruction_properties(qubit_count, connectivity_graph),
                 )
 
     target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
     return target
 
 
-def _2q_instruction_properties(qubit_count, connectivity, properties):
+def _2q_instruction_properties(qubit_count, connectivity_graph):
     instruction_props = {}
 
     # building coupling map for fully connected device
-    if connectivity.fullyConnected:
+    if not connectivity_graph:
         for src in range(qubit_count):
             for dst in range(qubit_count):
                 if src != dst:
@@ -405,25 +410,18 @@ def _2q_instruction_properties(qubit_count, connectivity, properties):
 
     # building coupling map for device with connectivity graph
     else:
-        if isinstance(
-            properties, (RigettiDeviceCapabilities, RigettiDeviceCapabilitiesV2)
-        ):
-            connectivity.connectivityGraph = _convert_aspen_qubit_indices(
-                connectivity.connectivityGraph
-            )
-
-        for src, connections in connectivity.connectivityGraph.items():
+        for src, connections in connectivity_graph.items():
             for dst in connections:
                 instruction_props[(int(src), int(dst))] = None
 
     return instruction_props
 
 
-def _convert_aspen_qubit_indices(connectivity_graph: dict) -> dict:
-    """Aspen qubit indices are discontinuous (label between x0 and x7, x being
+def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
+    """Device qubit indices may be noncontiguous (label between x0 and x7, x being
     the number of the octagon) while the Qiskit transpiler creates and/or
-    handles coupling maps with continuous indices. This function converts the
-    discontinuous connectivity graph from Aspen to a continuous one.
+    handles coupling maps with contiguous indices. This function converts the
+    noncontiguous connectivity graph from Aspen to a contiguous one.
 
     Args:
         connectivity_graph (dict): connectivity graph from Aspen. For example
@@ -432,30 +430,32 @@ def _convert_aspen_qubit_indices(connectivity_graph: dict) -> dict:
                 "7": ["0","1","2"]}
 
     Returns:
-        dict: Connectivity graph with continuous indices. For example for an
-        input connectivity graph with discontinuous indices (qubit 0, 1, 2 and
+        dict: Connectivity graph with contiguous indices. For example for an
+        input connectivity graph with noncontiguous indices (qubit 0, 1, 2 and
         then qubit 7) as shown here:
             {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
             "7": ["0","1","2"]}
         the qubit index 7 will be mapped to qubit index 3 for the qiskit
-        transpilation step. Thereby the resultant continous qubit indices
+        transpilation step. Thereby the resultant contiguous qubit indices
         output will be:
             {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
             "3": ["0","1","2"]}
     """
-    # Creates list of existing qubit indices which are discontinuous.
-    indices = [int(key) for key in connectivity_graph.keys()]
-    indices.sort()
-    # Creates a list of continuous indices for number of qubits.
+    # Creates list of existing qubit indices which are noncontiguous.
+    indices = sorted(
+        int(i)
+        for i in set.union(*[{k} | set(v) for k, v in connectivity_graph.items()])
+    )
+    # Creates a list of contiguous indices for number of qubits.
     map_list = list(range(len(indices)))
-    # Creates a dictionary to remap the discontinuous indices to continuous.
+    # Creates a dictionary to remap the noncontiguous indices to contiguous.
     mapper = dict(zip(indices, map_list))
-    # Performs the remapping from the discontinuous to the continuous indices.
-    continous_connectivity_graph = {
+    # Performs the remapping from the noncontiguous to the contiguous indices.
+    contiguous_connectivity_graph = {
         mapper[int(k)]: [mapper[int(v)] for v in val]
         for k, val in connectivity_graph.items()
     }
-    return continous_connectivity_graph
+    return contiguous_connectivity_graph
 
 
 def to_braket(
