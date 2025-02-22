@@ -48,9 +48,13 @@ class TestBraketQuantumTask(TestCase):
         task = self._get_task()
 
         self.assertEqual(task.result().job_id, "AwesomeId")
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].status, "COMPLETED")
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].shots, 3)
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
 
@@ -144,9 +148,13 @@ class TestAmazonBraketTask(TestCase):
         task = self._get_task()
 
         self.assertEqual(task.result().job_id, "AwesomeId")
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].status, "COMPLETED")
+        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].shots, 3)
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
 
@@ -177,9 +185,13 @@ class TestAWSBraketJob(TestCase):
         job = self._get_job()
 
         self.assertEqual(job.result().job_id, "AwesomeId")
+        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
+        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].data.memory, ["10", "10", "01"])
+        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].status, "COMPLETED")
+        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].shots, 3)
         self.assertEqual(job.result().get_memory(), ["10", "10", "01"])
 
