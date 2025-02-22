@@ -17,7 +17,6 @@ from qiskit_braket_provider.providers import (
 from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
-from qiskit.result import Result
 
 
 class TestBraketQuantumTask(TestCase):
@@ -54,6 +53,24 @@ class TestBraketQuantumTask(TestCase):
         self.assertEqual(task.result().results[0].status, "COMPLETED")
         self.assertEqual(task.result().results[0].shots, 3)
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
+
+    @patch(
+        "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results"
+    )
+    def test_task_result_is_none(self, mock_retrieve_results):
+        """Tests result when result is None"""
+        mock_retrieve_results.return_value = [None, None]
+
+        task = BraketQuantumTask(
+            backend=BraketLocalBackend(name="default"),
+            task_id="AwesomeId",
+            tasks=[MOCK_LOCAL_QUANTUM_TASK, MOCK_LOCAL_QUANTUM_TASK],
+            shots=10,
+        )
+        result = task.result()
+
+        assert result.results is None
+        mock_retrieve_results.assert_called_once()
 
     @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
     def test_queue_position(self, mock_aws_quantum_task):
