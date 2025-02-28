@@ -163,7 +163,7 @@ class BraketQuantumTask(JobV1):
         status = self.status(use_cached_value=True)
 
         return Result(
-            backend_name=self._backend,
+            backend_name=self._backend.name,
             backend_version=self._backend.version,
             job_id=self._task_id,
             qobj_id=0,
