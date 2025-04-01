@@ -49,16 +49,14 @@ class TestBraketQuantumTask(TestCase):
 
         self.assertEqual(task.result().job_id, "AwesomeId")
         self.assertEqual(task.result().backend_name, "default")
-        # pylint: disable-next=no-member
-        self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
-        # pylint: disable-next=no-member
-        self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
-        # pylint: disable-next=no-member
-        self.assertEqual(task.result().results[0].status, "COMPLETED")
-        # pylint: disable-next=no-member
-        self.assertEqual(task.result().results[0].shots, 3)
-        # pylint: disable-next=no-member
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
+
+        # pylint: disable=no-member
+        self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
+        self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
+        self.assertEqual(task.result().results[0].status, "COMPLETED")
+        self.assertEqual(task.result().results[0].shots, 3)
+        # pylint: enable=no-member
 
     @patch(
         "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results"
