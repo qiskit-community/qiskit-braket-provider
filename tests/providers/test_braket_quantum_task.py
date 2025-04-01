@@ -48,6 +48,7 @@ class TestBraketQuantumTask(TestCase):
         task = self._get_task()
 
         self.assertEqual(task.result().job_id, "AwesomeId")
+        self.assertEqual(task.result().backend_name, "default")
         # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
         # pylint: disable-next=no-member
@@ -57,7 +58,6 @@ class TestBraketQuantumTask(TestCase):
         # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].shots, 3)
         # pylint: disable-next=no-member
-        self.assertEqual(task.result().results[0].backend_name, "default")        
         self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
 
     @patch(
