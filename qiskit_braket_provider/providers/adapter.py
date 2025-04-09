@@ -58,6 +58,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "v": "sx",
     "vi": "sxdg",
     "swap": "swap",
+    "iswap": "iswap",
     "rx": "rx",
     "ry": "ry",
     "rz": "rz",
