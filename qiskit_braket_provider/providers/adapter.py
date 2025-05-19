@@ -29,6 +29,7 @@ from braket.device_schema.rigetti import (
 )
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket import experimental_capabilities as braket_expcaps
 from braket.ir.openqasm.modifiers import Control
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate
@@ -141,6 +142,8 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
+    "CCPRx": lambda angle_1, angle_2, feedback_key: [braket_expcaps.iqm.classical_control.CCPRx(angle_1, angle_2, feedback_key)],
+    "MeasureFF": lambda feedback_key: [braket_expcaps.iqm.classical_control.MeasureFF(feedback_key)],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
