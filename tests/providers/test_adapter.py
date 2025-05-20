@@ -220,6 +220,8 @@ class TestAdapter(TestCase):
             "ryy": "yy",
             "zz": "zz",
             "global_phase": "gphase",
+            "CCPRx": "cc_prx",
+            "MeasureFF": "measure_ff",
         }
 
         qiskit_to_braket_gate_names |= {
