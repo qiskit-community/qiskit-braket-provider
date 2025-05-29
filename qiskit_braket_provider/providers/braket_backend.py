@@ -55,6 +55,11 @@ class BraketBackend(BackendV2, ABC):
             )
 
     def get_gateset(self, native=False) -> Optional[set[str]]:
+        """Get the gate set of the device.
+
+        Args:
+            native (bool): Whether to return the device's natvie gates.
+        """
         if native:
             return native_gate_set(self._device.properties)
         else:
