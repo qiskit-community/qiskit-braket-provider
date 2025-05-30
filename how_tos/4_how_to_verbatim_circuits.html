@@ -207,6 +207,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 </ul>
 
 </div></div>
@@ -245,7 +248,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumCircuit</span>
+<div class="input_area highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWSBraketProvider</span>
 </pre></div>
@@ -262,7 +265,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<div class="input_area highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
 <span class="n">aspen</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-M-3&quot;</span><span class="p">)</span>
 
 <span class="n">circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -288,7 +291,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aspen</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disable_qubit_rewiring</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="input_area highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="n">aspen</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disable_qubit_rewiring</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -499,7 +502,7 @@ File <span class="ansi-green-fg">~/.virtualenvs/pyqbench/lib/python3.9/site-pack
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">native_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<div class="input_area highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="n">native_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">native_circuit</span><span class="o">.</span><span class="n">cz</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">aspen</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">native_circuit</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disable_qubit_rewiring</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>

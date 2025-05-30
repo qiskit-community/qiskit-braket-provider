@@ -17,6 +17,7 @@
       ~BraketLocalBackend.acquire_channel
       ~BraketLocalBackend.control_channel
       ~BraketLocalBackend.drive_channel
+      ~BraketLocalBackend.get_gateset
       ~BraketLocalBackend.measure_channel
       ~BraketLocalBackend.qubit_properties
       ~BraketLocalBackend.run

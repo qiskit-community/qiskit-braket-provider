@@ -17,6 +17,7 @@
       ~AWSBraketBackend.acquire_channel
       ~AWSBraketBackend.control_channel
       ~AWSBraketBackend.drive_channel
+      ~AWSBraketBackend.get_gateset
       ~AWSBraketBackend.measure_channel
       ~AWSBraketBackend.qubit_properties
       ~AWSBraketBackend.queue_depth
