@@ -39,6 +39,11 @@ from qiskit.transpiler import Target
 from qiskit_ionq import add_equivalences, ionq_gates
 
 from qiskit_braket_provider.exception import QiskitBraketException
+from qiskit_braket_provider.providers.angle_restrictions import (
+    get_angle_restrictions,
+    is_angle_allowed,
+    decompose_rx_rigetti
+)
 
 add_equivalences()
 
@@ -464,6 +469,7 @@ def to_braket(
     basis_gates: Optional[Iterable[str]] = None,
     verbatim: bool = False,
     connectivity: Optional[list[list[int]]] = None,
+    backend=None,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -476,6 +482,8 @@ def to_braket(
             words without transpiling it. Default: False.
         connectivity (Optional[list[list[int]]): If provided, will transpile to a circuit
             with this connectivity. Default: `None`.
+        backend: Backend object containing device properties for angle restrictions.
+            Default: `None`.
 
     Returns:
         Circuit: Braket circuit
@@ -540,23 +548,11 @@ def to_braket(
                 raise ValueError(
                     f"Cannot apply operation {gate_name} to measured qubits {intersection}"
                 )
-            params = _create_free_parameters(operation)
-            if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
-                for gate in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](
-                    *params
-                ):
-                    gate_qubit_count = gate.qubit_count
-                    braket_circuit += Instruction(
-                        operator=gate,
-                        target=qubit_indices[-gate_qubit_count:],
-                        control=qubit_indices[:-gate_qubit_count],
-                    )
-            else:
-                for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
-                    braket_circuit += Instruction(
-                        operator=gate,
-                        target=qubit_indices,
-                    )
+            
+            # Convert operation to Braket instructions with angle restrictions
+            instructions = _op_to_instruction(operation, qubit_indices, backend)
+            for instruction in instructions:
+                braket_circuit += instruction
 
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
@@ -714,3 +710,60 @@ def convert_qiskit_to_braket_circuits(
     )
     for circuit in circuits:
         yield to_braket(circuit)
+
+
+def _op_to_instruction(operation, qubit_indices: list[int], backend=None) -> list[Instruction]:
+    """Convert a Qiskit operation to Braket instructions, respecting angle restrictions.
+    
+    Args:
+        operation: Qiskit operation
+        qubit_indices: List of qubit indices
+        backend: Backend object for angle restrictions
+        
+    Returns:
+        List of Braket Instructions
+    """
+    gate_name = operation.name
+    params = _create_free_parameters(operation)
+    
+    # Check for angle restrictions if backend is provided
+    if backend and hasattr(backend, 'properties'):
+        restrictions = get_angle_restrictions(backend.properties, gate_name)
+        if restrictions and params:
+            # Check if we need to decompose due to angle restrictions
+            if gate_name == 'rx' and len(params) == 1:
+                angle = params[0]
+                # Only check concrete numeric values, not FreeParameter objects
+                if isinstance(angle, (int, float)) and not is_angle_allowed(angle, restrictions):
+                    # Decompose RX for Rigetti
+                    decomposed = decompose_rx_rigetti(angle)
+                    instructions = []
+                    for decomp_gate, decomp_params in decomposed:
+                        for gate in _GATE_NAME_TO_BRAKET_GATE[decomp_gate](*decomp_params):
+                            instructions.append(Instruction(
+                                operator=gate,
+                                target=qubit_indices,
+                            ))
+                    return instructions
+                # If angle is a FreeParameter (not concrete), we can't check it at compile time
+                # so we proceed with normal conversion
+    
+    # Standard conversion for gates without restrictions or allowed angles
+    if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
+        instructions = []
+        for gate in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params):
+            gate_qubit_count = gate.qubit_count
+            instructions.append(Instruction(
+                operator=gate,
+                target=qubit_indices[-gate_qubit_count:],
+                control=qubit_indices[:-gate_qubit_count],
+            ))
+        return instructions
+    else:
+        instructions = []
+        for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
+            instructions.append(Instruction(
+                operator=gate,
+                target=qubit_indices,
+            ))
+        return instructions
