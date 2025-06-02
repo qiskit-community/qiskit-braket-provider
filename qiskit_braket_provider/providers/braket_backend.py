@@ -25,6 +25,7 @@ from .adapter import (
     local_simulator_to_target,
     native_gate_connectivity,
     native_gate_set,
+    native_angle_restrictions,
     to_braket,
 )
 from .braket_quantum_task import BraketQuantumTask
@@ -340,10 +341,17 @@ class BraketAwsBackend(BraketBackend):
         connectivity = (
             native_gate_connectivity(self._device.properties) if native else None
         )
+        angle_restrictions = (
+            native_angle_restrictions(self._device.properties) if native else None
+        )
 
         braket_circuits = [
             to_braket(
-                circ, basis_gates=gateset, verbatim=verbatim, connectivity=connectivity
+                circ,
+                basis_gates=gateset,
+                verbatim=verbatim,
+                connectivity=connectivity,
+                angle_restrictions=angle_restrictions,
             )
             for circ in circuits
         ]

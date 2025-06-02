@@ -600,6 +600,24 @@ class TestAdapter(TestCase):
             )
         )
 
+    def test_angle_restrictions_rigetti(self):
+        """Tests that angle restrictions for native gates are enforced."""
+        circuit = QuantumCircuit(1)
+        circuit.rx(np.pi / 4, 0)
+
+        restrictions = {"rx": {0: {np.pi, -np.pi, np.pi / 2, -np.pi / 2}}}
+        with pytest.raises(ValueError):
+            to_braket(circuit, basis_gates={"rx"}, angle_restrictions=restrictions)
+
+    def test_angle_restrictions_ionq(self):
+        """Tests IonQ MS gate angle range enforcement."""
+        circuit = QuantumCircuit(2)
+        circuit.append(ionq_gates.MSGate(0, 0, 3), [0, 1])
+
+        restrictions = {"ms": {2: (0.0, 1.0)}}
+        with pytest.raises(ValueError):
+            to_braket(circuit, basis_gates={"ms"}, angle_restrictions=restrictions)
+
 
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""
