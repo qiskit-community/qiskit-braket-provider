@@ -2,6 +2,13 @@
 
 import unittest
 
+# from braket.experimental_capabilities.iqm.classical_control import CCPRx as BraketCCPRx
+# from braket.experimental_capabilities.iqm.classical_control import MeasureFF as BraketMeasureFF
+from braket.experimental_capabilities import EnableExperimentalCapability
+from qiskit import QuantumCircuit
+from qiskit.circuit import CircuitInstruction, QuantumRegister, Qubit
+
+from qiskit_braket_provider import to_braket
 from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
 
 
@@ -63,6 +70,29 @@ class TestIqmExperimentalCapabilities(unittest.TestCase):
         ccprx = CCPRx(0.5, 0.7, 1)
         expected_repr = "CCPRx(0.5, 0.7, feedback_key=1)"
         self.assertEqual(repr(ccprx), expected_repr)
+
+    def test_circuit_with_measureff_ccprx(self):
+        """Test circuit with MeasureFF instruction"""
+        circuit = QuantumCircuit(1, 1)
+        circuit.append(MeasureFF(feedback_key=0), qargs=[0])
+        circuit.append(CCPRx(0.5, 0.7, feedback_key=0), qargs=[0])
+
+        assert circuit.data[0] == CircuitInstruction(
+            MeasureFF(0), qubits=(Qubit(QuantumRegister(1, "q"), 0),)
+        )
+        assert circuit.data[1] == CircuitInstruction(
+            CCPRx(0.5, 0.7, 0), qubits=(Qubit(QuantumRegister(1, "q"), 0),)
+        )
+
+        with EnableExperimentalCapability():
+            braket_circuit = to_braket(circuit)
+
+        assert braket_circuit.instructions[0].operator.name == "MeasureFF"
+        assert braket_circuit.instructions[0].operator.parameters == [0]
+        assert braket_circuit.instructions[0].target == [0]
+        assert braket_circuit.instructions[1].operator.name == "CCPRx"
+        assert braket_circuit.instructions[1].operator.parameters == [0.5, 0.7, 0]
+        assert braket_circuit.instructions[1].target == [0]
 
 
 if __name__ == "__main__":
