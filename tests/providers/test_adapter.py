@@ -609,14 +609,36 @@ class TestAdapter(TestCase):
         with pytest.raises(ValueError):
             to_braket(circuit, basis_gates={"rx"}, angle_restrictions=restrictions)
 
+    def test_angle_restrictions_rigetti_valid(self):
+        """Tests that allowed Rigetti angles pass validation."""
+        circuit = QuantumCircuit(1)
+        circuit.rx(np.pi / 2, 0)
+
+        restrictions = {"rx": {0: {np.pi, -np.pi, np.pi / 2, -np.pi / 2}}}
+        braket_circuit = to_braket(
+            circuit, basis_gates={"rx"}, angle_restrictions=restrictions
+        )
+        assert len(braket_circuit.instructions) == 1
+
     def test_angle_restrictions_ionq(self):
         """Tests IonQ MS gate angle range enforcement."""
         circuit = QuantumCircuit(2)
         circuit.append(ionq_gates.MSGate(0, 0, 3), [0, 1])
 
-        restrictions = {"ms": {2: (0.0, 1.0)}}
+        restrictions = {"ms": {2: (0.0, 0.25)}}
         with pytest.raises(ValueError):
             to_braket(circuit, basis_gates={"ms"}, angle_restrictions=restrictions)
+
+    def test_angle_restrictions_ionq_valid(self):
+        """Tests that allowed IonQ MS angles pass validation."""
+        circuit = QuantumCircuit(2)
+        circuit.append(ionq_gates.MSGate(0, 0, 0.25), [0, 1])
+
+        restrictions = {"ms": {2: (0.0, 0.25)}}
+        braket_circuit = to_braket(
+            circuit, basis_gates={"ms"}, angle_restrictions=restrictions
+        )
+        assert len(braket_circuit.instructions) == 1
 
 
 class TestFromBraket(TestCase):

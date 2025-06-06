@@ -263,7 +263,7 @@ def native_angle_restrictions(
     if isinstance(properties, (RigettiDeviceCapabilities, RigettiDeviceCapabilitiesV2)):
         return {"rx": {0: {pi, -pi, pi / 2, -pi / 2}}}
     if isinstance(properties, IonqDeviceCapabilities):
-        return {"ms": {2: (0.0, 1.0)}}
+        return {"ms": {2: (0.0, 0.25)}}
     return {}
 
 
