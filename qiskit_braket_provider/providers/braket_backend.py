@@ -23,9 +23,9 @@ from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
     local_simulator_to_target,
+    native_angle_restrictions,
     native_gate_connectivity,
     native_gate_set,
-    native_angle_restrictions,
     to_braket,
 )
 from .braket_quantum_task import BraketQuantumTask

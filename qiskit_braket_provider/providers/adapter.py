@@ -632,6 +632,14 @@ def _validate_angle_restrictions(
         dict[str, dict[int, Union[set[float], tuple[float, float]]]]
     ],
 ) -> None:
+    """Validate gate parameter angles against a restriction map.
+
+    Parameters that are ``FreeParameter`` or ``ParameterExpression`` instances
+    are ignored. Numeric angles are validated against the entry in
+    ``angle_restrictions`` for the ``gate_name``. Each restriction can be a set
+    of discrete allowed values or a ``(min, max)`` tuple describing an inclusive
+    range.
+    """
     if not angle_restrictions or gate_name not in angle_restrictions:
         return
     restrictions = angle_restrictions[gate_name]

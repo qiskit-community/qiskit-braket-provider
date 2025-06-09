@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction
 from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
+from braket.device_schema.ionq import IonqDeviceCapabilities
+from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
@@ -18,8 +20,10 @@ from qiskit_braket_provider.providers.adapter import (
     _GATE_NAME_TO_BRAKET_GATE,
     _GATE_NAME_TO_QISKIT_GATE,
     _get_controlled_gateset,
+    _validate_angle_restrictions,
     convert_qiskit_to_braket_circuit,
     convert_qiskit_to_braket_circuits,
+    native_angle_restrictions,
     to_braket,
     to_qiskit,
 )
@@ -620,6 +624,32 @@ class TestAdapter(TestCase):
         )
         assert len(braket_circuit.instructions) == 1
 
+    def test_validate_angle_restrictions_extra_index(self):
+        """Restrictions on unused parameter indices should be ignored."""
+        _validate_angle_restrictions("rx", [0.0], {"rx": {1: {0.0}}})
+
+    def test_native_angle_restrictions_default(self):
+        """Unknown device types should return an empty restriction map."""
+        properties = GateModelSimulatorDeviceCapabilities.parse_obj(
+            {
+                "braketSchemaHeader": {
+                    "name": "braket.device_schema.simulators.gate_model_simulator_device_capabilities",
+                    "version": "1",
+                },
+                "service": {"executionWindows": [], "shotsRange": [1, 10]},
+                "action": {
+                    "braket.ir.jaqcd.program": {
+                        "actionType": "braket.ir.jaqcd.program",
+                        "version": ["1"],
+                        "supportedOperations": ["x"],
+                    }
+                },
+                "paradigm": {"qubitCount": 2},
+                "deviceParameters": {},
+            }
+        )
+        assert native_angle_restrictions(properties) == {}
+
     def test_angle_restrictions_ionq(self):
         """Tests IonQ MS gate angle range enforcement."""
         circuit = QuantumCircuit(2)
@@ -637,6 +667,67 @@ class TestAdapter(TestCase):
         restrictions = {"ms": {2: (0.0, 0.25)}}
         braket_circuit = to_braket(
             circuit, basis_gates={"ms"}, angle_restrictions=restrictions
+        )
+        assert len(braket_circuit.instructions) == 1
+
+    def test_native_angle_restrictions_ionq(self):
+        """Tests that IonQ capabilities return the correct angle restriction map."""
+        properties = IonqDeviceCapabilities.parse_obj(
+            {
+                "braketSchemaHeader": {
+                    "name": "braket.device_schema.ionq.ionq_device_capabilities",
+                    "version": "1",
+                },
+                "service": {
+                    "braketSchemaHeader": {
+                        "name": "braket.device_schema.device_service_properties",
+                        "version": "1",
+                    },
+                    "executionWindows": [],
+                    "shotsRange": [1, 10],
+                    "deviceCost": {"price": 0.25, "unit": "minute"},
+                    "deviceDocumentation": {
+                        "imageUrl": "",
+                        "summary": "",
+                        "externalDocumentationUrl": "",
+                    },
+                    "deviceLocation": "us-east-1",
+                    "updatedAt": "2020-06-16T00:00:00",
+                },
+                "action": {
+                    "braket.ir.jaqcd.program": {
+                        "actionType": "braket.ir.jaqcd.program",
+                        "version": ["1"],
+                        "supportedOperations": ["x"],
+                    }
+                },
+                "paradigm": {
+                    "braketSchemaHeader": {
+                        "name": "braket.device_schema.gate_model_qpu_paradigm_properties",
+                        "version": "1",
+                    },
+                    "qubitCount": 2,
+                    "nativeGateSet": [],
+                    "connectivity": {
+                        "fullyConnected": False,
+                        "connectivityGraph": {"0": ["1"], "1": ["0"]},
+                    },
+                },
+                "deviceParameters": {},
+            }
+        )
+
+        assert native_angle_restrictions(properties) == {"ms": {2: (0.0, 0.25)}}
+
+    def test_angle_restrictions_skip_parameter_expression(self):
+        """Parameters that are expressions should bypass angle validation."""
+        theta = Parameter("theta")
+        circuit = QuantumCircuit(1)
+        circuit.rx(theta, 0)
+
+        restrictions = {"rx": {0: {0.0}}}
+        braket_circuit = to_braket(
+            circuit, basis_gates={"rx"}, angle_restrictions=restrictions
         )
         assert len(braket_circuit.instructions) == 1
 
