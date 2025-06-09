@@ -648,7 +648,7 @@ class TestAdapter(TestCase):
                 "deviceParameters": {},
             }
         )
-        assert native_angle_restrictions(properties) == {}
+        assert not native_angle_restrictions(properties)
 
     def test_angle_restrictions_ionq(self):
         """Tests IonQ MS gate angle range enforcement."""
