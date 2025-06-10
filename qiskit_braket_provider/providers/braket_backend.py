@@ -23,6 +23,7 @@ from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
     local_simulator_to_target,
+    native_angle_restrictions,
     native_gate_connectivity,
     native_gate_set,
     to_braket,
@@ -340,10 +341,17 @@ class BraketAwsBackend(BraketBackend):
         connectivity = (
             native_gate_connectivity(self._device.properties) if native else None
         )
+        angle_restrictions = (
+            native_angle_restrictions(self._device.properties) if native else None
+        )
 
         braket_circuits = [
             to_braket(
-                circ, basis_gates=gateset, verbatim=verbatim, connectivity=connectivity
+                circ,
+                basis_gates=gateset,
+                verbatim=verbatim,
+                connectivity=connectivity,
+                angle_restrictions=angle_restrictions,
             )
             for circ in circuits
         ]
