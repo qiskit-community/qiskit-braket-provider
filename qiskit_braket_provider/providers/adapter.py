@@ -643,6 +643,7 @@ def _validate_angle_restrictions(
     if not angle_restrictions or gate_name not in angle_restrictions:
         return
     restrictions = angle_restrictions[gate_name]
+    params = list(params)
     for index, restriction in restrictions.items():
         if index >= len(params):
             continue
