@@ -758,7 +758,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                 else:
                     gate_params.append(value)
         if gate_name in _BRAKET_SUPPORTED_ERRORS:
-            gate = _create_qiskit_kraus("kraus", instruction.operator.to_matrix())
+            gate = _create_qiskit_kraus(instruction.operator.to_matrix())
         else:
             gate = _create_qiskit_gate(gate_name, gate_params)
 
