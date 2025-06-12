@@ -7,9 +7,9 @@ import numpy as np
 import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction
 from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
-from braket.devices import LocalSimulator
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
+from braket.devices import LocalSimulator
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
