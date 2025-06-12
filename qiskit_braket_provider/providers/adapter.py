@@ -201,7 +201,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
-    "kraus": qiskit_qi.Kraus([[[1, 0], [0, 0]],[[0, 0], [0, 1]]]).to_instruction(),
+    "kraus": qiskit_qi.Kraus([[[1, 0], [0, 0]], [[0, 0], [0, 1]]]).to_instruction(),
 }
 
 _BRAKET_SUPPORTED_ERRORS = {
@@ -558,7 +558,6 @@ def to_braket(
         gate_name = operation.name
 
         qubits = circuit_instruction.qubits
-
         if gate_name == "measure":
             qubit = qubits[0]  # qubit count = 1 for measure
             qubit_index = circuit.find_bit(qubit).index
@@ -579,15 +578,15 @@ def to_braket(
         elif gate_name in ["quantum_channel", "kraus"]:
             if gate_name == "quantum_channel":
                 hidden = operation.definition.data
-                assert (
-                    len(hidden) == 1
-                ), "incorrect channel length"
+                assert len(hidden) == 1, "incorrect channel length"
                 circuit_instruction = hidden[0]
                 operation = circuit_instruction.operation
                 gate_name = operation.name
 
             params = _create_free_parameters(operation)
-            qubit_indices = [q._index for q in circuit_instruction.qubits]
+            qubit_indices = [q._index for q in circuit_instruction.qubits][
+                ::-1
+            ]  # reversal for little to big endian notation
 
             for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](params):
                 braket_circuit += Instruction(
@@ -781,9 +780,11 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     return qiskit_circuit
 
 
-def _create_qiskit_kraus(
-    gate_params: list[Union[float, Parameter]]
-) -> Instruction:
+def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
+    for param in gate_params:
+        if param.shape[0] == 4:
+            param[[1, 2]] = param[[2, 1]]
+            param[:, [1, 2]] = param[:, [2, 1]]
     return qiskit_qi.Kraus(gate_params)
 
 

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction
 from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
+from braket.devices import LocalSimulator
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
@@ -775,6 +776,46 @@ class TestAdapter(TestCase):
 
             qqc = to_qiskit(qc)
             assert len(qqc.data) == 6
+
+    def test_kraus_compilation_q_to_b(self):
+        mat = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
+        qc = QuantumCircuit(2)
+        qc.h(1)
+        qc.cx(1, 0)
+        qc.append(Kraus([mat]), [0, 1])
+        qc.h(1)
+        bqc = to_braket(qc)
+        res = (
+            LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
+        )
+        assert res["00"] == 1000
+
+        mat0 = np.array([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        mat1 = np.array([[0, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        mat2 = np.array([[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        mat3 = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]])
+
+        # in standard notation, this acts on all states and returns |q0q1> = |01>
+        # however, qiskit interprets this in reverse order, returning |10>, i.e.
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.h(1)
+        qc.append(Kraus([mat0, mat1, mat2, mat3]), [0, 1])
+
+        bqc = to_braket(qc)
+        res = (
+            LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
+        )
+        assert res["10"] == 1000
+
+        # if we however go from braket -> qiskit -> braket, we expect it to match however
+        qc = Circuit()
+        qc.h(0).h(0).kraus([0, 1], [mat0, mat1, mat2, mat3])
+        qc = to_braket(to_qiskit(qc))
+        res = (
+            LocalSimulator("braket_dm").run(qc, shots=1000).result().measurement_counts
+        )
+        assert res["01"] == 1000
 
 
 class TestFromBraket(TestCase):
