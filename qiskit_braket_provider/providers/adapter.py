@@ -201,14 +201,14 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
-    "kraus": qiskit_qi.Kraus([[1, 0], [0, 1]]),
+    "kraus": qiskit_qi.Kraus([[[1, 0], [0, 0]],[[0, 0], [0, 1]]]).to_instruction(),
 }
 
 _BRAKET_SUPPORTED_ERRORS = {
     "kraus": braket_noisy.Kraus(
         [np.array([[1, 0], [0, 0]]), np.array([[0, 0], [0, 1]])]
     ),
-    "bitflip": braket_noisy.BitFlip,
+    "bitflip": braket_noisy.BitFlip(0.1),
     "depolarizing": braket_noisy.Depolarizing(0.2),
     "amplitudedamping": braket_noisy.AmplitudeDamping(0.3),
     "generalizedamplitudedamping": braket_noisy.GeneralizedAmplitudeDamping(0.5, 0.4),
@@ -782,11 +782,9 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
 
 
 def _create_qiskit_kraus(
-    gate_name: str, gate_params: list[Union[float, Parameter]]
+    gate_params: list[Union[float, Parameter]]
 ) -> Instruction:
-    gate_instance = _GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
-    gate_cls = gate_instance.__class__
-    return gate_cls(gate_params)
+    return qiskit_qi.Kraus(gate_params)
 
 
 def _create_qiskit_gate(
