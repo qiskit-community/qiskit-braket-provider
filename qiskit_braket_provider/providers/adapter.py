@@ -581,7 +581,7 @@ def to_braket(
                 hidden = operation.definition.data
                 assert (
                     len(hidden) == 1
-                ), "no current support for composed quantum channels"
+                ), "incorrect channel length"
                 circuit_instruction = hidden[0]
                 operation = circuit_instruction.operation
                 gate_name = operation.name
