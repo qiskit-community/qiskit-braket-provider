@@ -13,10 +13,11 @@ from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
-from qiskit.quantum_info import Operator, SparsePauliOp
+from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
 from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
+    _BRAKET_SUPPORTED_ERRORS,
     _GATE_NAME_TO_BRAKET_GATE,
     _GATE_NAME_TO_QISKIT_GATE,
     _get_controlled_gateset,
@@ -224,6 +225,7 @@ class TestAdapter(TestCase):
             "ryy": "yy",
             "zz": "zz",
             "global_phase": "gphase",
+            "kraus": "kraus",
         }
 
         qiskit_to_braket_gate_names |= {
@@ -251,6 +253,7 @@ class TestAdapter(TestCase):
                 "gpi",
                 "gpi2",
                 "ms",
+                "kraus",
             ]
         }
 
@@ -730,6 +733,48 @@ class TestAdapter(TestCase):
             circuit, basis_gates={"rx"}, angle_restrictions=restrictions
         )
         assert len(braket_circuit.instructions) == 1
+
+    def test_kraus_to_braket(self):
+        op = Kraus(
+            [
+                np.array([[0.5, 0.5], [0.5, 0.5]]),
+                np.array([[0.5, -0.5], [-0.5, 0.5]]),
+            ]
+        )
+        qc = QuantumCircuit(1)
+        qc.append(Kraus(op), [0])
+        bqc = to_braket(qc)
+        assert len(bqc.instructions) == 1
+
+        mat = bqc.instructions[0].operator.to_matrix()
+        assert np.allclose(mat, op.data)
+
+    def test_kraus_to_qiskit(self):
+        op = [
+            np.array([[0.5, 0.5], [0.5, 0.5]]),
+            np.array([[0.5, -0.5], [-0.5, 0.5]]),
+        ]
+        qc = Circuit()
+        qc.kraus([0], op)
+        qqc = to_qiskit(qc)
+        assert len(qqc.data) == 3
+
+        mat = qqc.data[0].operation.params
+        assert np.allclose(mat, op)
+
+    def test_braket_noises(self):
+        for noise_channel in _BRAKET_SUPPORTED_ERRORS.values():
+            if noise_channel.qubit_count == 1:
+                instruct = Instruction(noise_channel, target=[0])
+            else:
+                instruct = Instruction(noise_channel, target=[0, 1])
+            qc = Circuit()
+            qc.x(0)
+            qc.cnot(0, 1)
+            qc.add_instruction(instruct)
+
+            qqc = to_qiskit(qc)
+            assert len(qqc.data) == 6
 
 
 class TestFromBraket(TestCase):
