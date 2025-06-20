@@ -254,6 +254,31 @@ def native_gate_set(properties: DeviceCapabilities) -> set[str]:
     }
 
 
+def native_angle_restrictions(
+    properties: DeviceCapabilities,
+) -> dict[str, dict[int, Union[set[float], tuple[float, float]]]]:
+    """Returns angle restrictions for gates natively supported by a Braket device.
+
+    The returned mapping specifies, for each gate name, constraints on the
+    gate parameters indexed by their position. The constraint can either be a
+    set of allowed angles or a tuple representing an inclusive ``(min, max)``
+    range. Angle units are in radians.
+
+    Args:
+        properties (DeviceCapabilities): The device properties of the Braket device.
+
+    Returns:
+        dict[str, dict[int, Union[set[float], tuple[float, float]]]]: Mapping
+            of gate names to parameter index restrictions.
+    """
+
+    if isinstance(properties, (RigettiDeviceCapabilities, RigettiDeviceCapabilitiesV2)):
+        return {"rx": {0: {pi, -pi, pi / 2, -pi / 2}}}
+    if isinstance(properties, IonqDeviceCapabilities):
+        return {"ms": {2: (0.0, 0.25)}}
+    return {}
+
+
 def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[str]:
     """Returns the gateset supported by a Braket device with the given properties
 
@@ -476,6 +501,9 @@ def to_braket(
     basis_gates: Optional[Iterable[str]] = None,
     verbatim: bool = False,
     connectivity: Optional[list[list[int]]] = None,
+    angle_restrictions: Optional[
+        dict[str, dict[int, Union[set[float], tuple[float, float]]]]
+    ] = None,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -488,6 +516,8 @@ def to_braket(
             words without transpiling it. Default: False.
         connectivity (Optional[list[list[int]]): If provided, will transpile to a circuit
             with this connectivity. Default: `None`.
+        angle_restrictions (Optional[dict]): Mapping of gate names to parameter
+            angle constraints used to validate numeric parameters. Default: ``None``.
 
     Returns:
         Circuit: Braket circuit
@@ -553,6 +583,7 @@ def to_braket(
                     f"Cannot apply operation {gate_name} to measured qubits {intersection}"
                 )
             params = _create_free_parameters(operation)
+            _validate_angle_restrictions(gate_name, params, angle_restrictions)
             if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                 for gate in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](
                     *params
@@ -604,6 +635,53 @@ def _create_free_parameters(operation):
             params[i] = FreeParameterExpression(renamed_param_name)
 
     return params
+
+
+def _validate_angle_restrictions(
+    gate_name: str,
+    params: Iterable,
+    angle_restrictions: Optional[
+        dict[str, dict[int, Union[set[float], tuple[float, float]]]]
+    ],
+) -> None:
+    """Validate gate parameter angles against a restriction map.
+
+    Parameters that are ``FreeParameter`` or ``ParameterExpression`` instances
+    are ignored. Numeric angles are validated against the entry in
+    ``angle_restrictions`` for the ``gate_name``. Each restriction can be a set
+    of discrete allowed values or a ``(min, max)`` tuple describing an inclusive
+    range.
+    """
+    if not angle_restrictions or gate_name not in angle_restrictions:
+        return
+    restrictions = angle_restrictions[gate_name]
+    params = list(params)
+    for index, restriction in restrictions.items():
+        if index >= len(params):
+            continue
+        param = params[index]
+        if isinstance(
+            param,
+            (
+                FreeParameter,
+                FreeParameterExpression,
+                ParameterExpression,
+            ),
+        ):
+            continue
+        angle = float(param)
+        if isinstance(restriction, set):
+            if not any(abs(angle - allowed) <= _EPS for allowed in restriction):
+                raise ValueError(
+                    f"Angle {angle} for {gate_name} parameter {index} is not supported"
+                )
+        else:
+            min_angle, max_angle = restriction
+            if angle < min_angle - _EPS or angle > max_angle + _EPS:
+                raise ValueError(
+                    f"Angle {angle} for {gate_name} parameter {index} "
+                    f"not in range [{min_angle}, {max_angle}]"
+                )
 
 
 def _rename_param_vector_element(parameter):

@@ -23,6 +23,7 @@ from .adapter import (
     aws_device_to_target,
     gateset_from_properties,
     local_simulator_to_target,
+    native_angle_restrictions,
     native_gate_connectivity,
     native_gate_set,
     to_braket,
@@ -54,7 +55,12 @@ class BraketBackend(BackendV2, ABC):
                 f"results, received meas_level={meas_level}."
             )
 
-    def _get_gateset(self, native=False) -> Optional[set[str]]:
+    def get_gateset(self, native=False) -> Optional[set[str]]:
+        """Get the gate set of the device.
+
+        Args:
+            native (bool): Whether to return the device's natvie gates.
+        """
         if native:
             return native_gate_set(self._device.properties)
         else:
@@ -135,7 +141,7 @@ class BraketLocalBackend(BraketBackend):
             [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         )
         verbatim = options.pop("verbatim", False)
-        gateset = self._get_gateset() if not verbatim else None
+        gateset = self.get_gateset() if not verbatim else None
         circuits: list[Circuit] = [
             to_braket(circ, gateset, verbatim) for circ in convert_input
         ]
@@ -331,14 +337,21 @@ class BraketAwsBackend(BraketBackend):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        gateset = self._get_gateset(native) if not verbatim else None
+        gateset = self.get_gateset(native) if not verbatim else None
         connectivity = (
             native_gate_connectivity(self._device.properties) if native else None
+        )
+        angle_restrictions = (
+            native_angle_restrictions(self._device.properties) if native else None
         )
 
         braket_circuits = [
             to_braket(
-                circ, basis_gates=gateset, verbatim=verbatim, connectivity=connectivity
+                circ,
+                basis_gates=gateset,
+                verbatim=verbatim,
+                connectivity=connectivity,
+                angle_restrictions=angle_restrictions,
             )
             for circ in circuits
         ]
