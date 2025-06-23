@@ -128,9 +128,11 @@ class TestAdapter(TestCase):
 
         with self.assertWarns(DeprecationWarning):
             convert_qiskit_to_braket_circuit(qiskit_circuit)
+            pass
 
         with self.assertWarns(DeprecationWarning):
             list(convert_qiskit_to_braket_circuits([qiskit_circuit]))
+            pass
 
     def test_u_gate(self):
         """Tests adapter conversion of u gate"""
