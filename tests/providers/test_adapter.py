@@ -736,6 +736,7 @@ class TestAdapter(TestCase):
         assert len(braket_circuit.instructions) == 1
 
     def test_kraus_to_braket(self):
+        """test qiskit Kraus operator converts to Braket"""
         op = Kraus(
             [
                 np.array([[0.5, 0.5], [0.5, 0.5]]),
@@ -751,6 +752,7 @@ class TestAdapter(TestCase):
         assert np.allclose(mat, op.data)
 
     def test_kraus_to_qiskit(self):
+        """test Braket Kraus operator converts to Qiskit"""
         op = [
             np.array([[0.5, 0.5], [0.5, 0.5]]),
             np.array([[0.5, -0.5], [-0.5, 0.5]]),
@@ -764,6 +766,7 @@ class TestAdapter(TestCase):
         assert np.allclose(mat, op)
 
     def test_braket_noises(self):
+        """test Braket supported noise channels convert to Qiskit"""
         for noise_channel in _BRAKET_SUPPORTED_ERRORS.values():
             if noise_channel.qubit_count == 1:
                 instruct = Instruction(noise_channel, target=[0])
@@ -778,6 +781,7 @@ class TestAdapter(TestCase):
             assert len(qqc.data) == 6
 
     def test_kraus_compilation_q_to_b(self):
+        """check qiskit to braket conversions respect proper bit-ordering"""
         mat = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
         qc = QuantumCircuit(2)
         qc.h(1)

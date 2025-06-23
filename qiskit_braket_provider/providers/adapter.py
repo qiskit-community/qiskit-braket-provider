@@ -550,13 +550,11 @@ def to_braket(
 
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
-
     # Handle qiskit to braket conversion
     measured_qubits: dict[int, int] = {}
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         gate_name = operation.name
-
         qubits = circuit_instruction.qubits
         if gate_name == "measure":
             qubit = qubits[0]  # qubit count = 1 for measure
@@ -575,14 +573,7 @@ def to_braket(
             raise NotImplementedError(
                 "reset operation not supported by qiskit to braket adapter"
             )
-        elif gate_name in ["quantum_channel", "kraus"]:
-            if gate_name == "quantum_channel":
-                hidden = operation.definition.data
-                assert len(hidden) == 1, "incorrect channel length"
-                circuit_instruction = hidden[0]
-                operation = circuit_instruction.operation
-                gate_name = operation.name
-
+        elif gate_name == "kraus":
             params = _create_free_parameters(operation)
             qubit_indices = [q._index for q in circuit_instruction.qubits][
                 ::-1
@@ -600,7 +591,6 @@ def to_braket(
                 and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
             ):
                 raise ValueError("Negative control is not supported")
-
             # Getting the index from the bit mapping
             qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
             if intersection := set(measured_qubits.values()).intersection(
@@ -627,7 +617,6 @@ def to_braket(
                         operator=gate,
                         target=qubit_indices,
                     )
-
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
         if _GPHASE_GATE_NAME in basis_gates:
