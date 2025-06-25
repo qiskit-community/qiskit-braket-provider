@@ -6,7 +6,7 @@ from math import inf, pi
 from typing import Optional, Union
 
 import braket.circuits.gates as braket_gates
-import braket.circuits.noises as braket_noisy
+import braket.circuits.noises as braket_noises
 import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
@@ -81,6 +81,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi2": "gpi2",
     "ms": "ms",
     "gphase": _GPHASE_GATE_NAME,
+    "kraus": "kraus",
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
@@ -144,7 +145,7 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
-    "kraus": lambda operators: [braket_noisy.Kraus(operators)],
+    "kraus": lambda operators: [braket_noises.Kraus(operators)],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
@@ -201,24 +202,22 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
-    "kraus": qiskit_qi.Kraus([[[1, 0], [0, 0]], [[0, 0], [0, 1]]]).to_instruction(),
+    "kraus": qiskit_qi.Kraus,
 }
 
-_BRAKET_SUPPORTED_ERRORS = {
-    "kraus": braket_noisy.Kraus(
-        [np.array([[1, 0], [0, 0]]), np.array([[0, 0], [0, 1]])]
-    ),
-    "bitflip": braket_noisy.BitFlip(0.1),
-    "depolarizing": braket_noisy.Depolarizing(0.2),
-    "amplitudedamping": braket_noisy.AmplitudeDamping(0.3),
-    "generalizedamplitudedamping": braket_noisy.GeneralizedAmplitudeDamping(0.5, 0.4),
-    "phasedamping": braket_noisy.PhaseDamping(0.4),
-    "phaseflip": braket_noisy.PhaseFlip(0.3),
-    "paulichannel": braket_noisy.PauliChannel(0.1, 0.0, 0.0),
-    "twoqubitdepolarizing": braket_noisy.TwoQubitDepolarizing(0.2),
-    "twoqubitdephasing": braket_noisy.TwoQubitDephasing(0.3),
-    "twoqubitpaulichannel": braket_noisy.TwoQubitPauliChannel({"XX": 0.9}),
-}
+_BRAKET_SUPPORTED_NOISES = [
+    "kraus",
+    "bitflip",
+    "depolarizing",
+    "amplitudedamping",
+    "generalizedamplitudedamping",
+    "phasedamping",
+    "phaseflip",
+    "paulichannel",
+    "twoqubitdepolarizing",
+    "twoqubitdephasing",
+    # "twoqubitpaulichannel" # no to_openqasm support yet
+]
 
 
 def native_gate_connectivity(
@@ -395,8 +394,10 @@ def _simulator_target(
     )
     for operation in action.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-        if instruction:
-            target.add_instruction(instruction)
+        if instruction is not None:
+            target.add_instruction(
+                instruction, name=_BRAKET_TO_QISKIT_NAMES[operation.lower()]
+            )
     target.add_instruction(Measure())
     return target
 
@@ -745,7 +746,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                     gate_params.append(dict_param[value.name])
                 else:
                     gate_params.append(value)
-        if gate_name in _BRAKET_SUPPORTED_ERRORS:
+        if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(instruction.operator.to_matrix())
         else:
             gate = _create_qiskit_gate(gate_name, gate_params)
