@@ -814,16 +814,16 @@ class TestAdapter(TestCase):
             else:
                 instruct = Instruction(noise_channel, target=[0, 1])
             qc.add_instruction(instruct)
-
+        qc.density_matrix([0, 1])
         qqc = to_qiskit(qc)
         assert len(qqc.data) == 16
+
         bqc = to_braket(qqc)
 
+        ### removing measurement moments
         bqc.moments._moments.popitem(last=True)
         bqc.moments._moments.popitem(last=True)
         bqc._measure_targets = []
-
-        qc.density_matrix([0, 1])
         bqc.density_matrix([0, 1])
 
         res_orig = LocalSimulator("braket_dm").run(qc, shots=0).result().values[0]

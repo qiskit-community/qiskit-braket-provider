@@ -4,6 +4,7 @@ import uuid
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import numpy as np
 from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from braket.circuits import Circuit
@@ -12,7 +13,7 @@ from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
-from qiskit_braket_provider.providers import BraketProvider
+from qiskit_braket_provider.providers import BraketProvider, to_qiskit
 from qiskit_braket_provider.providers.braket_backend import (
     BraketAwsBackend,
     BraketBackend,
@@ -228,3 +229,24 @@ class TestBraketProvider(TestCase):
         mock_queue_position.assert_called_once()
         assert isinstance(result, QuantumTaskQueueInfo)
         self.assertEqual(result, mock_return_value)
+
+    def test_kraus_target_simulator(self):
+        """test Kraus target works for multi-qubit kraus and we find multi-qubit Kraus operators"""
+
+        k1 = [np.diag([0, 1]), np.diag([1, 0])]
+        k2 = [np.diag([1, 1, 0, 0]), np.diag([0, 0, 1, 1])]
+
+        qc = Circuit()
+        qc.h(0)
+        qc.h(1)
+        qc.kraus([1], k1)
+        qc.kraus([0, 1], k2)
+        qc.kraus([2], k1)
+
+        qd = BraketLocalBackend("braket_dm")
+        c = transpile(to_qiskit(qc), backend=qd)
+        assert c.count_ops()["kraus"] == 3
+        nq = [
+            ins.operation.num_qubits for ins in c.data if ins.operation.name == "kraus"
+        ]
+        assert set(nq) == set([1, 2])

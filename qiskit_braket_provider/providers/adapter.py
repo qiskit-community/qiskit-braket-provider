@@ -216,7 +216,7 @@ _BRAKET_SUPPORTED_NOISES = [
     "paulichannel",
     "twoqubitdepolarizing",
     "twoqubitdephasing",
-    # "twoqubitpaulichannel" # no to_openqasm support yet
+    # "twoqubitpaulichannel" no to_open qasm support yet
 ]
 
 
