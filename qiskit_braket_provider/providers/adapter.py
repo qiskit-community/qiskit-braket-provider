@@ -10,6 +10,7 @@ import braket.circuits.noises as braket_noises
 import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
+from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice
 from braket.circuits import (
     Circuit,
@@ -42,6 +43,7 @@ from qiskit.transpiler import Target
 from qiskit_ionq import add_equivalences, ionq_gates
 
 from qiskit_braket_provider.exception import QiskitBraketException
+from qiskit_braket_provider.providers import braket_instructions
 
 add_equivalences()
 
@@ -146,6 +148,12 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
     "kraus": lambda operators: [braket_noises.Kraus(operators)],
+    "CCPRx": lambda angle_1, angle_2, feedback_key: [
+        braket_expcaps.iqm.classical_control.CCPRx(angle_1, angle_2, feedback_key)
+    ],
+    "MeasureFF": lambda feedback_key: [
+        braket_expcaps.iqm.classical_control.MeasureFF(feedback_key)
+    ],
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
@@ -203,6 +211,10 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
     "kraus": qiskit_qi.Kraus,
+    "cc_prx": braket_instructions.CCPRx(
+        Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key")
+    ),
+    "measure_ff": braket_instructions.MeasureFF(Parameter("feedback_key")),
 }
 
 _BRAKET_SUPPORTED_NOISES = [
