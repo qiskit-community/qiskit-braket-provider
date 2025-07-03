@@ -229,7 +229,7 @@ class BraketAwsBackend(BraketBackend):
         self._aws_device.aws_session.add_braket_user_agent(
             f"QiskitBraketProvider/{version.__version__}"
         )
-        self._target = aws_device_to_target(device=device)
+        self._target = aws_device_to_target(device=self._aws_device)
 
     def retrieve_job(self, task_id: str) -> BraketQuantumTask:
         """Return a single job submitted to AWS backend.
@@ -356,9 +356,7 @@ class BraketAwsBackend(BraketBackend):
             for circ in circuits
         ]
 
-        batch_task: AwsQuantumTaskBatch = self._device.run_batch(
-            braket_circuits, **options
-        )
+        batch_task: AwsQuantumTaskBatch = self._device.run_batch(braket_circuits, **options)
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
