@@ -356,7 +356,9 @@ class BraketAwsBackend(BraketBackend):
             for circ in circuits
         ]
 
-        batch_task: AwsQuantumTaskBatch = self._device.run_batch(braket_circuits, **options)
+        batch_task: AwsQuantumTaskBatch = self._device.run_batch(
+            braket_circuits, **options
+        )
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
