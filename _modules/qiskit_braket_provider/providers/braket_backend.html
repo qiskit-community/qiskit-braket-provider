@@ -478,7 +478,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">aws_session</span><span class="o">.</span><span class="n">add_braket_user_agent</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;QiskitBraketProvider/</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a single job submitted to AWS backend.</span>
