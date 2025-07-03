@@ -229,7 +229,7 @@ class BraketAwsBackend(BraketBackend):
         self._aws_device.aws_session.add_braket_user_agent(
             f"QiskitBraketProvider/{version.__version__}"
         )
-        self._target = aws_device_to_target(device=device)
+        self._target = aws_device_to_target(device=self._aws_device)
 
     def retrieve_job(self, task_id: str) -> BraketQuantumTask:
         """Return a single job submitted to AWS backend.
