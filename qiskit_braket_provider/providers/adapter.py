@@ -786,18 +786,18 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes"""
     for n, param in enumerate(gate_params):
         assert (
-            param.shape[0] == param.shape[1]
-        ), "Please specify square Kraus operators."
-        if param.shape[0] == 2:
-            continue
-        n_q = int(np.log2(param.shape[0]))
-
-        kraus_tensor = param.reshape([2] * n_q * 2)
-        kraus_tensor = np.transpose(
-            kraus_tensor,
-            list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+            (param.shape[0] == param.shape[1]), "Kraus operators must be square matrices."
         )
-        gate_params[n] = kraus_tensor.reshape((2**n_q, 2**n_q))
+
+        n_q = int(np.log2(param.shape[0]))
+        if n_q > 1:
+            # Convert multi-qubit Karus from little to big endian notation
+            kraus_tensor = param.reshape([2] * n_q * 2)
+            kraus_tensor = np.transpose(
+                kraus_tensor,
+                list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+            )
+            gate_params[n] = kraus_tensor.reshape((2**n_q, 2**n_q))
     return qiskit_qi.Kraus(gate_params)
 
 
