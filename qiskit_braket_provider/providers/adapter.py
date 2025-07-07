@@ -783,10 +783,22 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
 
 
 def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
-    for param in gate_params:
-        if param.shape[0] == 4:
-            param[[1, 2]] = param[[2, 1]]
-            param[:, [1, 2]] = param[:, [2, 1]]
+    """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes """
+    for n in range(len(gate_params)):
+        param = gate_params[n]
+        assert (
+            param.shape[0] == param.shape[1]
+        ), "Please specify square Kraus operators."
+        if param.shape[0] == 2:
+            continue
+        n_q = int(np.log2(param.shape[0]))
+
+        K_tensor = param.reshape([2] * n_q * 2)
+        K_tensor = np.transpose(
+            K_tensor,
+            list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+        )
+        gate_params[n] = K_tensor.reshape((2**n_q, 2**n_q))
     return qiskit_qi.Kraus(gate_params)
 
 
