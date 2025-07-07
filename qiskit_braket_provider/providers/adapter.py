@@ -783,7 +783,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
 
 
 def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
-    """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes """
+    """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes"""
     for n in range(len(gate_params)):
         param = gate_params[n]
         assert (
