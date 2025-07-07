@@ -754,7 +754,7 @@ class TestAdapter(TestCase):
         )
         assert len(braket_circuit.instructions) == 1
 
-    def test_kraus_to_braket(self):
+    def test_kraus_conversion_with_to_braket(self):
         """test qiskit Kraus operator converts to Braket"""
         op = Kraus(
             [
@@ -770,22 +770,8 @@ class TestAdapter(TestCase):
         mat = bqc.instructions[0].operator.to_matrix()
         assert np.allclose(mat, op.data)
 
-    def test_kraus_to_qiskit(self):
-        """test Braket Kraus operator converts to Qiskit"""
-        op = [
-            np.array([[0.5, 0.5], [0.5, 0.5]]),
-            np.array([[0.5, -0.5], [-0.5, 0.5]]),
-        ]
-        qc = Circuit()
-        qc.kraus([0], op)
-        qqc = to_qiskit(qc)
-        assert len(qqc.data) == 3
-
-        mat = qqc.data[0].operation.params
-        assert np.allclose(mat, op)
-
-    def test_braket_noises(self):
-        """test Braket noises Braket supported noise channels convert to Qiskit"""
+    def test_braket_noise_to_qiskit_conversion(self):
+        """check Kraus matrix conversion of Braket noises to Qiskit"""
         self.assertEqual(
             set(_BRAKET_SUPPORTED_NOISE_INSTANCES.keys()),
             set(_BRAKET_SUPPORTED_NOISES),
@@ -804,7 +790,31 @@ class TestAdapter(TestCase):
             qqc = to_qiskit(qc)
             assert len(qqc.data) == 6
 
-    def test_all_supported_braket_noises(self):
+            if noise_channel.qubit_count == 1:
+                assert np.all(
+                    np.isclose(
+                        noise_channel.to_matrix(),
+                        np.array(qqc.data[2].operation.params),
+                    )
+                )
+            elif noise_channel.qubit_count == 2:
+                braket_kraus = [
+                    np.reshape(
+                        np.transpose(
+                            np.reshape(k, [2] * 4),
+                            [1, 0, 3, 2],
+                        ),
+                        (4, 4),
+                    )
+                    for k in noise_channel.to_matrix()
+                ]
+                assert np.all(
+                    np.isclose(
+                        np.array(braket_kraus), np.array(qqc.data[2].operation.params)
+                    )
+                )
+
+    def test_all_braket_noises_converted_simulated(self):
         """check all supported noises and test outcome distributions via braket_dm"""
         qc = Circuit()
         qc.h(0)
@@ -822,14 +832,14 @@ class TestAdapter(TestCase):
 
         bqc = to_braket(qqc)
 
-        ### removing measurement moments
+        ## removing measurement moments to append densit_matrix result
         bqc.moments._moments.popitem(last=True)
         bqc.moments._moments.popitem(last=True)
         bqc._measure_targets = []
         bqc.density_matrix([0, 1])
 
         res_orig = LocalSimulator("braket_dm").run(qc, shots=0).result().values[0]
-        res_conv = LocalSimulator("braket_dm").run(qc, shots=0).result().values[0]
+        res_conv = LocalSimulator("braket_dm").run(bqc, shots=0).result().values[0]
 
         assert len(bqc.instructions) == len(qc.instructions)
         assert np.all(np.isclose(res_orig, res_conv))
