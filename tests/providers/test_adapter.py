@@ -834,8 +834,8 @@ class TestAdapter(TestCase):
         assert len(bqc.instructions) == len(qc.instructions)
         assert np.all(np.isclose(res_orig, res_conv))
 
-    def test_kraus_compilation_q_to_b(self):
-        """check qiskit to braket conversions respect proper bit-ordering"""
+    def test_kraus_braket_bit_ordering(self):
+        """check qiskit <-> braket conversions respect proper bit-ordering"""
         mat = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
         qc = QuantumCircuit(2)
         qc.h(1)
@@ -869,9 +869,9 @@ class TestAdapter(TestCase):
         # if we however go from braket -> qiskit -> braket, we expect it to match however
         qc = Circuit()
         qc.h(0).h(0).kraus([0, 1], [mat0, mat1, mat2, mat3])
-        qc = to_braket(to_qiskit(qc))
+        qqc = to_braket(to_qiskit(qc))
         res = (
-            LocalSimulator("braket_dm").run(qc, shots=1000).result().measurement_counts
+            LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         )
         assert res["01"] == 1000
 
