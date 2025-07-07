@@ -3,20 +3,23 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import braket.circuits.noises as braket_noises
 import numpy as np
 import pytest
 from braket.circuits import Circuit, FreeParameter, Gate, Instruction
 from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
+from braket.devices import LocalSimulator
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
-from qiskit.quantum_info import Operator, SparsePauliOp
+from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
 from qiskit_ionq import ionq_gates
 
 from qiskit_braket_provider.providers.adapter import (
+    _BRAKET_SUPPORTED_NOISES,
     _GATE_NAME_TO_BRAKET_GATE,
     _GATE_NAME_TO_QISKIT_GATE,
     _get_controlled_gateset,
@@ -90,6 +93,22 @@ qiskit_ionq_gates = [
     ionq_gates.MSGate(Parameter("φ0"), Parameter("φ1"), Parameter("ϴ")),
     ionq_gates.ZZGate(Parameter("ϴ")),
 ]
+
+_BRAKET_SUPPORTED_NOISE_INSTANCES = {
+    "kraus": braket_noises.Kraus(
+        [np.array([[1, 0], [0, 0]]), np.array([[0, 0], [0, 1]])]
+    ),
+    "bitflip": braket_noises.BitFlip(0.1),
+    "depolarizing": braket_noises.Depolarizing(0.2),
+    "amplitudedamping": braket_noises.AmplitudeDamping(0.3),
+    "generalizedamplitudedamping": braket_noises.GeneralizedAmplitudeDamping(0.5, 0.4),
+    "phasedamping": braket_noises.PhaseDamping(0.4),
+    "phaseflip": braket_noises.PhaseFlip(0.3),
+    "paulichannel": braket_noises.PauliChannel(0.1, 0.0, 0.0),
+    "twoqubitdepolarizing": braket_noises.TwoQubitDepolarizing(0.2),
+    "twoqubitdephasing": braket_noises.TwoQubitDephasing(0.3),
+    # "twoqubitpaulichannel": braket_noises.TwoQubitPauliChannel({"XX": 0.9}),
+}
 
 
 def check_to_braket_unitary_correct(qiskit_circuit: QuantumCircuit) -> bool:
@@ -224,6 +243,7 @@ class TestAdapter(TestCase):
             "ryy": "yy",
             "zz": "zz",
             "global_phase": "gphase",
+            "kraus": "kraus",
             "CCPRx": "cc_prx",
             "MeasureFF": "measure_ff",
         }
@@ -253,6 +273,7 @@ class TestAdapter(TestCase):
                 "gpi",
                 "gpi2",
                 "ms",
+                "kraus",
             ]
         }
 
@@ -732,6 +753,137 @@ class TestAdapter(TestCase):
             circuit, basis_gates={"rx"}, angle_restrictions=restrictions
         )
         assert len(braket_circuit.instructions) == 1
+
+    def test_kraus_conversion_with_to_braket(self):
+        """test qiskit Kraus operator converts to Braket"""
+        op = Kraus(
+            [
+                np.array([[0.5, 0.5], [0.5, 0.5]]),
+                np.array([[0.5, -0.5], [-0.5, 0.5]]),
+            ]
+        )
+        qc = QuantumCircuit(1)
+        qc.append(Kraus(op), [0])
+        bqc = to_braket(qc)
+        assert len(bqc.instructions) == 1
+
+        mat = bqc.instructions[0].operator.to_matrix()
+        assert np.allclose(mat, op.data)
+
+    def test_braket_noise_to_qiskit_conversion(self):
+        """check Kraus matrix conversion of Braket noises to Qiskit"""
+        self.assertEqual(
+            set(_BRAKET_SUPPORTED_NOISE_INSTANCES.keys()),
+            set(_BRAKET_SUPPORTED_NOISES),
+        )
+
+        for noise_channel in _BRAKET_SUPPORTED_NOISE_INSTANCES.values():
+            if noise_channel.qubit_count == 1:
+                instruct = Instruction(noise_channel, target=[0])
+            else:
+                instruct = Instruction(noise_channel, target=[0, 1])
+            qc = Circuit()
+            qc.x(0)
+            qc.cnot(0, 1)
+            qc.add_instruction(instruct)
+
+            qqc = to_qiskit(qc)
+            assert len(qqc.data) == 6
+
+            if noise_channel.qubit_count == 1:
+                assert np.all(
+                    np.isclose(
+                        noise_channel.to_matrix(),
+                        np.array(qqc.data[2].operation.params),
+                    )
+                )
+            elif noise_channel.qubit_count == 2:
+                braket_kraus = [
+                    np.reshape(
+                        np.transpose(
+                            np.reshape(k, [2] * 4),
+                            [1, 0, 3, 2],
+                        ),
+                        (4, 4),
+                    )
+                    for k in noise_channel.to_matrix()
+                ]
+                assert np.all(
+                    np.isclose(
+                        np.array(braket_kraus), np.array(qqc.data[2].operation.params)
+                    )
+                )
+
+    def test_all_braket_noises_converted_simulated(self):
+        """check all supported noises and test outcome distributions via braket_dm"""
+        qc = Circuit()
+        qc.h(0)
+        qc.h(1)
+        qc.cnot(0, 1)
+        for noise_channel in _BRAKET_SUPPORTED_NOISE_INSTANCES.values():
+            if noise_channel.qubit_count == 1:
+                instruct = Instruction(noise_channel, target=[0])
+            else:
+                instruct = Instruction(noise_channel, target=[0, 1])
+            qc.add_instruction(instruct)
+        qc.density_matrix([0, 1])
+        qqc = to_qiskit(qc)
+        assert len(qqc.data) == 16
+
+        bqc = to_braket(qqc)
+
+        ## removing measurement moments to append densit_matrix result
+        bqc.moments._moments.popitem(last=True)
+        bqc.moments._moments.popitem(last=True)
+        bqc._measure_targets = []
+        bqc.density_matrix([0, 1])
+
+        res_orig = LocalSimulator("braket_dm").run(qc, shots=0).result().values[0]
+        res_conv = LocalSimulator("braket_dm").run(bqc, shots=0).result().values[0]
+
+        assert len(bqc.instructions) == len(qc.instructions)
+        assert np.all(np.isclose(res_orig, res_conv))
+
+    def test_kraus_braket_bit_ordering(self):
+        """check qiskit <-> braket conversions respect proper bit-ordering"""
+        mat = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
+        qc = QuantumCircuit(2)
+        qc.h(1)
+        qc.cx(1, 0)
+        qc.append(Kraus([mat]), [0, 1])
+        qc.h(1)
+        bqc = to_braket(qc)
+        res = (
+            LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
+        )
+        assert res["00"] == 1000
+
+        mat0 = np.array([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        mat1 = np.array([[0, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        mat2 = np.array([[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+        mat3 = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0]])
+
+        # in standard notation, this acts on all states and returns |q0q1> = |01>
+        # however, qiskit interprets this in reverse order, returning |10>, i.e.
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qc.h(1)
+        qc.append(Kraus([mat0, mat1, mat2, mat3]), [0, 1])
+
+        bqc = to_braket(qc)
+        res = (
+            LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
+        )
+        assert res["10"] == 1000
+
+        # if we however go from braket -> qiskit -> braket, we expect it to match however
+        qc = Circuit()
+        qc.h(0).h(0).kraus([0, 1], [mat0, mat1, mat2, mat3])
+        qqc = to_braket(to_qiskit(qc))
+        res = (
+            LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
+        )
+        assert res["01"] == 1000
 
 
 class TestFromBraket(TestCase):

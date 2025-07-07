@@ -6,7 +6,10 @@ from math import inf, pi
 from typing import Optional, Union
 
 import braket.circuits.gates as braket_gates
+import braket.circuits.noises as braket_noises
+import numpy as np
 import qiskit.circuit.library as qiskit_gates
+import qiskit.quantum_info as qiskit_qi
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice
 from braket.circuits import (
@@ -80,6 +83,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi2": "gpi2",
     "ms": "ms",
     "gphase": _GPHASE_GATE_NAME,
+    "kraus": "kraus",
 }
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
@@ -143,6 +147,7 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
+    "kraus": lambda operators: [braket_noises.Kraus(operators)],
     "CCPRx": lambda angle_1, angle_2, feedback_key: [
         braket_expcaps.iqm.classical_control.CCPRx(angle_1, angle_2, feedback_key)
     ],
@@ -205,11 +210,26 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, Optional[QiskitInstruction]] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
+    "kraus": qiskit_qi.Kraus,
     "cc_prx": braket_instructions.CCPRx(
         Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key")
     ),
     "measure_ff": braket_instructions.MeasureFF(Parameter("feedback_key")),
 }
+
+_BRAKET_SUPPORTED_NOISES = [
+    "kraus",
+    "bitflip",
+    "depolarizing",
+    "amplitudedamping",
+    "generalizedamplitudedamping",
+    "phasedamping",
+    "phaseflip",
+    "paulichannel",
+    "twoqubitdepolarizing",
+    "twoqubitdephasing",
+    # "twoqubitpaulichannel" no to_open qasm support yet
+]
 
 
 def native_gate_connectivity(
@@ -386,8 +406,10 @@ def _simulator_target(
     )
     for operation in action.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-        if instruction:
-            target.add_instruction(instruction)
+        if instruction is not None:
+            target.add_instruction(
+                instruction, name=_BRAKET_TO_QISKIT_NAMES[operation.lower()]
+            )
     target.add_instruction(Measure())
     return target
 
@@ -541,15 +563,12 @@ def to_braket(
 
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
-
     # Handle qiskit to braket conversion
     measured_qubits: dict[int, int] = {}
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         gate_name = operation.name
-
         qubits = circuit_instruction.qubits
-
         if gate_name == "measure":
             qubit = qubits[0]  # qubit count = 1 for measure
             qubit_index = circuit.find_bit(qubit).index
@@ -567,13 +586,24 @@ def to_braket(
             raise NotImplementedError(
                 "reset operation not supported by qiskit to braket adapter"
             )
+        elif gate_name == "kraus":
+            params = _create_free_parameters(operation)
+            qubit_indices = [q._index for q in circuit_instruction.qubits][
+                ::-1
+            ]  # reversal for little to big endian notation
+
+            for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](params):
+                braket_circuit += Instruction(
+                    operator=gate,
+                    target=qubit_indices,
+                )
+
         else:
             if (
                 isinstance(operation, ControlledGate)
                 and operation.ctrl_state != 2**operation.num_ctrl_qubits - 1
             ):
                 raise ValueError("Negative control is not supported")
-
             # Getting the index from the bit mapping
             qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
             if intersection := set(measured_qubits.values()).intersection(
@@ -600,7 +630,6 @@ def to_braket(
                         operator=gate,
                         target=qubit_indices,
                     )
-
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
         if _GPHASE_GATE_NAME in basis_gates:
@@ -729,8 +758,10 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                     gate_params.append(dict_param[value.name])
                 else:
                     gate_params.append(value)
-
-        gate = _create_qiskit_gate(gate_name, gate_params)
+        if gate_name in _BRAKET_SUPPORTED_NOISES:
+            gate = _create_qiskit_kraus(instruction.operator.to_matrix())
+        else:
+            gate = _create_qiskit_gate(gate_name, gate_params)
 
         if instruction.power != 1:
             gate = gate**instruction.power
@@ -749,6 +780,25 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     if num_measurements == 0:
         qiskit_circuit.measure_all()
     return qiskit_circuit
+
+
+def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
+    """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes"""
+    for n, param in enumerate(gate_params):
+        assert (
+            param.shape[0] == param.shape[1]
+        ), "Kraus operators must be square matrices."
+
+        n_q = int(np.log2(param.shape[0]))
+        if n_q > 1:
+            # Convert multi-qubit Karus from little to big endian notation
+            kraus_tensor = param.reshape([2] * n_q * 2)
+            kraus_tensor = np.transpose(
+                kraus_tensor,
+                list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+            )
+            gate_params[n] = kraus_tensor.reshape((2**n_q, 2**n_q))
+    return qiskit_qi.Kraus(gate_params)
 
 
 def _create_qiskit_gate(
