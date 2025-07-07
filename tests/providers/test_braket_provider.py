@@ -249,4 +249,4 @@ class TestBraketProvider(TestCase):
         nq = [
             ins.operation.num_qubits for ins in c.data if ins.operation.name == "kraus"
         ]
-        assert set(nq) == set([1, 2])
+        assert nq == [1,2,1]
