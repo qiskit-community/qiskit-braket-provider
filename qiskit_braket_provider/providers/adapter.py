@@ -786,7 +786,8 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes"""
     for n, param in enumerate(gate_params):
         assert (
-            (param.shape[0] == param.shape[1]), "Kraus operators must be square matrices."
+            (param.shape[0] == param.shape[1]),
+            "Kraus operators must be square matrices.",
         )
 
         n_q = int(np.log2(param.shape[0]))
