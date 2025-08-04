@@ -791,7 +791,7 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
 
         n_q = int(np.log2(param.shape[0]))
         if n_q > 1:
-            # Convert multi-qubit Karus from little to big endian notation
+            # Convert multi-qubit Kraus from little to big endian notation
             kraus_tensor = param.reshape([2] * n_q * 2)
             kraus_tensor = np.transpose(
                 kraus_tensor,
@@ -821,7 +821,7 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
     Args:
-        circuit (QuantumCircuit): Qiskit Quantum Cricuit
+        circuit (QuantumCircuit): Qiskit Quantum Circuit
 
     Returns:
         Circuit: Braket circuit

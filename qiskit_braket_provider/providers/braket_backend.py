@@ -59,7 +59,7 @@ class BraketBackend(BackendV2, ABC):
         """Get the gate set of the device.
 
         Args:
-            native (bool): Whether to return the device's natvie gates.
+            native (bool): Whether to return the device's native gates.
         """
         if native:
             return native_gate_set(self._device.properties)
