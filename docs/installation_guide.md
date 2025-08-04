@@ -9,7 +9,7 @@ pip install qiskit_braket_provider
 ## Local installation
 
 1. Clone repo
-2. Installing Depencencies
+2. Installing Dependencies
 
 ```shell
 pip install -r requirements.txt

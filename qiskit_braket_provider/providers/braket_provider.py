@@ -30,11 +30,11 @@ class BraketProvider:
     """
 
     def get_backend(self, name=None, **kwargs):
-        """Return a single backend matching the specififed filters.
+        """Return a single backend matching the specified filters.
 
         Args:
             name (str): name of the selected backend
-            **kwargs: dict with additional options for filitering and storing aws session
+            **kwargs: dict with additional options for filtering and storing aws session
         Returns:
             BraketAwsBackend: a backend matching the filters.
         Raises:
@@ -51,11 +51,11 @@ class BraketProvider:
         return backends[0]
 
     def backends(self, name=None, **kwargs):
-        """Return a list of backends matching the specififed filters.
+        """Return a list of backends matching the specified filters.
 
         Args:
             name (str): name of the selected backend
-            **kwargs: dict with additional options for filitering and storing aws session
+            **kwargs: dict with additional options for filtering and storing aws session
         Returns:
             BraketAwsBackend: a list of backends matching the filters.
         """
