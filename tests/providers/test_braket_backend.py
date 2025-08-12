@@ -9,7 +9,9 @@ import numpy as np
 from botocore import errorfactory
 from braket.aws import AwsDevice, AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo, QueueType
+from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
+from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
@@ -17,7 +19,6 @@ from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BackendEstimator
 from qiskit.quantum_info import SparsePauliOp, Statevector
-from qiskit.result import Result
 from qiskit.transpiler import Target
 from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 from qiskit_algorithms.optimizers import SLSQP
@@ -218,6 +219,33 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=0, meas_level=2)
 
+        braket_circuit = Circuit().h(0)
+        device.run_batch.assert_called_with([braket_circuit, braket_circuit], shots=0)
+        device.run_batch.assert_called_once()
+
+    def test_run_multiple_circuits_program_set(self):
+        """Tests run with multiple circuits"""
+        device = Mock()
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        device.properties.action["braket.ir.openqasm.program_set"] = {
+            "actionType": "braket.ir.openqasm.program_set",
+            "version": ["1"],
+            "maximumExecutables": 500,
+            "maximumTotalShots": 1000000,
+        }
+        backend = BraketAwsBackend(device=device)
+        backend._device.run = Mock(return_value=Mock(spec=LocalQuantumTask))
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+
+        backend.run([circuit, circuit], shots=5, meas_level=2)
+
+        braket_circuit = Circuit().h(0)
+        device.run.assert_called_with(
+            ProgramSet([braket_circuit, braket_circuit], shots_per_executable=5)
+        )
+        device.run.assert_called_once()
+
     def test_run_invalid_run_input(self):
         """Tests run with invalid input to run"""
         device = Mock()
@@ -376,8 +404,8 @@ class TestBraketAwsBackend(TestCase):
         task_id = job.task_id()
         retrieved_job = backend.retrieve_job(task_id)
 
-        job_result: Result = job.result()
-        retrieved_job_result: Result = retrieved_job.result()
+        job_result = job.result()
+        retrieved_job_result = retrieved_job.result()
 
         self.assertEqual(job_result.task_id, retrieved_job_result.task_id)
         self.assertEqual(job_result.status, retrieved_job_result.status)
