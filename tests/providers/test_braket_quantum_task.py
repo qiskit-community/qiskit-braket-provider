@@ -14,9 +14,9 @@ from qiskit_braket_provider.providers import (
     BraketLocalBackend,
     BraketQuantumTask,
 )
-from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
+from qiskit_braket_provider.providers.braket_backend import BraketAwsBackend
 from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
-from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK
+from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK, MOCK_PROGRAM_SET_QUANTUM_TASK
 
 
 class TestBraketQuantumTask(TestCase):
@@ -58,6 +58,52 @@ class TestBraketQuantumTask(TestCase):
         self.assertEqual(task.result().results[0].shots, 3)
         # pylint: enable=no-member
 
+    def test_program_set(self):
+        """Tests program set."""
+        task = BraketQuantumTask(
+            backend=BraketLocalBackend(name="default"),
+            task_id="TaskID",
+            tasks=MOCK_PROGRAM_SET_QUANTUM_TASK,
+            shots=10,
+        )
+
+        self.assertEqual(task.status(), JobStatus.DONE)
+        self.assertEqual(task.result().job_id, "TaskID")
+        self.assertEqual(task.result().status, "COMPLETED")
+        self.assertEqual(
+            # pylint: disable-next=no-member
+            task.result().results[0].data.counts,
+            {"11": 9, "00": 7, "01": 2, "10": 2},
+        )
+        self.assertEqual(
+            # pylint: disable-next=no-member
+            task.result().results[0].data.memory,
+            [
+                "00",
+                "10",
+                "11",
+                "00",
+                "11",
+                "00",
+                "11",
+                "01",
+                "11",
+                "00",
+                "11",
+                "00",
+                "10",
+                "01",
+                "11",
+                "11",
+                "11",
+                "00",
+                "11",
+                "00",
+            ],
+        )
+        # pylint: disable-next=no-member
+        self.assertEqual(task.result().results[0].shots, 20)
+
     @patch(
         "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTaskBatch._retrieve_results"
     )
@@ -73,14 +119,16 @@ class TestBraketQuantumTask(TestCase):
         )
         result = task.result()
 
-        assert result.results is None or result.results == [None]
-        mock_retrieve_results.assert_called_once()
+        assert result.results == [None, None]
 
-    @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
+    @patch(
+        "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask",
+        spec=AwsQuantumTask,
+    )
     def test_queue_position(self, mock_aws_quantum_task):
         """Tests queue position retrival"""
         task = BraketQuantumTask(
-            backend=Mock(spec=AWSBraketBackend),
+            backend=Mock(spec=BraketAwsBackend),
             task_id="arn:aws:braket:::quantum-task/AwesomeId",
             tasks=[mock_aws_quantum_task],
             shots=10,
@@ -98,13 +146,51 @@ class TestBraketQuantumTask(TestCase):
         )
         assert task_queue
 
-    @patch("qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask")
+    @patch(
+        "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask",
+        spec=AwsQuantumTask,
+    )
+    def test_queue_position_program_set(self, mock_aws_quantum_task):
+        """Tests queue position retrival for program set tasks"""
+        task = BraketQuantumTask(
+            backend=Mock(spec=BraketAwsBackend),
+            task_id="arn:aws:braket:::quantum-task/AwesomeId",
+            tasks=mock_aws_quantum_task,
+            shots=10,
+        )
+        mock_aws_quantum_task.queue_position.return_value = QuantumTaskQueueInfo(
+            queue_type=QueueType.NORMAL, queue_position=1, message=None
+        )
+        task_queue = task.queue_position()
+
+        mock_aws_quantum_task.queue_position.assert_called_once()
+        assert task_queue
+
+    @patch(
+        "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask",
+        spec=AwsQuantumTask,
+    )
     def test_task_cancellation(self, mock_aws_quantum_task):
         """Tests task cancellation"""
         task = BraketQuantumTask(
-            backend=Mock(spec=AWSBraketBackend),
+            backend=Mock(spec=BraketAwsBackend),
             task_id="arn:aws:braket:::quantum-task/AwesomeId",
             tasks=[mock_aws_quantum_task],
+            shots=10,
+        )
+        task.cancel()
+        mock_aws_quantum_task.cancel.assert_called_once()
+
+    @patch(
+        "qiskit_braket_provider.providers.braket_quantum_task.AwsQuantumTask",
+        spec=AwsQuantumTask,
+    )
+    def test_task_cancellation_program_set(self, mock_aws_quantum_task):
+        """Tests task cancellation for program set tasks"""
+        task = BraketQuantumTask(
+            backend=Mock(spec=BraketAwsBackend),
+            task_id="arn:aws:braket:::quantum-task/AwesomeId",
+            tasks=mock_aws_quantum_task,
             shots=10,
         )
         task.cancel()

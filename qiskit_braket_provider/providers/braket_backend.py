@@ -8,11 +8,12 @@ from abc import ABC
 from collections.abc import Iterable
 from typing import Optional, Union
 
-from braket.aws import AwsDevice, AwsQuantumTask, AwsQuantumTaskBatch
+from braket.aws import AwsDevice, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
 from braket.devices import Device, LocalSimulator
+from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, Provider, QubitProperties
@@ -175,7 +176,7 @@ class BraketLocalBackend(BraketBackend):
             task_id=task_id,
             tasks=tasks,
             backend=self,
-            shots=shots,  # type: ignore[arg-type]
+            shots=shots,
         )
 
 
@@ -230,6 +231,9 @@ class BraketAwsBackend(BraketBackend):
             f"QiskitBraketProvider/{version.__version__}"
         )
         self._target = aws_device_to_target(device=self._aws_device)
+        self._supports_program_sets = (
+            DeviceActionType.OPENQASM_PROGRAM_SET in self._aws_device.properties.action
+        )
 
     def retrieve_job(self, task_id: str) -> BraketQuantumTask:
         """Return a single job submitted to AWS backend.
@@ -355,15 +359,28 @@ class BraketAwsBackend(BraketBackend):
             )
             for circ in circuits
         ]
-
-        batch_task: AwsQuantumTaskBatch = self._device.run_batch(
-            braket_circuits, **options
+        shots = options.pop("shots", None)
+        return (
+            self._run_program_set(braket_circuits, shots, **options)
+            if self._supports_program_sets and shots != 0
+            else self._run_batch(braket_circuits, shots, **options)
         )
+
+    def _run_program_set(
+        self, braket_circuits: list[Circuit], shots: Optional[int], **options
+    ):
+        program_set = ProgramSet(braket_circuits, shots_per_executable=shots)
+        task = self._aws_device.run(program_set, **options)
+        return BraketQuantumTask(
+            task_id=task.id, tasks=task, backend=self, shots=program_set.total_shots
+        )
+
+    def _run_batch(self, braket_circuits: list[Circuit], shots: int, **options):
+        batch_task = self._aws_device.run_batch(braket_circuits, shots=shots, **options)
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
-
         return BraketQuantumTask(
-            task_id=task_id, tasks=tasks, backend=self, shots=options.get("shots")
+            task_id=task_id, tasks=tasks, backend=self, shots=shots
         )
 
 

@@ -1,7 +1,7 @@
 certifi>=2021.5.30
 qiskit>=0.34.2, <2.0
 qiskit-ionq>=0.5.2
-amazon-braket-sdk>=1.76.0
+amazon-braket-sdk>=1.97.0
 
 setuptools>=40.1.0
 numpy>=1.3

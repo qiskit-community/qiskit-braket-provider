@@ -1,15 +1,26 @@
 """Amazon Braket task."""
 
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Union
 
 from braket.aws import AwsQuantumTask, AwsQuantumTaskBatch
 from braket.aws.queue_information import QuantumTaskQueueInfo
+from braket.tasks import GateModelQuantumTaskResult, QuantumTask
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.quantum_info import Statevector
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
+
+_TASK_STATUS_MAP = {
+    "INITIALIZED": JobStatus.INITIALIZING,
+    "QUEUED": JobStatus.INITIALIZING,
+    "FAILED": JobStatus.ERROR,
+    "CANCELLING": JobStatus.CANCELLED,
+    "CANCELLED": JobStatus.CANCELLED,
+    "COMPLETED": JobStatus.DONE,
+    "RUNNING": JobStatus.RUNNING,
+}
 
 
 def retry_if_result_none(result):
@@ -17,64 +28,42 @@ def retry_if_result_none(result):
     return result is None
 
 
-def _get_result_from_tasks(
-    tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
-) -> Optional[List[ExperimentResult]]:
-    """Returns experiment results of AWS tasks.
+def _result_from_circuit_task(
+    task: Union[LocalQuantumTask, AwsQuantumTask], result: GateModelQuantumTaskResult
+) -> ExperimentResult:
+    if not result:
+        return None
 
-    Args:
-        tasks: AWS Quantum tasks
-        shots: number of shots
-
-    Returns:
-        List of experiment results.
-    """
-    experiment_results: List[ExperimentResult] = []
-
-    results = AwsQuantumTaskBatch._retrieve_results(
-        tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
-    )
-
-    # For each task we create an ExperimentResult object with the downloaded results.
-    for task, result in zip(tasks, results):
-        if not result:
-            return None
-
-        if result.task_metadata.shots == 0:
-            braket_statevector = result.values[
-                result._result_types_indices[
-                    "{'type': <Type.statevector: 'statevector'>}"
-                ]
-            ]
-            data = ExperimentResultData(
-                statevector=Statevector(braket_statevector).reverse_qargs().data,
-            )
-        else:
-            counts = {
-                k[::-1]: v for k, v in dict(result.measurement_counts).items()
-            }  # convert to little-endian
-
-            data = ExperimentResultData(
-                counts=counts,
-                memory=[
-                    "".join(shot_result[::-1].astype(str))
-                    for shot_result in result.measurements
-                ],
-            )
-
-        experiment_result = ExperimentResult(
-            shots=result.task_metadata.shots,
-            success=True,
-            status=(
-                task.state()
-                if isinstance(task, LocalQuantumTask)
-                else result.task_metadata.status
-            ),
-            data=data,
+    if result.task_metadata.shots == 0:
+        braket_statevector = result.values[
+            result._result_types_indices["{'type': <Type.statevector: 'statevector'>}"]
+        ]
+        data = ExperimentResultData(
+            statevector=Statevector(braket_statevector).reverse_qargs().data,
         )
-        experiment_results.append(experiment_result)
+    else:
+        counts = {
+            k[::-1]: v for k, v in dict(result.measurement_counts).items()
+        }  # convert to little-endian
 
-    return experiment_results
+        data = ExperimentResultData(
+            counts=counts,
+            memory=[
+                "".join(shot_result[::-1].astype(str))
+                for shot_result in result.measurements
+            ],
+        )
+
+    return ExperimentResult(
+        shots=result.task_metadata.shots,
+        success=True,
+        status=(
+            task.state()
+            if isinstance(task, LocalQuantumTask)
+            else result.task_metadata.status
+        ),
+        data=data,
+    )
 
 
 class BraketQuantumTask(JobV1):
@@ -84,8 +73,8 @@ class BraketQuantumTask(JobV1):
         self,
         task_id: str,
         backend: BackendV2,
-        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
-        **metadata: Optional[dict],
+        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask], AwsQuantumTask],
+        **metadata,
     ):
         """BraketQuantumTask for execution of circuits on Amazon Braket or locally.
 
@@ -147,6 +136,8 @@ class BraketQuantumTask(JobV1):
             queue_position=None, message='Task is in COMPLETED status. AmazonBraket does
             not show queue position for this status.')
         """
+        if isinstance(self._tasks, QuantumTask):
+            return self._tasks.queue_position()
         for task in self._tasks:
             if isinstance(task, LocalQuantumTask):
                 raise NotImplementedError(
@@ -159,7 +150,43 @@ class BraketQuantumTask(JobV1):
         return self._task_id
 
     def result(self) -> Result:
-        experiment_results = _get_result_from_tasks(tasks=self._tasks)
+        tasks = self._tasks
+        if isinstance(tasks, QuantumTask):
+            # Guaranteed to be program set result
+            experiment_results = [
+                ExperimentResult(
+                    shots=len((executable_result := program_result[0]).measurements),
+                    success=True,
+                    data=ExperimentResultData(
+                        counts=executable_result.counts,
+                        memory=[
+                            "".join(shot_result[::-1].astype(str))
+                            for shot_result in executable_result.measurements
+                        ],
+                    ),
+                )
+                for program_result in tasks.result()
+            ]
+            status = tasks.state()
+            return Result(
+                backend_name=self._backend.name,
+                backend_version=self._backend.version,
+                job_id=self._task_id,
+                qobj_id=0,
+                success=status not in AwsQuantumTask.NO_RESULT_TERMINAL_STATES,
+                results=experiment_results,
+                status=status,
+            )
+
+        experiment_results = [
+            _result_from_circuit_task(task, result)
+            for task, result in zip(
+                tasks,
+                AwsQuantumTaskBatch._retrieve_results(
+                    tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
+                ),
+            )
+        ]
         status = self.status(use_cached_value=True)
 
         return Result(
@@ -173,10 +200,15 @@ class BraketQuantumTask(JobV1):
         )
 
     def cancel(self):
-        for task in self._tasks:
-            task.cancel()
+        if isinstance(self._tasks, QuantumTask):
+            self._tasks.cancel()
+        else:
+            for task in self._tasks:
+                task.cancel()
 
     def status(self, use_cached_value: bool = False):
+        if isinstance(self._tasks, QuantumTask):
+            return _TASK_STATUS_MAP[self._tasks.state()]
         braket_tasks_states = [
             (
                 task.state()
