@@ -152,9 +152,7 @@ class TestBraketAwsBackend(TestCase):
         q_c.cx(0, 1)
         circuits.append(q_c)
 
-        results = []
-        for circuit in circuits:
-            results.append(backend.run(circuit).result())
+        results = [backend.run(circuit).result() for circuit in circuits]
 
         # Result 0
         self.assertEqual(results[0].get_counts(), {"11": 1024})
