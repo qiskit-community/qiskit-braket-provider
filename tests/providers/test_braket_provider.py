@@ -5,14 +5,14 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import numpy as np
-from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
-from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
-from braket.circuits import Circuit
 from qiskit import QuantumCircuit
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
 from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
+from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
+from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
+from braket.circuits import Circuit
 from qiskit_braket_provider.providers import BraketProvider, to_qiskit
 from qiskit_braket_provider.providers.braket_backend import (
     BraketAwsBackend,
@@ -52,9 +52,7 @@ class TestBraketProvider(TestCase):
 
         # Matches QiskitBackendNotFoundError where multiple backends are found
         with self.assertRaises(QiskitBackendNotFoundError) as err1:
-            provider.get_backend(
-                aws_session=self.mock_session, types=[AwsDeviceType.SIMULATOR]
-            )
+            provider.get_backend(aws_session=self.mock_session, types=[AwsDeviceType.SIMULATOR])
         self.assertIsInstance(err1.exception, QiskitBackendNotFoundError)
 
         # Matches QiskitBackendNotFoundError where no backends are found
@@ -67,9 +65,7 @@ class TestBraketProvider(TestCase):
     def test_provider_backends(self):
         """Tests provider."""
         provider = BraketProvider()
-        backends = provider.backends(
-            aws_session=self.mock_session, types=[AwsDeviceType.SIMULATOR]
-        )
+        backends = provider.backends(aws_session=self.mock_session, types=[AwsDeviceType.SIMULATOR])
 
         self.assertTrue(len(backends) > 0)
         for backend in backends:
@@ -85,9 +81,7 @@ class TestBraketProvider(TestCase):
         """Check if a DeprecationWarning is raised when a subclass of AWSBraketProvider is created"""
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketProvider(
-                AWSBraketProvider
-            ):  # pylint: disable=unused-variable
+            class SubclassAWSBraketProvider(AWSBraketProvider):  # pylint: disable=unused-variable
                 """This is a subclass of AWSBraketProvider for testing purposes."""
 
                 pass
@@ -96,9 +90,7 @@ class TestBraketProvider(TestCase):
         """Tests getting local backends using kwargs"""
         provider = BraketProvider()
 
-        self.assertIsInstance(
-            provider.backends(name=None, local="sv1")[0], BraketLocalBackend
-        )
+        self.assertIsInstance(provider.backends(name=None, local="sv1")[0], BraketLocalBackend)
 
     def test_real_devices(self):
         """Tests real devices."""
@@ -116,18 +108,14 @@ class TestBraketProvider(TestCase):
                 with self.subTest(f"{backend.name}"):
                     self.assertIsInstance(backend, BraketAwsBackend)
 
-            online_simulators_backends = provider.backends(
-                statuses=["ONLINE"], types=["SIMULATOR"]
-            )
+            online_simulators_backends = provider.backends(statuses=["ONLINE"], types=["SIMULATOR"])
             for backend in online_simulators_backends:
                 with self.subTest(f"{backend.name}"):
                     self.assertIsInstance(backend, BraketAwsBackend)
 
     @patch("qiskit_braket_provider.providers.braket_backend.BraketAwsBackend")
     @patch("qiskit_braket_provider.providers.braket_backend.AwsDevice.get_devices")
-    def test_qiskit_circuit_transpilation_run(
-        self, mock_get_devices, mock_aws_braket_backend
-    ):
+    def test_qiskit_circuit_transpilation_run(self, mock_get_devices, mock_aws_braket_backend):
         """Tests qiskit circuit transpilation."""
         mock_get_devices.return_value = [
             AwsDevice(MOCK_GATE_MODEL_SIMULATOR_SV["deviceArn"], self.mock_session)
@@ -155,16 +143,10 @@ class TestBraketProvider(TestCase):
         task.tasks = [task_mock]
 
         provider = BraketProvider()
-        state_vector_backend = provider.get_backend(
-            "SV1", aws_session=self.mock_session
-        )
-        transpiled_circuit = transpile(
-            q_circuit, backend=state_vector_backend, seed_transpiler=42
-        )
+        state_vector_backend = provider.get_backend("SV1", aws_session=self.mock_session)
+        transpiled_circuit = transpile(q_circuit, backend=state_vector_backend, seed_transpiler=42)
 
-        state_vector_backend._device.run_batch = Mock(
-            spec=AwsQuantumTaskBatch, return_value=task
-        )
+        state_vector_backend._device.run_batch = Mock(spec=AwsQuantumTaskBatch, return_value=task)
         result = state_vector_backend.run(transpiled_circuit, shots=10)
         self.assertTrue(result)
 
@@ -178,9 +160,7 @@ class TestBraketProvider(TestCase):
         mock_m_3_device.provider = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["providerName"]
         mock_m_3_device.status = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceStatus"]
         mock_m_3_device.device_type = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceType"]
-        mock_m_3_device.device_capabilities = MOCK_RIGETTI_GATE_MODEL_M_3_QPU[
-            "deviceCapabilities"
-        ]
+        mock_m_3_device.device_capabilities = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceCapabilities"]
         mock_m_3_device_properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
         mock_m_3_device_properties.service = Mock()
         mock_m_3_device_properties.service.updatedAt = "2023-06-02T17:00:00+00:00"
@@ -199,13 +179,9 @@ class TestBraketProvider(TestCase):
         self.assertTrue(result)
 
     @patch("qiskit_braket_provider.providers.braket_backend.BraketAwsBackend.run")
-    @patch(
-        "qiskit_braket_provider.providers.braket_job.AmazonBraketTask.queue_position"
-    )
+    @patch("qiskit_braket_provider.providers.braket_job.AmazonBraketTask.queue_position")
     @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
-    def test_queue_position_for_quantum_tasks(
-        self, mocked_device, mock_queue_position, mock_run
-    ):
+    def test_queue_position_for_quantum_tasks(self, mocked_device, mock_queue_position, mock_run):
         """Tests queue position for quantum tasks."""
 
         mock_return_value = QuantumTaskQueueInfo(
@@ -246,7 +222,5 @@ class TestBraketProvider(TestCase):
         qd = BraketLocalBackend("braket_dm")
         c = transpile(to_qiskit(qc), backend=qd)
         assert c.count_ops()["kraus"] == 3
-        nq = [
-            ins.operation.num_qubits for ins in c.data if ins.operation.name == "kraus"
-        ]
+        nq = [ins.operation.num_qubits for ins in c.data if ins.operation.name == "kraus"]
         assert nq == [1, 2, 1]

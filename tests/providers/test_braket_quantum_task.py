@@ -4,10 +4,10 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import pytest
-from braket.aws import AwsQuantumTask
-from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from qiskit.providers import JobStatus
 
+from braket.aws import AwsQuantumTask
+from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from qiskit_braket_provider.providers import (
     AmazonBraketTask,
     AWSBraketJob,
@@ -133,17 +133,13 @@ class TestBraketQuantumTask(TestCase):
             tasks=[mock_aws_quantum_task],
             shots=10,
         )
-        mock_aws_quantum_task.return_value.queue_position.return_value = (
-            QuantumTaskQueueInfo(
-                queue_type=QueueType.NORMAL, queue_position=1, message=None
-            )
+        mock_aws_quantum_task.return_value.queue_position.return_value = QuantumTaskQueueInfo(
+            queue_type=QueueType.NORMAL, queue_position=1, message=None
         )
         task_queue = task.queue_position()
 
         mock_aws_quantum_task.return_value.queue_position.assert_called_once()
-        mock_aws_quantum_task.assert_called_once_with(
-            "arn:aws:braket:::quantum-task/AwesomeId"
-        )
+        mock_aws_quantum_task.assert_called_once_with("arn:aws:braket:::quantum-task/AwesomeId")
         assert task_queue
 
     @patch(

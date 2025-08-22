@@ -3,14 +3,15 @@
 from datetime import datetime
 from typing import List, Union
 
-from braket.aws import AwsQuantumTask, AwsQuantumTaskBatch
-from braket.aws.queue_information import QuantumTaskQueueInfo
-from braket.tasks import GateModelQuantumTaskResult, QuantumTask
-from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.quantum_info import Statevector
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
+
+from braket.aws import AwsQuantumTask, AwsQuantumTaskBatch
+from braket.aws.queue_information import QuantumTaskQueueInfo
+from braket.tasks import GateModelQuantumTaskResult, QuantumTask
+from braket.tasks.local_quantum_task import LocalQuantumTask
 
 _TASK_STATUS_MAP = {
     "INITIALIZED": JobStatus.INITIALIZING,
@@ -48,19 +49,14 @@ def _result_from_circuit_task(
 
         data = ExperimentResultData(
             counts=counts,
-            memory=[
-                "".join(shot_result[::-1].astype(str))
-                for shot_result in result.measurements
-            ],
+            memory=["".join(shot_result[::-1].astype(str)) for shot_result in result.measurements],
         )
 
     return ExperimentResult(
         shots=result.task_metadata.shots,
         success=True,
         status=(
-            task.state()
-            if isinstance(task, LocalQuantumTask)
-            else result.task_metadata.status
+            task.state() if isinstance(task, LocalQuantumTask) else result.task_metadata.status
         ),
         data=data,
     )
@@ -98,11 +94,7 @@ class BraketQuantumTask(JobV1):
         Returns:
             shots: int with the number of shots.
         """
-        return (
-            self.metadata["metadata"]["shots"]
-            if "shots" in self.metadata["metadata"]
-            else 0
-        )
+        return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
 
     def submit(self):
         return

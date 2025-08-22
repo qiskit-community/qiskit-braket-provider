@@ -7,12 +7,12 @@ from collections import Counter
 from typing import Dict
 
 import numpy as np
+
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.task_result import ProgramSetTaskResult, TaskMetadata
 from braket.tasks import GateModelQuantumTaskResult, ProgramSetQuantumTaskResult
 from braket.tasks.local_quantum_task import LocalQuantumTask
-
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 
 RIGETTI_ARN = "arn:aws:braket:::device/qpu/rigetti/Aspen-10"
@@ -79,9 +79,7 @@ RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
     "supportedModifiers"
 ] = [{"name": "ctrl", "max_qubits": 4}]
 RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["qubitCount"] = 4
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["connectivity"][
-    "connectivityGraph"
-] = {
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["connectivity"]["connectivityGraph"] = {
     "0": ["1", "2", "7"],
     "1": ["0", "2", "7"],
     "2": ["0", "1", "7"],
@@ -149,9 +147,7 @@ MOCK_GATE_MODEL_SIMULATOR_TN = {
 }
 
 MOCK_GATE_MODEL_QUANTUM_TASK_RESULT = GateModelQuantumTaskResult(
-    task_metadata=TaskMetadata(
-        **{"id": str(uuid.uuid4()), "deviceId": "default", "shots": 3}
-    ),
+    task_metadata=TaskMetadata(**{"id": str(uuid.uuid4()), "deviceId": "default", "shots": 3}),
     additional_metadata=None,
     measurements=np.array([[0, 1], [0, 1], [1, 0]]),
     measured_qubits=[0, 1],

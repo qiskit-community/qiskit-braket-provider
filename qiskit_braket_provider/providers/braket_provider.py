@@ -2,11 +2,12 @@
 
 import warnings
 
+from qiskit.providers.exceptions import QiskitBackendNotFoundError
+
 from braket.aws import AwsDevice
 from braket.device_schema.dwave import DwaveDeviceCapabilities
 from braket.device_schema.quera import QueraDeviceCapabilities
 from braket.device_schema.xanadu import XanaduDeviceCapabilities
-from qiskit.providers.exceptions import QiskitBackendNotFoundError
 
 from .braket_backend import BraketAwsBackend, BraketLocalBackend
 
@@ -43,9 +44,7 @@ class BraketProvider:
         """
         backends = self.backends(name=name, **kwargs)
         if len(backends) > 1:
-            raise QiskitBackendNotFoundError(
-                "More than one backend matches the criteria"
-            )
+            raise QiskitBackendNotFoundError("More than one backend matches the criteria")
         if not backends:
             raise QiskitBackendNotFoundError("No backend matches the criteria")
         return backends[0]
@@ -98,9 +97,7 @@ class AWSBraketProvider(BraketProvider):
 
     def __init_subclass__(cls, **kwargs):
         """This throws a deprecation warning on subclassing."""
-        warnings.warn(
-            f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2
-        )
+        warnings.warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
         super().__init_subclass__(**kwargs)
 
     def __init__(self):
