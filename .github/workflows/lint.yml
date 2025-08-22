@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox
       - name: Run styles check
-        run: tox -e linters
+        run: tox -e linters_check
   docs:
     runs-on: ubuntu-latest
     steps:
