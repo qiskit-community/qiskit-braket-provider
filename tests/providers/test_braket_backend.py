@@ -7,12 +7,6 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 from botocore import errorfactory
-from braket.aws import AwsDevice, AwsQuantumTaskBatch
-from braket.aws.queue_information import QueueDepthInfo, QueueType
-from braket.circuits import Circuit
-from braket.device_schema import DeviceActionType
-from braket.program_sets import ProgramSet
-from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import TwoLocal
@@ -23,6 +17,12 @@ from qiskit.transpiler import Target
 from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 from qiskit_algorithms.optimizers import SLSQP
 
+from braket.aws import AwsDevice, AwsQuantumTaskBatch
+from braket.aws.queue_information import QueueDepthInfo, QueueType
+from braket.circuits import Circuit
+from braket.device_schema import DeviceActionType
+from braket.program_sets import ProgramSet
+from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit_braket_provider import AWSBraketProvider, exception, version
 from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
@@ -35,9 +35,7 @@ from tests.providers.mocks import (
 )
 
 
-def combine_dicts(
-    dict1: Dict[str, float], dict2: Dict[str, float]
-) -> Dict[str, List[float]]:
+def combine_dicts(dict1: Dict[str, float], dict2: Dict[str, float]) -> Dict[str, List[float]]:
     """Combines dictionaries with different keys.
 
     Args:
@@ -86,7 +84,7 @@ class TestBraketAwsBackend(TestCase):
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
-        user_agent = f"QiskitBraketProvider/" f"{version.__version__}"
+        user_agent = f"QiskitBraketProvider/{version.__version__}"
         device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
         with self.assertRaises(NotImplementedError):
             backend.dtm()
@@ -154,9 +152,7 @@ class TestBraketAwsBackend(TestCase):
         q_c.cx(0, 1)
         circuits.append(q_c)
 
-        results = []
-        for circuit in circuits:
-            results.append(backend.run(circuit).result())
+        results = [backend.run(circuit).result() for circuit in circuits]
 
         # Result 0
         self.assertEqual(results[0].get_counts(), {"11": 1024})
@@ -177,9 +173,7 @@ class TestBraketAwsBackend(TestCase):
 
         inv_sqrt_2 = 1 / np.sqrt(2)
         self.assertTrue(
-            np.allclose(
-                result.get_statevector(), np.array([0, 0, inv_sqrt_2, inv_sqrt_2])
-            )
+            np.allclose(result.get_statevector(), np.array([0, 0, inv_sqrt_2, inv_sqrt_2]))
         )
 
     def test_deprecation_warning_on_init(self):
@@ -195,9 +189,7 @@ class TestBraketAwsBackend(TestCase):
 
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketBackend(
-                AWSBraketBackend
-            ):  # pylint: disable=unused-variable
+            class SubclassAWSBraketBackend(AWSBraketBackend):  # pylint: disable=unused-variable
                 """A subclass of AWSBraketBackend for testing purposes"""
 
                 pass
@@ -338,9 +330,7 @@ class TestBraketAwsBackend(TestCase):
                         qiskit_sv.data,
                     )
                 )
-            with self.subTest(
-                f"Random circuit with {i} qubits and {(shots := 10000)} shots."
-            ):
+            with self.subTest(f"Random circuit with {i} qubits and {(shots := 10000)} shots."):
                 braket_result = backend.run(circuit, shots=shots).result().get_counts()
                 qiskit_result = qiskit_sv.probabilities_dict()
 
@@ -356,9 +346,7 @@ class TestBraketAwsBackend(TestCase):
                             f"Missing {key} key in one of the results.",
                         )
                     else:
-                        percent_diff = abs(
-                            ((float(values[0]) - values[1]) / values[0]) * 100
-                        )
+                        percent_diff = abs(((float(values[0]) - values[1]) / values[0]) * 100)
                         abs_diff = abs(values[0] - values[1])
                         self.assertTrue(
                             percent_diff < 10 or abs_diff < 0.05,
@@ -368,9 +356,7 @@ class TestBraketAwsBackend(TestCase):
 
     @patch("qiskit_braket_provider.providers.braket_backend.AwsQuantumTask")
     @patch("qiskit_braket_provider.providers.braket_backend.BraketQuantumTask")
-    def test_retrieve_job_task_ids(
-        self, mock_braket_quantum_task, mock_aws_quantum_task
-    ):
+    def test_retrieve_job_task_ids(self, mock_braket_quantum_task, mock_aws_quantum_task):
         """Test method for retrieving job task IDs."""
         device = Mock()
         device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
@@ -395,9 +381,7 @@ class TestBraketAwsBackend(TestCase):
         """Tests retrieve task by id."""
         backend = AWSBraketProvider().get_backend("SV1")
         circuits = [
-            transpile(
-                random_circuit(3, 2, seed=seed), backend=backend, seed_transpiler=42
-            )
+            transpile(random_circuit(3, 2, seed=seed), backend=backend, seed_transpiler=42)
             for seed in range(3)
         ]
         job = backend.run(circuits, shots=10)
@@ -409,9 +393,7 @@ class TestBraketAwsBackend(TestCase):
 
         self.assertEqual(job_result.task_id, retrieved_job_result.task_id)
         self.assertEqual(job_result.status, retrieved_job_result.status)
-        self.assertEqual(
-            job_result.backend_version, retrieved_job_result.backend_version
-        )
+        self.assertEqual(job_result.backend_version, retrieved_job_result.backend_version)
         self.assertEqual(job_result.backend_name, retrieved_job_result.backend_name)
 
     @unittest.skip("Call to external resources.")
@@ -446,9 +428,7 @@ class TestBraketAwsBackend(TestCase):
         circuit.cz(0, 1)
         circuit.measure_all()
 
-        result = backend.run(
-            circuit, shots=10, verbatim=True, disable_qubit_rewiring=True
-        ).result()
+        result = backend.run(circuit, shots=10, verbatim=True, disable_qubit_rewiring=True).result()
 
         self.assertEqual(sum(result.get_counts().values()), 10)
 
@@ -532,20 +512,14 @@ class TestAWSBackendTarget(TestCase):
     def test_fully_connected(self):
         """Tests if instruction_props is correctly populated for fully connected topology."""
         mock_device = Mock()
-        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.copy(
-            deep=True
-        )
+        mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.copy(deep=True)
         mock_device.properties.paradigm.connectivity.fullyConnected = True
         mock_device.properties.paradigm.qubitCount = 2
-        mock_device.properties.action.get(
-            DeviceActionType.OPENQASM
-        ).supportedOperations = ["CNOT"]
+        mock_device.properties.action.get(DeviceActionType.OPENQASM).supportedOperations = ["CNOT"]
 
         instruction_props = aws_device_to_target(mock_device)
 
-        cx_instruction = QiskitInstruction(
-            name="cx", num_qubits=2, num_clbits=0, params=[]
-        )
+        cx_instruction = QiskitInstruction(name="cx", num_qubits=2, num_clbits=0, params=[])
         measure_instruction = QiskitInstruction(
             name="measure", num_qubits=1, num_clbits=1, params=[]
         )
@@ -565,11 +539,7 @@ class TestAWSBackendTarget(TestCase):
                 instruction[0].num_clbits,
                 expected_instruction_props[index][0].num_clbits,
             )
-            self.assertEqual(
-                instruction[0].params, expected_instruction_props[index][0].params
-            )
-            self.assertEqual(
-                instruction[0].name, expected_instruction_props[index][0].name
-            )
+            self.assertEqual(instruction[0].params, expected_instruction_props[index][0].params)
+            self.assertEqual(instruction[0].name, expected_instruction_props[index][0].name)
 
             self.assertEqual(instruction[1], expected_instruction_props[index][1])

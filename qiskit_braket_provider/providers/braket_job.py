@@ -3,9 +3,10 @@
 from typing import List, Optional, Union
 from warnings import warn
 
+from qiskit.providers import BackendV2
+
 from braket.aws import AwsQuantumTask
 from braket.tasks.local_quantum_task import LocalQuantumTask
-from qiskit.providers import BackendV2
 
 from .braket_quantum_task import BraketQuantumTask
 

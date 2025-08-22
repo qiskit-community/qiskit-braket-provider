@@ -3,14 +3,8 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-import braket.circuits.noises as braket_noises
 import numpy as np
 import pytest
-from braket.circuits import Circuit, FreeParameter, Gate, Instruction
-from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
-from braket.device_schema.ionq import IonqDeviceCapabilities
-from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
-from braket.devices import LocalSimulator
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
@@ -18,6 +12,12 @@ from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
 from qiskit_ionq import ionq_gates
 
+import braket.circuits.noises as braket_noises
+from braket.circuits import Circuit, FreeParameter, Gate, Instruction
+from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
+from braket.device_schema.ionq import IonqDeviceCapabilities
+from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
+from braket.devices import LocalSimulator
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_SUPPORTED_NOISES,
     _GATE_NAME_TO_BRAKET_GATE,
@@ -95,9 +95,7 @@ qiskit_ionq_gates = [
 ]
 
 _BRAKET_SUPPORTED_NOISE_INSTANCES = {
-    "kraus": braket_noises.Kraus(
-        [np.array([[1, 0], [0, 0]]), np.array([[0, 0], [0, 1]])]
-    ),
+    "kraus": braket_noises.Kraus([np.array([[1, 0], [0, 0]]), np.array([[0, 0], [0, 1]])]),
     "bitflip": braket_noises.BitFlip(0.1),
     "depolarizing": braket_noises.Depolarizing(0.2),
     "amplitudedamping": braket_noises.AmplitudeDamping(0.3),
@@ -166,9 +164,7 @@ class TestAdapter(TestCase):
 
             parameters = standard_gate.params
             if parameters:
-                parameter_values = [
-                    (137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)
-                ]
+                parameter_values = [(137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)]
                 parameter_bindings = dict(zip(parameters, parameter_values))
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
@@ -182,9 +178,7 @@ class TestAdapter(TestCase):
             qiskit_circuit.append(gate, range(gate.num_qubits))
 
             parameters = gate.params
-            parameter_values = [
-                (137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)
-            ]
+            parameter_values = [(137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)]
             parameter_bindings = dict(zip(parameters, parameter_values))
             qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
@@ -200,9 +194,7 @@ class TestAdapter(TestCase):
 
         braket_circuit = to_braket(qiskit_circuit)
         expected_braket_circuit = Circuit().h(0).gphase(1.23).gphase(np.pi / 2)
-        self.assertEqual(
-            braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0]
-        )
+        self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0])
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
         braket_circuit_no_gphase = to_braket(qiskit_circuit, basis_gates={"h"})
@@ -363,13 +355,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()
-            .h(0)
-            .cnot(0, 1)
-            .cnot(1, 2)
-            .measure(2)
-            .measure(0)
-            .measure(1)  # pylint: disable=no-member
+            Circuit().h(0).cnot(0, 1).cnot(1, 2).measure(2).measure(0).measure(1)  # pylint: disable=no-member
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -526,9 +512,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.ry(v[1], 0)
         braket_circuit = to_braket(qiskit_circuit)
 
-        expected_braket_circuit = (
-            Circuit().rx(0, FreeParameter("v_0")).ry(0, FreeParameter("v_1"))
-        )
+        expected_braket_circuit = Circuit().rx(0, FreeParameter("v_0")).ry(0, FreeParameter("v_1"))
         assert braket_circuit == expected_braket_circuit
 
     def test_parameter_expression(self):
@@ -605,26 +589,15 @@ class TestAdapter(TestCase):
 
         def gate_matches_connectivity(gate) -> bool:
             return any(
-                (
-                    gate.target.union(gate.control).issubset(adjacency)
-                    for adjacency in connectivity
-                )
+                (gate.target.union(gate.control).issubset(adjacency) for adjacency in connectivity)
             )
 
-        assert all(
-            (gate_matches_connectivity(gate) for gate in braket_circuit.instructions)
+        assert all((gate_matches_connectivity(gate) for gate in braket_circuit.instructions))
+        assert not all(
+            (gate_matches_connectivity(gate) for gate in braket_circuit_unconnected.instructions)
         )
         assert not all(
-            (
-                gate_matches_connectivity(gate)
-                for gate in braket_circuit_unconnected.instructions
-            )
-        )
-        assert not all(
-            (
-                gate_matches_connectivity(gate)
-                for gate in braket_circuit_verbatim.instructions
-            )
+            (gate_matches_connectivity(gate) for gate in braket_circuit_verbatim.instructions)
         )
 
     def test_angle_restrictions_rigetti(self):
@@ -642,9 +615,7 @@ class TestAdapter(TestCase):
         circuit.rx(np.pi / 2, 0)
 
         restrictions = {"rx": {0: {np.pi, -np.pi, np.pi / 2, -np.pi / 2}}}
-        braket_circuit = to_braket(
-            circuit, basis_gates={"rx"}, angle_restrictions=restrictions
-        )
+        braket_circuit = to_braket(circuit, basis_gates={"rx"}, angle_restrictions=restrictions)
         assert len(braket_circuit.instructions) == 1
 
     def test_validate_angle_restrictions_extra_index(self):
@@ -688,9 +659,7 @@ class TestAdapter(TestCase):
         circuit.append(ionq_gates.MSGate(0, 0, 0.25), [0, 1])
 
         restrictions = {"ms": {2: (0.0, 0.25)}}
-        braket_circuit = to_braket(
-            circuit, basis_gates={"ms"}, angle_restrictions=restrictions
-        )
+        braket_circuit = to_braket(circuit, basis_gates={"ms"}, angle_restrictions=restrictions)
         assert len(braket_circuit.instructions) == 1
 
     def test_native_angle_restrictions_ionq(self):
@@ -749,9 +718,7 @@ class TestAdapter(TestCase):
         circuit.rx(theta, 0)
 
         restrictions = {"rx": {0: {0.0}}}
-        braket_circuit = to_braket(
-            circuit, basis_gates={"rx"}, angle_restrictions=restrictions
-        )
+        braket_circuit = to_braket(circuit, basis_gates={"rx"}, angle_restrictions=restrictions)
         assert len(braket_circuit.instructions) == 1
 
     def test_kraus_conversion_with_to_braket(self):
@@ -809,9 +776,7 @@ class TestAdapter(TestCase):
                     for k in noise_channel.to_matrix()
                 ]
                 assert np.all(
-                    np.isclose(
-                        np.array(braket_kraus), np.array(qqc.data[2].operation.params)
-                    )
+                    np.isclose(np.array(braket_kraus), np.array(qqc.data[2].operation.params))
                 )
 
     def test_all_braket_noises_converted_simulated(self):
@@ -853,9 +818,7 @@ class TestAdapter(TestCase):
         qc.append(Kraus([mat]), [0, 1])
         qc.h(1)
         bqc = to_braket(qc)
-        res = (
-            LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
-        )
+        res = LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
         assert res["00"] == 1000
 
         mat0 = np.array([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
@@ -871,18 +834,14 @@ class TestAdapter(TestCase):
         qc.append(Kraus([mat0, mat1, mat2, mat3]), [0, 1])
 
         bqc = to_braket(qc)
-        res = (
-            LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
-        )
+        res = LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
         assert res["10"] == 1000
 
         # if we however go from braket -> qiskit -> braket, we expect it to match however
         qc = Circuit()
         qc.h(0).h(0).kraus([0, 1], [mat0, mat1, mat2, mat3])
         qqc = to_braket(to_qiskit(qc))
-        res = (
-            LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
-        )
+        res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
 
 
@@ -934,9 +893,7 @@ class TestFromBraket(TestCase):
 
                 braket_circuit = Circuit().add_instruction(instr)
                 qiskit_circuit = to_qiskit(braket_circuit)
-                param_uuids = {
-                    param.name: param._uuid for param in qiskit_circuit.parameters
-                }
+                param_uuids = {param.name: param._uuid for param in qiskit_circuit.parameters}
                 params_qiskit = [
                     (
                         Parameter(param.name, uuid=param_uuids.get(param.name))

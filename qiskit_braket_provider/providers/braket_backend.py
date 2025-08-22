@@ -8,6 +8,9 @@ from abc import ABC
 from collections.abc import Iterable
 from typing import Optional, Union
 
+from qiskit import QuantumCircuit
+from qiskit.providers import BackendV2, Options, Provider, QubitProperties
+
 from braket.aws import AwsDevice, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
@@ -15,8 +18,6 @@ from braket.device_schema import DeviceActionType
 from braket.devices import Device, LocalSimulator
 from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
-from qiskit import QuantumCircuit
-from qiskit.providers import BackendV2, Options, Provider, QubitProperties
 
 from .. import version
 from ..exception import QiskitBraketException
@@ -138,14 +139,10 @@ class BraketLocalBackend(BraketBackend):
     def run(
         self, run_input: Union[QuantumCircuit, list[QuantumCircuit]], **options
     ) -> BraketQuantumTask:
-        convert_input = (
-            [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
-        )
+        convert_input = [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         verbatim = options.pop("verbatim", False)
         gateset = self.get_gateset() if not verbatim else None
-        circuits: list[Circuit] = [
-            to_braket(circ, gateset, verbatim) for circ in convert_input
-        ]
+        circuits: list[Circuit] = [to_braket(circ, gateset, verbatim) for circ in convert_input]
 
         shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
@@ -156,9 +153,7 @@ class BraketLocalBackend(BraketBackend):
         tasks = []
         try:
             for circuit in circuits:
-                task: LocalQuantumTask = self._device.run(
-                    task_specification=circuit, shots=shots
-                )
+                task: LocalQuantumTask = self._device.run(task_specification=circuit, shots=shots)
                 tasks.append(task)
 
         except Exception as ex:
@@ -342,12 +337,8 @@ class BraketAwsBackend(BraketBackend):
             del options["meas_level"]
 
         gateset = self.get_gateset(native) if not verbatim else None
-        connectivity = (
-            native_gate_connectivity(self._device.properties) if native else None
-        )
-        angle_restrictions = (
-            native_angle_restrictions(self._device.properties) if native else None
-        )
+        connectivity = native_gate_connectivity(self._device.properties) if native else None
+        angle_restrictions = native_angle_restrictions(self._device.properties) if native else None
 
         braket_circuits = [
             to_braket(
@@ -366,9 +357,7 @@ class BraketAwsBackend(BraketBackend):
             else self._run_batch(braket_circuits, shots, **options)
         )
 
-    def _run_program_set(
-        self, braket_circuits: list[Circuit], shots: Optional[int], **options
-    ):
+    def _run_program_set(self, braket_circuits: list[Circuit], shots: Optional[int], **options):
         program_set = ProgramSet(braket_circuits, shots_per_executable=shots)
         task = self._aws_device.run(program_set, **options)
         return BraketQuantumTask(
@@ -379,9 +368,7 @@ class BraketAwsBackend(BraketBackend):
         batch_task = self._aws_device.run_batch(braket_circuits, shots=shots, **options)
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
-        return BraketQuantumTask(
-            task_id=task_id, tasks=tasks, backend=self, shots=shots
-        )
+        return BraketQuantumTask(task_id=task_id, tasks=tasks, backend=self, shots=shots)
 
 
 class AWSBraketBackend(BraketAwsBackend):
@@ -389,9 +376,7 @@ class AWSBraketBackend(BraketAwsBackend):
 
     def __init_subclass__(cls, **kwargs):
         """This throws a deprecation warning on subclassing."""
-        warnings.warn(
-            f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2
-        )
+        warnings.warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
         super().__init_subclass__(**kwargs)
 
     def __init__(  # pylint: disable=too-many-positional-arguments

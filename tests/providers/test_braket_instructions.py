@@ -2,12 +2,12 @@
 
 import unittest
 
-# from braket.experimental_capabilities.iqm.classical_control import CCPRx as BraketCCPRx
-# from braket.experimental_capabilities.iqm.classical_control import MeasureFF as BraketMeasureFF
-from braket.experimental_capabilities import EnableExperimentalCapability
 from qiskit import QuantumCircuit
 from qiskit.circuit import CircuitInstruction, QuantumRegister, Qubit
 
+# from braket.experimental_capabilities.iqm.classical_control import CCPRx as BraketCCPRx
+# from braket.experimental_capabilities.iqm.classical_control import MeasureFF as BraketMeasureFF
+from braket.experimental_capabilities import EnableExperimentalCapability
 from qiskit_braket_provider import to_braket
 from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
 

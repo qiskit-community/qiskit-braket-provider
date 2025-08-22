@@ -1,6 +1,5 @@
 qiskit-algorithms>=0.2.2
 coverage>=5.5
-pylint>=2.9.5
 nbqa>=1.1.1
 treon>=0.1.3
 pytest>=6.2.5
@@ -12,7 +11,4 @@ nbsphinx>=0.8.8
 sphinx-autodoc-typehints>=1.17.0
 qiskit_sphinx_theme~=1.16.0
 reno>=3.5.0
-# Black's formatting rules can change between major versions, so we use
-# the ~= specifier for it.
-black[jupyter]~=22.1
-isort>=5.12.0
+ruff
