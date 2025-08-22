@@ -257,7 +257,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.tracking</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tracker</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">BraketProvider</span><span class="p">,</span> <span class="n">to_braket</span>
 
 <span class="c1"># Use Braket SDK Cost Tracking to estimate the cost to run this example</span>
@@ -381,9 +380,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">braket_random_circuit</span> <span class="o">=</span> <span class="n">to_braket</span><span class="p">(</span>
-    <span class="n">qiskit_random_circuit</span><span class="p">,</span> <span class="n">basis_gates</span><span class="o">=</span><span class="n">aria_supported_gates</span>
-<span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">braket_random_circuit</span> <span class="o">=</span> <span class="n">to_braket</span><span class="p">(</span><span class="n">qiskit_random_circuit</span><span class="p">,</span> <span class="n">basis_gates</span><span class="o">=</span><span class="n">aria_supported_gates</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">braket_random_circuit</span><span class="p">)</span>
 </pre></div>
 </div>

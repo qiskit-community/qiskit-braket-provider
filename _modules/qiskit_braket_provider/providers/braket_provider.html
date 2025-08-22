@@ -245,11 +245,12 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.providers.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiskitBackendNotFoundError</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.aws</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwsDevice</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.device_schema.dwave</span><span class="w"> </span><span class="kn">import</span> <span class="n">DwaveDeviceCapabilities</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.device_schema.quera</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueraDeviceCapabilities</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.device_schema.xanadu</span><span class="w"> </span><span class="kn">import</span> <span class="n">XanaduDeviceCapabilities</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.providers.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">QiskitBackendNotFoundError</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.braket_backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketAwsBackend</span><span class="p">,</span> <span class="n">BraketLocalBackend</span>
 
@@ -286,9 +287,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">backends</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">backends</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">QiskitBackendNotFoundError</span><span class="p">(</span>
-                <span class="s2">&quot;More than one backend matches the criteria&quot;</span>
-            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">QiskitBackendNotFoundError</span><span class="p">(</span><span class="s2">&quot;More than one backend matches the criteria&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">backends</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">QiskitBackendNotFoundError</span><span class="p">(</span><span class="s2">&quot;No backend matches the criteria&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">backends</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -343,9 +342,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;This throws a deprecation warning on subclassing.&quot;&quot;&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
-        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> is deprecated.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AWSBraketProvider.__init__">

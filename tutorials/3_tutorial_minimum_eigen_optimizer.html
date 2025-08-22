@@ -252,6 +252,7 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendSampler</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketProvider</span>
 
 <span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSampler</span><span class="p">(</span>
@@ -290,19 +291,20 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAOA</span><span class="p">,</span> <span class="n">NumPyMinimumEigensolver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">COBYLA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticProgram</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MinimumEigenOptimizer</span><span class="p">,</span>
+    <span class="n">OptimizationResultStatus</span><span class="p">,</span>
     <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">,</span>
     <span class="n">SolutionSample</span><span class="p">,</span>
-    <span class="n">OptimizationResultStatus</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticProgram</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </pre></div>
 </div>
 </div>
@@ -315,9 +317,7 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
 <span class="n">qubo</span><span class="o">.</span><span class="n">binary_var</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
 <span class="n">qubo</span><span class="o">.</span><span class="n">binary_var</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
 <span class="n">qubo</span><span class="o">.</span><span class="n">binary_var</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
-<span class="n">qubo</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
-    <span class="n">linear</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">quadratic</span><span class="o">=</span><span class="p">{(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">):</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">):</span> <span class="mi">2</span><span class="p">}</span>
-<span class="p">)</span>
+<span class="n">qubo</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">linear</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">quadratic</span><span class="o">=</span><span class="p">{(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">):</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">):</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">):</span> <span class="mi">2</span><span class="p">})</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">qubo</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -411,9 +411,7 @@ Subject to
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa</span> <span class="o">=</span> <span class="n">MinimumEigenOptimizer</span><span class="p">(</span><span class="n">qaoa_mes</span><span class="p">)</span>  <span class="c1"># using QAOA</span>
-<span class="n">exact</span> <span class="o">=</span> <span class="n">MinimumEigenOptimizer</span><span class="p">(</span>
-    <span class="n">exact_mes</span>
-<span class="p">)</span>  <span class="c1"># using the exact classical numpy minimum eigen solver</span>
+<span class="n">exact</span> <span class="o">=</span> <span class="n">MinimumEigenOptimizer</span><span class="p">(</span><span class="n">exact_mes</span><span class="p">)</span>  <span class="c1"># using the exact classical numpy minimum eigen solver</span>
 </pre></div>
 </div>
 </div>
@@ -503,16 +501,9 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_filtered_samples</span><span class="p">(</span>
     <span class="n">samples</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SolutionSample</span><span class="p">],</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">allowed_status</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OptimizationResultStatus</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">OptimizationResultStatus</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
-    <span class="p">),</span>
+    <span class="n">allowed_status</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OptimizationResultStatus</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">OptimizationResultStatus</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,),</span>
 <span class="p">):</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">allowed_status</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">res</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="n">allowed_status</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -594,9 +585,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
-    <span class="p">):</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span>
+    <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">x</span><span class="p">)):</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">filtered_samples</span>
 <span class="p">}</span>
 <span class="n">samples_for_plot</span>
@@ -645,9 +634,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa</span> <span class="o">=</span> <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">(</span>
-    <span class="n">qaoa</span><span class="p">,</span> <span class="n">min_num_vars</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_num_vars_optimizer</span><span class="o">=</span><span class="n">exact</span>
-<span class="p">)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa</span> <span class="o">=</span> <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">(</span><span class="n">qaoa</span><span class="p">,</span> <span class="n">min_num_vars</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_num_vars_optimizer</span><span class="o">=</span><span class="n">exact</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -696,9 +683,7 @@ status: SUCCESS
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rqaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
-    <span class="p">):</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span>
+    <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rqaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">x</span><span class="p">)):</span> <span class="n">s</span><span class="o">.</span><span class="n">probability</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">filtered_samples</span>
 <span class="p">}</span>
 <span class="n">samples_for_plot</span>

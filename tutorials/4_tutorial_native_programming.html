@@ -254,11 +254,12 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># General imports</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">braket.tracking</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tracker</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.transpiler.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingMap</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_ionq</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPIGate</span><span class="p">,</span> <span class="n">GPI2Gate</span><span class="p">,</span> <span class="n">MSGate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_ionq</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPI2Gate</span><span class="p">,</span> <span class="n">GPIGate</span><span class="p">,</span> <span class="n">MSGate</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.tracking</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tracker</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketProvider</span>
 
 <span class="n">t</span> <span class="o">=</span> <span class="n">Tracker</span><span class="p">()</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
