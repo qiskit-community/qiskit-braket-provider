@@ -249,7 +249,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Provider</span><span class="p">,</span> <span class="n">QubitProperties</span>
@@ -291,7 +290,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Device</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_meas_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meas_level</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_meas_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meas_level</span><span class="p">:</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span> <span class="o">|</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meas_level</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
             <span class="n">meas_level</span> <span class="o">=</span> <span class="n">meas_level</span><span class="o">.</span><span class="n">value</span>
         <span class="k">if</span> <span class="n">meas_level</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
@@ -300,11 +299,14 @@
                 <span class="sa">f</span><span class="s2">&quot;results, received meas_level=</span><span class="si">{</span><span class="n">meas_level</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_gateset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_gateset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the gate set of the device.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            native (bool): Whether to return the device&#39;s native gates.</span>
+<span class="sd">            native (bool): Whether to return the device&#39;s native gates. Default: False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            set[str] | None: The requested gate set.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">native</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">native_gate_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
@@ -367,9 +369,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Device</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_device</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">qubit_properties</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qubit_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QubitProperties</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">drive_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -384,9 +384,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">control_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Control channel is not supported by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span> <span class="o">**</span><span class="n">options</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
         <span class="n">convert_input</span> <span class="o">=</span> <span class="p">[</span><span class="n">run_input</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">run_input</span><span class="p">)</span>
         <span class="n">verbatim</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;verbatim&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="n">gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">verbatim</span> <span class="k">else</span> <span class="kc">None</span>
@@ -429,14 +427,14 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-positional-arguments</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">arn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">arn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">backend_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AwsDevice</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">AwsDevice</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketAwsBackend for executing circuits on Amazon Braket devices.</span>
@@ -512,9 +510,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_options</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Options</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">qubit_properties</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qubit_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QubitProperties</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">]:</span>
         <span class="c1"># TODO: fetch information from device.properties.provider  # pylint: disable=fixme</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
@@ -606,7 +602,7 @@
             <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_batch</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_program_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">braket_circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_program_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">braket_circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
         <span class="n">program_set</span> <span class="o">=</span> <span class="n">ProgramSet</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots_per_executable</span><span class="o">=</span><span class="n">shots</span><span class="p">)</span>
         <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program_set</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">BraketQuantumTask</span><span class="p">(</span>
