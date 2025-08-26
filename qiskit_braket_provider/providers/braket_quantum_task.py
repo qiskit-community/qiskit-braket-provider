@@ -1,7 +1,6 @@
 """Amazon Braket task."""
 
 from datetime import datetime
-from typing import List, Union
 
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.quantum_info import Statevector
@@ -30,8 +29,8 @@ def retry_if_result_none(result):
 
 
 def _result_from_circuit_task(
-    task: Union[LocalQuantumTask, AwsQuantumTask], result: GateModelQuantumTaskResult
-) -> ExperimentResult:
+    task: QuantumTask, result: GateModelQuantumTaskResult
+) -> ExperimentResult | None:
     if not result:
         return None
 
@@ -69,7 +68,7 @@ class BraketQuantumTask(JobV1):
         self,
         task_id: str,
         backend: BackendV2,
-        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask], AwsQuantumTask],
+        tasks: list[LocalQuantumTask] | list[AwsQuantumTask] | AwsQuantumTask,
         **metadata,
     ):
         """BraketQuantumTask for execution of circuits on Amazon Braket or locally.
@@ -211,14 +210,12 @@ class BraketQuantumTask(JobV1):
         ]
 
         if "FAILED" in braket_tasks_states:
-            status = JobStatus.ERROR
+            return JobStatus.ERROR
         elif "CANCELLED" in braket_tasks_states:
-            status = JobStatus.CANCELLED
+            return JobStatus.CANCELLED
         elif all(state == "COMPLETED" for state in braket_tasks_states):
-            status = JobStatus.DONE
+            return JobStatus.DONE
         elif all(state == "RUNNING" for state in braket_tasks_states):
-            status = JobStatus.RUNNING
+            return JobStatus.RUNNING
         else:
-            status = JobStatus.QUEUED
-
-        return status
+            return JobStatus.QUEUED

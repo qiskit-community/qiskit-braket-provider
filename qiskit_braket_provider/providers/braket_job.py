@@ -1,6 +1,5 @@
 """Deprecated Amazon Braket Qiskit Job classes"""
 
-from typing import List, Optional, Union
 from warnings import warn
 
 from qiskit.providers import BackendV2
@@ -23,8 +22,8 @@ class AmazonBraketTask(BraketQuantumTask):
         self,
         task_id: str,
         backend: BackendV2,
-        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
-        **metadata: Optional[dict],
+        tasks: list[LocalQuantumTask] | list[AwsQuantumTask],
+        **metadata: dict | None,
     ):
         """This throws a deprecation warning on initialization."""
         warn(
@@ -47,8 +46,8 @@ class AWSBraketJob(BraketQuantumTask):
         self,
         job_id: str,
         backend: BackendV2,
-        tasks: Union[List[LocalQuantumTask], List[AwsQuantumTask]],
-        **metadata: Optional[dict],
+        tasks: list[LocalQuantumTask] | list[AwsQuantumTask],
+        **metadata: dict | None,
     ):
         """This throws a deprecation warning on initialization."""
         warn(
