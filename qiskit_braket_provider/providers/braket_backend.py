@@ -8,7 +8,7 @@ from abc import ABC
 from collections.abc import Iterable
 
 from qiskit import QuantumCircuit
-from qiskit.providers import BackendV2, Options, Provider, QubitProperties
+from qiskit.providers import BackendV2, Options, QubitProperties
 
 from braket.aws import AwsDevice, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
@@ -179,7 +179,7 @@ class BraketAwsBackend(BraketBackend):
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         arn: str | None = None,
-        provider: Provider = None,
+        provider=None,
         name: str = None,
         description: str = None,
         online_date: datetime.datetime = None,
@@ -378,7 +378,7 @@ class AWSBraketBackend(BraketAwsBackend):
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         device: AwsDevice,
-        provider: Provider = None,
+        provider=None,
         name: str = None,
         description: str = None,
         online_date: datetime.datetime = None,
