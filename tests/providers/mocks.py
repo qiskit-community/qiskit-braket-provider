@@ -4,7 +4,6 @@ import copy
 import enum
 import uuid
 from collections import Counter
-from typing import Dict
 
 import numpy as np
 
@@ -69,7 +68,7 @@ RIGETTI_MOCK_GATE_MODEL_QPU = {
     "deviceCapabilities": RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.json(),
 }
 
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON: Dict = copy.deepcopy(
+RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON: dict = copy.deepcopy(
     RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON
 )
 RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][

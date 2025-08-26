@@ -1,7 +1,6 @@
 """Tests for AWS Braket backends."""
 
 import unittest
-from typing import Dict, List
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -35,7 +34,7 @@ from tests.providers.mocks import (
 )
 
 
-def combine_dicts(dict1: Dict[str, float], dict2: Dict[str, float]) -> Dict[str, List[float]]:
+def combine_dicts(dict1: dict[str, float], dict2: dict[str, float]) -> dict[str, list[float]]:
     """Combines dictionaries with different keys.
 
     Args:
@@ -45,7 +44,7 @@ def combine_dicts(dict1: Dict[str, float], dict2: Dict[str, float]) -> Dict[str,
     Returns:
         merged dicts with list of keys
     """
-    combined_dict: Dict[str, List[float]] = {}
+    combined_dict: dict[str, list[float]] = {}
     for key in dict1.keys():
         if key in combined_dict:
             combined_dict[key].append(dict1[key])

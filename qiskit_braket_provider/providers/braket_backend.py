@@ -6,7 +6,6 @@ import logging
 import warnings
 from abc import ABC
 from collections.abc import Iterable
-from typing import Optional, Union
 
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, Provider, QubitProperties
@@ -48,7 +47,7 @@ class BraketBackend(BackendV2, ABC):
     def _device(self) -> Device:
         raise NotImplementedError
 
-    def _validate_meas_level(self, meas_level: Union[enum.Enum, int]):
+    def _validate_meas_level(self, meas_level: enum.Enum | int):
         if isinstance(meas_level, enum.Enum):
             meas_level = meas_level.value
         if meas_level != 2:
@@ -57,11 +56,14 @@ class BraketBackend(BackendV2, ABC):
                 f"results, received meas_level={meas_level}."
             )
 
-    def get_gateset(self, native=False) -> Optional[set[str]]:
+    def get_gateset(self, native=False) -> set[str] | None:
         """Get the gate set of the device.
 
         Args:
-            native (bool): Whether to return the device's native gates.
+            native (bool): Whether to return the device's native gates. Default: False.
+
+        Returns:
+            set[str] | None: The requested gate set.
         """
         if native:
             return native_gate_set(self._device.properties)
@@ -119,9 +121,7 @@ class BraketLocalBackend(BraketBackend):
     def _device(self) -> Device:
         return self._local_device
 
-    def qubit_properties(
-        self, qubit: Union[int, list[int]]
-    ) -> Union[QubitProperties, list[QubitProperties]]:
+    def qubit_properties(self, qubit: int | list[int]) -> QubitProperties | list[QubitProperties]:
         raise NotImplementedError
 
     def drive_channel(self, qubit: int):
@@ -136,9 +136,7 @@ class BraketLocalBackend(BraketBackend):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(
-        self, run_input: Union[QuantumCircuit, list[QuantumCircuit]], **options
-    ) -> BraketQuantumTask:
+    def run(self, run_input: QuantumCircuit | list[QuantumCircuit], **options) -> BraketQuantumTask:
         convert_input = [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         verbatim = options.pop("verbatim", False)
         gateset = self.get_gateset() if not verbatim else None
@@ -180,14 +178,14 @@ class BraketAwsBackend(BraketBackend):
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        arn: Optional[str] = None,
+        arn: str | None = None,
         provider: Provider = None,
         name: str = None,
         description: str = None,
         online_date: datetime.datetime = None,
         backend_version: str = None,
         *,
-        device: Optional[AwsDevice] = None,
+        device: AwsDevice | None = None,
         **fields,
     ):
         """BraketAwsBackend for executing circuits on Amazon Braket devices.
@@ -263,9 +261,7 @@ class BraketAwsBackend(BraketBackend):
     def _default_options(cls):
         return Options()
 
-    def qubit_properties(
-        self, qubit: Union[int, list[int]]
-    ) -> Union[QubitProperties, list[QubitProperties]]:
+    def qubit_properties(self, qubit: int | list[int]) -> QubitProperties | list[QubitProperties]:
         # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
         raise NotImplementedError
 
@@ -357,7 +353,7 @@ class BraketAwsBackend(BraketBackend):
             else self._run_batch(braket_circuits, shots, **options)
         )
 
-    def _run_program_set(self, braket_circuits: list[Circuit], shots: Optional[int], **options):
+    def _run_program_set(self, braket_circuits: list[Circuit], shots: int | None, **options):
         program_set = ProgramSet(braket_circuits, shots_per_executable=shots)
         task = self._aws_device.run(program_set, **options)
         return BraketQuantumTask(
