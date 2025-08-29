@@ -11,7 +11,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.parametervector import ParameterVectorElement
-from qiskit.transpiler import Target
+from qiskit.transpiler import Target, InstructionProperties
 from qiskit_ionq import add_equivalences, ionq_gates
 
 import braket.circuits.gates as braket_gates
@@ -419,43 +419,232 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
         else None
     )
 
+    std = getattr(properties, "standardized", None)
+    # prefer the provider-declared native set over supportedOperations (which can include non-native)
+    native_ops = {op["name"].lower() for op in properties.provider.specs.get("instructions", [])}
+
     for operation in action_properties.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
+        if not instruction:
+            continue
 
-        if instruction:
-            # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
-            match instruction.num_qubits:
-                case 1:
-                    target.add_instruction(instruction, {(i,): None for i in range(qubit_count)})
-                case 2:
-                    target.add_instruction(
-                        instruction,
-                        _2q_instruction_properties(qubit_count, connectivity_graph),
-                    )
+        if instruction.name.lower() not in native_ops:
+            # skip convenience ops; keep the Target native
+            continue
 
-    target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
+        # TODO: Add 3+ qubit gates once Target supports them
+        if instruction.num_qubits == 1:
+            # Populate per-qubit InstructionProperties from standardized 1Q fidelity/duration
+            qarg_map = {}
+            for q in range(qubit_count):
+                dur = _get_oneq_gate_duration(std, q, instruction.name)  # your existing helper
+                err = _get_oneq_gate_error(std, q, use_simultaneous=True)  # uses RB; falls back to simultaneous RB
+                qarg_map[(q,)] = InstructionProperties(duration=dur, error=err)
+            target.add_instruction(instruction, qarg_map)
+
+        elif instruction.num_qubits == 2:
+            # Use enhanced 2Q builder with durations/errors from standardized props
+            twoq_props = _2q_instruction_properties(
+                qubit_count=qubit_count,
+                connectivity_graph=connectivity_graph,  # None / dict / iterable of edges
+                std_props=std,
+                qiskit_gate_name=instruction.name,
+            )
+            target.add_instruction(instruction, twoq_props)
+
+    # Measurement (duration if published)
+    meas_map = {}
+    for q in range(qubit_count):
+        meas_dur = _get_measure_duration(std, q)           # device-wide or per-qubit if exposed
+        meas_err = _get_readout_error(std, q)              # 1 - readout fidelity
+        meas_map[(q,)] = InstructionProperties(duration=meas_dur, error=meas_err)
+    target.add_instruction(Measure(), meas_map)
+
     return target
 
+# --- Helpers: name normalization and standardized lookups --------------------
 
-def _2q_instruction_properties(qubit_count, connectivity_graph):
-    instruction_props = {}
+def _normalize_2q_gate_for_braket(op_name: str) -> str:
+    """Map Qiskit op names to Braket standardized gateName."""
+    op = op_name.lower()
+    return "cnot" if op == "cx" else op  # extend if needed (e.g., rxx/ms variants)
 
-    # building coupling map for fully connected device
-    if not connectivity_graph:
-        for src in range(qubit_count):
-            for dst in range(qubit_count):
-                if src != dst:
-                    instruction_props[(src, dst)] = None
-                    instruction_props[(dst, src)] = None
+def _braket_edge_key(i: int, j: int) -> str:
+    """Braket standardized twoQubitProperties keys look like 'min-max'."""
+    a, b = sorted((i, j))
+    return f"{a}-{b}"
 
-    # building coupling map for device with connectivity graph
-    else:
-        for src, connections in connectivity_graph.items():
-            for dst in connections:
-                instruction_props[(int(src), int(dst))] = None
+# --- robust selectors for 1Q fidelities --------------------------------------
 
-    return instruction_props
+def _select_oneq_fidelity(std_props, q: int, prefer: str = "RB", allow_simultaneous: bool = True):
+    """
+    Return (fidelity, stderr, tag) for qubit q from standardized.oneQubitProperties.
+    prefer: "RB" (RANDOMIZED_BENCHMARKING) or "READOUT".
+    If prefer == "RB" and not found, optionally fall back to SIMULTANEOUS_RANDOMIZED_BENCHMARKING.
+    Values are in [0,1] (NOT percent). Returns (None, None, None) if unavailable.
+    """
+    if not std_props or not hasattr(std_props, "oneQubitProperties"):
+        return None, None, None
+    entry = std_props.oneQubitProperties.get(str(q))
+    if not entry:
+        return None, None, None
 
+    fobj = getattr(entry, "oneQubitFidelity", None)
+    if not fobj:
+        return None, None, None
+
+    # normalize to list
+    feats = list(fobj) if isinstance(fobj, (list, tuple)) else [fobj]
+
+    # index by type name (uppercased)
+    idx = {}
+    for rec in feats:
+        t = getattr(rec, "fidelityType", None)
+        tname = getattr(t, "name", None)
+        if tname:
+            idx[tname.upper()] = rec
+
+    prefer = prefer.upper()
+
+    if prefer == "READOUT":
+        rec = idx.get("READOUT")
+        if rec:
+            return getattr(rec, "fidelity", None), getattr(rec, "standardError", None), "READOUT"
+        return None, None, None
+
+    # prefer single-qubit RB; optionally fall back to simultaneous RB
+    rec = idx.get("RANDOMIZED_BENCHMARKING")
+    if not rec and allow_simultaneous:
+        rec = idx.get("SIMULTANEOUS_RANDOMIZED_BENCHMARKING")
+
+    if rec:
+        tname = getattr(rec, "fidelityType", None)
+        tag = getattr(tname, "name", None) if tname else "RB"
+        return getattr(rec, "fidelity", None), getattr(rec, "standardError", None), tag
+
+    return None, None, None
+
+
+def _get_oneq_gate_error(std_props, q: int, use_simultaneous: bool = True) -> float | None:
+    """
+    Per-gate 1Q error = 1 - fidelity, using RB (or simultaneous RB as fallback).
+    """
+    f, _, _ = _select_oneq_fidelity(std_props, q, prefer="RB", allow_simultaneous=use_simultaneous)
+    return None if f is None else max(0.0, 1.0 - float(f))
+
+
+def _get_readout_error(std_props, q: int) -> float | None:
+    """
+    Readout error = 1 - readout fidelity.
+    """
+    f, _, _ = _select_oneq_fidelity(std_props, q, prefer="READOUT", allow_simultaneous=False)
+    return None if f is None else max(0.0, 1.0 - float(f))
+
+def _get_oneq_gate_duration(std_props, q: int, gate_name: str) -> float | None:
+    """
+    Try to fetch per-gate 1Q duration:
+    standardized.oneQubitProperties[str(q)].oneQubitGateDuration = [{gateName, duration}, ...]
+    """
+    if not std_props or not hasattr(std_props, "oneQubitProperties"):
+        return None
+    entry = std_props.oneQubitProperties.get(str(q))
+    if not entry:
+        return None
+    dur_list = getattr(entry, "oneQubitGateDuration", None)
+    if dur_list:
+        gn = gate_name.lower()
+        for item in dur_list:
+            if getattr(item, "gateName", "").lower() == gn:
+                return getattr(item, "duration", None)
+    return None
+
+def _get_twoq_gate_fidelity(std_props, i: int, j: int, braket_gate: str) -> float | None:
+    """
+    standardized.twoQubitProperties['i-j'].twoQubitGateFidelity = [{gateName, fidelity}, ...]
+    """
+    if not std_props or not hasattr(std_props, "twoQubitProperties"):
+        return None
+    entry = std_props.twoQubitProperties.get(_braket_edge_key(i, j))
+    if not entry:
+        return None
+    for it in (getattr(entry, "twoQubitGateFidelity", None) or []):
+        if getattr(it, "gateName", "").lower() == braket_gate.lower():
+            return getattr(it, "fidelity", None)
+    return None
+
+def _get_twoq_gate_duration(std_props, i: int, j: int, braket_gate: str) -> float | None:
+    """
+    standardized.twoQubitProperties['i-j'].twoQubitGateDuration = [{gateName, duration}, ...]
+    """
+    if not std_props or not hasattr(std_props, "twoQubitProperties"):
+        return None
+    entry = std_props.twoQubitProperties.get(_braket_edge_key(i, j))
+    if not entry:
+        return None
+    for it in (getattr(entry, "twoQubitGateDuration", None) or []):
+        if getattr(it, "gateName", "").lower() == braket_gate.lower():
+            return getattr(it, "duration", None)
+    return None
+
+def _get_measure_duration(std_props, q: int) -> float | None:
+    """
+    Some providers expose a device-wide readoutDuration; per-qubit variants are uncommon.
+    """
+    if not std_props:
+        return None
+    val = getattr(std_props, "readoutDuration", None)
+    return float(val) if isinstance(val, (int, float)) else None
+
+def _err_from_fidelity(fid: float | None) -> float | None:
+    return None if fid is None else max(0.0, 1.0 - float(fid))
+
+# --- Replacement: _2q_instruction_properties with durations/errors -----------
+
+def _2q_instruction_properties(
+    qubit_count,
+    connectivity_graph,
+    std_props,
+    qiskit_gate_name: str,
+):
+    """
+    Returns {(i,j): InstructionProperties(duration, error)} for the given 2Q gate name.
+    - connectivity_graph may be:
+        * None (fully connected),
+        * dict[src] -> iterable[dst],
+        * iterable of undirected edges [(i,j), ...] (both directions are added).
+    - durations/errors are taken from properties.standardized when available.
+    """
+    instr_props = {}
+    braket_gate = _normalize_2q_gate_for_braket(qiskit_gate_name)
+
+    # enumerate directed pairs
+    def _edges():
+        if connectivity_graph is None:
+            for i in range(qubit_count):
+                for j in range(qubit_count):
+                    if i != j:
+                        yield (i, j)
+            return
+        if isinstance(connectivity_graph, dict):
+            for s, nbrs in connectivity_graph.items():
+                s_int = int(s)
+                for d in nbrs:
+                    yield (s_int, int(d))
+            return
+        # iterable of undirected pairs
+        for (i, j) in connectivity_graph:
+            i, j = int(i), int(j)
+            if i != j:
+                yield (i, j)
+                yield (j, i)
+
+    for i, j in _edges():
+        dur = _get_twoq_gate_duration(std_props, i, j, braket_gate)
+        fid = _get_twoq_gate_fidelity(std_props, i, j, braket_gate)
+        err = _err_from_fidelity(fid)
+        instr_props[(i, j)] = InstructionProperties(duration=dur, error=err)
+
+    return instr_props
 
 def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
     """Device qubit indices may be noncontiguous (label between x0 and x7, x being
