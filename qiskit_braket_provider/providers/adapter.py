@@ -11,7 +11,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.parametervector import ParameterVectorElement
-from qiskit.transpiler import Target, InstructionProperties
+from qiskit.transpiler import Target, InstructionProperties, QubitProperties
 from qiskit_ionq import add_equivalences, ionq_gates
 
 import braket.circuits.gates as braket_gates
@@ -429,43 +429,39 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
 
     for operation in action_properties.supportedOperations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-        if not instruction:
-            continue
 
-        if instruction.name.lower() not in native_ops:
-            # skip convenience ops; keep the Target native
-            continue
+        if instruction and instruction.name.lower() in native_ops:
+            # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
+            match instruction.num_qubits:
+                case 1:
+                    # Add fidelity/duration info if available
+                    if std:
+                        qarg_map = {}
+                        for q in range(qubit_count):
+                            physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
+                            dur = _get_oneq_gate_duration(std, physical_q, instruction.name)
+                            err = _get_oneq_gate_error(std, physical_q, use_simultaneous=True)
+                            qarg_map[(q,)] = InstructionProperties(duration=dur, error=err)
+                        target.add_instruction(instruction, qarg_map)
+                    else:
+                        target.add_instruction(instruction, {(i,): None for i in range(qubit_count)})
+                case 2:
+                    target.add_instruction(
+                        instruction,
+                        _2q_instruction_properties(qubit_count, connectivity_graph, std, instruction.name, qubit_mapping),
+                    )
 
-        # TODO: Add 3+ qubit gates once Target supports them
-        if instruction.num_qubits == 1:
-            # Populate per-qubit InstructionProperties from standardized 1Q fidelity/duration
-            qarg_map = {}
-            for q in range(qubit_count):
-                physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
-                dur = _get_oneq_gate_duration(std, physical_q, instruction.name)
-                err = _get_oneq_gate_error(std, physical_q, use_simultaneous=True)
-                qarg_map[(q,)] = InstructionProperties(duration=dur, error=err)
-            target.add_instruction(instruction, qarg_map)
-
-        elif instruction.num_qubits == 2:
-            # Use enhanced 2Q builder with durations/errors from standardized props
-            twoq_props = _2q_instruction_properties(
-                qubit_count=qubit_count,
-                connectivity_graph=connectivity_graph,
-                std_props=std,
-                qiskit_gate_name=instruction.name,
-                qubit_mapping=qubit_mapping,
-            )
-            target.add_instruction(instruction, twoq_props)
-
-    # Measurement (duration if published)
-    meas_map = {}
-    for q in range(qubit_count):
-        physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
-        meas_dur = _get_measure_duration(std, physical_q)
-        meas_err = _get_readout_error(std, physical_q)
-        meas_map[(q,)] = InstructionProperties(duration=meas_dur, error=meas_err)
-    target.add_instruction(Measure(), meas_map)
+    # Add measurement with fidelity info if available
+    if std:
+        meas_map = {}
+        for q in range(qubit_count):
+            physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
+            meas_dur = _get_measure_duration(std, physical_q)
+            meas_err = _get_readout_error(std, physical_q)
+            meas_map[(q,)] = InstructionProperties(duration=meas_dur, error=meas_err)
+        target.add_instruction(Measure(), meas_map)
+    else:
+        target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
 
     # Add qubit properties (T1, T2) if available
     if std and qubit_mapping:
@@ -492,11 +488,6 @@ def _create_qubit_mapping(physical_qubits, connectivity_graph, qubit_count):
 
 def _apply_qubit_properties(target: Target, std_props, qubit_mapping) -> None:
     """Attach per-qubit T1/T2 properties to Target if available."""
-    try:
-        from qiskit.transpiler import QubitProperties
-    except ImportError:
-        return
-    
     if not std_props or not hasattr(std_props, "oneQubitProperties"):
         return
     
@@ -657,60 +648,44 @@ def _err_from_fidelity(fid: float | None) -> float | None:
     return None if fid is None else max(0.0, 1.0 - float(fid))
 
 
-def _2q_instruction_properties(
-    qubit_count,
-    connectivity_graph,
-    std_props,
-    qiskit_gate_name: str,
-    qubit_mapping=None,
-):
-    """
-    Returns {(i,j): InstructionProperties(duration, error)} for the given 2Q gate name.
-    - connectivity_graph may be:
-        * None (fully connected),
-        * dict[src] -> iterable[dst],
-        * iterable of undirected edges [(i,j), ...] (both directions are added).
-    - durations/errors are taken from properties.standardized when available.
-    - qubit_mapping: optional mapping dict for physical-to-logical qubit translation
-    """
-    instr_props = {}
-    braket_gate = _normalize_2q_gate_for_braket(qiskit_gate_name)
+def _2q_instruction_properties(qubit_count, connectivity_graph, std_props=None, qiskit_gate_name=None, qubit_mapping=None):
+    instruction_props = {}
 
-    # enumerate directed pairs
-    def _edges():
-        if connectivity_graph is None:
-            for i in range(qubit_count):
-                for j in range(qubit_count):
-                    if i != j:
-                        yield (i, j)
-            return
-        if isinstance(connectivity_graph, dict):
-            for s, nbrs in connectivity_graph.items():
-                s_int = int(s)
-                for d in nbrs:
-                    yield (s_int, int(d))
-            return
-        # iterable of undirected pairs
-        for (i, j) in connectivity_graph:
-            i, j = int(i), int(j)
-            if i != j:
-                yield (i, j)
-                yield (j, i)
+    # building coupling map for fully connected device
+    if not connectivity_graph:
+        for src in range(qubit_count):
+            for dst in range(qubit_count):
+                if src != dst:
+                    if std_props and qiskit_gate_name:
+                        # Add fidelity/duration info if available
+                        braket_gate = _normalize_2q_gate_for_braket(qiskit_gate_name)
+                        physical_src = qubit_mapping["idx_to_physical"][src] if qubit_mapping else src
+                        physical_dst = qubit_mapping["idx_to_physical"][dst] if qubit_mapping else dst
+                        dur = _get_twoq_gate_duration(std_props, physical_src, physical_dst, braket_gate)
+                        fid = _get_twoq_gate_fidelity(std_props, physical_src, physical_dst, braket_gate)
+                        err = _err_from_fidelity(fid)
+                        instruction_props[(src, dst)] = InstructionProperties(duration=dur, error=err)
+                    else:
+                        instruction_props[(src, dst)] = None
+                        instruction_props[(dst, src)] = None
 
-    for i, j in _edges():
-        # Convert logical indices to physical qubit IDs if mapping exists
-        if qubit_mapping:
-            physical_i = qubit_mapping["idx_to_physical"][i]
-            physical_j = qubit_mapping["idx_to_physical"][j]
-        else:
-            physical_i, physical_j = i, j
-            
-        dur = _get_twoq_gate_duration(std_props, physical_i, physical_j, braket_gate)
-        fid = _get_twoq_gate_fidelity(std_props, physical_i, physical_j, braket_gate)
-        err = _err_from_fidelity(fid)
-        instr_props[(i, j)] = InstructionProperties(duration=dur, error=err)
+    # building coupling map for device with connectivity graph
+    else:
+        for src, connections in connectivity_graph.items():
+            for dst in connections:
+                if std_props and qiskit_gate_name:
+                    # Add fidelity/duration info if available
+                    braket_gate = _normalize_2q_gate_for_braket(qiskit_gate_name)
+                    physical_src = qubit_mapping["idx_to_physical"][int(src)] if qubit_mapping else int(src)
+                    physical_dst = qubit_mapping["idx_to_physical"][int(dst)] if qubit_mapping else int(dst)
+                    dur = _get_twoq_gate_duration(std_props, physical_src, physical_dst, braket_gate)
+                    fid = _get_twoq_gate_fidelity(std_props, physical_src, physical_dst, braket_gate)
+                    err = _err_from_fidelity(fid)
+                    instruction_props[(int(src), int(dst))] = InstructionProperties(duration=dur, error=err)
+                else:
+                    instruction_props[(int(src), int(dst))] = None
 
-    return instr_props
+    return instruction_props
 
 def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
     """Device qubit indices may be noncontiguous (label between x0 and x7, x being
