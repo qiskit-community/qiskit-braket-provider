@@ -421,7 +421,8 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
 
     # Create mapping from physical qubit IDs to contiguous indices for Qiskit compatibility
     physical_qubits = list(connectivity.connectivityGraph.keys()) if connectivity_graph else None
-    qubit_mapping = _create_qubit_mapping(physical_qubits, connectivity_graph, qubit_count)
+    logical_indices = list(connectivity_graph.keys()) if connectivity_graph else None
+    qubit_mapping = _create_qubit_mapping(physical_qubits, logical_indices)
 
     std = getattr(properties, "standardized", None)
     # prefer the provider-declared native set over supportedOperations (which can include non-native)
@@ -470,16 +471,11 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
     return target
 
 
-def _create_qubit_mapping(physical_qubits, connectivity_graph, qubit_count):
+def _create_qubit_mapping(physical_qubits, logical_indices):
     """Create mapping between physical qubit IDs and logical indices for Qiskit compatibility."""
-    if not physical_qubits or not connectivity_graph:
+    if not physical_qubits or not logical_indices:
         return None
-    
-    # For devices with contiguous numbering, no mapping needed
-    logical_indices = list(connectivity_graph.keys())
-    if logical_indices == list(range(qubit_count)):
-        return None
-    
+
     return {
         "physical_to_idx": {physical_qubits[i]: logical_indices[i] for i in range(len(physical_qubits))},
         "idx_to_physical": {logical_indices[i]: physical_qubits[i] for i in range(len(physical_qubits))}
