@@ -422,16 +422,35 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
     # Create mapping from physical qubit IDs to contiguous indices for Qiskit compatibility
     physical_qubits = list(connectivity.connectivityGraph.keys()) if connectivity_graph else None
     logical_indices = list(connectivity_graph.keys()) if connectivity_graph else None
-    qubit_mapping = _create_qubit_mapping(physical_qubits, logical_indices)
+    qubit_mapping = None
+    if physical_qubits and logical_indices:
+        qubit_mapping = {
+            "physical_to_idx": {physical_qubits[i]: logical_indices[i] for i in range(len(physical_qubits))},
+            "idx_to_physical": {logical_indices[i]: physical_qubits[i] for i in range(len(physical_qubits))}
+        }
 
     std = getattr(properties, "standardized", None)
-    # prefer the provider-declared native set over supportedOperations (which can include non-native)
-    native_ops = {op["name"].lower() for op in properties.provider.specs.get("instructions", [])}
 
-    for operation in action_properties.supportedOperations:
+    # Prefer provider-declared instruction set over supportedOperations (which can include non-native)
+    provider_ops = None
+    if hasattr(properties, "provider"):
+        provider = properties.provider
+        if hasattr(provider, "specs") and provider.specs is not None:
+            if isinstance(provider.specs, dict):
+                provider_ops = provider.specs.get("instructions")
+            else:
+                provider_ops = getattr(provider.specs, "instructions", None)
+
+    # Fall back to supportedOperations if provider_ops is not available
+    operations = (
+        {op.get("name", "").lower() for op in provider_ops} if provider_ops
+        else set(getattr(action_properties, "supportedOperations", []) or [])
+    )
+
+    for operation in operations:
         instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
 
-        if instruction and instruction.name.lower() in native_ops:
+        if instruction:
             # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
             match instruction.num_qubits:
                 case 1:
@@ -440,8 +459,28 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                         qarg_map = {}
                         for q in range(qubit_count):
                             physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
-                            dur = _get_oneq_gate_duration(std, physical_q, instruction.name)
-                            err = _get_oneq_gate_error(std, physical_q, use_simultaneous=True)
+                            if instruction.name == "measure":
+                                # Use global readout duration and readout fidelity for measurements
+                                dur = getattr(std, "readoutDuration", None)
+                                dur = float(dur) if isinstance(dur, (int, float)) else None
+                                f, _, _ = _select_oneq_fidelity(std, physical_q, prefer="READOUT", allow_simultaneous=False)
+                                err = None if f is None else max(0.0, 1.0 - float(f))
+                            else:
+                                # Get gate duration from oneQubitGateDuration list
+                                dur = None
+                                if std and hasattr(std, "oneQubitProperties"):
+                                    entry = std.oneQubitProperties.get(str(physical_q))
+                                    if entry:
+                                        dur_list = getattr(entry, "oneQubitGateDuration", None)
+                                        if dur_list:
+                                            gn = instruction.name.lower()
+                                            for item in dur_list:
+                                                if getattr(item, "gateName", "").lower() == gn:
+                                                    dur = getattr(item, "duration", None)
+                                                    break
+                                # Get gate error from RB fidelity
+                                f, _, _ = _select_oneq_fidelity(std, physical_q, prefer="RB", allow_simultaneous=True)
+                                err = None if f is None else max(0.0, 1.0 - float(f))
                             qarg_map[(q,)] = InstructionProperties(duration=dur, error=err)
                         target.add_instruction(instruction, qarg_map)
                     else:
@@ -452,68 +491,47 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                         _2q_instruction_properties(qubit_count, connectivity_graph, std, instruction.name, qubit_mapping),
                     )
 
-    # Add measurement with fidelity info if available
-    if std:
-        meas_map = {}
-        for q in range(qubit_count):
-            physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
-            meas_dur = _get_measure_duration(std, physical_q)
-            meas_err = _get_readout_error(std, physical_q)
-            meas_map[(q,)] = InstructionProperties(duration=meas_dur, error=meas_err)
-        target.add_instruction(Measure(), meas_map)
-    else:
-        target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
+    # Add measurement if not already added
+    if "measure" not in operations:
+        if std:
+            meas_map = {}
+            for q in range(qubit_count):
+                physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
+                dur = getattr(std, "readoutDuration", None)
+                dur = float(dur) if isinstance(dur, (int, float)) else None
+                f, _, _ = _select_oneq_fidelity(std, physical_q, prefer="READOUT", allow_simultaneous=False)
+                err = None if f is None else max(0.0, 1.0 - float(f))
+                meas_map[(q,)] = InstructionProperties(duration=dur, error=err)
+            target.add_instruction(Measure(), meas_map)
+        else:
+            target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
 
     # Add qubit properties (T1, T2) if available
-    if std and qubit_mapping:
-        _apply_qubit_properties(target, std, qubit_mapping)
+    if std and qubit_mapping and hasattr(std, "oneQubitProperties"):
+        # Build properties for each logical qubit index
+        for logical_idx, physical_q in qubit_mapping["idx_to_physical"].items():
+            # Get T1 coherence time
+            t1 = None
+            entry = std.oneQubitProperties.get(str(physical_q))
+            if entry:
+                coherence_time = getattr(entry, "T1", None)
+                if coherence_time:
+                    t1 = getattr(coherence_time, "value", None)
+            
+            # Get T2 coherence time
+            t2 = None
+            if entry:
+                coherence_time = getattr(entry, "T2", None)
+                if coherence_time:
+                    t2 = getattr(coherence_time, "value", None)
+            
+            if t1 is not None or t2 is not None:
+                props = QubitProperties(t1=t1, t2=t2)
+                if hasattr(target, "set_qubit_properties") and callable(getattr(target, "set_qubit_properties")):
+                    target.set_qubit_properties(logical_idx, props)
 
     return target
 
-
-def _create_qubit_mapping(physical_qubits, logical_indices):
-    """Create mapping between physical qubit IDs and logical indices for Qiskit compatibility."""
-    if not physical_qubits or not logical_indices:
-        return None
-
-    return {
-        "physical_to_idx": {physical_qubits[i]: logical_indices[i] for i in range(len(physical_qubits))},
-        "idx_to_physical": {logical_indices[i]: physical_qubits[i] for i in range(len(physical_qubits))}
-    }
-
-
-def _apply_qubit_properties(target: Target, std_props, qubit_mapping) -> None:
-    """Attach per-qubit T1/T2 properties to Target if available."""
-    if not std_props or not hasattr(std_props, "oneQubitProperties"):
-        return
-    
-    # Build properties for each logical qubit index
-    for logical_idx, physical_q in qubit_mapping["idx_to_physical"].items():
-        t1 = _get_oneq_coherence_time(std_props, physical_q, "T1")
-        t2 = _get_oneq_coherence_time(std_props, physical_q, "T2")
-        
-        if t1 is not None or t2 is not None:
-            props = QubitProperties(t1=t1, t2=t2)
-            if hasattr(target, "set_qubit_properties") and callable(getattr(target, "set_qubit_properties")):
-                target.set_qubit_properties(logical_idx, props)
-
-
-def _get_oneq_coherence_time(std_props, q: int, var_name: str) -> float | None:
-    """Extract T1 or T2 coherence time for a specific qubit."""
-    if not std_props or not hasattr(std_props, "oneQubitProperties"):
-        return None
-    entry = std_props.oneQubitProperties.get(str(q))
-    if entry:
-        coherence_time = getattr(entry, var_name, None)
-        if coherence_time:
-            return getattr(coherence_time, "value", None)
-    return None
-
-
-def _normalize_2q_gate_for_braket(op_name: str) -> str:
-    """Map Qiskit op names to Braket standardized gateName."""
-    op = op_name.lower()
-    return "cnot" if op == "cx" else op  # extend if needed (e.g., rxx/ms variants)
 
 def _braket_edge_key(i: int, j: int) -> str:
     """Braket standardized twoQubitProperties keys look like 'min-max'."""
@@ -570,39 +588,6 @@ def _select_oneq_fidelity(std_props, q: int, prefer: str = "RB", allow_simultane
     return None, None, None
 
 
-def _get_oneq_gate_error(std_props, q: int, use_simultaneous: bool = True) -> float | None:
-    """
-    Per-gate 1Q error = 1 - fidelity, using RB (or simultaneous RB as fallback).
-    """
-    f, _, _ = _select_oneq_fidelity(std_props, q, prefer="RB", allow_simultaneous=use_simultaneous)
-    return None if f is None else max(0.0, 1.0 - float(f))
-
-
-def _get_readout_error(std_props, q: int) -> float | None:
-    """
-    Readout error = 1 - readout fidelity.
-    """
-    f, _, _ = _select_oneq_fidelity(std_props, q, prefer="READOUT", allow_simultaneous=False)
-    return None if f is None else max(0.0, 1.0 - float(f))
-
-def _get_oneq_gate_duration(std_props, q: int, gate_name: str) -> float | None:
-    """
-    Try to fetch per-gate 1Q duration:
-    standardized.oneQubitProperties[str(q)].oneQubitGateDuration = [{gateName, duration}, ...]
-    """
-    if not std_props or not hasattr(std_props, "oneQubitProperties"):
-        return None
-    entry = std_props.oneQubitProperties.get(str(q))
-    if not entry:
-        return None
-    dur_list = getattr(entry, "oneQubitGateDuration", None)
-    if dur_list:
-        gn = gate_name.lower()
-        for item in dur_list:
-            if getattr(item, "gateName", "").lower() == gn:
-                return getattr(item, "duration", None)
-    return None
-
 def _get_twoq_gate_fidelity(std_props, i: int, j: int, braket_gate: str) -> float | None:
     """
     standardized.twoQubitProperties['i-j'].twoQubitGateFidelity = [{gateName, fidelity}, ...]
@@ -631,19 +616,6 @@ def _get_twoq_gate_duration(std_props, i: int, j: int, braket_gate: str) -> floa
             return getattr(it, "duration", None)
     return None
 
-def _get_measure_duration(std_props, q: int) -> float | None:
-    """
-    Some providers expose a device-wide readoutDuration; per-qubit variants are uncommon.
-    """
-    if not std_props:
-        return None
-    val = getattr(std_props, "readoutDuration", None)
-    return float(val) if isinstance(val, (int, float)) else None
-
-def _err_from_fidelity(fid: float | None) -> float | None:
-    return None if fid is None else max(0.0, 1.0 - float(fid))
-
-
 def _2q_instruction_properties(qubit_count, connectivity_graph, std_props=None, qiskit_gate_name=None, qubit_mapping=None):
     instruction_props = {}
 
@@ -654,12 +626,12 @@ def _2q_instruction_properties(qubit_count, connectivity_graph, std_props=None, 
                 if src != dst:
                     if std_props and qiskit_gate_name:
                         # Add fidelity/duration info if available
-                        braket_gate = _normalize_2q_gate_for_braket(qiskit_gate_name)
+                        braket_gate = "cnot" if qiskit_gate_name.lower() == "cx" else qiskit_gate_name.lower()
                         physical_src = qubit_mapping["idx_to_physical"][src] if qubit_mapping else src
                         physical_dst = qubit_mapping["idx_to_physical"][dst] if qubit_mapping else dst
                         dur = _get_twoq_gate_duration(std_props, physical_src, physical_dst, braket_gate)
                         fid = _get_twoq_gate_fidelity(std_props, physical_src, physical_dst, braket_gate)
-                        err = _err_from_fidelity(fid)
+                        err = None if fid is None else max(0.0, 1.0 - float(fid))
                         instruction_props[(src, dst)] = InstructionProperties(duration=dur, error=err)
                     else:
                         instruction_props[(src, dst)] = None
@@ -671,12 +643,12 @@ def _2q_instruction_properties(qubit_count, connectivity_graph, std_props=None, 
             for dst in connections:
                 if std_props and qiskit_gate_name:
                     # Add fidelity/duration info if available
-                    braket_gate = _normalize_2q_gate_for_braket(qiskit_gate_name)
+                    braket_gate = "cnot" if qiskit_gate_name.lower() == "cx" else qiskit_gate_name.lower()
                     physical_src = qubit_mapping["idx_to_physical"][int(src)] if qubit_mapping else int(src)
                     physical_dst = qubit_mapping["idx_to_physical"][int(dst)] if qubit_mapping else int(dst)
                     dur = _get_twoq_gate_duration(std_props, physical_src, physical_dst, braket_gate)
                     fid = _get_twoq_gate_fidelity(std_props, physical_src, physical_dst, braket_gate)
-                    err = _err_from_fidelity(fid)
+                    err = None if fid is None else max(0.0, 1.0 - float(fid))
                     instruction_props[(int(src), int(dst))] = InstructionProperties(duration=dur, error=err)
                 else:
                     instruction_props[(int(src), int(dst))] = None
