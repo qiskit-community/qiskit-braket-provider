@@ -1119,4 +1119,17 @@ class TestThereAndBackAgain(TestCase):
                     Operator(qiskit_circuit).data, Operator(qiskit_tolkien_circuit).data
                 )
 
+    def test_simple_travels(self):
+        qc = QuantumCircuit(1,1)
+        qc.rz(0.1, 0)
+        circ = Circuit().rz(0,0.1)
         
+        bqc1 = to_qiskit(
+            to_braket(qc), add_measurements=False) # passes 
+        bqc2 = to_qiskit(
+            to_braket(
+                to_qiskit(circ, add_measurements=False)),
+            add_measurements=False) # fails
+        assert np.allclose(
+            Operator(bqc1).data, Operator(bqc2).data
+        )
