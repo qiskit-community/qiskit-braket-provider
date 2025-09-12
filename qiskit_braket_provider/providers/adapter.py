@@ -624,7 +624,6 @@ def to_braket(
 def _create_free_parameters(operation):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
-        print(i, param)
         if isinstance(param, ParameterVectorElement):
             renamed_param_name = _rename_param_vector_element(param)
             params[i] = FreeParameter(renamed_param_name)
@@ -762,19 +761,19 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     return qiskit_qi.Kraus(gate_params)
 
 
-def sy_to_qis_converter(expr: Mul | Add | Symbol):
-    """convert a sympy expression a qiskit one"""
+def sympy_to_qiskit_converter(expr: Mul | Add | Symbol) -> ParameterExpression | Parameter:
+    """ convert a sympy expression to qiskit Parameters recursively """
+    print(type(expr),isinstance(expr, Mul))
     if isinstance(expr, Mul):
-        return sy_to_qis_converter(expr.args[0]) * sy_to_qis_converter(expr.args[1])
+        return sympy_to_qiskit_converter(expr.args[0]) * sympy_to_qiskit_converter(expr.args[1])
     elif isinstance(expr, Add):
-        return sy_to_qis_converter(expr.args[0]) + sy_to_qis_converter(expr.args[1])
+        return sympy_to_qiskit_converter(expr.args[0]) + sympy_to_qiskit_converter(expr.args[1])
     elif isinstance(expr, Symbol):
         return Parameter(expr.name)
-    elif hasattr(expr, "is_number"):
-        if expr.is_number:
-            return float(expr)
+    elif hasattr(expr, "is_number") and expr.is_number:
+        return float(expr)
     else:
-        raise TypeError
+        raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
 
 
 def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) -> Instruction:
@@ -789,7 +788,7 @@ def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) ->
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
         if hasattr(value, "expression"):
-            value = sy_to_qis_converter(coeff * value.expression)
+            value = sympy_to_qiskit_converter(coeff * value.expression)
         else:
             value = coeff * value
         # get value
