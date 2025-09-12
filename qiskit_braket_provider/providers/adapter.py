@@ -13,6 +13,7 @@ from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
 from qiskit_ionq import add_equivalences, ionq_gates
+from sympy import Add, Mul, Symbol
 
 import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
@@ -623,6 +624,7 @@ def to_braket(
 def _create_free_parameters(operation):
     params = operation.params if hasattr(operation, "params") else []
     for i, param in enumerate(params):
+        print(i, param)
         if isinstance(param, ParameterVectorElement):
             renamed_param_name = _rename_param_vector_element(param)
             params[i] = FreeParameter(renamed_param_name)
@@ -693,11 +695,14 @@ def _validate_name_conflicts(parameters):
         )
 
 
-def to_qiskit(circuit: Circuit) -> QuantumCircuit:
+def to_qiskit(circuit: Circuit, add_measurements: bool = True) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
 
     Args:
         circuit (Circuit): Braket quantum circuit
+
+    Kwargs:
+        add_measurements (bool) : whether or not to append measurements in the conversion
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
@@ -710,22 +715,15 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     )
     qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements)
     qubit_map = {int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))}
-    dict_param = {}
     cbit = 0
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
         gate_params = []
-        if hasattr(instruction.operator, "parameters"):
-            for value in instruction.operator.parameters:
-                if isinstance(value, FreeParameter):
-                    if value.name not in dict_param:
-                        dict_param[value.name] = Parameter(value.name)
-                    gate_params.append(dict_param[value.name])
-                else:
-                    gate_params.append(value)
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(instruction.operator.to_matrix())
         else:
+            if hasattr(instruction.operator, "parameters"):
+                gate_params = instruction.operator.parameters
             gate = _create_qiskit_gate(gate_name, gate_params)
 
         if instruction.power != 1:
@@ -742,7 +740,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
             cbit += 1
         else:
             qiskit_circuit.append(gate, target)
-    if num_measurements == 0:
+    if num_measurements == 0 and add_measurements:
         qiskit_circuit.measure_all()
     return qiskit_circuit
 
@@ -764,17 +762,38 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     return qiskit_qi.Kraus(gate_params)
 
 
+def sy_to_qis_converter(expr: Mul | Add | Symbol):
+    """convert a sympy expression a qiskit one"""
+    if isinstance(expr, Mul):
+        return sy_to_qis_converter(expr.args[0]) * sy_to_qis_converter(expr.args[1])
+    elif isinstance(expr, Add):
+        return sy_to_qis_converter(expr.args[0]) + sy_to_qis_converter(expr.args[1])
+    elif isinstance(expr, Symbol):
+        return Parameter(expr.name)
+    elif hasattr(expr, "is_number"):
+        if expr.is_number:
+            return float(expr)
+    else:
+        raise TypeError
+
+
 def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) -> Instruction:
+    """convert braket FreeParameterExpression to Qiskit ParameterExpressions"""
     gate_instance = _GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
     if gate_instance is None:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     gate_cls = gate_instance.__class__
     new_gate_params = []
+    #
     for param_expression, value in zip(gate_instance.params, gate_params):
-        # Assumes that each Qiskit gate has one free parameter per expression
-        param = list(param_expression.parameters)[0]
-        assigned = param_expression.assign(param, value)
-        new_gate_params.append(assigned)
+        param = list(param_expression.parameters)[0].sympify()
+        coeff = float(param_expression.sympify().subs(param, 1))
+        if hasattr(value, "expression"):
+            value = sy_to_qis_converter(coeff * value.expression)
+        else:
+            value = coeff * value
+        # get value
+        new_gate_params.append(value)
     return gate_cls(*new_gate_params)
 
 

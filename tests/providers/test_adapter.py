@@ -1050,3 +1050,55 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure(0, 1)
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+
+class TestThereAndBackAgain(TestCase):
+    def test_all_standard_gates(self):
+        """
+        Tests whether or not we can loop
+        """
+
+        gate_set = [
+            attr
+            for attr in dir(Gate)
+            if attr[0].isupper() and attr.lower() in _GATE_NAME_TO_QISKIT_GATE
+        ]
+
+        # pytest.mark.parametrize is incompatible with TestCase
+        param_sets = [
+            [0.1, 0.2, 0.3],
+            [
+                FreeParameter("alpha"),
+                FreeParameter("beta"),
+                FreeParameter("gamma"),
+            ],
+        ]
+        for gate_name in gate_set:
+            for params_braket in param_sets:
+                gate = getattr(Gate, gate_name)
+                if issubclass(gate, AngledGate):
+                    op = gate(params_braket[0])
+                elif issubclass(gate, DoubleAngledGate):
+                    op = gate(params_braket[0], params_braket[1])
+                elif issubclass(gate, TripleAngledGate):
+                    op = gate(*params_braket)
+                else:
+                    op = gate()
+                target = range(op.qubit_count)
+                instr = Instruction(op, target)
+
+                braket_circuit = Circuit().add_instruction(instr)
+                qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+                # deep copy is necessary to avoid parameter table inconsistency in the MS gate
+                qiskit_tolkien_circuit = to_qiskit(
+                    to_braket(qiskit_circuit.copy()), add_measurements=False
+                )
+
+                num_para = len(qiskit_circuit.parameters)
+                values = [0.5, 0.4, 0.8]
+
+                qiskit_circuit = qiskit_circuit.assign_parameters(values[:num_para], inplace=False)
+                qiskit_tolkien_circuit = qiskit_tolkien_circuit.assign_parameters(values[:num_para])
+                assert np.allclose(
+                    Operator(qiskit_circuit).data, Operator(qiskit_tolkien_circuit).data
+                )
