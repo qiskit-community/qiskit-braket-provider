@@ -785,13 +785,13 @@ def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) ->
     new_gate_params = []
     #
     for param_expression, value in zip(gate_instance.params, gate_params):
+        # extract the coefficient in the templated gate 
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
         if hasattr(value, "expression"):
             value = sympy_to_qiskit_converter(coeff * value.expression)
-        else:
+        else: # simply a numeric type 
             value = coeff * value
-        # get value
         new_gate_params.append(value)
     return gate_cls(*new_gate_params)
 
