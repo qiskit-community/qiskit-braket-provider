@@ -763,7 +763,6 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
 
 def sympy_to_qiskit_converter(expr: Mul | Add | Symbol) -> ParameterExpression | Parameter:
     """ convert a sympy expression to qiskit Parameters recursively """
-    print(type(expr),isinstance(expr, Mul))
     if isinstance(expr, Mul):
         return sympy_to_qiskit_converter(expr.args[0]) * sympy_to_qiskit_converter(expr.args[1])
     elif isinstance(expr, Add):
