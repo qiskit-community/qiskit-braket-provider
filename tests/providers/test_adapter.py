@@ -842,7 +842,7 @@ class TestFromBraket(TestCase):
 
                 braket_circuit = Circuit().add_instruction(instr)
                 qiskit_circuit = to_qiskit(braket_circuit)
-                param_uuids = {param.name: param._uuid for param in qiskit_circuit.parameters}
+                param_uuids = {param.name: param.uuid for param in qiskit_circuit.parameters}
                 params_qiskit = [
                     (
                         Parameter(param.name, uuid=param_uuids.get(param.name))
@@ -875,7 +875,7 @@ class TestFromBraket(TestCase):
         braket_circuit = Circuit().rx(0, FreeParameter("alpha"))
         qiskit_circuit = to_qiskit(braket_circuit)
 
-        uuid = qiskit_circuit.parameters[0]._uuid
+        uuid = qiskit_circuit.parameters[0].uuid
 
         expected_qiskit_circuit = QuantumCircuit(1)
         expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid), 0)
