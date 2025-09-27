@@ -19,9 +19,9 @@ from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from qiskit_braket_provider.providers.adapter import (
+    _BRAKET_GATE_NAME_TO_QISKIT_GATE,
     _BRAKET_SUPPORTED_NOISES,
-    _GATE_NAME_TO_BRAKET_GATE,
-    _GATE_NAME_TO_QISKIT_GATE,
+    _QISKIT_GATE_NAME_TO_BRAKET_GATE,
     _get_controlled_gateset,
     _validate_angle_restrictions,
     convert_qiskit_to_braket_circuit,
@@ -276,12 +276,12 @@ class TestAdapter(TestCase):
 
         self.assertEqual(
             set(qiskit_to_braket_gate_names.keys()),
-            set(_GATE_NAME_TO_BRAKET_GATE.keys()),
+            set(_QISKIT_GATE_NAME_TO_BRAKET_GATE.keys()),
         )
 
         self.assertEqual(
             set(braket_to_qiskit_gate_names.values()),
-            set(_GATE_NAME_TO_QISKIT_GATE.keys()),
+            set(_BRAKET_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
     def test_type_error_on_bad_input(self):
@@ -864,7 +864,7 @@ class TestFromBraket(TestCase):
         gate_set = [
             attr
             for attr in dir(Gate)
-            if attr[0].isupper() and attr.lower() in _GATE_NAME_TO_QISKIT_GATE
+            if attr[0].isupper() and attr.lower() in _BRAKET_GATE_NAME_TO_QISKIT_GATE
         ]
 
         # pytest.mark.parametrize is incompatible with TestCase
@@ -904,7 +904,7 @@ class TestFromBraket(TestCase):
                 ]
 
                 expected_qiskit_circuit = QuantumCircuit(op.qubit_count)
-                qiskit_gate = _GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower())
+                qiskit_gate = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name.lower())
                 expected_qiskit_circuit.append(qiskit_gate, target)
                 expected_qiskit_circuit.measure_all()
                 expected_qiskit_circuit = expected_qiskit_circuit.assign_parameters(
