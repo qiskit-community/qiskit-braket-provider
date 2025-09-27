@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 from botocore import errorfactory
+from braket.devices import LocalSimulator
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import TwoLocal
@@ -22,7 +23,7 @@ from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
 from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
-from qiskit_braket_provider import AWSBraketProvider, exception, version
+from qiskit_braket_provider import BraketProvider, exception, version
 from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
 from qiskit_braket_provider.providers.adapter import aws_device_to_target
 from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
@@ -69,7 +70,7 @@ class TestBraketBackend(TestCase):
     def test_invalid_device(self):
         """Test the device method of BraketBackend."""
         with self.assertRaises(NotImplementedError):
-            _ = MockBraketBackend(name="default")._device
+            _ = MockBraketBackend(LocalSimulator(), name="default")._device
 
 
 class TestBraketAwsBackend(TestCase):
@@ -132,7 +133,7 @@ class TestBraketAwsBackend(TestCase):
     def test_local_backend_output(self):
         """Test local backend output"""
         first_backend = BraketLocalBackend(name="braket_dm")
-        self.assertEqual(first_backend.backend_name, "braket_dm")
+        self.assertEqual(first_backend.name, "braket_dm")
 
     def test_local_backend_circuit(self):
         """Tests local backend with circuit."""
@@ -379,7 +380,7 @@ class TestBraketAwsBackend(TestCase):
     @unittest.skip("Call to external resources.")
     def test_retrieve_job(self):
         """Tests retrieve task by id."""
-        backend = AWSBraketProvider().get_backend("SV1")
+        backend = BraketProvider().get_backend("SV1")
         circuits = [
             transpile(random_circuit(3, 2, seed=seed), backend=backend, seed_transpiler=42)
             for seed in range(3)
@@ -403,7 +404,7 @@ class TestBraketAwsBackend(TestCase):
         Note that in case of Rigetti devices, both of those parameters are
         needed if one wishes to run instructions wrapped in verbatim boxes.
         """
-        device = AWSBraketProvider().get_backend("Aspen-M-2")
+        device = BraketProvider().get_backend("Aspen-M-2")
         circuit = QuantumCircuit(2)
         circuit.cx(0, 1)
 
@@ -413,7 +414,7 @@ class TestBraketAwsBackend(TestCase):
     @unittest.skip("Call to external resources.")
     def test_running_circuit_with_disabled_rewiring_requires_matching_topolog(self):
         """Tests working of disable_qubit_rewiring=True."""
-        device = AWSBraketProvider().get_backend("Aspen-M-2")
+        device = BraketProvider().get_backend("Aspen-M-2")
         circuit = QuantumCircuit(4)
         circuit.cz(0, 3)
 
@@ -423,7 +424,7 @@ class TestBraketAwsBackend(TestCase):
     @unittest.skip("Call to external resources.")
     def test_native_circuits_with_measurements_can_be_run_in_verbatim_mode(self):
         """Tests running circuit with measurement in verbatim mode."""
-        backend = AWSBraketProvider().get_backend("Aspen-M-2")
+        backend = BraketProvider().get_backend("Aspen-M-2")
         circuit = QuantumCircuit(2)
         circuit.cz(0, 1)
         circuit.measure_all()

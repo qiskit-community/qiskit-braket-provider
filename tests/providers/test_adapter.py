@@ -33,60 +33,6 @@ from qiskit_braket_provider.providers.adapter import (
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
-standard_gates = [
-    qiskit_gates.IGate(),
-    qiskit_gates.SXGate(),
-    qiskit_gates.XGate(),
-    qiskit_gates.CXGate(),
-    qiskit_gates.RZGate(Parameter("λ")),
-    qiskit_gates.RGate(Parameter("ϴ"), Parameter("φ")),
-    qiskit_gates.C3SXGate(),
-    qiskit_gates.CCXGate(),
-    qiskit_gates.DCXGate(),
-    qiskit_gates.CHGate(),
-    qiskit_gates.CPhaseGate(Parameter("ϴ")),
-    qiskit_gates.CRXGate(Parameter("ϴ")),
-    qiskit_gates.CRYGate(Parameter("ϴ")),
-    qiskit_gates.CRZGate(Parameter("ϴ")),
-    qiskit_gates.CSwapGate(),
-    qiskit_gates.CSXGate(),
-    qiskit_gates.CUGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ"), Parameter("γ")),
-    qiskit_gates.CU1Gate(Parameter("λ")),
-    qiskit_gates.CU3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
-    qiskit_gates.CYGate(),
-    qiskit_gates.CZGate(),
-    qiskit_gates.CCZGate(),
-    qiskit_gates.HGate(),
-    qiskit_gates.PhaseGate(Parameter("ϴ")),
-    qiskit_gates.RCCXGate(),
-    qiskit_gates.RC3XGate(),
-    qiskit_gates.RXGate(Parameter("ϴ")),
-    qiskit_gates.RXXGate(Parameter("ϴ")),
-    qiskit_gates.RYGate(Parameter("ϴ")),
-    qiskit_gates.RYYGate(Parameter("ϴ")),
-    qiskit_gates.RZZGate(Parameter("ϴ")),
-    qiskit_gates.RZXGate(Parameter("ϴ")),
-    qiskit_gates.XXMinusYYGate(Parameter("ϴ"), Parameter("φ")),
-    qiskit_gates.XXPlusYYGate(Parameter("ϴ"), Parameter("φ")),
-    qiskit_gates.ECRGate(),
-    qiskit_gates.SGate(),
-    qiskit_gates.SdgGate(),
-    qiskit_gates.CSGate(),
-    qiskit_gates.CSdgGate(),
-    qiskit_gates.SwapGate(),
-    qiskit_gates.iSwapGate(),
-    qiskit_gates.SXdgGate(),
-    qiskit_gates.TGate(),
-    qiskit_gates.TdgGate(),
-    qiskit_gates.UGate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
-    qiskit_gates.U1Gate(Parameter("λ")),
-    qiskit_gates.U2Gate(Parameter("φ"), Parameter("λ")),
-    qiskit_gates.U3Gate(Parameter("ϴ"), Parameter("φ"), Parameter("λ")),
-    qiskit_gates.YGate(),
-    qiskit_gates.ZGate(),
-]
-
-
 qiskit_ionq_gates = [
     ionq_gates.GPIGate(Parameter("φ")),
     ionq_gates.GPI2Gate(Parameter("φ")),
@@ -158,7 +104,10 @@ class TestAdapter(TestCase):
 
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
-        for standard_gate in standard_gates:
+        gates = qiskit_gates.get_standard_gate_name_mapping()
+        for name in {"delay", "global_phase", "measure", "reset"}:
+            gates.pop(name)
+        for standard_gate in gates.values():
             qiskit_circuit = QuantumCircuit(standard_gate.num_qubits)
             qiskit_circuit.append(standard_gate, range(standard_gate.num_qubits))
 
@@ -1000,7 +949,7 @@ class TestFromBraket(TestCase):
 
         with self.assertRaises(TypeError):
             with patch.dict(
-                "qiskit_braket_provider.providers.adapter._GATE_NAME_TO_QISKIT_GATE",
+                "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
                 {"cnot": None},
             ):
                 to_qiskit(circuit)

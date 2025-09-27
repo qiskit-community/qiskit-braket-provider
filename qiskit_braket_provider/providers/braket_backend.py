@@ -41,8 +41,8 @@ T = TypeVar("T", bound=Device, covariant=True)
 class BraketBackend(BackendV2, Generic[T], ABC):
     """BraketBackend."""
 
-    def __init__(self, device: T, **fields):
-        super().__init__(name=device.name, **fields)
+    def __init__(self, device: T, name: str, **fields):
+        super().__init__(name=name, **fields)
         self._device = device
 
     def __repr__(self):
@@ -97,8 +97,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
             name: name of backend
             **fields: extra fields
         """
-        super().__init__(LocalSimulator(backend=name), **fields)
-        self.backend_name = name
+        super().__init__(LocalSimulator(backend=name), name, **fields)
         self._target = local_simulator_to_target(self._device)
         self._gateset = self.get_gateset()
         self.status = self._device.status
@@ -145,8 +144,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
         verbatim = options.pop("verbatim", False)
         circuits: list[Circuit] = [
             to_braket(circ, self._gateset if not verbatim else None, verbatim)
-            for circ
-            in convert_input
+            for circ in convert_input
         ]
 
         shots = options["shots"] if "shots" in options else 1024
@@ -220,8 +218,8 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             raise ValueError("Can only specify one of arn and device")
         super().__init__(
             AwsDevice(arn) if arn else device,
+            name,
             provider=provider,
-            name=name,
             description=description,
             online_date=online_date,
             backend_version=backend_version,
@@ -339,9 +337,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             del options["meas_level"]
 
         target, basis_gates, angle_restrictions = (
-            self._target, None, native_angle_restrictions(self._device.properties)
-        ) if native else (
-            None, self._gateset, None
+            (self._target, None, native_angle_restrictions(self._device.properties))
+            if native
+            else (None, self._gateset, None)
         )
 
         braket_circuits = (
@@ -352,7 +350,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                     circ,
                     target=target,
                     basis_gates=basis_gates,
-                    angle_restrictions=angle_restrictions
+                    angle_restrictions=angle_restrictions,
                 )
                 for circ in circuits
             ]

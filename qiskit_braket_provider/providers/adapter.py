@@ -160,14 +160,10 @@ _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
 }
 
 _TRANSLATABLE_STANDARD_QISKIT_GATE_NAMES = (
-    (
-        set(_QISKIT_GATE_NAME_TO_BRAKET_GATE.keys())
-        .union(set(_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES))
-        .union({"measure", "barrier", "reset"})
-    )
-    .intersection(set(get_standard_gate_name_mapping().keys()))
-    .intersection({"MeasureFF"})
-)
+    set(_QISKIT_GATE_NAME_TO_BRAKET_GATE.keys())
+    .union(set(_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES))
+    .union({"measure", "barrier", "reset"})
+).intersection(set(get_standard_gate_name_mapping().keys()))
 
 _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     "u": qiskit_gates.UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
@@ -323,7 +319,7 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
             break
     return gateset.union(
         _get_controlled_gateset(gateset, max_control)
-    # transpile only accepts standard gates in basis_gates
+        # transpile only accepts standard gates in basis_gates
     ).intersection(_TRANSLATABLE_STANDARD_QISKIT_GATE_NAMES)
 
 
@@ -386,6 +382,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
                 "Cannot convert to target. "
                 f"{device.properties.__class__} device capabilities are not supported."
             )
+
 
 def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapabilities):
     target = Target(description=description, num_qubits=properties.paradigm.qubitCount)
