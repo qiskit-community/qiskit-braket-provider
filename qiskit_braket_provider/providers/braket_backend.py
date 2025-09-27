@@ -11,7 +11,7 @@ from typing import Generic, TypeVar
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, QubitProperties
 
-from braket.aws import AwsDevice, AwsQuantumTask, AwsDeviceType
+from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType

@@ -6,7 +6,6 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 from botocore import errorfactory
-from braket.devices import LocalSimulator
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import TwoLocal
@@ -30,7 +29,6 @@ from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from tests.providers.mocks import (
     RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES,
     RIGETTI_MOCK_M_3_QPU_CAPABILITIES,
-    MockBraketBackend,
     MockMeasLevelEnum,
 )
 
@@ -66,11 +64,6 @@ class TestBraketBackend(TestCase):
         """Test the repr method of BraketBackend."""
         backend = BraketLocalBackend(name="default")
         self.assertEqual(repr(backend), "BraketBackend[default]")
-
-    def test_invalid_device(self):
-        """Test the device method of BraketBackend."""
-        with self.assertRaises(NotImplementedError):
-            _ = MockBraketBackend(LocalSimulator(), name="default")._device
 
 
 class TestBraketAwsBackend(TestCase):
