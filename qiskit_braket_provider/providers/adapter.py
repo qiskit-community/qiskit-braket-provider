@@ -699,8 +699,6 @@ def to_qiskit(circuit: Circuit, add_measurements: bool = True) -> QuantumCircuit
 
     Args:
         circuit (Circuit): Braket quantum circuit
-
-    Kwargs:
         add_measurements (bool) : whether or not to append measurements in the conversion
 
     Returns:
