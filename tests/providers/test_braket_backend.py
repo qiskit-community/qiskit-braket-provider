@@ -19,7 +19,6 @@ from qiskit_algorithms.optimizers import SLSQP
 from braket.aws import AwsDevice, AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo, QueueType
 from braket.circuits import Circuit
-from braket.device_schema import DeviceActionType
 from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit_braket_provider import BraketProvider, exception, version
