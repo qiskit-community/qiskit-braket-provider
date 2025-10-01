@@ -165,6 +165,7 @@ class TestBraketProvider(TestCase):
         mock_m_3_device_properties.service = Mock()
         mock_m_3_device_properties.service.updatedAt = "2023-06-02T17:00:00+00:00"
         mock_m_3_device.properties = mock_m_3_device_properties
+        mock_m_3_device.type = "QPU"
         mock_get_devices.return_value = [mock_m_3_device]
 
         provider = BraketProvider()
@@ -193,6 +194,7 @@ class TestBraketProvider(TestCase):
         mock_run.return_value = mock_task
 
         mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
+        mocked_device.type = "QPU"
         device = BraketAwsBackend(device=mocked_device)
         circuit = QuantumCircuit(3)
         circuit.h(0)

@@ -416,7 +416,7 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
 
     # TODO: Use gate calibrations if available
     for operation in action_properties.supportedOperations:
-        if instruction := _QISKIT_GATE_NAME_TO_BRAKET_GATE.get(operation.lower(), None):
+        if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
             # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
             match instruction.num_qubits:
                 case 1:
