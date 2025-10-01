@@ -400,14 +400,10 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
 
 
 def _qpu_target(description: str, properties: DeviceCapabilities):
-    qubit_count = properties.paradigm.qubitCount
+    paradigm = properties.paradigm
+    qubit_count = paradigm.qubitCount
     target = Target(description=description, num_qubits=qubit_count)
-    action_properties = (
-        properties.action.get(DeviceActionType.OPENQASM)
-        if properties.action.get(DeviceActionType.OPENQASM)
-        else properties.action.get(DeviceActionType.JAQCD)
-    )
-    connectivity = properties.paradigm.connectivity
+    connectivity = paradigm.connectivity
     connectivity_graph = (
         _contiguous_qubit_indices(connectivity.connectivityGraph)
         if not connectivity.fullyConnected
@@ -415,7 +411,7 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
     )
 
     # TODO: Use gate calibrations if available
-    for operation in action_properties.supportedOperations:
+    for operation in paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
             # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
             match instruction.num_qubits:
@@ -604,7 +600,7 @@ def to_braket(
                         )
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
-        if _GPHASE_GATE_NAME in basis_gates:
+        if basis_gates and _GPHASE_GATE_NAME in basis_gates:
             braket_circuit.gphase(global_phase)
         else:
             warnings.warn(

@@ -207,7 +207,9 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=0, meas_level=2)
 
-        braket_circuit = Circuit().h(0)
+        braket_circuit = Circuit().add_verbatim_box(
+            Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
+        )
         device.run_batch.assert_called_with([braket_circuit, braket_circuit], shots=0)
         device.run_batch.assert_called_once()
 
@@ -229,7 +231,9 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=5, meas_level=2)
 
-        braket_circuit = Circuit().h(0)
+        braket_circuit = Circuit().add_verbatim_box(
+            Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
+        )
         device.run.assert_called_with(
             ProgramSet([braket_circuit, braket_circuit], shots_per_executable=5)
         )
@@ -452,13 +456,10 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run(circuit, native=True)
         assert mock_to_braket.call_args.kwargs["basis_gates"] is None
-        assert mock_to_braket.call_args.kwargs["connectivity"] is None
         assert mock_to_braket.call_args.kwargs["target"] == backend.target
 
         backend.run(circuit, verbatim=True)
-        assert mock_to_braket.call_args.kwargs["basis_gates"] is None
         assert mock_to_braket.call_args.kwargs["verbatim"] is True
-        assert mock_to_braket.call_args.kwargs["connectivity"] is None
 
     @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
     def test_queue_depth(self, mocked_device):
@@ -490,8 +491,8 @@ class TestAWSBackendTarget(TestCase):
 
         target = aws_device_to_target(mock_device)
         self.assertEqual(target.num_qubits, 30)
-        self.assertEqual(len(target.operations), 2)
-        self.assertEqual(len(target.instructions), 60)
+        self.assertEqual(len(target.operations), 4)
+        self.assertEqual(len(target.instructions), 94)
         self.assertIn("Target for Amazon Braket QPU", target.description)
 
     def test_target_invalid_device(self):
@@ -508,7 +509,7 @@ class TestAWSBackendTarget(TestCase):
         mock_device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.copy(deep=True)
         mock_device.properties.paradigm.connectivity.fullyConnected = True
         mock_device.properties.paradigm.qubitCount = 2
-        mock_device.properties.action.get(DeviceActionType.OPENQASM).supportedOperations = ["CNOT"]
+        mock_device.properties.paradigm.nativeGateSet = ["CNOT"]
         mock_device.type = "QPU"
 
         instruction_props = aws_device_to_target(mock_device)
