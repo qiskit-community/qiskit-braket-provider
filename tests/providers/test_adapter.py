@@ -10,6 +10,7 @@ from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
+from qiskit.transpiler import Target
 from qiskit_ionq import ionq_gates
 
 import braket.circuits.noises as braket_noises
@@ -59,7 +60,7 @@ def check_to_braket_unitary_correct(qiskit_circuit: QuantumCircuit) -> bool:
     """Checks if endianness-reversed Qiskit circuit matrix matches Braket counterpart"""
     return np.allclose(
         to_braket(qiskit_circuit).to_unitary(),
-        Operator(qiskit_circuit).reverse_qargs().to_matrix(),
+        Operator(qiskit_circuit.decompose()).reverse_qargs().to_matrix(),
     )
 
 
@@ -122,6 +123,10 @@ class TestAdapter(TestCase):
 
     def test_ionq_gates(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
+        target = Target()
+        for gate in qiskit_ionq_gates:
+            target.add_instruction(gate)
+
         for gate in qiskit_ionq_gates:
             qiskit_circuit = QuantumCircuit(gate.num_qubits)
             qiskit_circuit.append(gate, range(gate.num_qubits))
@@ -132,7 +137,12 @@ class TestAdapter(TestCase):
             qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
             with self.subTest(f"Circuit with {gate.name} gate."):
-                self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
+                self.assertTrue(
+                    np.allclose(
+                        to_braket(qiskit_circuit, target=target).to_unitary(),
+                        Operator(qiskit_circuit.decompose()).reverse_qargs().to_matrix(),
+                    )
+                )
 
     def test_global_phase(self):
         """Tests conversion when transpiler generates a global phase"""
@@ -530,7 +540,9 @@ class TestAdapter(TestCase):
         qiskit_circuit.rxx(0.1, 0, 2)
         connectivity = [[0, 1], [1, 0], [1, 2], [2, 1]]
 
-        braket_circuit = to_braket(qiskit_circuit, connectivity=connectivity)
+        braket_circuit = to_braket(
+            qiskit_circuit, basis_gates={"h", "cx", "rxx"}, connectivity=connectivity
+        )
         braket_circuit_unconnected = to_braket(qiskit_circuit)
         braket_circuit_verbatim = to_braket(
             qiskit_circuit, verbatim=True, connectivity=connectivity
@@ -746,7 +758,7 @@ class TestAdapter(TestCase):
 
         bqc = to_braket(qqc)
 
-        ## removing measurement moments to append densit_matrix result
+        ## removing measurement moments to append density_matrix result
         bqc.moments._moments.popitem(last=True)
         bqc.moments._moments.popitem(last=True)
         bqc._measure_targets = []
