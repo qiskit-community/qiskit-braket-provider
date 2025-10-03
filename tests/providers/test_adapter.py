@@ -38,7 +38,6 @@ qiskit_ionq_gates = [
     ionq_gates.GPIGate(Parameter("φ")),
     ionq_gates.GPI2Gate(Parameter("φ")),
     ionq_gates.MSGate(Parameter("φ0"), Parameter("φ1"), Parameter("ϴ")),
-    ionq_gates.ZZGate(Parameter("ϴ")),
 ]
 
 _BRAKET_SUPPORTED_NOISE_INSTANCES = {
