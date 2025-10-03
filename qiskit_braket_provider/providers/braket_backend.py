@@ -143,7 +143,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
         convert_input = [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         verbatim = options.pop("verbatim", False)
         circuits: list[Circuit] = [
-            to_braket(circ, self._gateset if not verbatim else None, verbatim)
+            to_braket(circ, target=self._target if not verbatim else None, verbatim=verbatim)
             for circ in convert_input
         ]
 
@@ -336,21 +336,16 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        target, basis_gates, angle_restrictions = (
-            (self._target, None, native_angle_restrictions(self._device.properties))
-            if native
-            else (None, self._gateset, None)
-        )
-
         braket_circuits = (
             [to_braket(circ, verbatim=True) for circ in circuits]
             if verbatim
             else [
                 to_braket(
                     circ,
-                    target=target,
-                    basis_gates=basis_gates,
-                    angle_restrictions=angle_restrictions,
+                    target=self._target,
+                    angle_restrictions=(
+                        native_angle_restrictions(self._device.properties) if native else None
+                    ),
                 )
                 for circ in circuits
             ]

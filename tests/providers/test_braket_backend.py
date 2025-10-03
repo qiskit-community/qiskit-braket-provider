@@ -454,7 +454,6 @@ class TestBraketAwsBackend(TestCase):
         backend = AWSBraketBackend(device=mock_device)
 
         backend.run(circuit, native=True)
-        assert mock_to_braket.call_args.kwargs["basis_gates"] is None
         assert mock_to_braket.call_args.kwargs["target"] == backend.target
 
         backend.run(circuit, verbatim=True)

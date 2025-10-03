@@ -224,6 +224,7 @@ class TestAdapter(TestCase):
                 "gpi",
                 "gpi2",
                 "ms",
+                "unitary",
                 "kraus",
             ]
         }
@@ -445,8 +446,8 @@ class TestAdapter(TestCase):
         expected_braket_circuit = (
             Circuit()  # pylint: disable=no-member
             .h(0)
-            .cnot(0, 2)
             .x(1)
+            .cnot(0, 2)
             .measure(2)
             .measure(0)
         )
@@ -822,11 +823,12 @@ class TestFromBraket(TestCase):
         Tests Braket to Qiskit conversion with standard gates.
         """
 
-        gate_set = [
+        gate_set = {
             attr
             for attr in dir(Gate)
             if attr[0].isupper() and attr.lower() in _BRAKET_GATE_NAME_TO_QISKIT_GATE
-        ]
+        }
+        gate_set -= {"Unitary"}
 
         # pytest.mark.parametrize is incompatible with TestCase
         param_sets = [
@@ -882,7 +884,7 @@ class TestFromBraket(TestCase):
 
     def test_parametric_gates(self):
         """
-        Tests braket to qiskit conversion with standard gates.
+        Tests braket to qiskit conversion with free parameters.
         """
         braket_circuit = Circuit().rx(0, FreeParameter("alpha"))
         qiskit_circuit = to_qiskit(braket_circuit)
@@ -893,6 +895,20 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid), 0)
 
         expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_unitary(self):
+        """
+        Tests braket to qiskit conversion with UnitaryGate.
+        """
+        braket_circuit = Circuit().h(0).unitary([0, 1], Gate.CNot().to_matrix())
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        expected_qiskit_circuit = QuantumCircuit(2)
+        expected_qiskit_circuit.h(0)
+        expected_qiskit_circuit.unitary(qiskit_gates.CXGate().to_matrix(), [0, 1])
+        expected_qiskit_circuit.measure_all()
+
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_control_modifier(self):

@@ -10,7 +10,6 @@ import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
 from qiskit_ionq import add_equivalences, ionq_gates
@@ -45,6 +44,7 @@ from qiskit_braket_provider.providers import braket_instructions
 add_equivalences()
 
 _GPHASE_GATE_NAME = "global_phase"
+_UNITARY_GATE_NAME = "unitary"
 
 _BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
@@ -80,6 +80,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi2": "gpi2",
     "ms": "ms",
     "gphase": _GPHASE_GATE_NAME,
+    _UNITARY_GATE_NAME: _UNITARY_GATE_NAME,
     "kraus": "kraus",
 }
 
@@ -144,6 +145,7 @@ _QISKIT_GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
     _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
+    _UNITARY_GATE_NAME: lambda operators: [braket_gates.Unitary(operators[0])],
     "kraus": lambda operators: [braket_noises.Kraus(operators)],
     "CCPRx": lambda angle_1, angle_2, feedback_key: [
         braket_expcaps.iqm.classical_control.CCPRx(angle_1, angle_2, feedback_key)
@@ -158,12 +160,6 @@ _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
     for gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.values()
     for controlled_gate, base_gate in gate_map.items()
 }
-
-_TRANSLATABLE_STANDARD_QISKIT_GATE_NAMES = (
-    set(_QISKIT_GATE_NAME_TO_BRAKET_GATE.keys())
-    .union(set(_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES))
-    .union({"measure", "barrier", "reset"})
-).intersection(set(get_standard_gate_name_mapping().keys()))
 
 _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     "u": qiskit_gates.UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
@@ -207,6 +203,7 @@ _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
+    _UNITARY_GATE_NAME: qiskit_gates.UnitaryGate,
     "kraus": qiskit_qi.Kraus,
     "cc_prx": braket_instructions.CCPRx(
         Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key")
@@ -320,7 +317,7 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
     return gateset.union(
         _get_controlled_gateset(gateset, max_control)
         # transpile only accepts standard gates in basis_gates
-    ).intersection(_TRANSLATABLE_STANDARD_QISKIT_GATE_NAMES)
+    )
 
 
 def _get_controlled_gateset(base_gateset: set[str], max_qubits: int | None = None) -> set[str]:
@@ -413,7 +410,6 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
     # TODO: Use gate calibrations if available
     for operation in paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
-            # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
             match instruction.num_qubits:
                 case 1:
                     target.add_instruction(instruction, {(i,): None for i in range(qubit_count)})
@@ -520,17 +516,14 @@ def to_braket(
     if (basis_gates or connectivity) and target:
         raise ValueError("Basis gates and connectivity cannot be specified alongside target.")
 
-    # If target is not None, then basis_gates remains empty
-    basis_gates = basis_gates if basis_gates or target else _TRANSLATABLE_STANDARD_QISKIT_GATE_NAMES
+    # If basis_gates is not None, then target remains empty
+    target = target if basis_gates or target else _create_default_target(circuit)
     needs_transpilation = (
         target
         or connectivity
         or (basis_gates and not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates))
     )
-    # TODO: Find a way to add Kraus instructions to transpiler target
-    if has_kraus := circuit.get_instructions("kraus"):
-        warnings.warn("Found Kraus instructions in circuit; skipping transpilation")
-    if not verbatim and needs_transpilation and not has_kraus:
+    if not verbatim and needs_transpilation:
         circuit = transpile(
             circuit,
             basis_gates=basis_gates,
@@ -561,7 +554,7 @@ def to_braket(
                 raise NotImplementedError(
                     "reset operation not supported by qiskit to braket adapter"
                 )
-            case "kraus":
+            case "unitary" | "kraus":
                 params = _create_free_parameters(operation)
                 qubit_indices = [q._index for q in circuit_instruction.qubits][
                     ::-1
@@ -572,7 +565,6 @@ def to_braket(
                         operator=gate,
                         target=qubit_indices,
                     )
-
             case _:
                 if (
                     isinstance(operation, ControlledGate)
@@ -611,7 +603,7 @@ def to_braket(
                 f"global phase of {global_phase} will not be included in Braket circuit"
             )
 
-    if verbatim or target:  # target only passed for native transpilation
+    if verbatim or (target and any(v != {None: None} for v in target.values())):
         braket_circuit = Circuit(braket_circuit.result_types).add_verbatim_box(
             Circuit(braket_circuit.instructions)
         )
@@ -620,6 +612,15 @@ def to_braket(
         braket_circuit.measure(measured_qubits[clbit])
 
     return braket_circuit
+
+
+def _create_default_target(circuit: QuantumCircuit) -> Target:
+    target = Target(num_qubits=circuit.num_qubits)
+    for braket_name, instruction in _BRAKET_GATE_NAME_TO_QISKIT_GATE.items():
+        if (name := braket_name.lower()) in _BRAKET_TO_QISKIT_NAMES:
+            target.add_instruction(instruction, name=_BRAKET_TO_QISKIT_NAMES[name])
+    target.add_instruction(Measure())
+    return target
 
 
 def _create_free_parameters(operation):
@@ -727,6 +728,8 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                     gate_params.append(value)
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(instruction.operator.to_matrix())
+        elif gate_name == _UNITARY_GATE_NAME:
+            gate = _create_qiskit_unitary(instruction.operator.to_matrix())
         else:
             gate = _create_qiskit_gate(gate_name, gate_params)
 
@@ -749,21 +752,29 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     return qiskit_circuit
 
 
+def _create_qiskit_unitary(matrix: np.ndarray):
+    return qiskit_gates.UnitaryGate(_reverse_endianness(matrix))
+
+
 def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes"""
-    for n, param in enumerate(gate_params):
+    for i, param in enumerate(gate_params):
         assert param.shape[0] == param.shape[1], "Kraus operators must be square matrices."
-
-        n_q = int(np.log2(param.shape[0]))
-        if n_q > 1:
-            # Convert multi-qubit Kraus from little to big endian notation
-            kraus_tensor = param.reshape([2] * n_q * 2)
-            kraus_tensor = np.transpose(
-                kraus_tensor,
-                list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
-            )
-            gate_params[n] = kraus_tensor.reshape((2**n_q, 2**n_q))
+        gate_params[i] = _reverse_endianness(param)
     return qiskit_qi.Kraus(gate_params)
+
+
+def _reverse_endianness(matrix: np.ndarray):
+    n_q = int(np.log2(matrix.shape[0]))
+    # Convert multi-qubit Kraus from little to big endian notation
+    return (
+        np.transpose(
+            matrix.reshape([2] * n_q * 2),
+            list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+        ).reshape((2**n_q, 2**n_q))
+        if n_q > 1
+        else matrix
+    )
 
 
 def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) -> Instruction:
