@@ -252,6 +252,21 @@ class TestAdapter(TestCase):
         with pytest.raises(TypeError, match=message):
             to_braket(circuit)
 
+    def test_target_with_loose_constraints(self):
+        """
+        Tests that to_braket raises a ValueError if both target and loose constraints are supplied.
+        """
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+
+        target = Target()
+        target.add_instruction(qiskit_gates.HGate())
+
+        with pytest.raises(ValueError):
+            to_braket(circuit, basis_gates={"h"}, target=target)
+        with pytest.raises(ValueError):
+            to_braket(circuit, connectivity=[[0, 1], [1, 2]], target=target)
+
     def test_convert_parametric_qiskit_to_braket_circuit(self):
         """Tests to_braket works with parametric circuits."""
 

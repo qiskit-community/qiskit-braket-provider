@@ -23,7 +23,7 @@ from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit_braket_provider import BraketProvider, exception, version
 from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
-from qiskit_braket_provider.providers.adapter import aws_device_to_target
+from qiskit_braket_provider.providers.adapter import aws_device_to_target, native_gate_connectivity
 from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from tests.providers.mocks import (
     RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES,
@@ -477,10 +477,6 @@ class TestBraketAwsBackend(TestCase):
         assert isinstance(result, QueueDepthInfo)
         self.assertEqual(result, mock_return_value)
 
-
-class TestAWSBackendTarget(TestCase):
-    """Tests target for AWS Braket backend."""
-
     def test_target(self):
         """Tests target."""
         mock_device = Mock()
@@ -509,21 +505,23 @@ class TestAWSBackendTarget(TestCase):
         mock_device.properties.paradigm.qubitCount = 2
         mock_device.properties.paradigm.nativeGateSet = ["CNOT"]
         mock_device.type = "QPU"
+        backend = BraketAwsBackend(device=mock_device)
 
-        instruction_props = aws_device_to_target(mock_device)
+        self.assertEqual(backend.get_gateset(True), {"cx"})
+        self.assertIsNone(native_gate_connectivity(mock_device))
 
         cx_instruction = QiskitInstruction(name="cx", num_qubits=2, num_clbits=0, params=[])
         measure_instruction = QiskitInstruction(
             name="measure", num_qubits=1, num_clbits=1, params=[]
         )
-
         expected_instruction_props = [
             (cx_instruction, (0, 1)),
             (cx_instruction, (1, 0)),
             (measure_instruction, (0,)),
             (measure_instruction, (1,)),
         ]
-        for index, instruction in enumerate(instruction_props.instructions):
+
+        for index, instruction in enumerate(backend.target.instructions):
             self.assertEqual(
                 instruction[0].num_qubits,
                 expected_instruction_props[index][0].num_qubits,

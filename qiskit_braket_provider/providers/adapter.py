@@ -10,6 +10,7 @@ import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
 from qiskit.circuit import Instruction as QiskitInstruction
+from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
 from qiskit_ionq import add_equivalences, ionq_gates
@@ -226,9 +227,7 @@ _BRAKET_SUPPORTED_NOISES = [
 ]
 
 
-def native_gate_connectivity(
-    properties: DeviceCapabilities,
-) -> list[list[int]] | None:
+def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
     """Returns the connectivity natively supported by a Braket device from its properties
 
     Args:
@@ -389,6 +388,16 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
         instruction = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower())
         if instruction:
             target.add_instruction(instruction, name=_BRAKET_TO_QISKIT_NAMES[operation.lower()])
+    if isinstance(action, OpenQASMDeviceActionProperties):
+        max_control = 0
+        for modifier in action.supportedModifiers:
+            if isinstance(modifier, Control):
+                max_control = modifier.max_qubits
+                break
+        standard_gate_mapping = get_standard_gate_name_mapping()
+        for gate in _get_controlled_gateset(target.keys(), max_control):
+            if gate in standard_gate_mapping:
+                target.add_instruction(standard_gate_mapping[gate])
     target.add_instruction(Measure())
     return target
 
