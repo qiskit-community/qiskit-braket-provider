@@ -314,10 +314,7 @@ def gateset_from_properties(properties: OpenQASMDeviceActionProperties) -> set[s
         if isinstance(modifier, Control):
             max_control = modifier.max_qubits
             break
-    return gateset.union(
-        _get_controlled_gateset(gateset, max_control)
-        # transpile only accepts standard gates in basis_gates
-    )
+    return gateset.union(_get_controlled_gateset(gateset, max_control))
 
 
 def _get_controlled_gateset(base_gateset: set[str], max_qubits: int | None = None) -> set[str]:
@@ -595,7 +592,9 @@ def to_braket(
                         )
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
-        if basis_gates and _GPHASE_GATE_NAME in basis_gates:
+        if (target and _GPHASE_GATE_NAME in target) or (
+            basis_gates and _GPHASE_GATE_NAME in basis_gates
+        ):
             braket_circuit.gphase(global_phase)
         else:
             warnings.warn(

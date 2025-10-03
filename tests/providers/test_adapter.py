@@ -117,7 +117,6 @@ class TestAdapter(TestCase):
                 parameter_values = [(137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)]
                 parameter_bindings = dict(zip(parameters, parameter_values))
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
-
             with self.subTest(f"Circuit with {standard_gate.name} gate."):
                 self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
 
@@ -152,7 +151,8 @@ class TestAdapter(TestCase):
         qiskit_circuit.append(gate, [])
 
         braket_circuit = to_braket(qiskit_circuit)
-        expected_braket_circuit = Circuit().h(0).gphase(1.23).gphase(np.pi / 2)
+        expected_braket_circuit = Circuit().gphase(1.23).h(0).gphase(np.pi / 2)
+
         self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0])
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -349,7 +349,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.reset(0)
 
         with self.assertRaises(NotImplementedError):
-            to_braket(qiskit_circuit)
+            to_braket(qiskit_circuit, basis_gates={"reset"})
 
     def test_measure_different_indices(self):
         """
