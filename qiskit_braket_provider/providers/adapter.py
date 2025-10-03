@@ -527,7 +527,10 @@ def to_braket(
         or connectivity
         or (basis_gates and not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates))
     )
-    if not verbatim and needs_transpilation:
+    # TODO: Find a way to add Kraus instructions to transpiler target
+    if has_kraus := circuit.get_instructions("kraus"):
+        warnings.warn("Found Kraus instructions in circuit; skipping transpilation")
+    if not verbatim and needs_transpilation and not has_kraus:
         circuit = transpile(
             circuit,
             basis_gates=basis_gates,
