@@ -162,6 +162,8 @@ _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
     for controlled_gate, base_gate in gate_map.items()
 }
 
+_STANDARD_GATE_NAME_MAPPING = get_standard_gate_name_mapping()
+
 _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     "u": qiskit_gates.UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "u1": qiskit_gates.U1Gate(Parameter("theta")),
@@ -394,10 +396,9 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
             if isinstance(modifier, Control):
                 max_control = modifier.max_qubits
                 break
-        standard_gate_mapping = get_standard_gate_name_mapping()
         for gate in _get_controlled_gateset(target.keys(), max_control):
-            if gate in standard_gate_mapping:
-                target.add_instruction(standard_gate_mapping[gate])
+            if gate in _STANDARD_GATE_NAME_MAPPING:
+                target.add_instruction(_STANDARD_GATE_NAME_MAPPING[gate])
     target.add_instruction(Measure())
     return target
 
