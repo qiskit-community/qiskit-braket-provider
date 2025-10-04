@@ -612,6 +612,8 @@ def to_braket(
                 f"global phase of {global_phase} will not be included in Braket circuit"
             )
 
+    # QPU targets will have qubits/pairs specified for each instruction;
+    # Targets whose values consist solely of {None: None} are either simulator or default targets
     if verbatim or (target and any(v != {None: None} for v in target.values())):
         braket_circuit = Circuit(braket_circuit.result_types).add_verbatim_box(
             Circuit(braket_circuit.instructions)
