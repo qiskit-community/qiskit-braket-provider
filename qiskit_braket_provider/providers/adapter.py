@@ -44,9 +44,6 @@ from qiskit_braket_provider.providers import braket_instructions
 
 add_equivalences()
 
-_GPHASE_GATE_NAME = "global_phase"
-_UNITARY_GATE_NAME = "unitary"
-
 _BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
     "phaseshift": "p",
@@ -80,8 +77,8 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi": "gpi",
     "gpi2": "gpi2",
     "ms": "ms",
-    "gphase": _GPHASE_GATE_NAME,
-    _UNITARY_GATE_NAME: _UNITARY_GATE_NAME,
+    "gphase": "global_phase",
+    "unitary": "unitary",
     "kraus": "kraus",
 }
 
@@ -145,8 +142,8 @@ _QISKIT_GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     ],
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
-    _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
-    _UNITARY_GATE_NAME: lambda operators: [braket_gates.Unitary(operators[0])],
+    "global_phase": lambda phase: [braket_gates.GPhase(phase)],
+    "unitary": lambda operators: [braket_gates.Unitary(operators[0])],
     "kraus": lambda operators: [braket_noises.Kraus(operators)],
     "CCPRx": lambda angle_1, angle_2, feedback_key: [
         braket_expcaps.iqm.classical_control.CCPRx(angle_1, angle_2, feedback_key)
@@ -206,7 +203,7 @@ _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
-    _UNITARY_GATE_NAME: qiskit_gates.UnitaryGate,
+    "unitary": qiskit_gates.UnitaryGate,
     "kraus": qiskit_qi.Kraus,
     "cc_prx": braket_instructions.CCPRx(
         Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key")
@@ -602,8 +599,8 @@ def to_braket(
                         )
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
-        if (target and _GPHASE_GATE_NAME in target) or (
-            basis_gates and _GPHASE_GATE_NAME in basis_gates
+        if (target and "global_phase" in target) or (
+            basis_gates and "global_phase" in basis_gates
         ):
             braket_circuit.gphase(global_phase)
         else:
@@ -739,7 +736,7 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
                     gate_params.append(value)
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(instruction.operator.to_matrix())
-        elif gate_name == _UNITARY_GATE_NAME:
+        elif gate_name == "unitary":
             gate = _create_qiskit_unitary(instruction.operator.to_matrix())
         else:
             gate = _create_qiskit_gate(gate_name, gate_params)
