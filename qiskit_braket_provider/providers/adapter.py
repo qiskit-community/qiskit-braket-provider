@@ -592,6 +592,7 @@ def to_braket(
                         f"Cannot apply operation {gate_name} to measured qubits {intersection}"
                     )
                 params = _create_free_parameters(operation)
+                # TODO: Use angle_bounds in Target.add_instruction instead of validating here
                 _validate_angle_restrictions(gate_name, params, angle_restrictions)
                 if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                     for gate in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params):
