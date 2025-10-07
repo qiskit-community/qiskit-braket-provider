@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import numpy as np
+from networkx import DiGraph, from_dict_of_lists, relabel_nodes
 from qiskit import QuantumCircuit
 from qiskit import circuit as qiskit_circuit
 from qiskit.compiler import transpile
@@ -13,7 +14,7 @@ from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from braket.circuits import Circuit
-from qiskit_braket_provider.providers import BraketProvider, to_qiskit
+from qiskit_braket_provider.providers import BraketProvider, to_braket, to_qiskit
 from qiskit_braket_provider.providers.braket_backend import (
     BraketAwsBackend,
     BraketBackend,
@@ -152,7 +153,7 @@ class TestBraketProvider(TestCase):
 
     @patch("braket.aws.aws_device.AwsDevice.get_devices")
     def test_discontinous_qubit_indices_qiskit_transpilation(self, mock_get_devices):
-        """Tests circuit transpilation with discontinous qubit indices."""
+        """Tests circuit transpilation with discontiguous qubit indices."""
 
         mock_m_3_device = Mock()
         mock_m_3_device.name = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceName"]
@@ -166,18 +167,28 @@ class TestBraketProvider(TestCase):
         mock_m_3_device_properties.service.updatedAt = "2023-06-02T17:00:00+00:00"
         mock_m_3_device.properties = mock_m_3_device_properties
         mock_m_3_device.type = "QPU"
+
+        g = from_dict_of_lists(
+            RIGETTI_MOCK_M_3_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph,
+            create_using=DiGraph(),
+        )
+        mock_m_3_device.topology_graph = relabel_nodes(g, {n: int(n) for n in g.nodes})
+
         mock_get_devices.return_value = [mock_m_3_device]
 
         provider = BraketProvider()
         device = provider.get_backend("Aspen-M-3")
 
-        circ = qiskit_circuit.QuantumCircuit(3)
+        circ = qiskit_circuit.QuantumCircuit(4)
         circ.h(0)
         circ.cx(0, 1)
         circ.cx(1, 2)
+        circ.cx(2, 3)
 
-        result = transpile(circ, device)
-        self.assertTrue(result)
+        self.assertEqual(
+            to_braket(circ, target=device.target, braket_qubits=device._braket_qubits).qubits,
+            {0, 1, 2, 7},
+        )
 
     @patch("qiskit_braket_provider.providers.braket_backend.BraketAwsBackend.run")
     @patch("qiskit_braket_provider.providers.braket_job.AmazonBraketTask.queue_position")

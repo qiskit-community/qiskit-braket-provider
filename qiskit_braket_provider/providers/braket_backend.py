@@ -229,6 +229,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             f"QiskitBraketProvider/{version.__version__}"
         )
         self._target = aws_device_to_target(device=self._device)
+        self._braket_qubits = (
+            sorted(self._device.topology_graph.nodes) if self._device.topology_graph else None
+        )
         self._gateset = self.get_gateset()
         self._supports_program_sets = (
             DeviceActionType.OPENQASM_PROGRAM_SET in self._device.properties.action
@@ -337,12 +340,13 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             del options["meas_level"]
 
         braket_circuits = (
-            [to_braket(circ, verbatim=True) for circ in circuits]
+            [to_braket(circ, verbatim=True, braket_qubits=self._braket_qubits) for circ in circuits]
             if verbatim
             else [
                 to_braket(
                     circ,
                     target=self._target,
+                    braket_qubits=self._braket_qubits,
                     angle_restrictions=(
                         native_angle_restrictions(self._device.properties) if native else None
                     ),

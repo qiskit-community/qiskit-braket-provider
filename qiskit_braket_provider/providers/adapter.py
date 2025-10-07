@@ -1,7 +1,7 @@
 """Util function for provider."""
 
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from math import inf, pi
 
 import numpy as np
@@ -404,6 +404,8 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
     paradigm = properties.paradigm
     qubit_count = paradigm.qubitCount
     target = Target(description=description, num_qubits=qubit_count)
+
+    # TODO: Build target from AwsDevice.topology_graph instead of paradigm properties
     connectivity = paradigm.connectivity
     connectivity_graph = (
         _contiguous_qubit_indices(connectivity.connectivityGraph)
@@ -494,6 +496,8 @@ def to_braket(
     angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None = None,
     *,
     target: Target | None = None,
+    braket_qubits: Sequence[int] | None = None,
+    optimization_level: int | None = None,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -511,6 +515,11 @@ def to_braket(
             validate numeric parameters. Default: `None`.
         target (Target | None): A backend transpiler target. Can only be provided
             if basis_gates is `None`. Default: `None`.
+        braket_qubits (Sequence[int] | None): A list of (not necessarily contiguous) indices of
+            qubits in the underlying Amazon Braket device. If not supplied, then the indices are
+            assumed to be contiguous.
+        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
+            Default: None.
 
     Returns:
         Circuit: Braket circuit
@@ -532,7 +541,7 @@ def to_braket(
             circuit,
             basis_gates=basis_gates,
             coupling_map=connectivity,
-            optimization_level=0,
+            optimization_level=optimization_level,
             target=target,
         )
 
@@ -541,13 +550,14 @@ def to_braket(
     # Handle qiskit to braket conversion
     measured_qubits: dict[int, int] = {}
     braket_circuit = Circuit()
+    braket_qubits = braket_qubits or sorted(circuit.find_bit(q).index for q in circuit.qubits)
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         qubits = circuit_instruction.qubits
         match gate_name := operation.name:
             case "measure":
                 qubit = qubits[0]  # qubit count = 1 for measure
-                qubit_index = circuit.find_bit(qubit).index
+                qubit_index = braket_qubits[circuit.find_bit(qubit).index]
                 if qubit_index in measured_qubits.values():
                     raise ValueError(f"Cannot measure previously measured qubit {qubit_index}")
                 clbit = circuit.find_bit(circuit_instruction.clbits[0]).index
@@ -560,7 +570,7 @@ def to_braket(
                 )
             case "unitary" | "kraus":
                 params = _create_free_parameters(operation)
-                qubit_indices = [q._index for q in circuit_instruction.qubits][
+                qubit_indices = [braket_qubits[circuit.find_bit(qubit).index] for qubit in qubits][
                     ::-1
                 ]  # reversal for little to big endian notation
 
@@ -576,7 +586,7 @@ def to_braket(
                 ):
                     raise ValueError("Negative control is not supported")
                 # Getting the index from the bit mapping
-                qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
+                qubit_indices = [braket_qubits[circuit.find_bit(qubit).index] for qubit in qubits]
                 if intersection := set(measured_qubits.values()).intersection(qubit_indices):
                     raise ValueError(
                         f"Cannot apply operation {gate_name} to measured qubits {intersection}"
@@ -599,9 +609,7 @@ def to_braket(
                         )
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
-        if (target and "global_phase" in target) or (
-            basis_gates and "global_phase" in basis_gates
-        ):
+        if (target and "global_phase" in target) or (basis_gates and "global_phase" in basis_gates):
             braket_circuit.gphase(global_phase)
         else:
             warnings.warn(

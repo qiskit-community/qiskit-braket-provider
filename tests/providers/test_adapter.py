@@ -55,10 +55,12 @@ _BRAKET_SUPPORTED_NOISE_INSTANCES = {
 }
 
 
-def check_to_braket_unitary_correct(qiskit_circuit: QuantumCircuit) -> bool:
+def check_to_braket_unitary_correct(
+    qiskit_circuit: QuantumCircuit, optimization_level: int | None = None
+) -> bool:
     """Checks if endianness-reversed Qiskit circuit matrix matches Braket counterpart"""
     return np.allclose(
-        to_braket(qiskit_circuit).to_unitary(),
+        to_braket(qiskit_circuit, optimization_level=optimization_level).to_unitary(),
         Operator(qiskit_circuit.decompose()).reverse_qargs().to_matrix(),
     )
 
@@ -117,7 +119,7 @@ class TestAdapter(TestCase):
                 parameter_bindings = dict(zip(parameters, parameter_values))
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
             with self.subTest(f"Circuit with {standard_gate.name} gate."):
-                self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit))
+                self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit, 0))
 
     def test_ionq_gates(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
@@ -150,7 +152,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.append(gate, [])
 
         braket_circuit = to_braket(qiskit_circuit)
-        expected_braket_circuit = Circuit().gphase(1.23).h(0).gphase(np.pi / 2)
+        expected_braket_circuit = Circuit().h(0).gphase(1.23 + np.pi / 2)
 
         self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0])
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -789,13 +791,15 @@ class TestAdapter(TestCase):
         """check qiskit <-> braket conversions respect proper bit-ordering"""
         mat = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
         qc = QuantumCircuit(2)
+        qc.x(0)
         qc.h(1)
         qc.cx(1, 0)
         qc.append(Kraus([mat]), [0, 1])
         qc.h(1)
+        qc.x(1)
         bqc = to_braket(qc)
         res = LocalSimulator("braket_dm").run(bqc, shots=1000).result().measurement_counts
-        assert res["00"] == 1000
+        assert res["11"] == 1000
 
         mat0 = np.array([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
         mat1 = np.array([[0, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
