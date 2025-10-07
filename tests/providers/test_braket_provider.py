@@ -177,7 +177,7 @@ class TestBraketProvider(TestCase):
         mock_get_devices.return_value = [mock_m_3_device]
 
         provider = BraketProvider()
-        device = provider.get_backend("Aspen-M-3")
+        backend = provider.get_backend("Aspen-M-3")
 
         circ = qiskit_circuit.QuantumCircuit(4)
         circ.h(0)
@@ -186,7 +186,7 @@ class TestBraketProvider(TestCase):
         circ.cx(2, 3)
 
         self.assertEqual(
-            to_braket(circ, target=device.target, braket_qubits=device._braket_qubits).qubits,
+            to_braket(circ, target=backend.target, braket_qubits=backend._braket_qubits).qubits,
             {0, 1, 2, 7},
         )
 
@@ -206,13 +206,13 @@ class TestBraketProvider(TestCase):
 
         mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
         mocked_device.type = "QPU"
-        device = BraketAwsBackend(device=mocked_device)
+        backend = BraketAwsBackend(device=mocked_device)
         circuit = QuantumCircuit(3)
         circuit.h(0)
         circuit.cx(0, 1)
         circuit.cx(0, 2)
 
-        qpu_task = device.run(circuit, shots=1)
+        qpu_task = backend.run(circuit, shots=1)
         result = qpu_task.queue_position()
 
         mock_queue_position.assert_called_once()
