@@ -759,12 +759,12 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     return qiskit_qi.Kraus(gate_params)
 
 
-def sympy_to_qiskit_converter(expr: Mul | Add | Symbol) -> ParameterExpression | Parameter:
+def _sympy_to_qiskit_converter(expr: Mul | Add | Symbol) -> ParameterExpression | Parameter:
     """ convert a sympy expression to qiskit Parameters recursively """
     if isinstance(expr, Mul):
-        return sympy_to_qiskit_converter(expr.args[0]) * sympy_to_qiskit_converter(expr.args[1])
+        return _sympy_to_qiskit_converter(expr.args[0]) * _sympy_to_qiskit_converter(expr.args[1])
     elif isinstance(expr, Add):
-        return sympy_to_qiskit_converter(expr.args[0]) + sympy_to_qiskit_converter(expr.args[1])
+        return _sympy_to_qiskit_converter(expr.args[0]) + _sympy_to_qiskit_converter(expr.args[1])
     elif isinstance(expr, Symbol):
         return Parameter(expr.name)
     elif hasattr(expr, "is_number") and expr.is_number:
@@ -786,7 +786,7 @@ def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) ->
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
         if hasattr(value, "expression"):
-            value = sympy_to_qiskit_converter(coeff * value.expression)
+            value = _sympy_to_qiskit_converter(coeff * value.expression)
         else: # simply a numeric type 
             value = coeff * value
         new_gate_params.append(value)
