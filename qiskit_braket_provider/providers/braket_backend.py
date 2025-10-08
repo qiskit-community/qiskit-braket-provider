@@ -357,7 +357,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         shots = options.pop("shots", None)
         return (
             self._run_program_set(braket_circuits, shots, **options)
-            if self._supports_program_sets and shots != 0
+            if self._supports_program_sets and shots != 0 and len(braket_circuits) > 1
             else self._run_batch(braket_circuits, shots, **options)
         )
 
