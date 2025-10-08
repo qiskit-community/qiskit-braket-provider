@@ -503,7 +503,7 @@ class TestBraketAwsBackend(TestCase):
         target = aws_device_to_target(mock_device)
         self.assertEqual(target.num_qubits, 30)
         self.assertEqual(len(target.operations), 4)
-        self.assertEqual(len(target.instructions), 94)
+        self.assertEqual(len(target.instructions), 95)
         self.assertIn("Target for Amazon Braket QPU", target.description)
 
     def test_target_invalid_device(self):
