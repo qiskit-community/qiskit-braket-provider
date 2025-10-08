@@ -50,9 +50,9 @@ RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON = {
         "connectivity": {
             "fullyConnected": False,
             "connectivityGraph": {
-                "0": ["1"],
-                "1": ["0", "2"],
-                "2": ["1"],
+                "1": ["2"],
+                "2": ["1", "5"],
+                "5": ["2"],
             },
         },
     },
