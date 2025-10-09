@@ -38,7 +38,7 @@ _TASK_ID_DIVIDER = ";"
 T = TypeVar("T", bound=Device, covariant=True)
 
 
-class BraketBackend(BackendV2, Generic[T], ABC):
+class BraketBackend(BackendV2, ABC, Generic[T]):
     """BraketBackend."""
 
     def __init__(self, device: T, name: str, **fields):
