@@ -7,13 +7,14 @@ from math import inf, pi
 import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
+from braket.default_simulator.openqasm.interpreter import Interpreter
+from braket.ir.openqasm import Program
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
-from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
-from qiskit_ionq import add_equivalences, ionq_gates
+from qiskit_ionq import add_equivalences
 
 import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
@@ -40,7 +41,8 @@ from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm.modifiers import Control
 from qiskit_braket_provider.exception import QiskitBraketException
-from qiskit_braket_provider.providers import braket_instructions
+from qiskit_braket_provider.providers.openqasm import QiskitProgramContext, \
+    _BRAKET_GATE_NAME_TO_QISKIT_GATE
 
 add_equivalences()
 
@@ -161,55 +163,7 @@ _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
 
 _STANDARD_GATE_NAME_MAPPING = get_standard_gate_name_mapping()
 
-_BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
-    "u": qiskit_gates.UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
-    "u1": qiskit_gates.U1Gate(Parameter("theta")),
-    "u2": qiskit_gates.U2Gate(Parameter("theta"), Parameter("lam")),
-    "u3": qiskit_gates.U3Gate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
-    "h": qiskit_gates.HGate(),
-    "ccnot": qiskit_gates.CCXGate(),
-    "cnot": qiskit_gates.CXGate(),
-    "cphaseshift": qiskit_gates.CPhaseGate(Parameter("theta")),
-    "cswap": qiskit_gates.CSwapGate(),
-    "cy": qiskit_gates.CYGate(),
-    "cz": qiskit_gates.CZGate(),
-    "i": qiskit_gates.IGate(),
-    "phaseshift": qiskit_gates.PhaseGate(Parameter("theta")),
-    "rx": qiskit_gates.RXGate(Parameter("theta")),
-    "ry": qiskit_gates.RYGate(Parameter("theta")),
-    "rz": qiskit_gates.RZGate(Parameter("phi")),
-    "s": qiskit_gates.SGate(),
-    "si": qiskit_gates.SdgGate(),
-    "swap": qiskit_gates.SwapGate(),
-    "t": qiskit_gates.TGate(),
-    "ti": qiskit_gates.TdgGate(),
-    "v": qiskit_gates.SXGate(),
-    "vi": qiskit_gates.SXdgGate(),
-    "x": qiskit_gates.XGate(),
-    "xx": qiskit_gates.RXXGate(Parameter("theta")),
-    "y": qiskit_gates.YGate(),
-    "yy": qiskit_gates.RYYGate(Parameter("theta")),
-    "z": qiskit_gates.ZGate(),
-    "zz": qiskit_gates.RZZGate(Parameter("theta")),
-    "ecr": qiskit_gates.ECRGate(),
-    "prx": qiskit_gates.RGate(Parameter("theta"), Parameter("phi")),
-    "iswap": qiskit_gates.iSwapGate(),
-    "gpi": ionq_gates.GPIGate(Parameter("phi") / (2 * pi)),
-    "gpi2": ionq_gates.GPI2Gate(Parameter("phi") / (2 * pi)),
-    "ms": ionq_gates.MSGate(
-        Parameter("phi0") / (2 * pi),
-        Parameter("phi1") / (2 * pi),
-        Parameter("theta") / (2 * pi),
-    ),
-    "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
-    "measure": qiskit_gates.Measure(),
-    "unitary": qiskit_gates.UnitaryGate,
-    "kraus": qiskit_qi.Kraus,
-    "cc_prx": braket_instructions.CCPRx(
-        Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key")
-    ),
-    "measure_ff": braket_instructions.MeasureFF(Parameter("feedback_key")),
-}
+
 
 _BRAKET_SUPPORTED_NOISES = [
     "kraus",
@@ -489,7 +443,7 @@ def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
 
 
 def to_braket(
-    circuit: QuantumCircuit,
+    circuit: QuantumCircuit | Program,
     basis_gates: Iterable[str] | None = None,
     verbatim: bool = False,
     connectivity: list[list[int]] | None = None,
@@ -502,7 +456,7 @@ def to_braket(
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
     Args:
-        circuit (QuantumCircuit): Qiskit quantum circuit
+        circuit (QuantumCircuit | Program): Qiskit quantum circuit or OpenQASM 3 program
         basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
             if target is `None`. If `None` and target is `None`, the transpiler will use all gates
             defined in the Braket SDK. Default: `None`.
@@ -524,6 +478,8 @@ def to_braket(
     Returns:
         Circuit: Braket circuit
     """
+    if isinstance(circuit, Program):
+        circuit = to_qiskit(circuit)
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
     if (basis_gates or connectivity) and target:
@@ -713,15 +669,19 @@ def _validate_name_conflicts(parameters):
         )
 
 
-def to_qiskit(circuit: Circuit) -> QuantumCircuit:
+def to_qiskit(circuit: Circuit | Program) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
 
     Args:
-        circuit (Circuit): Braket quantum circuit
+        circuit (Circuit | Program): Braket quantum circuit or OpenQASM 3 program.
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
     """
+    if isinstance(circuit, Program):
+        return Interpreter(QiskitProgramContext()).run(
+            circuit.source, inputs=circuit.inputs
+        ).circuit
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
