@@ -7,8 +7,6 @@ from math import inf, pi
 import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
-from braket.default_simulator.openqasm.interpreter import Interpreter
-from braket.ir.openqasm import Program
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
 from qiskit.circuit.library import get_standard_gate_name_mapping
@@ -27,6 +25,7 @@ from braket.circuits import (
     Instruction,
     measure,
 )
+from braket.default_simulator.openqasm.interpreter import Interpreter
 from braket.device_schema import (
     DeviceActionType,
     DeviceCapabilities,
@@ -39,10 +38,13 @@ from braket.device_schema.rigetti import (
 )
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
 from qiskit_braket_provider.exception import QiskitBraketException
-from qiskit_braket_provider.providers.openqasm import QiskitProgramContext, \
-    _BRAKET_GATE_NAME_TO_QISKIT_GATE
+from qiskit_braket_provider.providers.openqasm import (
+    _BRAKET_GATE_NAME_TO_QISKIT_GATE,
+    QiskitProgramContext,
+)
 
 add_equivalences()
 
@@ -162,7 +164,6 @@ _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
 }
 
 _STANDARD_GATE_NAME_MAPPING = get_standard_gate_name_mapping()
-
 
 
 _BRAKET_SUPPORTED_NOISES = [
@@ -679,9 +680,9 @@ def to_qiskit(circuit: Circuit | Program) -> QuantumCircuit:
         QuantumCircuit: Qiskit quantum circuit
     """
     if isinstance(circuit, Program):
-        return Interpreter(QiskitProgramContext()).run(
-            circuit.source, inputs=circuit.inputs
-        ).circuit
+        return (
+            Interpreter(QiskitProgramContext()).run(circuit.source, inputs=circuit.inputs).circuit
+        )
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 

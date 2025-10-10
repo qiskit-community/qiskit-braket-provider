@@ -6,12 +6,11 @@ import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit
 from qiskit.circuit import CircuitInstruction, Gate, Parameter
+from qiskit.circuit import Instruction as QiskitInstruction
+from qiskit_ionq import ionq_gates
 from sympy import Expr
 
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
-from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit_ionq import ionq_gates
-
 from qiskit_braket_provider.providers import braket_instructions
 
 _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
@@ -53,7 +52,7 @@ _BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
         Parameter("phi0") / (2 * pi),
         Parameter("phi1") / (2 * pi),
         Parameter("theta") / (2 * pi),
-        ),
+    ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
     "unitary": qiskit_gates.UnitaryGate,
@@ -88,10 +87,10 @@ class QiskitProgramContext(AbstractProgramContext):
         self, gate_name: str, target: tuple[int, ...], params, ctrl_modifiers: list[int], power: int
     ):
         gate: Gate = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name]
+        print(params)
         if params:
             gate.params = [float(param) if isinstance(param, Number) else param for param in params]
-        if power:
-            gate = gate.power(float(power))
+        gate = gate.power(float(power))
         if ctrl_modifiers:
             gate = gate.control(
                 len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
