@@ -87,7 +87,11 @@ class QiskitProgramContext(AbstractProgramContext):
         self, gate_name: str, target: tuple[int, ...], params, ctrl_modifiers: list[int], power: int
     ):
         gate: Gate = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name]
-        print(params)
+        params = (
+            [float(param) if isinstance(param, Number) else param for param in params]
+            if params is not None
+            else []
+        )
         if params:
             gate.params = [float(param) if isinstance(param, Number) else param for param in params]
         gate = gate.power(float(power))
