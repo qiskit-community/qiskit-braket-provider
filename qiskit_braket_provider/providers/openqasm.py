@@ -104,9 +104,10 @@ class QiskitProgramContext(AbstractProgramContext):
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
         if isinstance(value, Expr):
             evaluated_value = value.evalf()
-            if isinstance(evaluated_value, Number):
-                return evaluated_value
-            return Parameter(evaluated_value)
+            if not isinstance(evaluated_value, Number):
+                # TODO: Convert Sympy expressions into Qiskit ParameterExpressions
+                raise TypeError("Unbound symbolic expressions are not supported")
+            return evaluated_value
         return value
 
     def add_measure(self, target: tuple[int], classical_targets: Iterable[int] = None):
