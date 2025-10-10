@@ -93,7 +93,7 @@ class QiskitProgramContext(AbstractProgramContext):
             else []
         )
         if params:
-            gate.params = [float(param) if isinstance(param, Number) else param for param in params]
+            gate.params = params
         gate = gate.power(float(power))
         if ctrl_modifiers:
             gate = gate.control(
