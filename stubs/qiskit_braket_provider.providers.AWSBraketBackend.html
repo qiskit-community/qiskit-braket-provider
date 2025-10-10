@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qiskit_braket_provider.providers.BraketLocalBackend" href="qiskit_braket_provider.providers.BraketLocalBackend.html" /><link rel="prev" title="Provider module (qiskit_braket_provider.providers)" href="../apidocs/providers.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.AWSBraketBackend - Qiskit-Braket provider 0.6.0</title>
+        <title>qiskit_braket_provider.providers.AWSBraketBackend - Qiskit-Braket provider 0.7.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -143,7 +143,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Qiskit-Braket provider 0.6.0</div></a>
+      <a href="../index.html"><div class="brand">Qiskit-Braket provider 0.7.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -170,7 +170,7 @@
     <img class="sidebar-logo" src="../_static/logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Qiskit-Braket provider 0.6.0</span>
+  <span class="sidebar-brand-text">Qiskit-Braket provider 0.7.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -262,19 +262,19 @@
 <td><p>This throws a deprecation warning on initialization.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">acquire_channel</span></code>(qubit)</p></td>
-<td><p>Return the acquisition channel for the given qubit.</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">control_channel</span></code>(qubits)</p></td>
-<td><p>Return the secondary drive channel for the given qubit</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">drive_channel</span></code>(qubit)</p></td>
-<td><p>Return the drive channel for the given qubit.</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_gateset</span></code>([native])</p></td>
 <td><p>Get the gate set of the device.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">measure_channel</span></code>(qubit)</p></td>
-<td><p>Return the measure stimulus channel for the given qubit.</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">qubit_properties</span></code>(qubit)</p></td>
 <td><p>Return QubitProperties for a given qubit.</p></td>
@@ -310,49 +310,46 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">instruction_durations</span></code></p></td>
 <td><p>Return the <code class="xref py py-class docutils literal notranslate"><span class="pre">InstructionDurations</span></code> object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">instruction_schedule_map</span></code></p></td>
-<td><p>Return the <code class="xref py py-class docutils literal notranslate"><span class="pre">InstructionScheduleMap</span></code> for the instructions defined in this backend's target.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">instructions</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">instructions</span></code></p></td>
 <td><p>A list of Instruction tuples on the backend of the form <code class="docutils literal notranslate"><span class="pre">(instruction,</span> <span class="pre">(qubits)</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_circuits</span></code></p></td>
-<td><p>The maximum number of circuits (or Pulse schedules) that can be run in a single job.</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_circuits</span></code></p></td>
+<td><p>The maximum number of circuits that can be run in a single job.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meas_map</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">meas_map</span></code></p></td>
 <td><p>Return the grouping of measurements which are multiplexed</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_qubits</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_qubits</span></code></p></td>
 <td><p>Return the number of qubits the backend has.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">operation_names</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">operation_names</span></code></p></td>
 <td><p>A list of instruction names that the backend supports.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">operations</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">operations</span></code></p></td>
 <td><p>A list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Instruction</span></code> instances that the backend supports.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">options</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">options</span></code></p></td>
 <td><p>Return the options for the backend</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">provider</span></code></p></td>
-<td><p>Return the backend Provider.</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">provider</span></code></p></td>
+<td><p>Return the backend provider.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">target</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">target</span></code></p></td>
 <td><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">qiskit.transpiler.Target</span></code> object for the backend.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
 <td><p>Name of the backend.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">description</span></code></p></td>
 <td><p>Optional human-readable description.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">online_date</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">online_date</span></code></p></td>
 <td><p>Date that the backend came online.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend_version</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend_version</span></code></p></td>
 <td><p>Version of the backend being provided.</p></td>
 </tr>
 </tbody>
@@ -434,7 +431,7 @@
   </div>
 </div><script src="../_static/jquery.js?v=5d32c60e"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-    <script src="../_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="../_static/documentation_options.js?v=fe7df9b0"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/qiskit-sphinx-theme.js?v=4d77b8ca"></script>

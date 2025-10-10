@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.braket_backend - Qiskit-Braket provider 0.6.0</title>
+        <title>qiskit_braket_provider.providers.braket_backend - Qiskit-Braket provider 0.7.0</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -143,7 +143,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">Qiskit-Braket provider 0.6.0</div></a>
+      <a href="../../../index.html"><div class="brand">Qiskit-Braket provider 0.7.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -170,7 +170,7 @@
     <img class="sidebar-logo" src="../../../_static/logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Qiskit-Braket provider 0.6.0</span>
+  <span class="sidebar-brand-text">Qiskit-Braket provider 0.7.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -249,11 +249,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumCircuit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Provider</span><span class="p">,</span> <span class="n">QubitProperties</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendV2</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">QubitProperties</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">braket.aws</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwsDevice</span><span class="p">,</span> <span class="n">AwsQuantumTask</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.aws</span><span class="w"> </span><span class="kn">import</span> <span class="n">AwsDevice</span><span class="p">,</span> <span class="n">AwsDeviceType</span><span class="p">,</span> <span class="n">AwsQuantumTask</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.aws.queue_information</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueueDepthInfo</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.device_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceActionType</span>
@@ -268,7 +269,6 @@
     <span class="n">gateset_from_properties</span><span class="p">,</span>
     <span class="n">local_simulator_to_target</span><span class="p">,</span>
     <span class="n">native_angle_restrictions</span><span class="p">,</span>
-    <span class="n">native_gate_connectivity</span><span class="p">,</span>
     <span class="n">native_gate_set</span><span class="p">,</span>
     <span class="n">to_braket</span><span class="p">,</span>
 <span class="p">)</span>
@@ -276,19 +276,20 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-
 <span class="n">_TASK_ID_DIVIDER</span> <span class="o">=</span> <span class="s2">&quot;;&quot;</span>
 
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Device</span><span class="p">,</span> <span class="n">covariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">BraketBackend</span><span class="p">(</span><span class="n">BackendV2</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BraketBackend</span><span class="p">(</span><span class="n">BackendV2</span><span class="p">,</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;BraketBackend.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;BraketBackend[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Device</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_meas_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meas_level</span><span class="p">:</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span> <span class="o">|</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meas_level</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
@@ -314,10 +315,17 @@
             <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">action</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DeviceActionType</span><span class="o">.</span><span class="n">OPENQASM</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">gateset_from_properties</span><span class="p">(</span><span class="n">action</span><span class="p">)</span> <span class="k">if</span> <span class="n">action</span> <span class="k">else</span> <span class="kc">None</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_program_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">braket_circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="n">program_set</span> <span class="o">=</span> <span class="n">ProgramSet</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots_per_executable</span><span class="o">=</span><span class="n">shots</span><span class="p">)</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program_set</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">BraketQuantumTask</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">program_set</span><span class="o">.</span><span class="n">total_shots</span>
+        <span class="p">)</span>
+
 
 <div class="viewcode-block" id="BraketLocalBackend">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.BraketLocalBackend.html#qiskit_braket_provider.providers.BraketLocalBackend">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BraketLocalBackend</span><span class="p">(</span><span class="n">BraketBackend</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BraketLocalBackend</span><span class="p">(</span><span class="n">BraketBackend</span><span class="p">[</span><span class="n">LocalSimulator</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;BraketLocalBackend.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BraketLocalBackend.__init__">
@@ -336,11 +344,10 @@
 <span class="sd">            name: name of backend</span>
 <span class="sd">            **fields: extra fields</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">backend_name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_local_device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">backend_name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">local_simulator_to_target</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_local_device</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_device</span><span class="o">.</span><span class="n">status</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">local_simulator_to_target</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">status</span></div>
 
 
     <span class="nd">@property</span>
@@ -365,10 +372,6 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">meas_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Measurement map is not supported by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Device</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_device</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">qubit_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QubitProperties</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QubitProperties</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
@@ -387,8 +390,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
         <span class="n">convert_input</span> <span class="o">=</span> <span class="p">[</span><span class="n">run_input</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">run_input</span><span class="p">)</span>
         <span class="n">verbatim</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;verbatim&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="n">gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">verbatim</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">to_braket</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">gateset</span><span class="p">,</span> <span class="n">verbatim</span><span class="p">)</span> <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">convert_input</span><span class="p">]</span>
+        <span class="n">circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">to_braket</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">verbatim</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="n">verbatim</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">convert_input</span>
+        <span class="p">]</span>
 
         <span class="n">shots</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s2">&quot;shots&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;shots&quot;</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">else</span> <span class="mi">1024</span>
         <span class="k">if</span> <span class="n">shots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -422,13 +427,13 @@
 
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">BraketAwsBackend</span><span class="p">(</span><span class="n">BraketBackend</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BraketAwsBackend</span><span class="p">(</span><span class="n">BraketBackend</span><span class="p">[</span><span class="n">AwsDevice</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;BraketAwsBackend.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-positional-arguments</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">arn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -461,20 +466,24 @@
         <span class="k">if</span> <span class="n">arn</span> <span class="ow">and</span> <span class="n">device</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can only specify one of arn and device&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">AwsDevice</span><span class="p">(</span><span class="n">arn</span><span class="p">)</span> <span class="k">if</span> <span class="n">arn</span> <span class="k">else</span> <span class="n">device</span><span class="p">,</span>
+            <span class="n">name</span><span class="p">,</span>
             <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
             <span class="n">online_date</span><span class="o">=</span><span class="n">online_date</span><span class="p">,</span>
             <span class="n">backend_version</span><span class="o">=</span><span class="n">backend_version</span><span class="p">,</span>
             <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span> <span class="o">=</span> <span class="n">AwsDevice</span><span class="p">(</span><span class="n">arn</span><span class="p">)</span> <span class="k">if</span> <span class="n">arn</span> <span class="k">else</span> <span class="n">device</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">aws_session</span><span class="o">.</span><span class="n">add_braket_user_agent</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">aws_session</span><span class="o">.</span><span class="n">add_braket_user_agent</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;QiskitBraketProvider/</span><span class="si">{</span><span class="n">version</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">aws_device_to_target</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_braket_qubits</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">topology_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">topology_graph</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_supports_program_sets</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">DeviceActionType</span><span class="o">.</span><span class="n">OPENQASM_PROGRAM_SET</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">action</span>
+            <span class="n">DeviceActionType</span><span class="o">.</span><span class="n">OPENQASM_PROGRAM_SET</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">action</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
@@ -501,10 +510,6 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">max_circuits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Device</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_options</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -569,7 +574,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">control_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Control channel is not supported by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">,</span> <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">native</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">,</span> <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">native</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="c1"># Defaults to native transpilation if the underlying device is a QPU</span>
+        <span class="n">native</span> <span class="o">=</span> <span class="n">native</span> <span class="k">if</span> <span class="n">native</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">AwsDeviceType</span><span class="o">.</span><span class="n">QPU</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">):</span>
             <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span><span class="n">run_input</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -581,36 +588,30 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_meas_level</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;meas_level&quot;</span><span class="p">])</span>
             <span class="k">del</span> <span class="n">options</span><span class="p">[</span><span class="s2">&quot;meas_level&quot;</span><span class="p">]</span>
 
-        <span class="n">gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">(</span><span class="n">native</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">verbatim</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">connectivity</span> <span class="o">=</span> <span class="n">native_gate_connectivity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span> <span class="k">if</span> <span class="n">native</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">angle_restrictions</span> <span class="o">=</span> <span class="n">native_angle_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span> <span class="k">if</span> <span class="n">native</span> <span class="k">else</span> <span class="kc">None</span>
-
-        <span class="n">braket_circuits</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">to_braket</span><span class="p">(</span>
-                <span class="n">circ</span><span class="p">,</span>
-                <span class="n">basis_gates</span><span class="o">=</span><span class="n">gateset</span><span class="p">,</span>
-                <span class="n">verbatim</span><span class="o">=</span><span class="n">verbatim</span><span class="p">,</span>
-                <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
-                <span class="n">angle_restrictions</span><span class="o">=</span><span class="n">angle_restrictions</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span>
-        <span class="p">]</span>
+        <span class="n">braket_circuits</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">to_braket</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">braket_qubits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_braket_qubits</span><span class="p">)</span> <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">verbatim</span>
+            <span class="k">else</span> <span class="p">[</span>
+                <span class="n">to_braket</span><span class="p">(</span>
+                    <span class="n">circ</span><span class="p">,</span>
+                    <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">,</span>
+                    <span class="n">braket_qubits</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_braket_qubits</span><span class="p">,</span>
+                    <span class="n">angle_restrictions</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">native_angle_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span> <span class="k">if</span> <span class="n">native</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
         <span class="n">shots</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;shots&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_run_program_set</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_supports_program_sets</span> <span class="ow">and</span> <span class="n">shots</span> <span class="o">!=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_supports_program_sets</span> <span class="ow">and</span> <span class="n">shots</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
             <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_batch</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_program_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">braket_circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
-        <span class="n">program_set</span> <span class="o">=</span> <span class="n">ProgramSet</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots_per_executable</span><span class="o">=</span><span class="n">shots</span><span class="p">)</span>
-        <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">program_set</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">BraketQuantumTask</span><span class="p">(</span>
-            <span class="n">task_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">program_set</span><span class="o">.</span><span class="n">total_shots</span>
-        <span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">braket_circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">],</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
-        <span class="n">batch_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aws_device</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">shots</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">batch_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">braket_circuits</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">shots</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
         <span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AwsQuantumTask</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_task</span><span class="o">.</span><span class="n">tasks</span>
         <span class="n">task_id</span> <span class="o">=</span> <span class="n">_TASK_ID_DIVIDER</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">BraketQuantumTask</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="n">shots</span><span class="p">)</span>
@@ -631,7 +632,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-positional-arguments</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">AwsDevice</span><span class="p">,</span>
-        <span class="n">provider</span><span class="p">:</span> <span class="n">Provider</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -688,7 +689,7 @@
   </div>
 </div><script src="../../../_static/jquery.js?v=5d32c60e"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-    <script src="../../../_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="../../../_static/documentation_options.js?v=fe7df9b0"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/thebelab-helper.js"></script>

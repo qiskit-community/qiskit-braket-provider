@@ -35,7 +35,6 @@
       ~BraketLocalBackend.dt
       ~BraketLocalBackend.dtm
       ~BraketLocalBackend.instruction_durations
-      ~BraketLocalBackend.instruction_schedule_map
       ~BraketLocalBackend.instructions
       ~BraketLocalBackend.max_circuits
       ~BraketLocalBackend.meas_map

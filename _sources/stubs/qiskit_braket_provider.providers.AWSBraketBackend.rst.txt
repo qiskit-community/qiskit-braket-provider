@@ -37,7 +37,6 @@
       ~AWSBraketBackend.dt
       ~AWSBraketBackend.dtm
       ~AWSBraketBackend.instruction_durations
-      ~AWSBraketBackend.instruction_schedule_map
       ~AWSBraketBackend.instructions
       ~AWSBraketBackend.max_circuits
       ~AWSBraketBackend.meas_map
