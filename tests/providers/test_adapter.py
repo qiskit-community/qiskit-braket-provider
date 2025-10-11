@@ -19,6 +19,7 @@ from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngl
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket.ir.openqasm import Program
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_GATE_NAME_TO_QISKIT_GATE,
     _BRAKET_SUPPORTED_NOISES,
@@ -62,6 +63,13 @@ def check_to_braket_unitary_correct(
     return np.allclose(
         to_braket(qiskit_circuit, optimization_level=optimization_level).to_unitary(),
         Operator(qiskit_circuit.decompose()).reverse_qargs().to_matrix(),
+    )
+
+
+def check_to_braket_openqasm_unitary_correct(qasm_program: Program):
+    """Checks that to_braket converts an OpenQASM correctly"""
+    return np.allclose(
+        to_braket(qasm_program).to_unitary(), Circuit.from_ir(qasm_program).to_unitary()
     )
 
 
@@ -823,6 +831,49 @@ class TestAdapter(TestCase):
         qqc = to_braket(to_qiskit(qc))
         res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
+
+    def test_roundtrip_openqasm_custom_gate(self):
+        qasm_string = """
+        qubit[3] q;
+        
+        gate majority a, b, c {
+            // set c to the majority of {a, b, c}
+            ctrl @ x c, b;
+            ctrl @ x c, a;
+            ctrl(2) @ x a, b, c;
+        }
+        
+        pow(0.5) @ x q[0:1];     // sqrt x
+        inv @ v q[1];          // inv of (sqrt x)
+        // this should flip q[2] to 1
+        majority q[0], q[1], q[2];
+        """
+        qasm_program = Program(source=qasm_string)
+        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
+
+    def test_roundtrip_openqasm_subroutine(self):
+        qasm_string = """
+        const int[8] n = 4;
+        input bit[n] x;
+        
+        qubit q;
+        
+        def parity(bit[n] cin) -> bit {
+            bit c = false;
+            for int[8] i in [0: n - 1] {
+                c ^= cin[i];
+            }
+            return c;
+        }
+        
+        if (parity(x)) {
+            x q;
+        } else {
+            i q;
+        }
+        """
+        qasm_program = Program(source=qasm_string, inputs={"x": "1011"})
+        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
 
 
 class TestFromBraket(TestCase):
