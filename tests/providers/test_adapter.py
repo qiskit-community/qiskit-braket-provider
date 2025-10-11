@@ -859,14 +859,14 @@ class TestAdapter(TestCase):
         qubit q;
         
         def parity(bit[n] cin) -> bit {
-          bit c = false;
-          for int[8] i in [0: n - 1] {
-            c ^= cin[i];
-          }
-          return c;
+            bit c = false;
+            for int[8] i in [0: n - 1] {
+                c ^= cin[i];
+            }
+            return c;
         }
         
-        if(parity(x)) {
+        if (parity(x)) {
             x q;
         } else {
             i q;
