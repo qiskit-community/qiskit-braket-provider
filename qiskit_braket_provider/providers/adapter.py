@@ -810,11 +810,11 @@ def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) ->
         # extract the coefficient in the templated gate
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
-        if hasattr(value, "expression"):
-            value = _sympy_to_qiskit(coeff * value.expression)
-        else:  # simply a numeric type
-            value = coeff * value
-        new_gate_params.append(value)
+        new_gate_params.append(
+            _sympy_to_qiskit(coeff * value.expression)
+            if hasattr(value, "expression")
+            else coeff * value
+        )
     return gate_cls(*new_gate_params)
 
 
