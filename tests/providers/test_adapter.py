@@ -841,14 +841,35 @@ class TestAdapter(TestCase):
         ):
             to_braket(qc)
 
-    def test_conditional_gate_with_if_else_name(self):
-        """Tests that operations with if_else name raise NotImplementedError."""
-        qc = QuantumCircuit(2, 2)
+    def test_conditional_gate_with_if_test(self):
+        """Tests that if_test conditional operations raise NotImplementedError."""
+        qr = QuantumRegister(2, "q")
+        cr = ClassicalRegister(2, "c")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.h(1)
+        qc.measure(qr, cr)
+        
+        with qc.if_test((cr, 3)):
+            qc.x(0)
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc, verbatim=True)
+
+    def test_conditional_gate_with_while_loop(self):
+        """Tests that while_loop conditional operations raise NotImplementedError."""
+        qr = QuantumRegister(2, "q")
+        cr = ClassicalRegister(2, "c")
+        qc = QuantumCircuit(qr, cr)
         qc.h(0)
         qc.measure(0, 0)
-
-        if_else_instr = QiskitInstruction("if_else", 1, 0, [])
-        qc.append(if_else_instr, [1])
+        
+        with qc.while_loop((cr, 1)):
+            qc.x(0)
+            qc.measure(0, 0)
 
         with pytest.raises(
             NotImplementedError,
