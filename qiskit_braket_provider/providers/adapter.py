@@ -782,7 +782,7 @@ def _sympy_to_qiskit(expr: Mul | Add | Symbol | Pow) -> ParameterExpression | Pa
             return Parameter(expr.name)
         case Pow():
             return _sympy_to_qiskit(expr.args[0]) ** int(expr.args[1])
-        case obj if hasattr(obj, "is_number") and obj.is_number:
+        case obj if hasattr(obj, "is_number") and obj.is_real:
             return float(obj)
     raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
 

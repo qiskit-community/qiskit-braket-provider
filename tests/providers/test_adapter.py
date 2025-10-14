@@ -929,6 +929,14 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
+    def test_unsupported_parameter_division(self):
+        braket_circuit = Circuit().rx(0, 1j * FreeParameter("alpha"))
+        with pytest.raises(
+            TypeError,
+            match="unrecognized parameter type in conversion: <class 'sympy.core.numbers.ImaginaryUnit'>",
+        ):
+            to_qiskit(braket_circuit)
+
     def test_unitary(self):
         """
         Tests braket to qiskit conversion with UnitaryGate.
@@ -1127,8 +1135,8 @@ class TestThereAndBackAgain(TestCase):
         qc.rz(0.1, 0)
         circ = Circuit().rz(0, 0.1)
 
-        bqc1 = to_qiskit(to_braket(qc), add_measurements=False)  # passes
-        bqc2 = to_qiskit(
+        stayed_home = to_qiskit(to_braket(qc), add_measurements=False)  # passes
+        lonely_mountain_and_back = to_qiskit(
             to_braket(to_qiskit(circ, add_measurements=False)), add_measurements=False
         )  # fails
-        assert np.allclose(Operator(bqc1).data, Operator(bqc2).data)
+        assert np.allclose(Operator(stayed_home).data, Operator(lonely_mountain_and_back).data)
