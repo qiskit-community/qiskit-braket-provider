@@ -1,7 +1,6 @@
 certifi>=2021.5.30
 qiskit>=0.34.2
 qiskit-ionq>=0.5.2
-amazon-braket-default-simulator<1.31.0  # Pin until we fix matrix multiplication bug
 amazon-braket-sdk>=1.99.0
 
 setuptools>=40.1.0
