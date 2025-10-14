@@ -554,6 +554,13 @@ def to_braket(
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         qubits = circuit_instruction.qubits
+
+        if getattr(operation, "condition", None) is not None or operation.name == "if_else":
+            raise NotImplementedError(
+                f"Conditional operations are not supported. Found conditional gate '{operation.name}'. "
+                f"Only MeasureFF and CCPRx gates are supported in Braket."
+            )
+
         match gate_name := operation.name:
             case "measure":
                 qubit = qubits[0]  # qubit count = 1 for measure
