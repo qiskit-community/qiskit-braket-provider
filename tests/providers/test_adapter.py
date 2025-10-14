@@ -20,8 +20,8 @@ from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngl
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
-from braket.ir.openqasm import Program
 from braket.experimental_capabilities import EnableExperimentalCapability
+from braket.ir.openqasm import Program
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_GATE_NAME_TO_QISKIT_GATE,
     _BRAKET_SUPPORTED_NOISES,
