@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
@@ -19,6 +20,7 @@ from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngl
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket.experimental_capabilities import EnableExperimentalCapability
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_GATE_NAME_TO_QISKIT_GATE,
     _BRAKET_SUPPORTED_NOISES,
@@ -31,6 +33,7 @@ from qiskit_braket_provider.providers.adapter import (
     to_braket,
     to_qiskit,
 )
+from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
@@ -822,6 +825,69 @@ class TestAdapter(TestCase):
         qqc = to_braket(to_qiskit(qc))
         res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
+
+    def test_conditional_gate_with_condition_attribute(self):
+        """Tests that operations with condition attribute raise NotImplementedError."""
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.measure(0, 0)
+
+        x_instr = QiskitInstruction("x", 1, 0, [])
+        x_instr.condition = (0, 1)
+        qc.append(x_instr, [1])
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc)
+
+    def test_conditional_gate_with_if_test(self):
+        """Tests that if_test conditional operations raise NotImplementedError."""
+        qr = QuantumRegister(2, "q")
+        cr = ClassicalRegister(2, "c")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.h(1)
+        qc.measure(qr, cr)
+        
+        with qc.if_test((cr, 3)):
+            qc.x(0)
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc, verbatim=True)
+
+    def test_conditional_gate_with_while_loop(self):
+        """Tests that while_loop conditional operations raise NotImplementedError."""
+        qr = QuantumRegister(2, "q")
+        cr = ClassicalRegister(2, "c")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.measure(0, 0)
+        
+        with qc.while_loop((cr, 1)):
+            qc.x(0)
+            qc.measure(0, 0)
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc, verbatim=True)
+
+    def test_ccprx_and_measureff_gates_allowed(self):
+        """Tests that CCPRx and MeasureFF gates are allowed and don't raise conditional error."""
+        with EnableExperimentalCapability():
+            qc = QuantumCircuit(1, 1)
+            qc.r(np.pi, 0, 0)
+            qc.append(MeasureFF(feedback_key=0), qargs=[0])
+            qc.append(CCPRx(np.pi, 0, feedback_key=0), qargs=[0])
+
+            braket_circuit = to_braket(qc, verbatim=True)
+            self.assertGreater(len(braket_circuit.instructions), 0)
 
 
 class TestFromBraket(TestCase):
