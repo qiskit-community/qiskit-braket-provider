@@ -151,9 +151,8 @@ class TestAdapter(TestCase):
         gate = GlobalPhaseGate(1.23)
         qiskit_circuit.append(gate, [])
 
-        braket_circuit = to_braket(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit, optimization_level=2)
         expected_braket_circuit = Circuit().h(0).gphase(1.23 + np.pi / 2)
-
         self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0])
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -915,6 +914,29 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
+    def test_parametric_pow_gate(self):
+        """
+        Test braket to qiskit with powers of parameters
+        """
+        braket_circuit = Circuit().rx(0, FreeParameter("alpha") ** 2)
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        uuid = qiskit_circuit.parameters[0].uuid
+
+        expected_qiskit_circuit = QuantumCircuit(1)
+        expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid) ** 2, 0)
+
+        expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_unsupported_parameter_division(self):
+        braket_circuit = Circuit().rx(0, 1j * FreeParameter("alpha"))
+        with pytest.raises(
+            TypeError,
+            match="unrecognized parameter type in conversion: <class 'sympy.core.numbers.ImaginaryUnit'>",
+        ):
+            to_qiskit(braket_circuit)
+
     def test_unitary(self):
         """
         Tests braket to qiskit conversion with UnitaryGate.
@@ -1045,3 +1067,76 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure(0, 1)
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+
+class TestThereAndBackAgain(TestCase):
+    """testing whether or not to_braket and to_qiskit work together"""
+
+    def test_all_standard_gates(self):
+        """
+        Tests whether or not we can loop
+        """
+
+        gate_set = {
+            attr
+            for attr in dir(Gate)
+            if attr[0].isupper() and attr.lower() in _BRAKET_GATE_NAME_TO_QISKIT_GATE
+        }
+
+        gate_set -= {"Unitary"}
+
+        # pytest.mark.parametrize is incompatible with TestCase
+        param_sets = [
+            [0.1, 0.2, 0.3],
+            [
+                FreeParameter("alpha"),
+                FreeParameter("beta"),
+                FreeParameter("gamma"),
+            ],
+            [
+                FreeParameter("alpha") + FreeParameter("delta"),
+                FreeParameter("beta") + FreeParameter("epsilon"),
+                FreeParameter("gamma") ** 2,
+            ],
+        ]
+        for gate_name in gate_set:
+            for params_braket in param_sets:
+                gate = getattr(Gate, gate_name)
+                if issubclass(gate, AngledGate):
+                    op = gate(params_braket[0])
+                elif issubclass(gate, DoubleAngledGate):
+                    op = gate(params_braket[0], params_braket[1])
+                elif issubclass(gate, TripleAngledGate):
+                    op = gate(*params_braket)
+                else:
+                    op = gate()
+                target = range(op.qubit_count)
+                instr = Instruction(op, target)
+
+                braket_circuit = Circuit().add_instruction(instr)
+                qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+                # deep copy is necessary to avoid parameter table inconsistency in the MS gate
+                qiskit_back_circuit = to_qiskit(
+                    to_braket(qiskit_circuit.copy()), add_measurements=False
+                )
+
+                num_para = len(qiskit_circuit.parameters)
+                values = [0.5, 0.4, 0.8, 0.1, 0.2, 0.3]
+
+                qiskit_circuit = qiskit_circuit.assign_parameters(values[:num_para], inplace=False)
+                qiskit_back_circuit = qiskit_back_circuit.assign_parameters(values[:num_para])
+                assert np.allclose(
+                    Operator(qiskit_circuit).data, Operator(qiskit_back_circuit).data
+                )
+
+    def test_simple_travels(self):
+        qc = QuantumCircuit(1, 1)
+        qc.rz(0.1, 0)
+        circ = Circuit().rz(0, 0.1)
+
+        stayed_home = to_qiskit(to_braket(qc), add_measurements=False)  # passes
+        lonely_mountain_and_back = to_qiskit(
+            to_braket(to_qiskit(circ, add_measurements=False)), add_measurements=False
+        )  # fails
+        assert np.allclose(Operator(stayed_home).data, Operator(lonely_mountain_and_back).data)
