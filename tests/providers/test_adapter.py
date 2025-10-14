@@ -6,8 +6,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit.circuit import Instruction as QiskitInstruction, Parameter, ParameterVector
-from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate, XGate
+from qiskit.circuit import Instruction as QiskitInstruction
+from qiskit.circuit import Parameter, ParameterVector
+from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
 from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
 from qiskit.transpiler import Target
@@ -33,6 +34,7 @@ from qiskit_braket_provider.providers.adapter import (
     to_qiskit,
 )
 from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
+
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
 qiskit_ionq_gates = [
