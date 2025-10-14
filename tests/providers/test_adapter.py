@@ -151,9 +151,8 @@ class TestAdapter(TestCase):
         gate = GlobalPhaseGate(1.23)
         qiskit_circuit.append(gate, [])
 
-        braket_circuit = to_braket(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit, optimization_level=2)
         expected_braket_circuit = Circuit().h(0).gphase(1.23 + np.pi / 2)
-
         self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0])
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -855,7 +854,7 @@ class TestFromBraket(TestCase):
                 FreeParameter("angle_1"),
                 FreeParameter("angle_2"),
                 FreeParameter("angle_3"),
-            ]
+            ],
         ]
 
         for gate_name in gate_set:
@@ -911,6 +910,21 @@ class TestFromBraket(TestCase):
 
         expected_qiskit_circuit = QuantumCircuit(1)
         expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid), 0)
+
+        expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_parametric_pow_gate(self):
+        """
+        Test braket to qiskit with powers of parameters
+        """
+        braket_circuit = Circuit().rx(0, FreeParameter("alpha") ** 2)
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        uuid = qiskit_circuit.parameters[0].uuid
+
+        expected_qiskit_circuit = QuantumCircuit(1)
+        expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid) ** 2, 0)
 
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
@@ -1048,17 +1062,20 @@ class TestFromBraket(TestCase):
 
 
 class TestThereAndBackAgain(TestCase):
-    """ testing whether or not to_braket and to_qiskit work together """    
+    """testing whether or not to_braket and to_qiskit work together"""
+
     def test_all_standard_gates(self):
         """
         Tests whether or not we can loop
         """
 
-        gate_set = [
+        gate_set = {
             attr
             for attr in dir(Gate)
-            if attr[0].isupper() and attr.lower() in _GATE_NAME_TO_QISKIT_GATE
-        ]
+            if attr[0].isupper() and attr.lower() in _BRAKET_GATE_NAME_TO_QISKIT_GATE
+        }
+
+        gate_set -= {"Unitary"}
 
         # pytest.mark.parametrize is incompatible with TestCase
         param_sets = [
@@ -1071,7 +1088,7 @@ class TestThereAndBackAgain(TestCase):
             [
                 FreeParameter("alpha") + FreeParameter("delta"),
                 FreeParameter("beta") + FreeParameter("epsilon"),
-                FreeParameter("gamma") + FreeParameter("eta"),
+                FreeParameter("gamma") ** 2,
             ],
         ]
         for gate_name in gate_set:
@@ -1087,14 +1104,12 @@ class TestThereAndBackAgain(TestCase):
                     op = gate()
                 target = range(op.qubit_count)
                 instr = Instruction(op, target)
-                
-                
+
                 braket_circuit = Circuit().add_instruction(instr)
                 qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
 
-
                 # deep copy is necessary to avoid parameter table inconsistency in the MS gate
-                qiskit_tolkien_circuit = to_qiskit(
+                qiskit_back_circuit = to_qiskit(
                     to_braket(qiskit_circuit.copy()), add_measurements=False
                 )
 
@@ -1102,22 +1117,18 @@ class TestThereAndBackAgain(TestCase):
                 values = [0.5, 0.4, 0.8, 0.1, 0.2, 0.3]
 
                 qiskit_circuit = qiskit_circuit.assign_parameters(values[:num_para], inplace=False)
-                qiskit_tolkien_circuit = qiskit_tolkien_circuit.assign_parameters(values[:num_para])
+                qiskit_back_circuit = qiskit_back_circuit.assign_parameters(values[:num_para])
                 assert np.allclose(
-                    Operator(qiskit_circuit).data, Operator(qiskit_tolkien_circuit).data
+                    Operator(qiskit_circuit).data, Operator(qiskit_back_circuit).data
                 )
 
     def test_simple_travels(self):
-        qc = QuantumCircuit(1,1)
+        qc = QuantumCircuit(1, 1)
         qc.rz(0.1, 0)
-        circ = Circuit().rz(0,0.1)
-        
-        bqc1 = to_qiskit(
-            to_braket(qc), add_measurements=False) # passes 
+        circ = Circuit().rz(0, 0.1)
+
+        bqc1 = to_qiskit(to_braket(qc), add_measurements=False)  # passes
         bqc2 = to_qiskit(
-            to_braket(
-                to_qiskit(circ, add_measurements=False)),
-            add_measurements=False) # fails
-        assert np.allclose(
-            Operator(bqc1).data, Operator(bqc2).data
-        )
+            to_braket(to_qiskit(circ, add_measurements=False)), add_measurements=False
+        )  # fails
+        assert np.allclose(Operator(bqc1).data, Operator(bqc2).data)

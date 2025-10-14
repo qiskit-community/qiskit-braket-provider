@@ -14,7 +14,7 @@ from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
 from qiskit_ionq import add_equivalences, ionq_gates
-from sympy import Add, Mul, Symbol
+from sympy import Add, Mul, Pow, Symbol
 
 import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
@@ -498,7 +498,7 @@ def to_braket(
     *,
     target: Target | None = None,
     braket_qubits: Sequence[int] | None = None,
-    optimization_level: int | None = None,
+    optimization_level: int | None = 0,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -545,7 +545,6 @@ def to_braket(
             optimization_level=optimization_level,
             target=target,
         )
-
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
     # Handle qiskit to braket conversion
@@ -735,16 +734,12 @@ def to_qiskit(circuit: Circuit, add_measurements: bool = True) -> QuantumCircuit
     cbit = 0
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
-        gate_params = []
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(instruction.operator.to_matrix())
         elif gate_name == "unitary":
             gate = _create_qiskit_unitary(instruction.operator.to_matrix())
         else:
-            if hasattr(instruction.operator, "parameters"):
-                gate_params = instruction.operator.parameters
-            gate = _create_qiskit_gate(gate_name, gate_params)
-
+            gate = _create_qiskit_gate(gate_name, getattr(instruction.operator, "parameters", []))
         if instruction.power != 1:
             gate = gate**instruction.power
         if control_qubits := instruction.control:
@@ -776,18 +771,21 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     return qiskit_qi.Kraus(gate_params)
 
 
-def _sympy_to_qiskit_converter(expr: Mul | Add | Symbol) -> ParameterExpression | Parameter:
-    """ convert a sympy expression to qiskit Parameters recursively """
-    if isinstance(expr, Mul):
-        return _sympy_to_qiskit_converter(expr.args[0]) * _sympy_to_qiskit_converter(expr.args[1])
-    elif isinstance(expr, Add):
-        return _sympy_to_qiskit_converter(expr.args[0]) + _sympy_to_qiskit_converter(expr.args[1])
-    elif isinstance(expr, Symbol):
-        return Parameter(expr.name)
-    elif hasattr(expr, "is_number") and expr.is_number:
-        return float(expr)
-    else:
-        raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
+def _sympy_to_qiskit(expr: Mul | Add | Symbol | Pow) -> ParameterExpression | Parameter:
+    """convert a sympy expression to qiskit Parameters recursively"""
+    match expr:
+        case Mul():
+            return _sympy_to_qiskit(expr.args[0]) * _sympy_to_qiskit(expr.args[1])
+        case Add():
+            return _sympy_to_qiskit(expr.args[0]) + _sympy_to_qiskit(expr.args[1])
+        case Symbol():
+            return Parameter(expr.name)
+        case Pow():
+            return _sympy_to_qiskit(expr.args[0]) ** int(expr.args[1])
+        case obj if hasattr(obj, "is_number") and obj.is_number:
+            return float(obj)
+    raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
+
 
 def _reverse_endianness(matrix: np.ndarray):
     n_q = int(np.log2(matrix.shape[0]))
@@ -801,20 +799,20 @@ def _reverse_endianness(matrix: np.ndarray):
         else matrix
     )
 
+
 def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) -> Instruction:
     gate_instance = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name)
     if not gate_instance:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     gate_cls = gate_instance.__class__
     new_gate_params = []
-    #
     for param_expression, value in zip(gate_instance.params, gate_params):
-        # extract the coefficient in the templated gate 
+        # extract the coefficient in the templated gate
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
         if hasattr(value, "expression"):
-            value = _sympy_to_qiskit_converter(coeff * value.expression)
-        else: # simply a numeric type 
+            value = _sympy_to_qiskit(coeff * value.expression)
+        else:  # simply a numeric type
             value = coeff * value
         new_gate_params.append(value)
     return gate_cls(*new_gate_params)
