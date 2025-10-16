@@ -371,11 +371,10 @@ def aws_device_to_target(device: AwsDevice) -> Target:
             return _simulator_target(
                 f"Target for Amazon Braket simulator: {device.name}", device.properties
             )
-        case _:
-            raise QiskitBraketException(
-                "Cannot convert to target. "
-                f"{device.properties.__class__} device capabilities are not supported."
-            )
+    raise QiskitBraketException(
+        "Cannot convert to target. "
+        f"{device.properties.__class__} device capabilities are not supported."
+    )
 
 
 def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapabilities):
@@ -498,8 +497,8 @@ def to_braket(
     angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None = None,
     *,
     target: Target | None = None,
-    braket_qubits: Sequence[int] | None = None,
-    optimization_level: int | None = 0,
+    qubit_labels: Sequence[int] | None = None,
+    optimization_level: int = 0,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -518,11 +517,11 @@ def to_braket(
             validate numeric parameters. Default: `None`.
         target (Target | None): A backend transpiler target. Can only be provided
             if basis_gates is `None`. Default: `None`.
-        braket_qubits (Sequence[int] | None): A list of (not necessarily contiguous) indices of
+        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous.
-        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
-            Default: None.
+        optimization_level (int): The optimization level to pass to `qiskit.transpile`.
+            Default: 0 (no optimization).
 
     Returns:
         Circuit: Braket circuit
@@ -554,7 +553,7 @@ def to_braket(
     # Handle qiskit to braket conversion
     measured_qubits: dict[int, int] = {}
     braket_circuit = Circuit()
-    braket_qubits = braket_qubits or sorted(circuit.find_bit(q).index for q in circuit.qubits)
+    qubit_labels = qubit_labels or sorted(circuit.find_bit(q).index for q in circuit.qubits)
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         qubits = circuit_instruction.qubits
@@ -568,7 +567,7 @@ def to_braket(
         match gate_name := operation.name:
             case "measure":
                 qubit = qubits[0]  # qubit count = 1 for measure
-                qubit_index = braket_qubits[circuit.find_bit(qubit).index]
+                qubit_index = qubit_labels[circuit.find_bit(qubit).index]
                 if qubit_index in measured_qubits.values():
                     raise ValueError(f"Cannot measure previously measured qubit {qubit_index}")
                 clbit = circuit.find_bit(circuit_instruction.clbits[0]).index
@@ -581,7 +580,7 @@ def to_braket(
                 )
             case "unitary" | "kraus":
                 params = _create_free_parameters(operation)
-                qubit_indices = [braket_qubits[circuit.find_bit(qubit).index] for qubit in qubits][
+                qubit_indices = [qubit_labels[circuit.find_bit(qubit).index] for qubit in qubits][
                     ::-1
                 ]  # reversal for little to big endian notation
 
@@ -597,7 +596,7 @@ def to_braket(
                 ):
                     raise ValueError("Negative control is not supported")
                 # Getting the index from the bit mapping
-                qubit_indices = [braket_qubits[circuit.find_bit(qubit).index] for qubit in qubits]
+                qubit_indices = [qubit_labels[circuit.find_bit(qubit).index] for qubit in qubits]
                 if intersection := set(measured_qubits.values()).intersection(qubit_indices):
                     raise ValueError(
                         f"Cannot apply operation {gate_name} to measured qubits {intersection}"
@@ -795,7 +794,7 @@ def _sympy_to_qiskit(expr: Mul | Add | Symbol | Pow) -> ParameterExpression | Pa
             return Parameter(expr.name)
         case Pow():
             return _sympy_to_qiskit(expr.args[0]) ** int(expr.args[1])
-        case obj if hasattr(obj, "is_number") and obj.is_real:
+        case obj if getattr(obj, "is_real", False):
             return float(obj)
     raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
 
