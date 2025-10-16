@@ -217,9 +217,7 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=0, meas_level=2)
 
-        braket_circuit = Circuit().add_verbatim_box(
-            Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
-        )
+        braket_circuit = Circuit().h(0)
         device.run_batch.assert_called_with([braket_circuit, braket_circuit], shots=0)
         device.run_batch.assert_called_once()
 
@@ -242,9 +240,7 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=5, meas_level=2)
 
-        braket_circuit = Circuit().add_verbatim_box(
-            Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
-        )
+        braket_circuit = Circuit().h(0)
         device.run.assert_called_with(
             ProgramSet([braket_circuit, braket_circuit], shots_per_executable=5)
         )

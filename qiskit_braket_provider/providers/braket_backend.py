@@ -11,7 +11,7 @@ from typing import Generic, TypeVar
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, QubitProperties
 
-from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTask
+from braket.aws import AwsDevice, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
@@ -325,9 +325,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(self, run_input, verbatim: bool = False, native: bool | None = None, **options):
-        # Defaults to native transpilation if the underlying device is a QPU
-        native = native if native is not None else self._device.type == AwsDeviceType.QPU
+    def run(self, run_input, verbatim: bool = False, native: bool = False, **options):
         if isinstance(run_input, QuantumCircuit):
             circuits = [run_input]
         elif isinstance(run_input, list):
@@ -339,17 +337,22 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
+        target, angle_restrictions, gateset = (
+            (self._target, native_angle_restrictions(self._device.properties), None)
+            if native
+            else (None, None, self._gateset)
+        )
+
         braket_circuits = (
             [to_braket(circ, verbatim=True, braket_qubits=self._braket_qubits) for circ in circuits]
             if verbatim
             else [
                 to_braket(
                     circ,
-                    target=self._target,
+                    target=target,
+                    basis_gates=gateset,
                     braket_qubits=self._braket_qubits,
-                    angle_restrictions=(
-                        native_angle_restrictions(self._device.properties) if native else None
-                    ),
+                    angle_restrictions=angle_restrictions,
                 )
                 for circ in circuits
             ]
