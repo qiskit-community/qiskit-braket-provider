@@ -230,7 +230,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         )
         self._target = aws_device_to_target(device=self._device)
         self._qubit_labels = (
-            sorted(self._device.topology_graph.nodes) if self._device.topology_graph else None
+            tuple(sorted(self._device.topology_graph.nodes))
+            if self._device.topology_graph
+            else None
         )
         self._gateset = self.get_gateset()
         self._supports_program_sets = (
@@ -263,9 +265,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         return None
 
     @property
-    def qubit_labels(self) -> list[int]:
+    def qubit_labels(self) -> tuple[int, ...]:
         """
-        list[int]: The qubit labels of the underlying device, in ascending order.
+        tuple[int, ...]: The qubit labels of the underlying device, in ascending order.
 
         Unlike the qubits in the target, these labels are not necessarily contiguous.
         """
@@ -361,14 +363,14 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         )
 
         braket_circuits = (
-            [to_braket(circ, verbatim=True, braket_qubits=self._qubit_labels) for circ in circuits]
+            [to_braket(circ, verbatim=True, qubit_labels=self._qubit_labels) for circ in circuits]
             if verbatim
             else [
                 to_braket(
                     circ,
                     target=target,
                     basis_gates=gateset,
-                    braket_qubits=self._qubit_labels,
+                    qubit_labels=self._qubit_labels,
                     angle_restrictions=angle_restrictions,
                     optimization_level=optimization_level,
                 )
