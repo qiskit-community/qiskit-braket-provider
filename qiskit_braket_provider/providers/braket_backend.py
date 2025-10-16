@@ -11,7 +11,7 @@ from typing import Generic, TypeVar
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, QubitProperties
 
-from braket.aws import AwsDevice, AwsQuantumTask
+from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
 from braket.circuits import Circuit
 from braket.device_schema import DeviceActionType
@@ -356,12 +356,12 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        target, angle_restrictions, basis_gates = (
-            (self._target, native_angle_restrictions(self._device.properties), None)
-            if native
-            else (None, None, self._gateset)
+        # Always use target for simulator
+        target, basis_gates = (
+            (self._target, None)
+            if native or self._device.type == AwsDeviceType.SIMULATOR
+            else (None, self._gateset)
         )
-
         braket_circuits = (
             [to_braket(circ, verbatim=True, qubit_labels=self._qubit_labels) for circ in circuits]
             if verbatim
@@ -371,7 +371,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                     target=target,
                     basis_gates=basis_gates,
                     qubit_labels=self._qubit_labels,
-                    angle_restrictions=angle_restrictions,
+                    angle_restrictions=(
+                        native_angle_restrictions(self._device.properties) if native else None
+                    ),
                     optimization_level=optimization_level,
                 )
                 for circ in circuits
