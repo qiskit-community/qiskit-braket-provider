@@ -39,6 +39,7 @@ from braket.device_schema.rigetti import (
 )
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
 from qiskit_braket_provider.exception import QiskitBraketException
 from qiskit_braket_provider.providers import braket_instructions
@@ -490,7 +491,7 @@ def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
 
 
 def to_braket(
-    circuit: QuantumCircuit,
+    circuit: QuantumCircuit | Circuit | Program | str,
     basis_gates: Iterable[str] | None = None,
     verbatim: bool = False,
     connectivity: list[list[int]] | None = None,
@@ -503,7 +504,8 @@ def to_braket(
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
     Args:
-        circuit (QuantumCircuit): Qiskit quantum circuit
+        circuit (QuantumCircuit | Circuit | Program | str): Qiskit or Braket quantum circuit or
+            OpenQASM 3 program
         basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
             if target is `None`. If `None` and target is `None`, the transpiler will use all gates
             defined in the Braket SDK. Default: `None`.
@@ -525,6 +527,8 @@ def to_braket(
     Returns:
         Circuit: Braket circuit
     """
+    if isinstance(circuit, (Circuit, Program, str)):
+        circuit = to_qiskit(circuit)
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
     if (basis_gates or connectivity) and target:
@@ -720,16 +724,18 @@ def _validate_name_conflicts(parameters):
         )
 
 
-def to_qiskit(circuit: Circuit, add_measurements: bool = True) -> QuantumCircuit:
+def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
 
     Args:
-        circuit (Circuit): Braket quantum circuit
-        add_measurements (bool) : whether or not to append measurements in the conversion
+        circuit (Circuit | Program | str): Braket quantum circuit or OpenQASM 3 program.
+        add_measurements (bool): Whether to append measurements in the conversion
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
     """
+    if isinstance(circuit, (Program, str)):
+        circuit = Circuit.from_ir(circuit)
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
