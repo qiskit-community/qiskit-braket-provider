@@ -356,7 +356,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
-        target, angle_restrictions, gateset = (
+        target, angle_restrictions, basis_gates = (
             (self._target, native_angle_restrictions(self._device.properties), None)
             if native
             else (None, None, self._gateset)
@@ -369,7 +369,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                 to_braket(
                     circ,
                     target=target,
-                    basis_gates=gateset,
+                    basis_gates=basis_gates,
                     qubit_labels=self._qubit_labels,
                     angle_restrictions=angle_restrictions,
                     optimization_level=optimization_level,
