@@ -265,9 +265,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         return None
 
     @property
-    def qubit_labels(self) -> tuple[int, ...]:
+    def qubit_labels(self) -> tuple[int, ...] | None:
         """
-        tuple[int, ...]: The qubit labels of the underlying device, in ascending order.
+        tuple[int, ...] | None: The qubit labels of the underlying device, in ascending order.
 
         Unlike the qubits in the target, these labels are not necessarily contiguous.
         """
