@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
 from qiskit.circuit.library import standard_gates as qiskit_gates
@@ -19,6 +20,7 @@ from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngl
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket.experimental_capabilities import EnableExperimentalCapability
 from braket.ir.openqasm import Program
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_GATE_NAME_TO_QISKIT_GATE,
@@ -32,6 +34,7 @@ from qiskit_braket_provider.providers.adapter import (
     to_braket,
     to_qiskit,
 )
+from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
@@ -66,7 +69,7 @@ def check_to_braket_unitary_correct(
     )
 
 
-def check_to_braket_openqasm_unitary_correct(qasm_program: Program):
+def check_to_braket_openqasm_unitary_correct(qasm_program: Program | str):
     """Checks that to_braket converts an OpenQASM correctly"""
     return np.allclose(
         to_braket(qasm_program).to_unitary(), Circuit.from_ir(qasm_program).to_unitary()
@@ -159,9 +162,8 @@ class TestAdapter(TestCase):
         gate = GlobalPhaseGate(1.23)
         qiskit_circuit.append(gate, [])
 
-        braket_circuit = to_braket(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit, optimization_level=2)
         expected_braket_circuit = Circuit().h(0).gphase(1.23 + np.pi / 2)
-
         self.assertEqual(braket_circuit.global_phase, qiskit_circuit.global_phase + gate.params[0])
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -832,25 +834,6 @@ class TestAdapter(TestCase):
         res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
 
-    def test_roundtrip_openqasm_custom_gate(self):
-        qasm_string = """
-        qubit[3] q;
-        
-        gate majority a, b, c {
-            // set c to the majority of {a, b, c}
-            ctrl @ x c, b;
-            ctrl @ x c, a;
-            ctrl(2) @ x a, b, c;
-        }
-        
-        pow(0.5) @ x q[0:1];     // sqrt x
-        inv @ v q[1];          // inv of (sqrt x)
-        // this should flip q[2] to 1
-        majority q[0], q[1], q[2];
-        """
-        qasm_program = Program(source=qasm_string)
-        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
-
     def test_roundtrip_openqasm_subroutine(self):
         qasm_string = """
         const int[8] n = 4;
@@ -874,6 +857,87 @@ class TestAdapter(TestCase):
         """
         qasm_program = Program(source=qasm_string, inputs={"x": "1011"})
         self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
+
+    def test_roundtrip_openqasm_custom_gate(self):
+        qasm_string = """
+        qubit[3] q;
+        
+        gate majority a, b, c {
+            // set c to the majority of {a, b, c}
+            ctrl @ x c, b;
+            ctrl @ x c, a;
+            ctrl(2) @ x a, b, c;
+        }
+        
+        pow(0.5) @ x q[0:1];     // sqrt x
+        inv @ v q[1];          // inv of (sqrt x)
+        // this should flip q[2] to 1
+        majority q[0], q[1], q[2];
+        """
+        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_string))
+
+    def test_conditional_gate_with_condition_attribute(self):
+        """Tests that operations with condition attribute raise NotImplementedError."""
+        qc = QuantumCircuit(2, 2)
+        qc.h(0)
+        qc.measure(0, 0)
+
+        x_instr = QiskitInstruction("x", 1, 0, [])
+        x_instr.condition = (0, 1)
+        qc.append(x_instr, [1])
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc)
+
+    def test_conditional_gate_with_if_test(self):
+        """Tests that if_test conditional operations raise NotImplementedError."""
+        qr = QuantumRegister(2, "q")
+        cr = ClassicalRegister(2, "c")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.h(1)
+        qc.measure(qr, cr)
+        
+        with qc.if_test((cr, 3)):
+            qc.x(0)
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc, verbatim=True)
+
+    def test_conditional_gate_with_while_loop(self):
+        """Tests that while_loop conditional operations raise NotImplementedError."""
+        qr = QuantumRegister(2, "q")
+        cr = ClassicalRegister(2, "c")
+        qc = QuantumCircuit(qr, cr)
+        qc.h(0)
+        qc.measure(0, 0)
+        
+        with qc.while_loop((cr, 1)):
+            qc.x(0)
+            qc.measure(0, 0)
+
+        with pytest.raises(
+            NotImplementedError,
+            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+        ):
+            to_braket(qc, verbatim=True)
+
+    def test_ccprx_and_measureff_gates_allowed(self):
+        """Tests that CCPRx and MeasureFF gates are allowed and don't raise conditional error."""
+        with EnableExperimentalCapability():
+            qc = QuantumCircuit(1, 1)
+            qc.r(np.pi, 0, 0)
+            qc.append(MeasureFF(feedback_key=0), qargs=[0])
+            qc.append(CCPRx(np.pi, 0, feedback_key=0), qargs=[0])
+
+            braket_circuit = to_braket(qc, verbatim=True)
+            self.assertGreater(len(braket_circuit.instructions), 0)
 
 
 class TestFromBraket(TestCase):
@@ -965,6 +1029,29 @@ class TestFromBraket(TestCase):
 
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_parametric_pow_gate(self):
+        """
+        Test braket to qiskit with powers of parameters
+        """
+        braket_circuit = Circuit().rx(0, FreeParameter("alpha") ** 2)
+        qiskit_circuit = to_qiskit(braket_circuit)
+
+        uuid = qiskit_circuit.parameters[0].uuid
+
+        expected_qiskit_circuit = QuantumCircuit(1)
+        expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid) ** 2, 0)
+
+        expected_qiskit_circuit.measure_all()
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_unsupported_parameter_division(self):
+        braket_circuit = Circuit().rx(0, 1j * FreeParameter("alpha"))
+        with pytest.raises(
+            TypeError,
+            match="unrecognized parameter type in conversion: <class 'sympy.core.numbers.ImaginaryUnit'>",
+        ):
+            to_qiskit(braket_circuit)
 
     def test_unitary(self):
         """
@@ -1096,3 +1183,76 @@ class TestFromBraket(TestCase):
         expected_qiskit_circuit.measure(0, 1)
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+
+class TestThereAndBackAgain(TestCase):
+    """testing whether or not to_braket and to_qiskit work together"""
+
+    def test_all_standard_gates(self):
+        """
+        Tests whether or not we can loop
+        """
+
+        gate_set = {
+            attr
+            for attr in dir(Gate)
+            if attr[0].isupper() and attr.lower() in _BRAKET_GATE_NAME_TO_QISKIT_GATE
+        }
+
+        gate_set -= {"Unitary"}
+
+        # pytest.mark.parametrize is incompatible with TestCase
+        param_sets = [
+            [0.1, 0.2, 0.3],
+            [
+                FreeParameter("alpha"),
+                FreeParameter("beta"),
+                FreeParameter("gamma"),
+            ],
+            [
+                FreeParameter("alpha") + FreeParameter("delta"),
+                FreeParameter("beta") + FreeParameter("epsilon"),
+                FreeParameter("gamma") ** 2,
+            ],
+        ]
+        for gate_name in gate_set:
+            for params_braket in param_sets:
+                gate = getattr(Gate, gate_name)
+                if issubclass(gate, AngledGate):
+                    op = gate(params_braket[0])
+                elif issubclass(gate, DoubleAngledGate):
+                    op = gate(params_braket[0], params_braket[1])
+                elif issubclass(gate, TripleAngledGate):
+                    op = gate(*params_braket)
+                else:
+                    op = gate()
+                target = range(op.qubit_count)
+                instr = Instruction(op, target)
+
+                braket_circuit = Circuit().add_instruction(instr)
+                qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+                # deep copy is necessary to avoid parameter table inconsistency in the MS gate
+                qiskit_back_circuit = to_qiskit(
+                    to_braket(qiskit_circuit.copy()), add_measurements=False
+                )
+
+                num_para = len(qiskit_circuit.parameters)
+                values = [0.5, 0.4, 0.8, 0.1, 0.2, 0.3]
+
+                qiskit_circuit = qiskit_circuit.assign_parameters(values[:num_para], inplace=False)
+                qiskit_back_circuit = qiskit_back_circuit.assign_parameters(values[:num_para])
+                assert np.allclose(
+                    Operator(qiskit_circuit).data, Operator(qiskit_back_circuit).data
+                )
+
+    def test_simple_travels(self):
+        qc = QuantumCircuit(1, 1)
+        qc.rz(0.1, 0)
+        circ = Circuit().rz(0, 0.1)
+
+        stayed_home = to_qiskit(to_braket(qc), add_measurements=False)  # passes
+        lonely_mountain_and_back = to_qiskit(
+            to_braket(to_qiskit(circ, add_measurements=False)), add_measurements=False
+        )  # fails
+        assert np.allclose(Operator(stayed_home).data, Operator(lonely_mountain_and_back).data)
