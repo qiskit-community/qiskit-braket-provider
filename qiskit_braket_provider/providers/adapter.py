@@ -12,7 +12,7 @@ from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpressi
 from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target
-from qiskit_ionq import add_equivalences, ionq_gates
+from qiskit_ionq import add_equivalences
 from sympy import Add, Mul, Pow, Symbol
 
 import braket.circuits.gates as braket_gates
