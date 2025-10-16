@@ -12,7 +12,7 @@ from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpressi
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
-from qiskit.transpiler import Target, InstructionProperties, QubitProperties
+from qiskit.transpiler import InstructionProperties, QubitProperties, Target
 from qiskit_ionq import add_equivalences, ionq_gates
 from sympy import Add, Mul, Pow, Symbol
 
