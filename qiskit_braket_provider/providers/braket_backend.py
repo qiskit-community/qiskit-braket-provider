@@ -325,7 +325,15 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(self, run_input, verbatim: bool = False, native: bool = False, **options):
+    def run(
+        self,
+        run_input: QuantumCircuit | list[QuantumCircuit],
+        verbatim: bool = False,
+        native: bool = False,
+        *,
+        optimization_level: int = 0,
+        **options,
+    ):
         if isinstance(run_input, QuantumCircuit):
             circuits = [run_input]
         elif isinstance(run_input, list):
@@ -353,6 +361,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                     basis_gates=gateset,
                     braket_qubits=self._braket_qubits,
                     angle_restrictions=angle_restrictions,
+                    optimization_level=optimization_level,
                 )
                 for circ in circuits
             ]
