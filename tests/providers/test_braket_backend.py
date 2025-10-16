@@ -1,7 +1,7 @@
 """Tests for AWS Braket backends."""
 
 import unittest
-from unittest import TestCase, skip
+from unittest import TestCase
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -311,7 +311,6 @@ class TestBraketAwsBackend(TestCase):
         with self.assertRaises(exception.QiskitBraketException):
             backend.run(circuit, shots=10, meas_level=1)
 
-    @skip(reason="qiskit-algorithms doesn't support V2 primitives yet")
     def test_vqe(self):
         """Tests VQE."""
         local_simulator = BraketLocalBackend(name="default")
