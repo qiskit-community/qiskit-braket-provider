@@ -661,8 +661,8 @@ def to_braket(
 def _default_target(circuit: QuantumCircuit) -> Target:
     target = Target(num_qubits=circuit.num_qubits)
     for braket_name, instruction in _BRAKET_GATE_NAME_TO_QISKIT_GATE.items():
-        if (name := braket_name.lower()) in _BRAKET_TO_QISKIT_NAMES:
-            target.add_instruction(instruction, name=_BRAKET_TO_QISKIT_NAMES[name])
+        if name := _BRAKET_TO_QISKIT_NAMES.get(braket_name.lower()):
+            target.add_instruction(instruction, name=name)
     target.add_instruction(Measure())
     return target
 
