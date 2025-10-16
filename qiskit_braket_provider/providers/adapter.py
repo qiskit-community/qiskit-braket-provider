@@ -1,7 +1,7 @@
 """Util function for provider."""
 
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from math import inf, pi
 
 import numpy as np
@@ -10,14 +10,16 @@ import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
 from qiskit.circuit import Instruction as QiskitInstruction
+from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import Target, InstructionProperties, QubitProperties
 from qiskit_ionq import add_equivalences, ionq_gates
+from sympy import Add, Mul, Pow, Symbol
 
 import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
 from braket import experimental_capabilities as braket_expcaps
-from braket.aws import AwsDevice
+from braket.aws import AwsDevice, AwsDeviceType
 from braket.circuits import (
     Circuit,
     FreeParameter,
@@ -31,21 +33,18 @@ from braket.device_schema import (
     OpenQASMDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
-from braket.device_schema.iqm import IqmDeviceCapabilities
-from braket.device_schema.oqc import OqcDeviceCapabilities
 from braket.device_schema.rigetti import (
     RigettiDeviceCapabilities,
     RigettiDeviceCapabilitiesV2,
 )
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
+from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
 from qiskit_braket_provider.exception import QiskitBraketException
 from qiskit_braket_provider.providers import braket_instructions
 
 add_equivalences()
-
-_GPHASE_GATE_NAME = "global_phase"
 
 _BRAKET_TO_QISKIT_NAMES = {
     "u": "u",
@@ -80,7 +79,8 @@ _BRAKET_TO_QISKIT_NAMES = {
     "gpi": "gpi",
     "gpi2": "gpi2",
     "ms": "ms",
-    "gphase": _GPHASE_GATE_NAME,
+    "gphase": "global_phase",
+    "unitary": "unitary",
     "kraus": "kraus",
 }
 
@@ -103,7 +103,7 @@ _ADDITIONAL_U_GATES = {"u1", "u2", "u3"}
 
 _EPS = 1e-10  # global variable used to chop very small numbers to zero
 
-_GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
+_QISKIT_GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     "u1": lambda lam: [braket_gates.U(0, 0, lam)],
     "u2": lambda phi, lam: [braket_gates.U(pi / 2, phi, lam)],
     "u3": lambda theta, phi, lam: [braket_gates.U(theta, phi, lam)],
@@ -144,7 +144,8 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
     ],
     "zz": lambda angle: [braket_gates.ZZ(2 * pi * angle)],
     # Global phase
-    _GPHASE_GATE_NAME: lambda phase: [braket_gates.GPhase(phase)],
+    "global_phase": lambda phase: [braket_gates.GPhase(phase)],
+    "unitary": lambda operators: [braket_gates.Unitary(operators[0])],
     "kraus": lambda operators: [braket_noises.Kraus(operators)],
     "CCPRx": lambda angle_1, angle_2, feedback_key: [
         braket_expcaps.iqm.classical_control.CCPRx(angle_1, angle_2, feedback_key)
@@ -155,18 +156,14 @@ _GATE_NAME_TO_BRAKET_GATE: dict[str, Callable] = {
 }
 
 _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES: dict[str, Callable] = {
-    controlled_gate: _GATE_NAME_TO_BRAKET_GATE[base_gate]
+    controlled_gate: _QISKIT_GATE_NAME_TO_BRAKET_GATE[base_gate]
     for gate_map in _CONTROLLED_GATES_BY_QUBIT_COUNT.values()
     for controlled_gate, base_gate in gate_map.items()
 }
 
-_TRANSLATABLE_QISKIT_GATE_NAMES = (
-    set(_GATE_NAME_TO_BRAKET_GATE.keys())
-    .union(set(_QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES))
-    .union({"measure", "barrier", "reset"})
-)
+_STANDARD_GATE_NAME_MAPPING = get_standard_gate_name_mapping()
 
-_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
+_BRAKET_GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     "u": qiskit_gates.UGate(Parameter("theta"), Parameter("phi"), Parameter("lam")),
     "u1": qiskit_gates.U1Gate(Parameter("theta")),
     "u2": qiskit_gates.U2Gate(Parameter("theta"), Parameter("lam")),
@@ -208,6 +205,7 @@ _GATE_NAME_TO_QISKIT_GATE: dict[str, QiskitInstruction | None] = {
     ),
     "gphase": qiskit_gates.GlobalPhaseGate(Parameter("theta")),
     "measure": qiskit_gates.Measure(),
+    "unitary": qiskit_gates.UnitaryGate,
     "kraus": qiskit_qi.Kraus,
     "cc_prx": braket_instructions.CCPRx(
         Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key")
@@ -230,9 +228,7 @@ _BRAKET_SUPPORTED_NOISES = [
 ]
 
 
-def native_gate_connectivity(
-    properties: DeviceCapabilities,
-) -> list[list[int]] | None:
+def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
     """Returns the connectivity natively supported by a Braket device from its properties
 
     Args:
@@ -368,25 +364,18 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     Returns:
         Target: Target for Qiskit backend
     """
-    properties = device.properties
-    if isinstance(properties, GateModelSimulatorDeviceCapabilities):
-        return _simulator_target(f"Target for Amazon Braket simulator: {device.name}", properties)
-    elif isinstance(
-        properties,
-        (
-            IonqDeviceCapabilities,
-            RigettiDeviceCapabilities,
-            RigettiDeviceCapabilitiesV2,
-            OqcDeviceCapabilities,
-            IqmDeviceCapabilities,
-        ),
-    ):
-        return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", properties)
-
-    raise QiskitBraketException(
-        f"Cannot convert to target. "
-        f"{properties.__class__} device capabilities are not supported yet."
-    )
+    match device.type:
+        case AwsDeviceType.QPU:
+            return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", device.properties)
+        case AwsDeviceType.SIMULATOR:
+            return _simulator_target(
+                f"Target for Amazon Braket simulator: {device.name}", device.properties
+            )
+        case _:
+            raise QiskitBraketException(
+                "Cannot convert to target. "
+                f"{device.properties.__class__} device capabilities are not supported."
+            )
 
 
 def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapabilities):
@@ -397,16 +386,28 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
         else properties.action.get(DeviceActionType.JAQCD)
     )
     for operation in action.supportedOperations:
-        instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-        if instruction is not None:
+        instruction = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower())
+        if instruction:
             target.add_instruction(instruction, name=_BRAKET_TO_QISKIT_NAMES[operation.lower()])
+    if isinstance(action, OpenQASMDeviceActionProperties):
+        max_control = 0
+        for modifier in action.supportedModifiers:
+            if isinstance(modifier, Control):
+                max_control = modifier.max_qubits
+                break
+        for gate in _get_controlled_gateset(target.keys(), max_control):
+            if gate in _STANDARD_GATE_NAME_MAPPING:
+                target.add_instruction(_STANDARD_GATE_NAME_MAPPING[gate])
     target.add_instruction(Measure())
     return target
 
 
 def _qpu_target(description: str, properties: DeviceCapabilities):
-    qubit_count = properties.paradigm.qubitCount
-    connectivity = properties.paradigm.connectivity
+    paradigm = properties.paradigm
+    qubit_count = paradigm.qubitCount
+
+    # TODO: Build target from AwsDevice.topology_graph instead of paradigm properties
+    connectivity = paradigm.connectivity
     connectivity_graph = (
         _contiguous_qubit_indices(connectivity.connectivityGraph)
         if not connectivity.fullyConnected
@@ -455,24 +456,9 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                 qubit_properties[logical_idx] = QubitProperties(t1=t1, t2=t2)
 
     target = Target(description=description, num_qubits=qubit_count, qubit_properties=qubit_properties)
-    action_properties = (
-        properties.action.get(DeviceActionType.OPENQASM)
-        if properties.action.get(DeviceActionType.OPENQASM)
-        else properties.action.get(DeviceActionType.JAQCD)
-    )
-
-    # Prefer nativeGateSet (with error data) over supportedOperations, fallback if no overlap
-    native_gates = getattr(getattr(properties, "paradigm", None), "nativeGateSet", []) or []
-    supported_gates = getattr(action_properties, "supportedOperations", []) or []
-    operations = [g for g in native_gates if g in supported_gates] or supported_gates
-
-    for operation in operations:
-        instruction = _GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None)
-
-        if instruction:
-            # TODO: Add 3+ qubit gates once Target supports them  # pylint:disable=fixme
-            if "measure" in instruction.name:
-                continue  # Separate handling below
+    # TODO: Use gate calibrations if available
+    for operation in paradigm.nativeGateSet:
+        if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
             match instruction.num_qubits:
                 case 1:
                     # Add fidelity/duration info if available
@@ -685,58 +671,84 @@ def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
 
 
 def to_braket(
-    circuit: QuantumCircuit,
+    circuit: QuantumCircuit | Circuit | Program | str,
     basis_gates: Iterable[str] | None = None,
     verbatim: bool = False,
     connectivity: list[list[int]] | None = None,
     angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None = None,
+    *,
+    target: Target | None = None,
+    braket_qubits: Sequence[int] | None = None,
+    optimization_level: int | None = 0,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
     Args:
-        circuit (QuantumCircuit): Qiskit quantum circuit
-        basis_gates (Iterable[str] | None): The gateset to transpile to.
-            If `None`, the transpiler will use all gates defined in the Braket SDK.
-            Default: `None`.
+        circuit (QuantumCircuit | Circuit | Program | str): Qiskit or Braket quantum circuit or
+            OpenQASM 3 program
+        basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
+            if target is `None`. If `None` and target is `None`, the transpiler will use all gates
+            defined in the Braket SDK. Default: `None`.
         verbatim (bool): Whether to translate the circuit without any modification, in other
             words without transpiling it. Default: False.
         connectivity (list[list[int]] | None): If provided, will transpile to a circuit
             with this connectivity. Default: `None`.
         angle_restrictions (dict[str, dict[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
-            validate numeric parameters. Default: ``None``.
+            validate numeric parameters. Default: `None`.
+        target (Target | None): A backend transpiler target. Can only be provided
+            if basis_gates is `None`. Default: `None`.
+        braket_qubits (Sequence[int] | None): A list of (not necessarily contiguous) indices of
+            qubits in the underlying Amazon Braket device. If not supplied, then the indices are
+            assumed to be contiguous.
+        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
+            Default: None.
 
     Returns:
         Circuit: Braket circuit
     """
+    if isinstance(circuit, (Circuit, Program, str)):
+        circuit = to_qiskit(circuit)
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
+    if (basis_gates or connectivity) and target:
+        raise ValueError("Basis gates and connectivity cannot be specified alongside target.")
 
-    basis_gates = set(basis_gates or _TRANSLATABLE_QISKIT_GATE_NAMES)
-
-    braket_circuit = Circuit()
-    needs_transpilation = connectivity or not {gate.name for gate, _, _ in circuit.data}.issubset(
-        basis_gates
+    # If basis_gates is not None, then target remains empty
+    target = target if basis_gates or target else _create_default_target(circuit)
+    needs_transpilation = (
+        target
+        or connectivity
+        or (basis_gates and not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates))
     )
     if not verbatim and needs_transpilation:
         circuit = transpile(
             circuit,
             basis_gates=basis_gates,
             coupling_map=connectivity,
-            optimization_level=0,
+            optimization_level=optimization_level,
+            target=target,
         )
-
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
     # Handle qiskit to braket conversion
     measured_qubits: dict[int, int] = {}
+    braket_circuit = Circuit()
+    braket_qubits = braket_qubits or sorted(circuit.find_bit(q).index for q in circuit.qubits)
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         qubits = circuit_instruction.qubits
+
+        if getattr(operation, "condition", None) is not None:
+            raise NotImplementedError(
+                f"Conditional operations are not supported. Found conditional gate '{operation.name}'. "
+                f"Only MeasureFF and CCPRx gates are supported in Braket."
+            )
+
         match gate_name := operation.name:
             case "measure":
                 qubit = qubits[0]  # qubit count = 1 for measure
-                qubit_index = circuit.find_bit(qubit).index
+                qubit_index = braket_qubits[circuit.find_bit(qubit).index]
                 if qubit_index in measured_qubits.values():
                     raise ValueError(f"Cannot measure previously measured qubit {qubit_index}")
                 clbit = circuit.find_bit(circuit_instruction.clbits[0]).index
@@ -747,18 +759,17 @@ def to_braket(
                 raise NotImplementedError(
                     "reset operation not supported by qiskit to braket adapter"
                 )
-            case "kraus":
+            case "unitary" | "kraus":
                 params = _create_free_parameters(operation)
-                qubit_indices = [q._index for q in circuit_instruction.qubits][
+                qubit_indices = [braket_qubits[circuit.find_bit(qubit).index] for qubit in qubits][
                     ::-1
                 ]  # reversal for little to big endian notation
 
-                for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](params):
+                for gate in _QISKIT_GATE_NAME_TO_BRAKET_GATE[gate_name](params):
                     braket_circuit += Instruction(
                         operator=gate,
                         target=qubit_indices,
                     )
-
             case _:
                 if (
                     isinstance(operation, ControlledGate)
@@ -766,12 +777,13 @@ def to_braket(
                 ):
                     raise ValueError("Negative control is not supported")
                 # Getting the index from the bit mapping
-                qubit_indices = [circuit.find_bit(qubit).index for qubit in qubits]
+                qubit_indices = [braket_qubits[circuit.find_bit(qubit).index] for qubit in qubits]
                 if intersection := set(measured_qubits.values()).intersection(qubit_indices):
                     raise ValueError(
                         f"Cannot apply operation {gate_name} to measured qubits {intersection}"
                     )
                 params = _create_free_parameters(operation)
+                # TODO: Use angle_bounds in Target.add_instruction instead of validating here
                 _validate_angle_restrictions(gate_name, params, angle_restrictions)
                 if gate_name in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES:
                     for gate in _QISKIT_CONTROLLED_GATE_NAMES_TO_BRAKET_GATES[gate_name](*params):
@@ -782,14 +794,14 @@ def to_braket(
                             control=qubit_indices[:-gate_qubit_count],
                         )
                 else:
-                    for gate in _GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
+                    for gate in _QISKIT_GATE_NAME_TO_BRAKET_GATE[gate_name](*params):
                         braket_circuit += Instruction(
                             operator=gate,
                             target=qubit_indices,
                         )
     global_phase = circuit.global_phase
     if abs(global_phase) > _EPS:
-        if _GPHASE_GATE_NAME in basis_gates:
+        if (target and "global_phase" in target) or (basis_gates and "global_phase" in basis_gates):
             braket_circuit.gphase(global_phase)
         else:
             warnings.warn(
@@ -797,7 +809,9 @@ def to_braket(
                 f"global phase of {global_phase} will not be included in Braket circuit"
             )
 
-    if verbatim:
+    # QPU targets will have qubits/pairs specified for each instruction;
+    # Targets whose values consist solely of {None: None} are either simulator or default targets
+    if verbatim or (target and any(v != {None: None} for v in target.values())):
         braket_circuit = Circuit(braket_circuit.result_types).add_verbatim_box(
             Circuit(braket_circuit.instructions)
         )
@@ -806,6 +820,15 @@ def to_braket(
         braket_circuit.measure(measured_qubits[clbit])
 
     return braket_circuit
+
+
+def _create_default_target(circuit: QuantumCircuit) -> Target:
+    target = Target(num_qubits=circuit.num_qubits)
+    for braket_name, instruction in _BRAKET_GATE_NAME_TO_QISKIT_GATE.items():
+        if (name := braket_name.lower()) in _BRAKET_TO_QISKIT_NAMES:
+            target.add_instruction(instruction, name=_BRAKET_TO_QISKIT_NAMES[name])
+    target.add_instruction(Measure())
+    return target
 
 
 def _create_free_parameters(operation):
@@ -881,15 +904,18 @@ def _validate_name_conflicts(parameters):
         )
 
 
-def to_qiskit(circuit: Circuit) -> QuantumCircuit:
+def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
 
     Args:
-        circuit (Circuit): Braket quantum circuit
+        circuit (Circuit | Program | str): Braket quantum circuit or OpenQASM 3 program.
+        add_measurements (bool): Whether to append measurements in the conversion
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
     """
+    if isinstance(circuit, (Program, str)):
+        circuit = Circuit.from_ir(circuit)
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
@@ -898,24 +924,15 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
     )
     qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements)
     qubit_map = {int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))}
-    dict_param = {}
     cbit = 0
     for instruction in circuit.instructions:
         gate_name = instruction.operator.name.lower()
-        gate_params = []
-        if hasattr(instruction.operator, "parameters"):
-            for value in instruction.operator.parameters:
-                if isinstance(value, FreeParameter):
-                    if value.name not in dict_param:
-                        dict_param[value.name] = Parameter(value.name)
-                    gate_params.append(dict_param[value.name])
-                else:
-                    gate_params.append(value)
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(instruction.operator.to_matrix())
+        elif gate_name == "unitary":
+            gate = _create_qiskit_unitary(instruction.operator.to_matrix())
         else:
-            gate = _create_qiskit_gate(gate_name, gate_params)
-
+            gate = _create_qiskit_gate(gate_name, getattr(instruction.operator, "parameters", []))
         if instruction.power != 1:
             gate = gate**instruction.power
         if control_qubits := instruction.control:
@@ -930,39 +947,67 @@ def to_qiskit(circuit: Circuit) -> QuantumCircuit:
             cbit += 1
         else:
             qiskit_circuit.append(gate, target)
-    if num_measurements == 0:
+    if num_measurements == 0 and add_measurements:
         qiskit_circuit.measure_all()
     return qiskit_circuit
 
 
+def _create_qiskit_unitary(matrix: np.ndarray):
+    return qiskit_gates.UnitaryGate(_reverse_endianness(matrix))
+
+
 def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     """create qiskit.quantum_info.Kraus from Braket Kraus operators and reorder axes"""
-    for n, param in enumerate(gate_params):
+    for i, param in enumerate(gate_params):
         assert param.shape[0] == param.shape[1], "Kraus operators must be square matrices."
-
-        n_q = int(np.log2(param.shape[0]))
-        if n_q > 1:
-            # Convert multi-qubit Kraus from little to big endian notation
-            kraus_tensor = param.reshape([2] * n_q * 2)
-            kraus_tensor = np.transpose(
-                kraus_tensor,
-                list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
-            )
-            gate_params[n] = kraus_tensor.reshape((2**n_q, 2**n_q))
+        gate_params[i] = _reverse_endianness(param)
     return qiskit_qi.Kraus(gate_params)
 
 
+def _sympy_to_qiskit(expr: Mul | Add | Symbol | Pow) -> ParameterExpression | Parameter:
+    """convert a sympy expression to qiskit Parameters recursively"""
+    match expr:
+        case Mul():
+            return _sympy_to_qiskit(expr.args[0]) * _sympy_to_qiskit(expr.args[1])
+        case Add():
+            return _sympy_to_qiskit(expr.args[0]) + _sympy_to_qiskit(expr.args[1])
+        case Symbol():
+            return Parameter(expr.name)
+        case Pow():
+            return _sympy_to_qiskit(expr.args[0]) ** int(expr.args[1])
+        case obj if hasattr(obj, "is_number") and obj.is_real:
+            return float(obj)
+    raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
+
+
+def _reverse_endianness(matrix: np.ndarray):
+    n_q = int(np.log2(matrix.shape[0]))
+    # Convert multi-qubit Kraus from little to big endian notation
+    return (
+        np.transpose(
+            matrix.reshape([2] * n_q * 2),
+            list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+        ).reshape((2**n_q, 2**n_q))
+        if n_q > 1
+        else matrix
+    )
+
+
 def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) -> Instruction:
-    gate_instance = _GATE_NAME_TO_QISKIT_GATE.get(gate_name, None)
-    if gate_instance is None:
+    gate_instance = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name)
+    if not gate_instance:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     gate_cls = gate_instance.__class__
     new_gate_params = []
     for param_expression, value in zip(gate_instance.params, gate_params):
-        # Assumes that each Qiskit gate has one free parameter per expression
-        param = list(param_expression.parameters)[0]
-        assigned = param_expression.assign(param, value)
-        new_gate_params.append(assigned)
+        # extract the coefficient in the templated gate
+        param = list(param_expression.parameters)[0].sympify()
+        coeff = float(param_expression.sympify().subs(param, 1))
+        new_gate_params.append(
+            _sympy_to_qiskit(coeff * value.expression)
+            if hasattr(value, "expression")
+            else coeff * value
+        )
     return gate_cls(*new_gate_params)
 
 
