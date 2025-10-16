@@ -693,9 +693,7 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
             Interpreter(QiskitProgramContext()).run(circuit.source, inputs=circuit.inputs).circuit
         )
     if isinstance(circuit, str):
-        return (
-            Interpreter(QiskitProgramContext()).run(circuit).circuit
-        )
+        return Interpreter(QiskitProgramContext()).run(circuit).circuit
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
