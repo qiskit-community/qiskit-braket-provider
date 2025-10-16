@@ -181,7 +181,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
 class BraketAwsBackend(BraketBackend[AwsDevice]):
     """BraketAwsBackend."""
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(
         self,
         arn: str | None = None,
         provider=None,
@@ -229,7 +229,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             f"QiskitBraketProvider/{version.__version__}"
         )
         self._target = aws_device_to_target(device=self._device)
-        self._braket_qubits = (
+        self._qubit_labels = (
             sorted(self._device.topology_graph.nodes) if self._device.topology_graph else None
         )
         self._gateset = self.get_gateset()
@@ -262,12 +262,21 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def max_circuits(self):
         return None
 
+    @property
+    def qubit_labels(self) -> list[int]:
+        """
+        list[int]: The qubit labels of the underlying device, in ascending order.
+
+        Unlike the qubits in the target, these labels are not necessarily contiguous.
+        """
+        return self._qubit_labels
+
     @classmethod
     def _default_options(cls):
         return Options()
 
     def qubit_properties(self, qubit: int | list[int]) -> QubitProperties | list[QubitProperties]:
-        # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
+        # TODO: fetch information from device.properties.provider
         raise NotImplementedError
 
     def queue_depth(self) -> QueueDepthInfo:
@@ -352,14 +361,14 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         )
 
         braket_circuits = (
-            [to_braket(circ, verbatim=True, braket_qubits=self._braket_qubits) for circ in circuits]
+            [to_braket(circ, verbatim=True, braket_qubits=self._qubit_labels) for circ in circuits]
             if verbatim
             else [
                 to_braket(
                     circ,
                     target=target,
                     basis_gates=gateset,
-                    braket_qubits=self._braket_qubits,
+                    braket_qubits=self._qubit_labels,
                     angle_restrictions=angle_restrictions,
                     optimization_level=optimization_level,
                 )
@@ -388,7 +397,7 @@ class AWSBraketBackend(BraketAwsBackend):
         warnings.warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
         super().__init_subclass__(**kwargs)
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(
         self,
         device: AwsDevice,
         provider=None,
