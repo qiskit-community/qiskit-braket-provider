@@ -866,6 +866,7 @@ class TestAdapter(TestCase):
                 qiskit_no_measure.append(instruction)
         
         self.assertTrue(check_to_braket_unitary_correct(qiskit_no_measure))
+
     def test_roundtrip_openqasm_subroutine(self):
         qasm_string = """
         const int[8] n = 4;
