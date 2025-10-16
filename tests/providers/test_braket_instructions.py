@@ -7,7 +7,7 @@ from qiskit.circuit import CircuitInstruction, Parameter, QuantumRegister, Qubit
 
 from braket.experimental_capabilities import EnableExperimentalCapability
 from qiskit_braket_provider import to_braket
-from qiskit_braket_provider.providers.adapter import _create_default_target
+from qiskit_braket_provider.providers.adapter import _default_target
 from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
 
 
@@ -83,7 +83,7 @@ class TestIqmExperimentalCapabilities(unittest.TestCase):
             CCPRx(0.5, 0.7, 0), qubits=(Qubit(QuantumRegister(1, "q"), 0),)
         )
 
-        target = _create_default_target(circuit)
+        target = _default_target(circuit)
         target.add_instruction(
             CCPRx(Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key"))
         )

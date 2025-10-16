@@ -5,11 +5,12 @@ import enum
 import logging
 import warnings
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Generic, TypeVar
 
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, QubitProperties
+from qiskit.transpiler import PassManager, Target
 
 from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
@@ -343,6 +344,8 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         native: bool = False,
         *,
         optimization_level: int = 0,
+        callback: Callable | None = None,
+        pass_manager: PassManager | None = None,
         **options,
     ):
         if isinstance(run_input, QuantumCircuit):
@@ -357,13 +360,12 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             del options["meas_level"]
 
         # Always use target for simulator
-        target, basis_gates = (
-            (self._target, None)
-            if native or self._device.type == AwsDeviceType.SIMULATOR
-            else (None, self._gateset)
-        )
+        target, basis_gates = self._target_and_basis_gates(native, pass_manager)
         braket_circuits = (
-            [to_braket(circ, verbatim=True, qubit_labels=self._qubit_labels) for circ in circuits]
+            [
+                to_braket(circ, verbatim=True, qubit_labels=self._qubit_labels, callback=callback)
+                for circ in circuits
+            ]
             if verbatim
             else [
                 to_braket(
@@ -375,6 +377,8 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                         native_angle_restrictions(self._device.properties) if native else None
                     ),
                     optimization_level=optimization_level,
+                    callback=callback,
+                    pass_manager=pass_manager,
                 )
                 for circ in circuits
             ]
@@ -385,6 +389,16 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             if self._supports_program_sets and shots != 0 and len(braket_circuits) > 1
             else self._run_batch(braket_circuits, shots, **options)
         )
+
+    def _target_and_basis_gates(
+        self, native: bool, pass_manager: PassManager
+    ) -> tuple[Target | None, set[str] | None]:
+        if pass_manager:
+            return None, None
+        if native or self._device.type == AwsDeviceType.SIMULATOR:
+            # Always use target for simulator
+            return self._target, None
+        return None, self._gateset
 
     def _run_batch(self, braket_circuits: list[Circuit], shots: int, **options):
         batch_task = self._device.run_batch(braket_circuits, shots=shots, **options)

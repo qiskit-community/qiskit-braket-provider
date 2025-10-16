@@ -12,7 +12,7 @@ from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpressi
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.circuit.parametervector import ParameterVectorElement
-from qiskit.transpiler import Target
+from qiskit.transpiler import PassManager, Target
 from qiskit_ionq import add_equivalences, ionq_gates
 from sympy import Add, Mul, Pow, Symbol
 
@@ -499,6 +499,8 @@ def to_braket(
     target: Target | None = None,
     qubit_labels: Sequence[int] | None = None,
     optimization_level: int = 0,
+    callback: Callable | None = None,
+    pass_manager: PassManager | None = None,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -522,6 +524,10 @@ def to_braket(
             assumed to be contiguous.
         optimization_level (int): The optimization level to pass to `qiskit.transpile`.
             Default: 0 (no optimization).
+        callback (Callable | None): A callback function that will be called after each
+            pass execution. Default: `None`.
+        pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
+            used in conjunction with a target, basis gates, or connectivity. Default: `None`.
 
     Returns:
         Circuit: Braket circuit
@@ -530,30 +536,41 @@ def to_braket(
         circuit = to_qiskit(circuit)
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
-    if (basis_gates or connectivity) and target:
-        raise ValueError("Basis gates and connectivity cannot be specified alongside target.")
-
-    # If basis_gates is not None, then target remains empty
-    target = target if basis_gates or target else _create_default_target(circuit)
-    needs_transpilation = (
-        target
-        or connectivity
-        or (basis_gates and not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates))
-    )
-    if not verbatim and needs_transpilation:
-        circuit = transpile(
-            circuit,
-            basis_gates=basis_gates,
-            coupling_map=connectivity,
-            optimization_level=optimization_level,
-            target=target,
+    loose_constraints = basis_gates or connectivity
+    if pass_manager and (target or loose_constraints):
+        raise ValueError(
+            "Cannot specify target, basis gates, or connectivity alongside pass manager"
         )
+    if loose_constraints and target:
+        raise ValueError("Cannot specify basis gates or connectivity alongside target.")
+
+    if pass_manager:
+        circuit = pass_manager.run(circuit, callback=callback)
+    elif not verbatim:
+        # If basis_gates is not None, then target remains empty
+        target = target if basis_gates or target else _default_target(circuit)
+        if (
+            target
+            or connectivity
+            or (
+                basis_gates and not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates)
+            )
+        ):
+            circuit = transpile(
+                circuit,
+                basis_gates=basis_gates,
+                coupling_map=connectivity,
+                optimization_level=optimization_level,
+                target=target,
+                callback=callback,
+            )
+
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
     # Handle qiskit to braket conversion
     measured_qubits: dict[int, int] = {}
     braket_circuit = Circuit()
-    qubit_labels = qubit_labels or sorted(circuit.find_bit(q).index for q in circuit.qubits)
+    qubit_labels = qubit_labels or _default_qubit_labels(circuit)
     for circuit_instruction in circuit.data:
         operation = circuit_instruction.operation
         qubits = circuit_instruction.qubits
@@ -630,7 +647,7 @@ def to_braket(
 
     # QPU targets will have qubits/pairs specified for each instruction;
     # Targets whose values consist solely of {None: None} are either simulator or default targets
-    if verbatim or (target and any(v != {None: None} for v in target.values())):
+    if verbatim or (target and any(v != {None: None} for v in target.values())) or pass_manager:
         braket_circuit = Circuit(braket_circuit.result_types).add_verbatim_box(
             Circuit(braket_circuit.instructions)
         )
@@ -641,13 +658,18 @@ def to_braket(
     return braket_circuit
 
 
-def _create_default_target(circuit: QuantumCircuit) -> Target:
+def _default_target(circuit: QuantumCircuit) -> Target:
     target = Target(num_qubits=circuit.num_qubits)
     for braket_name, instruction in _BRAKET_GATE_NAME_TO_QISKIT_GATE.items():
         if (name := braket_name.lower()) in _BRAKET_TO_QISKIT_NAMES:
             target.add_instruction(instruction, name=_BRAKET_TO_QISKIT_NAMES[name])
     target.add_instruction(Measure())
     return target
+
+
+def _default_qubit_labels(circuit: QuantumCircuit) -> tuple[int, ...]:
+    bits = sorted(circuit.find_bit(q).index for q in circuit.qubits)
+    return tuple(range(max(bits) + 1)) if bits else tuple()
 
 
 def _create_free_parameters(operation):
