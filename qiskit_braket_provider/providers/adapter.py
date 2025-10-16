@@ -371,11 +371,10 @@ def aws_device_to_target(device: AwsDevice) -> Target:
             return _simulator_target(
                 f"Target for Amazon Braket simulator: {device.name}", device.properties
             )
-        case _:
-            raise QiskitBraketException(
-                "Cannot convert to target. "
-                f"{device.properties.__class__} device capabilities are not supported."
-            )
+    raise QiskitBraketException(
+        "Cannot convert to target. "
+        f"{device.properties.__class__} device capabilities are not supported."
+    )
 
 
 def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapabilities):
