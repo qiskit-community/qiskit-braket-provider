@@ -69,7 +69,7 @@ def check_to_braket_unitary_correct(
     )
 
 
-def check_to_braket_openqasm_unitary_correct(qasm_program: Program):
+def check_to_braket_openqasm_unitary_correct(qasm_program: Program | str):
     """Checks that to_braket converts an OpenQASM correctly"""
     return np.allclose(
         to_braket(qasm_program).to_unitary(), Circuit.from_ir(qasm_program).to_unitary()
@@ -834,25 +834,6 @@ class TestAdapter(TestCase):
         res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
 
-    def test_roundtrip_openqasm_custom_gate(self):
-        qasm_string = """
-        qubit[3] q;
-        
-        gate majority a, b, c {
-            // set c to the majority of {a, b, c}
-            ctrl @ x c, b;
-            ctrl @ x c, a;
-            ctrl(2) @ x a, b, c;
-        }
-        
-        pow(0.5) @ x q[0:1];     // sqrt x
-        inv @ v q[1];          // inv of (sqrt x)
-        // this should flip q[2] to 1
-        majority q[0], q[1], q[2];
-        """
-        qasm_program = Program(source=qasm_string)
-        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
-
     def test_roundtrip_openqasm_subroutine(self):
         qasm_string = """
         const int[8] n = 4;
@@ -876,6 +857,24 @@ class TestAdapter(TestCase):
         """
         qasm_program = Program(source=qasm_string, inputs={"x": "1011"})
         self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
+
+    def test_roundtrip_openqasm_custom_gate(self):
+        qasm_string = """
+        qubit[3] q;
+        
+        gate majority a, b, c {
+            // set c to the majority of {a, b, c}
+            ctrl @ x c, b;
+            ctrl @ x c, a;
+            ctrl(2) @ x a, b, c;
+        }
+        
+        pow(0.5) @ x q[0:1];     // sqrt x
+        inv @ v q[1];          // inv of (sqrt x)
+        // this should flip q[2] to 1
+        majority q[0], q[1], q[2];
+        """
+        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_string))
 
     def test_conditional_gate_with_condition_attribute(self):
         """Tests that operations with condition attribute raise NotImplementedError."""
