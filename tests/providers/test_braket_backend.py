@@ -217,14 +217,14 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=0, meas_level=2)
         braket_circuit = Circuit().h(0)
-        device.run_batch.assert_called_with([braket_circuit, braket_circuit], shots=0)
-        device.run_batch.assert_called_once()
+        device.run_batch.assert_called_once_with([braket_circuit, braket_circuit], shots=0)
 
         backend.run([circuit, circuit], shots=0, native=True)
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
         )
         device.run_batch.assert_called_with([native_circuit, native_circuit], shots=0)
+        self.assertEqual(device.run_batch.call_count, 2)
 
     def test_run_multiple_circuits_program_set(self):
         """Tests run with multiple circuits"""
@@ -245,10 +245,9 @@ class TestBraketAwsBackend(TestCase):
 
         backend.run([circuit, circuit], shots=5, meas_level=2)
         braket_circuit = Circuit().h(0)
-        device.run.assert_called_with(
+        device.run.assert_called_once_with(
             ProgramSet([braket_circuit, braket_circuit], shots_per_executable=5)
         )
-        device.run.assert_called_once()
 
         backend.run([circuit, circuit], shots=5, native=True)
         native_circuit = Circuit().add_verbatim_box(
@@ -257,6 +256,7 @@ class TestBraketAwsBackend(TestCase):
         device.run.assert_called_with(
             ProgramSet([native_circuit, native_circuit], shots_per_executable=5)
         )
+        self.assertEqual(device.run.call_count, 2)
 
     def test_run_invalid_run_input(self):
         """Tests run with invalid input to run"""
