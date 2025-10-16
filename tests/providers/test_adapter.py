@@ -900,7 +900,7 @@ class TestAdapter(TestCase):
         qc.h(0)
         qc.h(1)
         qc.measure(qr, cr)
-        
+
         with qc.if_test((cr, 3)):
             qc.x(0)
 
@@ -917,7 +917,7 @@ class TestAdapter(TestCase):
         qc = QuantumCircuit(qr, cr)
         qc.h(0)
         qc.measure(0, 0)
-        
+
         with qc.while_loop((cr, 1)):
             qc.x(0)
             qc.measure(0, 0)
