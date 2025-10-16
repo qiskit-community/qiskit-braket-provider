@@ -498,7 +498,7 @@ def to_braket(
     *,
     target: Target | None = None,
     qubit_labels: Sequence[int] | None = None,
-    optimization_level: int | None = 0,
+    optimization_level: int = 0,
 ) -> Circuit:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -520,8 +520,8 @@ def to_braket(
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous.
-        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
-            Default: None.
+        optimization_level (int): The optimization level to pass to `qiskit.transpile`.
+            Default: 0 (no optimization).
 
     Returns:
         Circuit: Braket circuit
