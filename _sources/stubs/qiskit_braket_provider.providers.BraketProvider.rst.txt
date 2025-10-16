@@ -1,0 +1,24 @@
+﻿qiskit\_braket\_provider.providers.BraketProvider
+=================================================
+
+.. currentmodule:: qiskit_braket_provider.providers
+
+.. autoclass:: BraketProvider
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BraketProvider.__init__
+      ~BraketProvider.backends
+      ~BraketProvider.get_backend
+   
+   
+
+   
+   
+   

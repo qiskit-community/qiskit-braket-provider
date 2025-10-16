@@ -1,0 +1,56 @@
+﻿qiskit\_braket\_provider.providers.BraketAwsBackend
+===================================================
+
+.. currentmodule:: qiskit_braket_provider.providers
+
+.. autoclass:: BraketAwsBackend
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BraketAwsBackend.__init__
+      ~BraketAwsBackend.acquire_channel
+      ~BraketAwsBackend.control_channel
+      ~BraketAwsBackend.drive_channel
+      ~BraketAwsBackend.get_gateset
+      ~BraketAwsBackend.measure_channel
+      ~BraketAwsBackend.qubit_properties
+      ~BraketAwsBackend.queue_depth
+      ~BraketAwsBackend.retrieve_job
+      ~BraketAwsBackend.run
+      ~BraketAwsBackend.set_options
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BraketAwsBackend.coupling_map
+      ~BraketAwsBackend.dt
+      ~BraketAwsBackend.dtm
+      ~BraketAwsBackend.instruction_durations
+      ~BraketAwsBackend.instructions
+      ~BraketAwsBackend.max_circuits
+      ~BraketAwsBackend.meas_map
+      ~BraketAwsBackend.num_qubits
+      ~BraketAwsBackend.operation_names
+      ~BraketAwsBackend.operations
+      ~BraketAwsBackend.options
+      ~BraketAwsBackend.provider
+      ~BraketAwsBackend.qubit_labels
+      ~BraketAwsBackend.target
+      ~BraketAwsBackend.version
+      ~BraketAwsBackend.name
+      ~BraketAwsBackend.description
+      ~BraketAwsBackend.online_date
+      ~BraketAwsBackend.backend_version
+   
+   

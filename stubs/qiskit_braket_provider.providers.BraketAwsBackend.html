@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qiskit_braket_provider.providers.BraketLocalBackend" href="qiskit_braket_provider.providers.BraketLocalBackend.html" /><link rel="prev" title="Provider module (qiskit_braket_provider.providers)" href="../apidocs/providers.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.AWSBraketBackend - Qiskit-Braket provider 0.7.0</title>
+        <title>qiskit_braket_provider.providers.BraketAwsBackend - Qiskit-Braket provider 0.7.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -184,10 +184,10 @@
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../apidocs/index.html">API References</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API References</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="../apidocs/providers.html">Provider module (<code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_provider.providers</span></code>)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Provider module (qiskit_braket_provider.providers)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">qiskit_braket_provider.providers.AWSBraketBackend</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">qiskit_braket_provider.providers.BraketAwsBackend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketLocalBackend.html">qiskit_braket_provider.providers.BraketLocalBackend</a></li>
-<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.AWSBraketProvider.html">qiskit_braket_provider.providers.AWSBraketProvider</a></li>
-<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.AmazonBraketTask.html">qiskit_braket_provider.providers.AmazonBraketTask</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 </ul>
 </li>
 </ul>
@@ -241,25 +241,69 @@
           </label>
         </div>
         <article role="main">
-          <section id="qiskit-braket-provider-providers-awsbraketbackend">
-<h1>qiskit_braket_provider.providers.AWSBraketBackend<a class="headerlink" href="#qiskit-braket-provider-providers-awsbraketbackend" title="Link to this heading">¶</a></h1>
+          <section id="qiskit-braket-provider-providers-braketawsbackend">
+<h1>qiskit_braket_provider.providers.BraketAwsBackend<a class="headerlink" href="#qiskit-braket-provider-providers-braketawsbackend" title="Link to this heading">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AWSBraketBackend">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AWSBraketBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">online_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_backend.html#AWSBraketBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AWSBraketBackend" title="Link to this definition">¶</a></dt>
-<dd><p>AWSBraketBackend.</p>
-<p>This throws a deprecation warning on initialization.</p>
+<dt class="sig sig-object py" id="qiskit_braket_provider.providers.BraketAwsBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BraketAwsBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">online_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_backend.html#BraketAwsBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.BraketAwsBackend" title="Link to this definition">¶</a></dt>
+<dd><p>BraketAwsBackend.</p>
+<p>BraketAwsBackend for executing circuits on Amazon Braket devices.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">()</span>
+<span class="go">{&quot;100&quot;: 10, &quot;001&quot;: 10}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – ARN of the Braket device</p></li>
+<li><p><strong>provider</strong> – Qiskit provider for this backend</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – name of backend</p></li>
+<li><p><strong>description</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – description of backend</p></li>
+<li><p><strong>online_date</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></span>) – online date</p></li>
+<li><p><strong>backend_version</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – backend version</p></li>
+<li><p><strong>device</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">AwsDevice</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Braket device instance</p></li>
+<li><p><strong>**fields</strong> – other arguments</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AWSBraketBackend.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">online_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_backend.html#AWSBraketBackend.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AWSBraketBackend.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>This throws a deprecation warning on initialization.</p>
+<dt class="sig sig-object py" id="qiskit_braket_provider.providers.BraketAwsBackend.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">online_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_backend.html#BraketAwsBackend.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.BraketAwsBackend.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>BraketAwsBackend for executing circuits on Amazon Braket devices.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">get_counts</span><span class="p">()</span>
+<span class="go">{&quot;100&quot;: 10, &quot;001&quot;: 10}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arn</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – ARN of the Braket device</p></li>
+<li><p><strong>provider</strong> – Qiskit provider for this backend</p></li>
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – name of backend</p></li>
+<li><p><strong>description</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – description of backend</p></li>
+<li><p><strong>online_date</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></span>) – online date</p></li>
+<li><p><strong>backend_version</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – backend version</p></li>
+<li><p><strong>device</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">AwsDevice</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Braket device instance</p></li>
+<li><p><strong>**fields</strong> – other arguments</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.AWSBraketBackend.__init__" title="qiskit_braket_provider.providers.AWSBraketBackend.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(device[, provider, name, ...])</p></td>
-<td><p>This throws a deprecation warning on initialization.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.BraketAwsBackend.__init__" title="qiskit_braket_provider.providers.BraketAwsBackend.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([arn, provider, name, description, ...])</p></td>
+<td><p>BraketAwsBackend for executing circuits on Amazon Braket devices.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">acquire_channel</span></code>(qubit)</p></td>
 <td><p></p></td>
@@ -285,7 +329,7 @@
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">retrieve_job</span></code>(task_id)</p></td>
 <td><p>Return a single job submitted to AWS backend.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code>(run_input[, verbatim, native])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code>(run_input[, verbatim, native, ...])</p></td>
 <td><p>Run on the backend.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_options</span></code>(**fields)</p></td>
@@ -334,22 +378,25 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">provider</span></code></p></td>
 <td><p>Return the backend provider.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">target</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">qubit_labels</span></code></p></td>
+<td><p>The qubit labels of the underlying device, in ascending order.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">target</span></code></p></td>
 <td><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">qiskit.transpiler.Target</span></code> object for the backend.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
 <td><p>Name of the backend.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">description</span></code></p></td>
 <td><p>Optional human-readable description.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">online_date</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">online_date</span></code></p></td>
 <td><p>Date that the backend came online.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend_version</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend_version</span></code></p></td>
 <td><p>Version of the backend being provided.</p></td>
 </tr>
 </tbody>
@@ -413,9 +460,9 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">qiskit_braket_provider.providers.AWSBraketBackend</a><ul>
-<li><a class="reference internal" href="#qiskit_braket_provider.providers.AWSBraketBackend"><code class="docutils literal notranslate"><span class="pre">AWSBraketBackend</span></code></a><ul>
-<li><a class="reference internal" href="#qiskit_braket_provider.providers.AWSBraketBackend.__init__"><code class="docutils literal notranslate"><span class="pre">AWSBraketBackend.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#">qiskit_braket_provider.providers.BraketAwsBackend</a><ul>
+<li><a class="reference internal" href="#qiskit_braket_provider.providers.BraketAwsBackend"><code class="docutils literal notranslate"><span class="pre">BraketAwsBackend</span></code></a><ul>
+<li><a class="reference internal" href="#qiskit_braket_provider.providers.BraketAwsBackend.__init__"><code class="docutils literal notranslate"><span class="pre">BraketAwsBackend.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="&lt;no title&gt;" href="../how_tos/index.html" /><link rel="prev" title="qiskit_braket_provider.providers.AWSBraketProvider" href="qiskit_braket_provider.providers.AWSBraketProvider.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qiskit_braket_provider.providers.BraketQuantumTask" href="qiskit_braket_provider.providers.BraketQuantumTask.html" /><link rel="prev" title="qiskit_braket_provider.providers.BraketLocalBackend" href="qiskit_braket_provider.providers.BraketLocalBackend.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.AmazonBraketTask - Qiskit-Braket provider 0.7.0</title>
+        <title>qiskit_braket_provider.providers.BraketProvider - Qiskit-Braket provider 0.7.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -184,10 +184,10 @@
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../apidocs/index.html">API References</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API References</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="../apidocs/providers.html">Provider module (<code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_provider.providers</span></code>)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Provider module (qiskit_braket_provider.providers)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.AWSBraketBackend.html">qiskit_braket_provider.providers.AWSBraketBackend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketAwsBackend.html">qiskit_braket_provider.providers.BraketAwsBackend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketLocalBackend.html">qiskit_braket_provider.providers.BraketLocalBackend</a></li>
-<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.AWSBraketProvider.html">qiskit_braket_provider.providers.AWSBraketProvider</a></li>
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">qiskit_braket_provider.providers.AmazonBraketTask</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">qiskit_braket_provider.providers.BraketProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 </ul>
 </li>
 </ul>
@@ -241,77 +241,44 @@
           </label>
         </div>
         <article role="main">
-          <section id="qiskit-braket-provider-providers-amazonbrakettask">
-<h1>qiskit_braket_provider.providers.AmazonBraketTask<a class="headerlink" href="#qiskit-braket-provider-providers-amazonbrakettask" title="Link to this heading">¶</a></h1>
+          <section id="qiskit-braket-provider-providers-braketprovider">
+<h1>qiskit_braket_provider.providers.BraketProvider<a class="headerlink" href="#qiskit-braket-provider-providers-braketprovider" title="Link to this heading">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AmazonBraketTask">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AmazonBraketTask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_job.html#AmazonBraketTask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AmazonBraketTask" title="Link to this definition">¶</a></dt>
-<dd><p>AmazonBraketTask.</p>
-<p>This throws a deprecation warning on initialization.</p>
+<dt class="sig sig-object py" id="qiskit_braket_provider.providers.BraketProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BraketProvider</span></span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_provider.html#BraketProvider"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.BraketProvider" title="Link to this definition">¶</a></dt>
+<dd><p>BraketProvider class for accessing Amazon Braket backends.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">backends</span>
+<span class="go">[BraketBackend[Aria 1],</span>
+<span class="go"> BraketBackend[Aria 2],</span>
+<span class="go"> BraketBackend[Aspen-M-3],</span>
+<span class="go"> BraketBackend[Forte 1],</span>
+<span class="go"> BraketBackend[Harmony],</span>
+<span class="go"> BraketBackend[Lucy],</span>
+<span class="go"> BraketBackend[SV1],</span>
+<span class="go"> BraketBackend[TN1],</span>
+<span class="go"> BraketBackend[dm1]]</span>
+</pre></div>
+</div>
 <dl class="py method">
-<dt class="sig sig-object py" id="qiskit_braket_provider.providers.AmazonBraketTask.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_job.html#AmazonBraketTask.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.AmazonBraketTask.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>This throws a deprecation warning on initialization.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="qiskit_braket_provider.providers.BraketProvider.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#qiskit_braket_provider.providers.BraketProvider.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.AmazonBraketTask.__init__" title="qiskit_braket_provider.providers.AmazonBraketTask.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(task_id, backend, tasks, **metadata)</p></td>
-<td><p>This throws a deprecation warning on initialization.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backend</span></code>()</p></td>
-<td><p>Return the backend where this job was executed.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cancel</span></code>()</p></td>
-<td><p>Attempt to cancel the job.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cancelled</span></code>()</p></td>
-<td><p>Return whether the job has been cancelled.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">done</span></code>()</p></td>
-<td><p>Return whether the job has successfully run.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">in_final_state</span></code>()</p></td>
-<td><p>Return whether the job is in a final job state such as <code class="docutils literal notranslate"><span class="pre">DONE</span></code> or <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">job_id</span></code>()</p></td>
-<td><p>Return a unique id identifying the job.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">queue_position</span></code>()</p></td>
-<td><p>The queue position details for the quantum job.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">result</span></code>()</p></td>
-<td><p>Return the results of the job.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">running</span></code>()</p></td>
-<td><p>Return whether the job is actively running.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">status</span></code>([use_cached_value])</p></td>
-<td><p>Return the status of the job, among the values of <code class="docutils literal notranslate"><span class="pre">JobStatus</span></code>.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">submit</span></code>()</p></td>
-<td><p>Submit the job to the backend for execution.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">task_id</span></code>()</p></td>
-<td><p>Return a unique id identifying the task.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">wait_for_final_state</span></code>([timeout, wait, callback])</p></td>
-<td><p>Poll the job status until it progresses to a final state such as <code class="docutils literal notranslate"><span class="pre">DONE</span></code> or <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="rubric">Attributes</p>
-<div class="table-wrapper autosummary longtable docutils container">
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">shots</span></code></p></td>
-<td><p>Return the number of shots.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">version</span></code></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.BraketProvider.__init__" title="qiskit_braket_provider.providers.BraketProvider.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>()</p></td>
 <td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">backends</span></code>([name])</p></td>
+<td><p>Return a list of backends matching the specified filters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_backend</span></code>([name])</p></td>
+<td><p>Return a single backend matching the specified filters.</p></td>
 </tr>
 </tbody>
 </table>
@@ -324,23 +291,23 @@
       </div>
       <footer>
         <div class="related-pages">
-          <a class="next-page" href="../how_tos/index.html">
+          <a class="next-page" href="qiskit_braket_provider.providers.BraketQuantumTask.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">&lt;no title&gt;</div>
+                <div class="title">qiskit_braket_provider.providers.BraketQuantumTask</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="qiskit_braket_provider.providers.AWSBraketProvider.html">
+          <a class="prev-page" href="qiskit_braket_provider.providers.BraketLocalBackend.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">qiskit_braket_provider.providers.AWSBraketProvider</div>
+                <div class="title">qiskit_braket_provider.providers.BraketLocalBackend</div>
                 
               </div>
             </a>
@@ -374,9 +341,9 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">qiskit_braket_provider.providers.AmazonBraketTask</a><ul>
-<li><a class="reference internal" href="#qiskit_braket_provider.providers.AmazonBraketTask"><code class="docutils literal notranslate"><span class="pre">AmazonBraketTask</span></code></a><ul>
-<li><a class="reference internal" href="#qiskit_braket_provider.providers.AmazonBraketTask.__init__"><code class="docutils literal notranslate"><span class="pre">AmazonBraketTask.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#">qiskit_braket_provider.providers.BraketProvider</a><ul>
+<li><a class="reference internal" href="#qiskit_braket_provider.providers.BraketProvider"><code class="docutils literal notranslate"><span class="pre">BraketProvider</span></code></a><ul>
+<li><a class="reference internal" href="#qiskit_braket_provider.providers.BraketProvider.__init__"><code class="docutils literal notranslate"><span class="pre">BraketProvider.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>

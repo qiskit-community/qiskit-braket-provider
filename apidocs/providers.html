@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qiskit_braket_provider.providers.AWSBraketBackend" href="../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html" /><link rel="prev" title="Qiskit-Braket Provider API References" href="index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qiskit_braket_provider.providers.BraketAwsBackend" href="../stubs/qiskit_braket_provider.providers.BraketAwsBackend.html" /><link rel="prev" title="Qiskit-Braket Provider API References" href="index.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
         <title>Provider module (qiskit_braket_provider.providers) - Qiskit-Braket provider 0.7.0</title>
@@ -184,10 +184,10 @@
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">API References</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API References</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">Provider module (<code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_provider.providers</span></code>)</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Provider module (qiskit_braket_provider.providers)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html">qiskit_braket_provider.providers.AWSBraketBackend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketAwsBackend.html">qiskit_braket_provider.providers.BraketAwsBackend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketLocalBackend.html">qiskit_braket_provider.providers.BraketLocalBackend</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.AWSBraketProvider.html">qiskit_braket_provider.providers.AWSBraketProvider</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html">qiskit_braket_provider.providers.AmazonBraketTask</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 </ul>
 </li>
 </ul>
@@ -244,23 +244,23 @@
           <section id="provider-module-qiskit-braket-provider-providers">
 <span id="module-qiskit_braket_provider.providers"></span><h1>Provider module (<a class="reference internal" href="#module-qiskit_braket_provider.providers" title="qiskit_braket_provider.providers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_provider.providers</span></code></a>)<a class="headerlink" href="#provider-module-qiskit-braket-provider-providers" title="Link to this heading">¶</a></h1>
 <p>Provider module contains classes and functions to connect
-AWS Braket abstraction to Qiskit architecture.</p>
+Amazon Braket abstraction to Qiskit architecture.</p>
 <section id="provider-classes-and-functions">
 <h2>Provider classes and functions<a class="headerlink" href="#provider-classes-and-functions" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html#qiskit_braket_provider.providers.AWSBraketBackend" title="qiskit_braket_provider.providers.AWSBraketBackend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AWSBraketBackend</span></code></a>(device[, provider, name, ...])</p></td>
-<td><p>AWSBraketBackend.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketAwsBackend.html#qiskit_braket_provider.providers.BraketAwsBackend" title="qiskit_braket_provider.providers.BraketAwsBackend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BraketAwsBackend</span></code></a>([arn, provider, name, ...])</p></td>
+<td><p>BraketAwsBackend.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketLocalBackend.html#qiskit_braket_provider.providers.BraketLocalBackend" title="qiskit_braket_provider.providers.BraketLocalBackend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BraketLocalBackend</span></code></a>([name])</p></td>
 <td><p>BraketLocalBackend.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.AWSBraketProvider.html#qiskit_braket_provider.providers.AWSBraketProvider" title="qiskit_braket_provider.providers.AWSBraketProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code></a>()</p></td>
-<td><p>AWSBraketProvider class for accessing Amazon Braket backends.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html#qiskit_braket_provider.providers.BraketProvider" title="qiskit_braket_provider.providers.BraketProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BraketProvider</span></code></a>()</p></td>
+<td><p>BraketProvider class for accessing Amazon Braket backends.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.AmazonBraketTask.html#qiskit_braket_provider.providers.AmazonBraketTask" title="qiskit_braket_provider.providers.AmazonBraketTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AmazonBraketTask</span></code></a>(task_id, backend, tasks, ...)</p></td>
-<td><p>AmazonBraketTask.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html#qiskit_braket_provider.providers.BraketQuantumTask" title="qiskit_braket_provider.providers.BraketQuantumTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BraketQuantumTask</span></code></a>(task_id, backend, tasks, ...)</p></td>
+<td><p>BraketQuantumTask.</p></td>
 </tr>
 </tbody>
 </table>
@@ -272,12 +272,12 @@ AWS Braket abstraction to Qiskit architecture.</p>
       </div>
       <footer>
         <div class="related-pages">
-          <a class="next-page" href="../stubs/qiskit_braket_provider.providers.AWSBraketBackend.html">
+          <a class="next-page" href="../stubs/qiskit_braket_provider.providers.BraketAwsBackend.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">qiskit_braket_provider.providers.AWSBraketBackend</div>
+                <div class="title">qiskit_braket_provider.providers.BraketAwsBackend</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

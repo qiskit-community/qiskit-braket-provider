@@ -1,0 +1,42 @@
+﻿qiskit\_braket\_provider.providers.BraketQuantumTask
+====================================================
+
+.. currentmodule:: qiskit_braket_provider.providers
+
+.. autoclass:: BraketQuantumTask
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BraketQuantumTask.__init__
+      ~BraketQuantumTask.backend
+      ~BraketQuantumTask.cancel
+      ~BraketQuantumTask.cancelled
+      ~BraketQuantumTask.done
+      ~BraketQuantumTask.in_final_state
+      ~BraketQuantumTask.job_id
+      ~BraketQuantumTask.queue_position
+      ~BraketQuantumTask.result
+      ~BraketQuantumTask.running
+      ~BraketQuantumTask.status
+      ~BraketQuantumTask.submit
+      ~BraketQuantumTask.task_id
+      ~BraketQuantumTask.wait_for_final_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BraketQuantumTask.shots
+      ~BraketQuantumTask.version
+   
+   
