@@ -491,7 +491,7 @@ def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
 
 
 def to_braket(
-    circuit: QuantumCircuit | Program | str,
+    circuit: QuantumCircuit | Circuit | Program | str,
     basis_gates: Iterable[str] | None = None,
     verbatim: bool = False,
     connectivity: list[list[int]] | None = None,
@@ -504,7 +504,8 @@ def to_braket(
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
     Args:
-        circuit (QuantumCircuit | Program | str): Qiskit quantum circuit or OpenQASM 3 program
+        circuit (QuantumCircuit | Circuit | Program | str): Qiskit or Braket quantum circuit or
+            OpenQASM 3 program
         basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
             if target is `None`. If `None` and target is `None`, the transpiler will use all gates
             defined in the Braket SDK. Default: `None`.
@@ -526,7 +527,7 @@ def to_braket(
     Returns:
         Circuit: Braket circuit
     """
-    if isinstance(circuit, (Program, str)):
+    if isinstance(circuit, (Circuit, Program, str)):
         circuit = to_qiskit(circuit)
     if not isinstance(circuit, QuantumCircuit):
         raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
