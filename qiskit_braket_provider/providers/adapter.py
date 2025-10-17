@@ -708,8 +708,8 @@ def _create_free_parameters(operation):
             case ParameterVectorElement():
                 renamed_param_name = _rename_param_vector_element(param)
                 params[i] = FreeParameter(renamed_param_name)
-            case Parameter():
-                params[i] = FreeParameter(param.name)
+            case Parameter(name=name):
+                params[i] = FreeParameter(name)
             case ParameterExpression():
                 renamed_param_name = _rename_param_vector_element(param)
                 params[i] = FreeParameterExpression(renamed_param_name)
