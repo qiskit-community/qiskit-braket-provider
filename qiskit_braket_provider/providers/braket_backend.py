@@ -345,6 +345,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         *,
         optimization_level: int = 0,
         callback: Callable | None = None,
+        num_processes: int | None = None,
         pass_manager: PassManager | None = None,
         **options,
     ):
@@ -362,26 +363,21 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         # Always use target for simulator
         target, basis_gates = self._target_and_basis_gates(native, pass_manager)
         braket_circuits = (
-            [
-                to_braket(circ, verbatim=True, qubit_labels=self._qubit_labels, callback=callback)
-                for circ in circuits
-            ]
+            to_braket(circuits, verbatim=True, qubit_labels=self._qubit_labels)
             if verbatim
-            else [
-                to_braket(
-                    circ,
-                    target=target,
-                    basis_gates=basis_gates,
-                    qubit_labels=self._qubit_labels,
-                    angle_restrictions=(
-                        native_angle_restrictions(self._device.properties) if native else None
-                    ),
-                    optimization_level=optimization_level,
-                    callback=callback,
-                    pass_manager=pass_manager,
-                )
-                for circ in circuits
-            ]
+            else to_braket(
+                circuits,
+                target=target,
+                basis_gates=basis_gates,
+                qubit_labels=self._qubit_labels,
+                angle_restrictions=(
+                    native_angle_restrictions(self._device.properties) if native else None
+                ),
+                optimization_level=optimization_level,
+                callback=callback,
+                num_processes=num_processes,
+                pass_manager=pass_manager,
+            )
         )
         shots = options.pop("shots", None)
         return (
