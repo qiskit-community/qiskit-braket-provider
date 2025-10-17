@@ -796,18 +796,18 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
     qubit_map = {int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))}
     cbit = 0
     for instruction in circuit.instructions:
-        gate_name = instruction.operator.name.lower()
+        operator = instruction.operator
+        gate_name = operator.name.lower()
         if gate_name in _BRAKET_SUPPORTED_NOISES:
-            gate = _create_qiskit_kraus(instruction.operator.to_matrix())
+            gate = _create_qiskit_kraus(operator.to_matrix())
         elif gate_name == "unitary":
-            gate = _create_qiskit_unitary(instruction.operator.to_matrix())
+            gate = _create_qiskit_unitary(operator.to_matrix())
         else:
-            operator = instruction.operator
             gate = _create_qiskit_gate(
                 gate_name, operator.parameters if isinstance(operator, Parameterizable) else []
             )
-        if instruction.power != 1:
-            gate = gate**instruction.power
+        if (power := instruction.power) != 1:
+            gate = gate**power
         if control_qubits := instruction.control:
             ctrl_state = instruction.control_state.as_string[::-1]
             gate = gate.control(len(control_qubits), ctrl_state=ctrl_state)
