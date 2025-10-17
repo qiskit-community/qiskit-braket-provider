@@ -524,7 +524,7 @@ def to_braket(
             assumed to be contiguous.
         optimization_level (int): The optimization level to pass to `qiskit.transpile`.
             Default: 0 (no optimization).
-        callback (Callable | None): A callback function that will be called after each
+        callback (Callable | None): A callback function that will be called after each transpiler
             pass execution. Default: `None`.
         pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
             used in conjunction with a target, basis gates, or connectivity. Default: `None`.
