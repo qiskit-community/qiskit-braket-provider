@@ -227,6 +227,8 @@ _BRAKET_SUPPORTED_NOISES = [
     # "twoqubitpaulichannel" no to_open qasm support yet
 ]
 
+_Translatable = QuantumCircuit | Circuit | Program | str
+
 
 def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
     """Returns the connectivity natively supported by a Braket device from its properties
@@ -490,7 +492,7 @@ def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
 
 
 def to_braket(
-    circuit: QuantumCircuit | Circuit | Program | str,
+    circuit: _Translatable | Iterable[_Translatable],
     basis_gates: Iterable[str] | None = None,
     verbatim: bool = False,
     connectivity: list[list[int]] | None = None,
@@ -500,13 +502,14 @@ def to_braket(
     qubit_labels: Sequence[int] | None = None,
     optimization_level: int = 0,
     callback: Callable | None = None,
+    num_processes: int | None = None,
     pass_manager: PassManager | None = None,
-) -> Circuit:
+) -> Circuit | list[Circuit]:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
     Args:
-        circuit (QuantumCircuit | Circuit | Program | str): Qiskit or Braket quantum circuit or
-            OpenQASM 3 program
+        circuit (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket circuit(s)
+            or OpenQASM 3 program to transpile and translate to Braket.
         basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
             if target is `None`. If `None` and target is `None`, the transpiler will use all gates
             defined in the Braket SDK. Default: `None`.
@@ -526,16 +529,26 @@ def to_braket(
             Default: 0 (no optimization).
         callback (Callable | None): A callback function that will be called after each transpiler
             pass execution. Default: `None`.
+        num_processes (int | None): The maximum number of parallel transpilation processes for
+            multiple circuits. Default: `None`.
         pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
             used in conjunction with a target, basis gates, or connectivity. Default: `None`.
 
     Returns:
-        Circuit: Braket circuit
+        Circuit | list[Circuit]: Braket circuit or circuits
     """
     if isinstance(circuit, (Circuit, Program, str)):
         circuit = to_qiskit(circuit)
-    if not isinstance(circuit, QuantumCircuit):
-        raise TypeError(f"Expected a QuantumCircuit, got {type(circuit)} instead.")
+    single_instance = isinstance(circuit, QuantumCircuit)
+    if single_instance:
+        circuit = [circuit]
+    other_types = (
+        {type(circ).__name__ for circ in circuit if not isinstance(circ, QuantumCircuit)}
+        if isinstance(circuit, Iterable)
+        else type(circuit).__name__
+    )
+    if other_types:
+        raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
     loose_constraints = basis_gates or connectivity
     if pass_manager and (target or loose_constraints):
         raise ValueError(
@@ -545,7 +558,7 @@ def to_braket(
         raise ValueError("Cannot specify basis gates or connectivity alongside target.")
 
     if pass_manager:
-        circuit = pass_manager.run(circuit, callback=callback)
+        circuit = pass_manager.run(circuit, callback=callback, num_processes=num_processes)
     elif not verbatim:
         # If basis_gates is not None, then target remains empty
         target = target if basis_gates or target else _default_target(circuit)
@@ -553,7 +566,10 @@ def to_braket(
             target
             or connectivity
             or (
-                basis_gates and not {gate.name for gate, _, _ in circuit.data}.issubset(basis_gates)
+                basis_gates
+                and not {gate.name for circ in circuit for gate, _, _ in circ.data}.issubset(
+                    basis_gates
+                )
             )
         ):
             circuit = transpile(
@@ -563,8 +579,26 @@ def to_braket(
                 optimization_level=optimization_level,
                 target=target,
                 callback=callback,
+                num_processes=num_processes,
             )
+    translated = [
+        _translate_to_braket(
+            circ, target, qubit_labels, verbatim, basis_gates, angle_restrictions, pass_manager
+        )
+        for circ in circuit
+    ]
+    return translated[0] if single_instance else translated
 
+
+def _translate_to_braket(
+    circuit: _Translatable,
+    target: Target | None,
+    qubit_labels: Sequence[int] | None,
+    verbatim: bool,
+    basis_gates: Iterable[str] | None,
+    angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None,
+    pass_manager: PassManager | None,
+) -> Circuit:
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
     # Handle qiskit to braket conversion
@@ -658,8 +692,9 @@ def to_braket(
     return braket_circuit
 
 
-def _default_target(circuit: QuantumCircuit) -> Target:
-    target = Target(num_qubits=circuit.num_qubits)
+def _default_target(circuits: Iterable[QuantumCircuit]) -> Target:
+    num_qubits = max(circuit.num_qubits for circuit in circuits)
+    target = Target(num_qubits=num_qubits)
     for braket_name, instruction in _BRAKET_GATE_NAME_TO_QISKIT_GATE.items():
         if name := _BRAKET_TO_QISKIT_NAMES.get(braket_name.lower()):
             target.add_instruction(instruction, name=name)

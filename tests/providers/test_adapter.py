@@ -259,7 +259,7 @@ class TestAdapter(TestCase):
         """Test raising TypeError if adapter does not receive a Qiskit QuantumCircuit."""
         circuit = Mock()
 
-        message = f"Expected a QuantumCircuit, got {type(circuit)} instead."
+        message = f"Expected only QuantumCircuits, got {circuit.__class__.__name__} instead."
         with pytest.raises(TypeError, match=message):
             to_braket(circuit)
 
@@ -553,7 +553,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.h(0)
         qiskit_circuit.cx(0, 1, ctrl_state=0)
 
-        mock_transpile.return_value = qiskit_circuit
+        mock_transpile.return_value = [qiskit_circuit]
         with pytest.raises(ValueError):
             to_braket(qiskit_circuit)
 
