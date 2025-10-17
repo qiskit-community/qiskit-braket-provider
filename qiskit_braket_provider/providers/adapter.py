@@ -28,13 +28,7 @@ import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice, AwsDeviceType
-from braket.circuits import (
-    Circuit,
-    FreeParameter,
-    FreeParameterExpression,
-    Instruction,
-    measure,
-)
+from braket.circuits import Circuit, Instruction, measure
 from braket.default_simulator.openqasm.interpreter import Interpreter
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
@@ -51,6 +45,7 @@ from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.devices import LocalSimulator
 from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
+from braket.parametric import FreeParameter, FreeParameterExpression, Parameterizable
 from qiskit_braket_provider.exception import QiskitBraketException
 from qiskit_braket_provider.providers import braket_instructions
 
@@ -249,18 +244,18 @@ class _QiskitProgramContext(AbstractProgramContext):
 
     def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
         super().add_qubits(name, num_qubits)
-        self._circuit.add_register(num_qubits)
+        self._circuit.add_register(num_qubits, num_qubits)
 
     def is_builtin_gate(self, name: str) -> bool:
         return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE
 
     def add_phase_instruction(self, target, phase_value):
-        self._circuit.global_phase *= phase_value
+        self._circuit.global_phase += phase_value
 
     def add_gate_instruction(
         self, gate_name: str, target: tuple[int, ...], params, ctrl_modifiers: list[int], power: int
     ):
-        gate: Gate = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name]
+        gate: Gate = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name].copy()
         params = (
             [float(param) if isinstance(param, Number) else param for param in params]
             if params is not None
@@ -276,13 +271,7 @@ class _QiskitProgramContext(AbstractProgramContext):
         self._circuit.append(CircuitInstruction(gate, target))
 
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
-        if isinstance(value, Expr):
-            evaluated_value = value.evalf()
-            if not isinstance(evaluated_value, Number):
-                # TODO: Convert Sympy expressions into Qiskit ParameterExpressions
-                raise TypeError("Unbound symbolic expressions are not supported")
-            return evaluated_value
-        return value
+        return _sympy_to_qiskit(value) if isinstance(value, Expr) else value
 
     def add_measure(self, target: tuple[int], classical_targets: Iterable[int] = None):
         for iter, qubit in enumerate(target):
@@ -637,7 +626,7 @@ def to_braket(
         operation = circuit_instruction.operation
         qubits = circuit_instruction.qubits
 
-        if getattr(operation, "condition", None) is not None:
+        if getattr(operation, "condition", None):
             raise NotImplementedError(
                 f"Conditional operations are not supported. Found conditional gate '{operation.name}'. "
                 f"Only MeasureFF and CCPRx gates are supported in Braket."
@@ -735,17 +724,16 @@ def _default_qubit_labels(circuit: QuantumCircuit) -> tuple[int, ...]:
 
 
 def _create_free_parameters(operation):
-    params = operation.params if hasattr(operation, "params") else []
-    for i, param in enumerate(params):
-        if isinstance(param, ParameterVectorElement):
-            renamed_param_name = _rename_param_vector_element(param)
-            params[i] = FreeParameter(renamed_param_name)
-        elif isinstance(param, Parameter):
-            params[i] = FreeParameter(param.name)
-        elif isinstance(param, ParameterExpression):
-            renamed_param_name = _rename_param_vector_element(param)
-            params[i] = FreeParameterExpression(renamed_param_name)
-
+    for i, param in enumerate(params := operation.params):
+        match param:
+            case ParameterVectorElement():
+                renamed_param_name = _rename_param_vector_element(param)
+                params[i] = FreeParameter(renamed_param_name)
+            case Parameter():
+                params[i] = FreeParameter(param.name)
+            case ParameterExpression():
+                renamed_param_name = _rename_param_vector_element(param)
+                params[i] = FreeParameterExpression(renamed_param_name)
     return params
 
 
@@ -839,7 +827,10 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
         elif gate_name == "unitary":
             gate = _create_qiskit_unitary(instruction.operator.to_matrix())
         else:
-            gate = _create_qiskit_gate(gate_name, getattr(instruction.operator, "parameters", []))
+            operator = instruction.operator
+            gate = _create_qiskit_gate(
+                gate_name, operator.parameters if isinstance(operator, Parameterizable) else []
+            )
         if instruction.power != 1:
             gate = gate**instruction.power
         if control_qubits := instruction.control:
@@ -900,7 +891,9 @@ def _reverse_endianness(matrix: np.ndarray):
     )
 
 
-def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) -> Instruction:
+def _create_qiskit_gate(
+    gate_name: str, gate_params: list[float | FreeParameterExpression]
+) -> Instruction:
     gate_instance = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name)
     if not gate_instance:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
@@ -912,7 +905,7 @@ def _create_qiskit_gate(gate_name: str, gate_params: list[float | Parameter]) ->
         coeff = float(param_expression.sympify().subs(param, 1))
         new_gate_params.append(
             _sympy_to_qiskit(coeff * value.expression)
-            if hasattr(value, "expression")
+            if isinstance(value, FreeParameterExpression)
             else coeff * value
         )
     return gate_cls(*new_gate_params)
