@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 from botocore import errorfactory
 from networkx import DiGraph, complete_graph, from_dict_of_lists, relabel_nodes
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, generate_preset_pass_manager, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
@@ -257,6 +257,29 @@ class TestBraketAwsBackend(TestCase):
             ProgramSet([native_circuit, native_circuit], shots_per_executable=5)
         )
         self.assertEqual(device.run.call_count, 2)
+
+    def test_run_with_pass_manager(self):
+        """Tests run with pass_manager"""
+        device = Mock()
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        device.type = "QPU"
+        device.topology_graph = None
+        backend = BraketAwsBackend(device=device)
+        mock_task_1 = Mock(spec=LocalQuantumTask)
+        mock_task_1.id = "0"
+        mock_task_2 = Mock(spec=LocalQuantumTask)
+        mock_task_2.id = "1"
+        mock_batch = Mock(spec=AwsQuantumTaskBatch)
+        mock_batch.tasks = [mock_task_1, mock_task_2]
+        backend._device.run_batch = Mock(return_value=mock_batch)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+
+        backend.run(circuit, shots=0, pass_manager=generate_preset_pass_manager(2, backend))
+        native_circuit = Circuit().add_verbatim_box(
+            Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
+        )
+        device.run_batch.assert_called_once_with([native_circuit], shots=0)
 
     def test_run_invalid_run_input(self):
         """Tests run with invalid input to run"""
