@@ -186,7 +186,7 @@ class TestBraketProvider(TestCase):
         circ.cx(2, 3)
 
         self.assertEqual(
-            to_braket(circ, target=backend.target, braket_qubits=backend._braket_qubits).qubits,
+            to_braket(circ, target=backend.target, qubit_labels=backend.qubit_labels).qubits,
             {0, 1, 2, 7},
         )
 
