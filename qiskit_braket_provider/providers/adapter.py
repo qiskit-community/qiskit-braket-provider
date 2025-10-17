@@ -509,7 +509,7 @@ def to_braket(
 
     Args:
         circuit (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket circuit(s)
-            or OpenQASM 3 program to transpile and translate to Braket.
+            or OpenQASM 3 program(s) to transpile and translate to Braket.
         basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
             if target is `None`. If `None` and target is `None`, the transpiler will use all gates
             defined in the Braket SDK. Default: `None`.
