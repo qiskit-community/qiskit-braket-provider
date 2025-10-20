@@ -31,6 +31,7 @@ from braket.device_schema import (
     DeviceActionType,
     DeviceCapabilities,
     OpenQASMDeviceActionProperties,
+    StandardizedGateModelQpuDeviceProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.rigetti import (
@@ -402,6 +403,7 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
 
 
 def _qpu_target(description: str, properties: DeviceCapabilities):
+    std: StandardizedGateModelQpuDeviceProperties | None = properties.standardized
     paradigm = properties.paradigm
     qubit_count = paradigm.qubitCount
 
@@ -427,8 +429,6 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
             "physical_to_idx": {physical_qubits[i]: contiguous_indices[i] for i in range(len(physical_qubits))},
             "idx_to_physical": {contiguous_indices[i]: physical_qubits[i] for i in range(len(physical_qubits))}
         }
-
-    std = getattr(properties, "standardized", None)
 
     # Prepare qubit properties list if standardized data is available
     qubit_properties = None
@@ -491,7 +491,7 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                     )
 
     # Add measurement if not already added
-    if "measure" not in operations:
+    if "measure" not in target:
         if std:
             meas_map = {}
             for q in range(qubit_count):
