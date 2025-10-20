@@ -259,7 +259,7 @@ class TestAdapter(TestCase):
         """Test raising TypeError if adapter does not receive a Qiskit QuantumCircuit."""
         circuit = Mock()
 
-        message = f"Expected only QuantumCircuits, got {circuit.__class__.__name__} instead."
+        message = f"Expected only QuantumCircuits, got {{'{circuit.__class__.__name__}'}} instead."
         with pytest.raises(TypeError, match=message):
             to_braket(circuit)
 
@@ -853,7 +853,7 @@ class TestAdapter(TestCase):
         res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
 
-    def test_roundtrip_openqasm_subroutine(self):
+    def test_roundtrip_openqasm_program(self):
         qasm_string = """
         const int[8] n = 4;
         input bit[n] x;
@@ -877,7 +877,7 @@ class TestAdapter(TestCase):
         qasm_program = Program(source=qasm_string, inputs={"x": "1011"})
         self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
 
-    def test_roundtrip_openqasm_custom_gate(self):
+    def test_roundtrip_openqasm_str(self):
         qasm_string = """
         qubit[3] q;
         

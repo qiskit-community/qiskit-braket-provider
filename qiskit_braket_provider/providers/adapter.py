@@ -532,16 +532,11 @@ def to_braket(
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
     """
-    if isinstance(circuit, (Circuit, Program, str)):
-        circuit = to_qiskit(circuit)
-    single_instance = isinstance(circuit, QuantumCircuit)
+    single_instance = isinstance(circuit, (Program, str)) or not isinstance(circuit, Iterable)
     if single_instance:
         circuit = [circuit]
-    other_types = (
-        {type(circ).__name__ for circ in circuit if not isinstance(circ, QuantumCircuit)}
-        if isinstance(circuit, Iterable)
-        else type(circuit).__name__
-    )
+    circuit = [to_qiskit(c) if isinstance(c, (Circuit, Program, str)) else c for c in circuit]
+    other_types = {type(c).__name__ for c in circuit if not isinstance(c, QuantumCircuit)}
     if other_types:
         raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
     loose_constraints = basis_gates or connectivity

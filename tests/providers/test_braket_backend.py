@@ -219,7 +219,7 @@ class TestBraketAwsBackend(TestCase):
         braket_circuit = Circuit().h(0)
         device.run_batch.assert_called_once_with([braket_circuit, braket_circuit], shots=0)
 
-        backend.run([circuit, circuit], shots=0, native=True)
+        backend.run([circuit, circuit], shots=0, native=True, num_processes=2)
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
         )
@@ -249,7 +249,7 @@ class TestBraketAwsBackend(TestCase):
             ProgramSet([braket_circuit, braket_circuit], shots_per_executable=5)
         )
 
-        backend.run([circuit, circuit], shots=5, native=True)
+        backend.run([circuit, circuit], shots=5, native=True, num_processes=2)
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
         )
