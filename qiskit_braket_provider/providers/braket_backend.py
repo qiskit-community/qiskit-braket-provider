@@ -5,11 +5,12 @@ import enum
 import logging
 import warnings
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Generic, TypeVar
 
 from qiskit import QuantumCircuit
 from qiskit.providers import BackendV2, Options, QubitProperties
+from qiskit.transpiler import PassManager, Target
 
 from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTask
 from braket.aws.queue_information import QueueDepthInfo
@@ -181,7 +182,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
 class BraketAwsBackend(BraketBackend[AwsDevice]):
     """BraketAwsBackend."""
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(
         self,
         arn: str | None = None,
         provider=None,
@@ -229,8 +230,10 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             f"QiskitBraketProvider/{version.__version__}"
         )
         self._target = aws_device_to_target(device=self._device)
-        self._braket_qubits = (
-            sorted(self._device.topology_graph.nodes) if self._device.topology_graph else None
+        self._qubit_labels = (
+            tuple(sorted(self._device.topology_graph.nodes))
+            if self._device.topology_graph
+            else None
         )
         self._gateset = self.get_gateset()
         self._supports_program_sets = (
@@ -262,12 +265,21 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def max_circuits(self):
         return None
 
+    @property
+    def qubit_labels(self) -> tuple[int, ...] | None:
+        """
+        tuple[int, ...] | None: The qubit labels of the underlying device, in ascending order.
+
+        Unlike the qubits in the target, these labels are not necessarily contiguous.
+        """
+        return self._qubit_labels
+
     @classmethod
     def _default_options(cls):
         return Options()
 
     def qubit_properties(self, qubit: int | list[int]) -> QubitProperties | list[QubitProperties]:
-        # TODO: fetch information from device.properties.provider  # pylint: disable=fixme
+        # TODO: fetch information from device.properties.provider
         raise NotImplementedError
 
     def queue_depth(self) -> QueueDepthInfo:
@@ -325,9 +337,17 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(self, run_input, verbatim: bool = False, native: bool | None = None, **options):
-        # Defaults to native transpilation if the underlying device is a QPU
-        native = native if native is not None else self._device.type == AwsDeviceType.QPU
+    def run(
+        self,
+        run_input: QuantumCircuit | list[QuantumCircuit],
+        verbatim: bool = False,
+        native: bool = False,
+        *,
+        optimization_level: int = 0,
+        callback: Callable | None = None,
+        pass_manager: PassManager | None = None,
+        **options,
+    ):
         if isinstance(run_input, QuantumCircuit):
             circuits = [run_input]
         elif isinstance(run_input, list):
@@ -339,17 +359,26 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
+        # Always use target for simulator
+        target, basis_gates = self._target_and_basis_gates(native, pass_manager)
         braket_circuits = (
-            [to_braket(circ, verbatim=True, braket_qubits=self._braket_qubits) for circ in circuits]
+            [
+                to_braket(circ, verbatim=True, qubit_labels=self._qubit_labels, callback=callback)
+                for circ in circuits
+            ]
             if verbatim
             else [
                 to_braket(
                     circ,
-                    target=self._target,
-                    braket_qubits=self._braket_qubits,
+                    target=target,
+                    basis_gates=basis_gates,
+                    qubit_labels=self._qubit_labels,
                     angle_restrictions=(
                         native_angle_restrictions(self._device.properties) if native else None
                     ),
+                    optimization_level=optimization_level,
+                    callback=callback,
+                    pass_manager=pass_manager,
                 )
                 for circ in circuits
             ]
@@ -360,6 +389,16 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             if self._supports_program_sets and shots != 0 and len(braket_circuits) > 1
             else self._run_batch(braket_circuits, shots, **options)
         )
+
+    def _target_and_basis_gates(
+        self, native: bool, pass_manager: PassManager
+    ) -> tuple[Target | None, set[str] | None]:
+        if pass_manager:
+            return None, None
+        if native or self._device.type == AwsDeviceType.SIMULATOR:
+            # Always use target for simulator
+            return self._target, None
+        return None, self._gateset
 
     def _run_batch(self, braket_circuits: list[Circuit], shots: int, **options):
         batch_task = self._device.run_batch(braket_circuits, shots=shots, **options)
@@ -376,7 +415,7 @@ class AWSBraketBackend(BraketAwsBackend):
         warnings.warn(f"{cls.__name__} is deprecated.", DeprecationWarning, stacklevel=2)
         super().__init_subclass__(**kwargs)
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(
         self,
         device: AwsDevice,
         provider=None,

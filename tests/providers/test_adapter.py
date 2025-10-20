@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, generate_preset_pass_manager
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.library import GlobalPhaseGate, PauliEvolutionGate
@@ -274,9 +274,28 @@ class TestAdapter(TestCase):
         target.add_instruction(qiskit_gates.HGate())
 
         with pytest.raises(ValueError):
-            to_braket(circuit, basis_gates={"h"}, target=target)
+            to_braket(circuit, target=target, basis_gates={"h"})
         with pytest.raises(ValueError):
-            to_braket(circuit, connectivity=[[0, 1], [1, 2]], target=target)
+            to_braket(circuit, target=target, connectivity=[[0, 1], [1, 2]])
+
+    def test_pass_manager_with_other_arguments(self):
+        """
+        Tests that to_braket raises a ValueError if pass_manager is supplied
+        with target or loose constraints.
+        """
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+
+        target = Target()
+        target.add_instruction(qiskit_gates.HGate())
+        pass_manager = generate_preset_pass_manager(2, target=target)
+
+        with pytest.raises(ValueError):
+            to_braket(circuit, pass_manager=pass_manager, target=target)
+        with pytest.raises(ValueError):
+            to_braket(circuit, pass_manager=pass_manager, basis_gates={"h"})
+        with pytest.raises(ValueError):
+            to_braket(circuit, pass_manager=pass_manager, connectivity=[[0, 1], [1, 2]])
 
     def test_convert_parametric_qiskit_to_braket_circuit(self):
         """Tests to_braket works with parametric circuits."""
