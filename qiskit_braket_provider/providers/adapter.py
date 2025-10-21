@@ -28,13 +28,7 @@ import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice, AwsDeviceType
-from braket.circuits import (
-    Circuit,
-    FreeParameter,
-    FreeParameterExpression,
-    Instruction,
-    measure,
-)
+from braket.circuits import Circuit, Instruction, measure
 from braket.default_simulator.openqasm.interpreter import Interpreter
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
