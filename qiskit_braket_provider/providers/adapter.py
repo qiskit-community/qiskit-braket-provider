@@ -532,7 +532,7 @@ def to_braket(
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
     """
-    single_instance = isinstance(circuit, (Program, str)) or not isinstance(circuit, Iterable)
+    single_instance = isinstance(circuit, _Translatable) or not isinstance(circuit, Iterable)
     if single_instance:
         circuit = [circuit]
     circuit = [to_qiskit(c) if isinstance(c, (Circuit, Program, str)) else c for c in circuit]
