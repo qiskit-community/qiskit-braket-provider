@@ -83,7 +83,7 @@ class TestIqmExperimentalCapabilities(unittest.TestCase):
             CCPRx(0.5, 0.7, 0), qubits=(Qubit(QuantumRegister(1, "q"), 0),)
         )
 
-        target = _default_target(circuit)
+        target = _default_target([circuit])
         target.add_instruction(
             CCPRx(Parameter("angle_1"), Parameter("angle_2"), Parameter("feedback_key"))
         )
