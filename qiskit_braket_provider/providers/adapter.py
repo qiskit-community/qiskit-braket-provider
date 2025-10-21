@@ -1,6 +1,7 @@
 """Util function for provider."""
 
 import warnings
+from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from math import inf, pi
 
@@ -31,7 +32,15 @@ from braket.device_schema import (
     DeviceActionType,
     DeviceCapabilities,
     OpenQASMDeviceActionProperties,
-    StandardizedGateModelQpuDeviceProperties,
+)
+from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 import (
+    StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV1
+)
+from braket.device_schema.standardized_gate_model_qpu_device_properties_v2 import (
+    StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV2
+)
+from braket.device_schema.standardized_gate_model_qpu_device_properties_v3 import (
+    StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV3
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.rigetti import (
@@ -403,17 +412,18 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
 
 
 def _qpu_target(description: str, properties: DeviceCapabilities):
-    std: StandardizedGateModelQpuDeviceProperties | None = properties.standardized
+    std = properties.standardized
     paradigm = properties.paradigm
     qubit_count = paradigm.qubitCount
 
     # TODO: Build target from AwsDevice.topology_graph instead of paradigm properties
     connectivity = paradigm.connectivity
     connectivity_graph = (
-        _contiguous_qubit_indices(connectivity.connectivityGraph)
+        _contiguous_connectivity(connectivity.connectivityGraph)
         if not connectivity.fullyConnected
         else None
     )
+    indices = _contiguous_indices(connectivity.connectivityGraph)
 
     # Create mapping from physical qubit IDs to contiguous indices
     qubit_mapping = None
@@ -432,6 +442,7 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
 
     # Prepare qubit properties list if standardized data is available
     qubit_properties = None
+
     if std and connectivity_graph and qubit_mapping and hasattr(std, "oneQubitProperties"):
         qubit_properties = [None] * qubit_count
         # Build properties for each logical qubit index
@@ -490,20 +501,55 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                         _2q_instruction_properties(qubit_count, connectivity_graph, std, instruction.name, qubit_mapping),
                     )
 
+    props_1q = {}
+    gate_props_2q = defaultdict(dict)
+    match std:
+        case (
+            StandardizedPropertiesV1(oneQubitProperties=props_1q, twoQubitProperties=props_2q)
+            | StandardizedPropertiesV2(oneQubitProperties=props_1q, twoQubitProperties=props_2q)
+        ):
+            for q, props in props_1q.items():
+                props_1q[indices[int(q)]] = InstructionProperties(
+                    error=max(
+                        f.standardError if f.standardError is not None else 1 - f.fidelity
+                        for f in props.oneQubitFidelity
+                    )
+                )
+            for edge, props in props_2q.items():
+                q1, q2 = tuple(int(q) for q in edge.split("-"))
+                for fidelity in props.twoQubitGateFidelity:
+                    error = fidelity.standardError
+                    gate_props_2q[_BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]][(q1, q2)] = (
+                        InstructionProperties(
+                            error=error if error is not None else 1 - fidelity.fidelity
+                        )
+                    )
+            if "measure" not in target:
+                meas_map = {}
+                for q in range(qubit_count):
+                    physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
+                    dur = getattr(std, "readoutDuration", None)
+                    dur = float(dur) if isinstance(dur, (int, float)) else None
+                    f, _, _ = _select_oneq_fidelity(std, physical_q, prefer="READOUT", allow_simultaneous=False)
+                    err = None if f is None else max(0.0, 1.0 - float(f))
+                    meas_map[(q,)] = InstructionProperties(duration=dur, error=err)
+                target.add_instruction(Measure(), meas_map)
+            return target
+        case StandardizedPropertiesV3(oneQubitProperties=props_1q):
+            for q, props in props_1q.items():
+                qubit = indices[int(q)]
+            for edge, props in std.twoQubitProperties.items():
+                q1, q2 = tuple(int(q) for q in edge.split("-"))
+                for fidelity in props.twoQubitGateFidelity:
+                    error = fidelity.standardError
+                    gate_props_2q[fidelity.gateName.lower()][(q1, q2)] = InstructionProperties(
+                        error=error if error is not None else fidelity.fidelity
+                    )
+            return target
+
     # Add measurement if not already added
     if "measure" not in target:
-        if std:
-            meas_map = {}
-            for q in range(qubit_count):
-                physical_q = qubit_mapping["idx_to_physical"][q] if qubit_mapping else q
-                dur = getattr(std, "readoutDuration", None)
-                dur = float(dur) if isinstance(dur, (int, float)) else None
-                f, _, _ = _select_oneq_fidelity(std, physical_q, prefer="READOUT", allow_simultaneous=False)
-                err = None if f is None else max(0.0, 1.0 - float(f))
-                meas_map[(q,)] = InstructionProperties(duration=dur, error=err)
-            target.add_instruction(Measure(), meas_map)
-        else:
-            target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
+        target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
 
     return target
 
@@ -630,7 +676,7 @@ def _2q_instruction_properties(qubit_count, connectivity_graph, std_props=None, 
 
     return instruction_props
 
-def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
+def _contiguous_connectivity(connectivity_graph: dict) -> dict:
     """Device qubit indices may be noncontiguous (label between x0 and x7, x being
     the number of the octagon) while the Qiskit transpiler creates and/or
     handles coupling maps with contiguous indices. This function converts the
@@ -654,19 +700,21 @@ def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
             {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
             "3": ["0","1","2"]}
     """
-    # Creates list of existing qubit indices which are noncontiguous.
-    indices = sorted(
-        int(i) for i in set.union(*[{k} | set(v) for k, v in connectivity_graph.items()])
-    )
-    # Creates a list of contiguous indices for number of qubits.
-    map_list = list(range(len(indices)))
-    # Creates a dictionary to remap the noncontiguous indices to contiguous.
-    mapper = dict(zip(indices, map_list))
+    mapper = _contiguous_indices(connectivity_graph)
     # Performs the remapping from the noncontiguous to the contiguous indices.
     contiguous_connectivity_graph = {
         mapper[int(k)]: [mapper[int(v)] for v in val] for k, val in connectivity_graph.items()
     }
     return contiguous_connectivity_graph
+
+
+def _contiguous_indices(connectivity_graph: dict) -> dict:
+    # Creates list of existing qubit indices which are noncontiguous.
+    indices = sorted(
+        int(i) for i in set.union(*[{k} | set(v) for k, v in connectivity_graph.items()])
+    )
+    # Creates a dictionary to remap the noncontiguous indices to contiguous.
+    return {q: i for i, q in enumerate(indices)}
 
 
 def to_braket(
