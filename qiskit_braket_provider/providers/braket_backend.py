@@ -1,5 +1,6 @@
 """Amazon Braket backends."""
 
+import copy
 import datetime
 import enum
 import logging
@@ -416,6 +417,18 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
         return BraketQuantumTask(task_id=task_id, tasks=tasks, backend=self, shots=shots)
+
+    def __deepcopy__(self, memo):
+        """Create deepcopy of the BraketBackend.
+
+        Note: the underlying self._device, and thus self._device.aws_session is shared between copies.
+        """
+        result = copy.copy(self)
+        memo[id(self)] = result
+        for key, value in self.__dict__.items():
+            if key != "_device":
+                setattr(result, key, copy.deepcopy(value, memo))  # Pass memo along
+        return result
 
 
 class AWSBraketBackend(BraketAwsBackend):
