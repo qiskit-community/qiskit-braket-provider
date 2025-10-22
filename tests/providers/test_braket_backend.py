@@ -1,5 +1,6 @@
 """Tests for AWS Braket backends."""
 
+import copy
 import unittest
 from unittest import TestCase
 from unittest.mock import Mock, patch
@@ -585,3 +586,17 @@ class TestBraketAwsBackend(TestCase):
             self.assertEqual(instruction[0].name, expected_instruction_props[index][0].name)
 
             self.assertEqual(instruction[1], expected_instruction_props[index][1])
+
+    def test_backend_deepcopy(self):
+        """Tests deepcopy of device."""
+        device = Mock()
+        device.properties = RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES
+        device.type = "QPU"
+        device._arn = "MOCK"
+        device.topology_graph = topology_graph(
+            RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
+        )
+        backend = BraketAwsBackend(device=device)
+        deep = copy.deepcopy(backend)
+        self.assertEqual(deep._device, backend._device)
+        self.assertNotEqual(deep, backend)

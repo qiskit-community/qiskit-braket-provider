@@ -1,5 +1,6 @@
 """Amazon Braket backends."""
 
+import copy
 import datetime
 import enum
 import logging
@@ -340,6 +341,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def run(
         self,
         run_input: QuantumCircuit | list[QuantumCircuit],
+        shots : int = 10,
         verbatim: bool = False,
         native: bool = False,
         *,
@@ -349,6 +351,21 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         pass_manager: PassManager | None = None,
         **options,
     ):
+        """ Execute QuantumCircuits on a BraketAwsBackend
+         
+        Args:
+            run_input : QuantumCircuit or list of QuantumCircuits
+
+        Kwargs:
+            shots : number of measurement repetitions for the BraketAwsBackend
+            verbatim : submit as a verbatim circuit (i.e. no transpilation)
+            native : use the Qiskit transpiler to compile to a verbatim native circuit 
+            optimization_level : Qiskit transpiler optimization level
+            callback : function for the Qiskit transpiler 
+            num_processes : allow for parallel transpilation 
+            pass_manager : user-specified PassManager for the Qiskit transpiler (creates verbatim)
+        """
+
         if isinstance(run_input, QuantumCircuit):
             circuits = [run_input]
         elif isinstance(run_input, list):
@@ -379,7 +396,6 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                 pass_manager=pass_manager,
             )
         )
-        shots = options.pop("shots", None)
         return (
             self._run_program_set(braket_circuits, shots, **options)
             if self._supports_program_sets and shots != 0 and len(braket_circuits) > 1
@@ -401,6 +417,18 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         tasks: list[AwsQuantumTask] = batch_task.tasks
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
         return BraketQuantumTask(task_id=task_id, tasks=tasks, backend=self, shots=shots)
+
+    def __deepcopy__(self, memo):
+        """Create deepcopy of the BraketBackend.
+
+        Note: the underlying self._device, and thus self._device.aws_session is shared between copies.
+        """
+        result = copy.copy(self)
+        memo[id(self)] = result
+        for key, value in self.__dict__.items():
+            if key != "_device":
+                setattr(result, key, copy.deepcopy(value, memo))  # Pass memo along
+        return result
 
 
 class AWSBraketBackend(BraketAwsBackend):
