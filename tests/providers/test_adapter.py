@@ -853,6 +853,17 @@ class TestAdapter(TestCase):
         res = LocalSimulator("braket_dm").run(qqc, shots=1000).result().measurement_counts
         assert res["01"] == 1000
 
+    def test_roundtrip_openqasm_parametrized_gate(self):
+        qasm_string = """
+        input float theta;
+        qubit q;
+        gphase(pi / 4);
+        rx(theta) q;
+        measure q;
+        """
+        qasm_program = Program(source=qasm_string, inputs={"theta": 1.0})
+        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
+
     def test_roundtrip_openqasm_program(self):
         qasm_string = """
         const int[8] n = 4;
