@@ -48,7 +48,10 @@ def _result_from_circuit_task(
 
         data = ExperimentResultData(
             counts=counts,
-            memory=["".join(shot_result[::-1].astype(str)) for shot_result in result.measurements],
+            memory=[
+                hex(int("".join(shot_result[::-1].astype(str)), 2))
+                for shot_result in result.measurements
+            ],
         )
 
     return ExperimentResult(
@@ -151,7 +154,7 @@ class BraketQuantumTask(JobV1):
                     data=ExperimentResultData(
                         counts=executable_result.counts,
                         memory=[
-                            "".join(shot_result[::-1].astype(str))
+                            hex(int("".join(shot_result[::-1].astype(str)), 2))
                             for shot_result in executable_result.measurements
                         ],
                     ),

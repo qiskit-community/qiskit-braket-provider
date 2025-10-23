@@ -49,11 +49,11 @@ class TestBraketQuantumTask(TestCase):
 
         self.assertEqual(task.result().job_id, "AwesomeId")
         self.assertEqual(task.result().backend_name, "default")
-        self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
+        self.assertEqual(task.result().get_memory(), ["10", "10", "1"])
 
         # pylint: disable=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
-        self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
+        self.assertEqual(task.result().results[0].data.memory, ["0x2", "0x2", "0x1"])
         self.assertEqual(task.result().results[0].status, "COMPLETED")
         self.assertEqual(task.result().results[0].shots, 3)
         # pylint: enable=no-member
@@ -79,26 +79,26 @@ class TestBraketQuantumTask(TestCase):
             # pylint: disable-next=no-member
             task.result().results[0].data.memory,
             [
-                "00",
-                "10",
-                "11",
-                "00",
-                "11",
-                "00",
-                "11",
-                "01",
-                "11",
-                "00",
-                "11",
-                "00",
-                "10",
-                "01",
-                "11",
-                "11",
-                "11",
-                "00",
-                "11",
-                "00",
+                "0x0",
+                "0x2",
+                "0x3",
+                "0x0",
+                "0x3",
+                "0x0",
+                "0x3",
+                "0x1",
+                "0x3",
+                "0x0",
+                "0x3",
+                "0x0",
+                "0x2",
+                "0x1",
+                "0x3",
+                "0x3",
+                "0x3",
+                "0x0",
+                "0x3",
+                "0x0",
             ],
         )
         # pylint: disable-next=no-member
@@ -233,12 +233,12 @@ class TestAmazonBraketTask(TestCase):
         # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
         # pylint: disable-next=no-member
-        self.assertEqual(task.result().results[0].data.memory, ["10", "10", "01"])
+        self.assertEqual(task.result().results[0].data.memory, ["0x2", "0x2", "0x1"])
         # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].status, "COMPLETED")
         # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].shots, 3)
-        self.assertEqual(task.result().get_memory(), ["10", "10", "01"])
+        self.assertEqual(task.result().get_memory(), ["10", "10", "1"])
 
 
 class TestAWSBraketJob(TestCase):
@@ -270,12 +270,12 @@ class TestAWSBraketJob(TestCase):
         # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
         # pylint: disable-next=no-member
-        self.assertEqual(job.result().results[0].data.memory, ["10", "10", "01"])
+        self.assertEqual(job.result().results[0].data.memory, ["0x2", "0x2", "0x1"])
         # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].status, "COMPLETED")
         # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].shots, 3)
-        self.assertEqual(job.result().get_memory(), ["10", "10", "01"])
+        self.assertEqual(job.result().get_memory(), ["10", "10", "1"])
 
 
 class TestBraketJobStatus:
