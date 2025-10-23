@@ -489,7 +489,9 @@ def _qpu_target(device: AwsDevice, description: str):
                 )
 
     target = Target(
-        description=description, num_qubits=len(indices), qubit_properties=qubit_properties
+        description=description,
+        num_qubits=len(qubit_properties or indices),
+        qubit_properties=qubit_properties or None,
     )
     # TODO: Use gate calibrations if available
     for operation in properties.paradigm.nativeGateSet:
