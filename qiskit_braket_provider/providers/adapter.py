@@ -496,7 +496,7 @@ def _qpu_target(device: AwsDevice, description: str):
     # TODO: Use gate calibrations if available
     for operation in properties.paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
-            match instruction.num_qubits:
+            match num_qubits := instruction.num_qubits:
                 case 1:
                     target.add_instruction(
                         instruction,
@@ -515,6 +515,10 @@ def _qpu_target(device: AwsDevice, description: str):
                             if gate_props
                             else {(indices[q0], indices[q1]): None for q0, q1 in topology.edges}
                         ),
+                    )
+                case _:
+                    warnings.warn(
+                        f"Instruction {instruction.name} has {num_qubits} and cannot be added to target"
                     )
 
     # Add measurement if not already added

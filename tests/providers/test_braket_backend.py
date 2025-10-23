@@ -544,25 +544,30 @@ class TestBraketAwsBackend(TestCase):
     def test_target(self):
         """Tests target."""
         mock_device = Mock()
-        mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
+        mock_device.properties.paradigm.nativeGateSet.append("cswap")
         mock_device.type = "QPU"
         topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
         )
         mock_device.topology_graph = topology_graph
 
-        target = aws_device_to_target(mock_device)
-        num_qubits = len(topology_graph)
-        num_native_gates = len(mock_device.properties.paradigm.nativeGateSet)
-        num_native_gates_2q = 1  # Needs to match number of 2q gates in capabilities
-        self.assertEqual(target.num_qubits, num_qubits)
-        self.assertEqual(len(target.operations), num_native_gates + 1)
-        self.assertEqual(
-            len(target.instructions),
-            (num_native_gates - num_native_gates_2q + 1) * num_qubits
-            + num_native_gates_2q * len(topology_graph.edges),
-        )
-        self.assertIn("Target for Amazon Braket QPU", target.description)
+        with self.assertWarns(UserWarning):
+            target = aws_device_to_target(mock_device)
+            num_qubits = len(topology_graph)
+            num_native_gates_unsupported = 1  # Needs to match number of 3q+ gates in capabilities
+            num_native_gates = (
+                len(mock_device.properties.paradigm.nativeGateSet) - num_native_gates_unsupported
+            )
+            num_native_gates_2q = 1  # Needs to match number of 2q gates in capabilities
+            self.assertEqual(target.num_qubits, num_qubits)
+            self.assertEqual(len(target.operations), num_native_gates + 1)
+            self.assertEqual(
+                len(target.instructions),
+                (num_native_gates - num_native_gates_2q + 1) * num_qubits
+                + num_native_gates_2q * len(topology_graph.edges),
+            )
+            self.assertIn("Target for Amazon Braket QPU", target.description)
 
     def test_target_invalid_device(self):
         """Tests target."""
