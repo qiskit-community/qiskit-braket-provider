@@ -886,6 +886,17 @@ class TestAdapter(TestCase):
         
         self.assertTrue(check_to_braket_unitary_correct(qiskit_no_measure))
 
+    def test_roundtrip_openqasm_parametrized_gate(self):
+        qasm_string = """
+        input float theta;
+        qubit q;
+        gphase(pi / 4);
+        rx(theta) q;
+        measure q;
+        """
+        qasm_program = Program(source=qasm_string, inputs={"theta": 1.0})
+        self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
+
     def test_roundtrip_openqasm_program(self):
         qasm_string = """
         const int[8] n = 4;
