@@ -518,7 +518,7 @@ def _qpu_target(device: AwsDevice, description: str):
                     )
                 case _:
                     warnings.warn(
-                        f"Instruction {instruction.name} has {num_qubits} and cannot be added to target"
+                        f"Instruction {instruction.name} has {num_qubits} qubits and cannot be added to target"
                     )
 
     # Add measurement if not already added
