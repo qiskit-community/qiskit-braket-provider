@@ -49,7 +49,7 @@ from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 impor
 from braket.device_schema.standardized_gate_model_qpu_device_properties_v2 import (
     StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV2,
 )
-from braket.devices import LocalSimulator, Device
+from braket.devices import Device, LocalSimulator
 from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
 from braket.parametric import FreeParameter, FreeParameterExpression, Parameterizable
@@ -410,7 +410,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
         Target: Target for Qiskit backend
     """
     return _simulator_target(
-        f"Target for Amazon Braket local simulator: {simulator.name}", simulator
+        simulator, f"Target for Amazon Braket local simulator: {simulator.name}"
     )
 
 
@@ -425,18 +425,16 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     """
     match device.type:
         case AwsDeviceType.QPU:
-            return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", device)
+            return _qpu_target(device, f"Target for Amazon Braket QPU: {device.name}")
         case AwsDeviceType.SIMULATOR:
-            return _simulator_target(
-                f"Target for Amazon Braket simulator: {device.name}", device
-            )
+            return _simulator_target(device, f"Target for Amazon Braket simulator: {device.name}")
     raise QiskitBraketException(
         "Cannot convert to target. "
         f"{device.properties.__class__} device capabilities are not supported."
     )
 
 
-def _simulator_target(description: str, device: Device):
+def _simulator_target(device: Device, description: str):
     properties: GateModelSimulatorDeviceCapabilities = device.properties
     target = Target(description=description, num_qubits=properties.paradigm.qubitCount)
     action = (
@@ -461,19 +459,19 @@ def _simulator_target(description: str, device: Device):
     return target
 
 
-def _qpu_target(description: str, device: AwsDevice):
+def _qpu_target(device: AwsDevice, description: str):
     properties: DeviceCapabilities = device.properties
     topology = device.topology_graph
-    std = properties.standardized
+    standardized = properties.standardized
     indices = {q: i for i, q in enumerate(sorted(topology.nodes))}
 
     qubit_properties = []
     instruction_props_1q = []
     instruction_props_2q = defaultdict(dict)
-    # TODO: Support V3 properties
-    if isinstance(std, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
-        props_1q = std.oneQubitProperties
-        props_2q = std.twoQubitProperties
+    # TODO: Support V3 standardized properties
+    if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
+        props_1q = standardized.oneQubitProperties
+        props_2q = standardized.twoQubitProperties
         for q in sorted(indices):
             props = props_1q[f"{q}"]
             instruction_props_1q.append(
@@ -487,9 +485,7 @@ def _qpu_target(description: str, device: AwsDevice):
             for fidelity in props.twoQubitGateFidelity:
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
                 instruction_props_2q[gate_name][tuple(int(q) for q in edge.split("-"))] = (
-                    InstructionProperties(
-                        error=1 - fidelity.fidelity
-                    )
+                    InstructionProperties(error=1 - fidelity.fidelity)
                 )
 
     target = Target(
@@ -506,7 +502,7 @@ def _qpu_target(description: str, device: AwsDevice):
                             {(q,): properties for q, properties in enumerate(instruction_props_1q)}
                             if instruction_props_1q
                             else {(i,): None for i in indices.values()}
-                        )
+                        ),
                     )
                 case 2:
                     gate_props = instruction_props_2q.get(instruction.name)
@@ -516,7 +512,7 @@ def _qpu_target(description: str, device: AwsDevice):
                             {edge: props for edge, props in gate_props.items()}
                             if gate_props
                             else {(indices[q0], indices[q1]): None for q0, q1 in topology.edges}
-                        )
+                        ),
                     )
 
     # Add measurement if not already added
@@ -528,7 +524,7 @@ def _qpu_target(description: str, device: AwsDevice):
                 {(q,): properties for q, properties in enumerate(instruction_props_1q)}
                 if instruction_props_1q
                 else {(i,): None for i in indices.values()}
-            )
+            ),
         )
     return target
 
