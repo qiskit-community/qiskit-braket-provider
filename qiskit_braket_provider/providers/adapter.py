@@ -49,7 +49,7 @@ from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 impor
 from braket.device_schema.standardized_gate_model_qpu_device_properties_v2 import (
     StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV2,
 )
-from braket.devices import LocalSimulator
+from braket.devices import LocalSimulator, Device
 from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
 from braket.parametric import FreeParameter, FreeParameterExpression, Parameterizable
@@ -410,8 +410,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
         Target: Target for Qiskit backend
     """
     return _simulator_target(
-        f"Target for Amazon Braket local simulator: {simulator.name}",
-        simulator.properties,
+        f"Target for Amazon Braket local simulator: {simulator.name}", simulator
     )
 
 
@@ -426,10 +425,10 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     """
     match device.type:
         case AwsDeviceType.QPU:
-            return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", device.properties)
+            return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", device)
         case AwsDeviceType.SIMULATOR:
             return _simulator_target(
-                f"Target for Amazon Braket simulator: {device.name}", device.properties
+                f"Target for Amazon Braket simulator: {device.name}", device
             )
     raise QiskitBraketException(
         "Cannot convert to target. "
@@ -437,7 +436,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     )
 
 
-def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapabilities):
+def _simulator_target(description: str, device: Device):
+    properties: GateModelSimulatorDeviceCapabilities = device.properties
     target = Target(description=description, num_qubits=properties.paradigm.qubitCount)
     action = (
         properties.action.get(DeviceActionType.OPENQASM)
@@ -461,13 +461,11 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
     return target
 
 
-def _qpu_target(description: str, properties: DeviceCapabilities):
+def _qpu_target(description: str, device: AwsDevice):
+    properties: DeviceCapabilities = device.properties
+    topology = device.topology_graph
     std = properties.standardized
-    paradigm = properties.paradigm
-    qubit_count = paradigm.qubitCount
-
-    # TODO: Build target from AwsDevice.topology_graph instead of paradigm properties
-    indices = _contiguous_indices(paradigm.connectivity.connectivityGraph)
+    indices = {q: i for i, q in enumerate(sorted(topology.nodes))}
 
     qubit_properties = []
     instruction_props_1q = []
@@ -481,28 +479,24 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
             instruction_props_1q.append(
                 InstructionProperties(
                     # Use highest known error rate
-                    error=max(
-                        f.standardError if f.standardError is not None else 1 - f.fidelity
-                        for f in props.oneQubitFidelity
-                    )
+                    error=max(1 - f.fidelity for f in props.oneQubitFidelity)
                 )
             )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
         for edge, props in props_2q.items():
             for fidelity in props.twoQubitGateFidelity:
-                error = fidelity.standardError
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
                 instruction_props_2q[gate_name][tuple(int(q) for q in edge.split("-"))] = (
                     InstructionProperties(
-                        error=error if error is not None else 1 - fidelity.fidelity
+                        error=1 - fidelity.fidelity
                     )
                 )
 
     target = Target(
-        description=description, num_qubits=qubit_count, qubit_properties=qubit_properties
+        description=description, num_qubits=len(indices), qubit_properties=qubit_properties
     )
     # TODO: Use gate calibrations if available
-    for operation in paradigm.nativeGateSet:
+    for operation in properties.paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
             match instruction.num_qubits:
                 case 1:
@@ -511,7 +505,7 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                         (
                             {(q,): properties for q, properties in enumerate(instruction_props_1q)}
                             if instruction_props_1q
-                            else {(i,): None for i in range(qubit_count)}
+                            else {(i,): None for i in indices.values()}
                         )
                     )
                 case 2:
@@ -521,7 +515,7 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                         (
                             {edge: props for edge, props in gate_props.items()}
                             if gate_props
-                            else _2q_instruction_properties_fully_connected(qubit_count)
+                            else {(indices[q0], indices[q1]): None for q0, q1 in topology.edges}
                         )
                     )
 
@@ -533,28 +527,10 @@ def _qpu_target(description: str, properties: DeviceCapabilities):
                 # TODO: Only use readout error
                 {(q,): properties for q, properties in enumerate(instruction_props_1q)}
                 if instruction_props_1q
-                else {(i,): None for i in range(qubit_count)}
+                else {(i,): None for i in indices.values()}
             )
         )
     return target
-
-
-def _2q_instruction_properties_fully_connected(qubit_count):
-    instruction_props = {}
-    for src in range(qubit_count):
-        for dst in range(qubit_count):
-            if src != dst:
-                instruction_props[(src, dst)] = None
-    return instruction_props
-
-
-def _contiguous_indices(connectivity_graph: dict) -> dict:
-    # Creates list of existing qubit indices which are noncontiguous.
-    indices = sorted(
-        int(i) for i in set.union(*[{k} | set(v) for k, v in connectivity_graph.items()])
-    )
-    # Creates a dictionary to remap the noncontiguous indices to contiguous.
-    return {q: i for i, q in enumerate(indices)}
 
 
 def to_braket(
