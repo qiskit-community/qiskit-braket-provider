@@ -25,7 +25,7 @@ from tests.providers.mocks import (
     MOCK_GATE_MODEL_SIMULATOR_SV,
     MOCK_GATE_MODEL_SIMULATOR_TN,
     MOCK_RIGETTI_GATE_MODEL_M_3_QPU,
-    RIGETTI_MOCK_M_3_QPU_CAPABILITIES,
+    MOCK_RIGETTI_M_3_QPU_CAPABILITIES,
     SIMULATOR_REGION,
 )
 
@@ -162,14 +162,14 @@ class TestBraketProvider(TestCase):
         mock_m_3_device.status = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceStatus"]
         mock_m_3_device.device_type = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceType"]
         mock_m_3_device.device_capabilities = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceCapabilities"]
-        mock_m_3_device_properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
+        mock_m_3_device_properties = MOCK_RIGETTI_M_3_QPU_CAPABILITIES
         mock_m_3_device_properties.service = Mock()
         mock_m_3_device_properties.service.updatedAt = "2023-06-02T17:00:00+00:00"
         mock_m_3_device.properties = mock_m_3_device_properties
         mock_m_3_device.type = "QPU"
 
         g = from_dict_of_lists(
-            RIGETTI_MOCK_M_3_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph,
+            MOCK_RIGETTI_M_3_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph,
             create_using=DiGraph(),
         )
         mock_m_3_device.topology_graph = relabel_nodes(g, {n: int(n) for n in g.nodes})
@@ -204,7 +204,7 @@ class TestBraketProvider(TestCase):
         mock_queue_position.return_value = mock_return_value
         mock_run.return_value = mock_task
 
-        mocked_device.properties = RIGETTI_MOCK_M_3_QPU_CAPABILITIES
+        mocked_device.properties = MOCK_RIGETTI_M_3_QPU_CAPABILITIES
         mocked_device.type = "QPU"
         backend = BraketAwsBackend(device=mocked_device)
         circuit = QuantumCircuit(3)

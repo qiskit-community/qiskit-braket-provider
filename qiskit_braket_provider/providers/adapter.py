@@ -472,7 +472,7 @@ def _qpu_target(device: AwsDevice, description: str):
     if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
         props_1q = standardized.oneQubitProperties
         props_2q = standardized.twoQubitProperties
-        for q in sorted(indices):
+        for q in sorted(int(q) for q in props_1q):
             props = props_1q[f"{q}"]
             instruction_props_1q.append(
                 InstructionProperties(
@@ -484,7 +484,7 @@ def _qpu_target(device: AwsDevice, description: str):
         for edge, props in props_2q.items():
             for fidelity in props.twoQubitGateFidelity:
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
-                instruction_props_2q[gate_name][tuple(int(q) for q in edge.split("-"))] = (
+                instruction_props_2q[gate_name][tuple(indices[int(q)] for q in edge.split("-"))] = (
                     InstructionProperties(error=1 - fidelity.fidelity)
                 )
 
