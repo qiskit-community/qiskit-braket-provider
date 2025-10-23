@@ -3,24 +3,34 @@
 import warnings
 from collections.abc import Callable, Iterable, Sequence
 from math import inf, pi
+from numbers import Number
 
 import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
-from qiskit.circuit import ControlledGate, Measure, Parameter, ParameterExpression
+from qiskit.circuit import (
+    CircuitInstruction,
+    ControlledGate,
+    Gate,
+    Measure,
+    Parameter,
+    ParameterExpression,
+    ParameterVectorElement,
+)
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
-from qiskit.circuit.parametervector import ParameterVectorElement
 from qiskit.transpiler import PassManager, Target
 from qiskit_ionq import add_equivalences, ionq_gates
-from sympy import Add, Mul, Pow, Symbol
+from sympy import Add, Expr, Mul, Pow, Symbol
 
 import braket.circuits.gates as braket_gates
 import braket.circuits.noises as braket_noises
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice, AwsDeviceType
 from braket.circuits import Circuit, Instruction, measure
+from braket.default_simulator.openqasm.interpreter import Interpreter
+from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
     DeviceActionType,
     DeviceCapabilities,
@@ -223,6 +233,52 @@ _BRAKET_SUPPORTED_NOISES = [
 ]
 
 _Translatable = QuantumCircuit | Circuit | Program | str
+
+
+class _QiskitProgramContext(AbstractProgramContext):
+    def __init__(self):
+        super().__init__()
+        self._circuit = QuantumCircuit()
+
+    @property
+    def circuit(self):
+        return self._circuit
+
+    def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
+        super().add_qubits(name, num_qubits)
+        self._circuit.add_register(num_qubits, num_qubits)
+
+    def is_builtin_gate(self, name: str) -> bool:
+        return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE
+
+    def add_phase_instruction(self, target, phase_value):
+        self._circuit.global_phase += phase_value
+
+    def add_gate_instruction(
+        self, gate_name: str, target: tuple[int, ...], params, ctrl_modifiers: list[int], power: int
+    ):
+        gate: Gate = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name].copy()
+        params = (
+            [float(param) if isinstance(param, Number) else param for param in params]
+            if params is not None
+            else []
+        )
+        if params:
+            gate.params = params
+        gate = gate.power(float(power))
+        if ctrl_modifiers:
+            gate = gate.control(
+                len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
+            )
+        self._circuit.append(CircuitInstruction(gate, target))
+
+    def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
+        return _sympy_to_qiskit(value) if isinstance(value, Expr) else value
+
+    def add_measure(self, target: tuple[int], classical_targets: Iterable[int] = None):
+        for iter, qubit in enumerate(target):
+            index = classical_targets[iter] if classical_targets else iter
+            self._circuit.measure(qubit, index)
 
 
 def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
@@ -783,8 +839,12 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
     Returns:
         QuantumCircuit: Qiskit quantum circuit
     """
-    if isinstance(circuit, (Program, str)):
-        circuit = Circuit.from_ir(circuit)
+    if isinstance(circuit, Program):
+        return (
+            Interpreter(_QiskitProgramContext()).run(circuit.source, inputs=circuit.inputs).circuit
+        )
+    if isinstance(circuit, str):
+        return Interpreter(_QiskitProgramContext()).run(circuit).circuit
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
