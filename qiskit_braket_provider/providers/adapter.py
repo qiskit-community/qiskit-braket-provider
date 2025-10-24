@@ -774,9 +774,9 @@ def _create_free_parameters(operation):
                 renamed_param_name = _rename_param_vector_element(param)
                 params[i] = FreeParameterExpression(renamed_param_name)
             case param if isinstance(param, float):
-                mult = 12 * param / pi
+                mult = 2 * param / pi
                 if abs(mult - round(mult)) < _EPS:
-                    params[i] = round(mult) / 12 * pi
+                    params[i] = pi * round(mult) / 2
     return params
 
 
