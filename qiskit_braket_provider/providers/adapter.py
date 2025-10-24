@@ -466,6 +466,7 @@ def _qpu_target(device: AwsDevice, description: str):
     indices = {q: i for i, q in enumerate(sorted(topology.nodes))}
 
     qubit_properties = []
+    instruction_props_measurement = {}
     instruction_props_1q = {}
     instruction_props_2q = defaultdict(dict)
     # TODO: Support V3 standardized properties
@@ -474,28 +475,43 @@ def _qpu_target(device: AwsDevice, description: str):
         props_2q = standardized.twoQubitProperties
         for q in sorted(int(q) for q in props_1q):
             props = props_1q[str(q)]
-            instruction_props_1q[(indices[q],)] = InstructionProperties(
-                # Use highest known error rate
-                error=max(1 - fidelity.fidelity for fidelity in props.oneQubitFidelity)
-            )
+            instruction_props_key = (indices[q],)
+            for fidelity in props.oneQubitFidelity:
+                if "readout" in fidelity.fidelityType.name.lower():
+                    instruction_props_measurement[instruction_props_key] = InstructionProperties(
+                        # Use highest known error rate
+                        error=max(
+                            1 - fidelity.fidelity,
+                            instruction_props_measurement.get(instruction_props_key, 0),
+                        )
+                    )
+                else:
+                    instruction_props_1q[instruction_props_key] = InstructionProperties(
+                        error=max(
+                            1 - fidelity.fidelity,
+                            instruction_props_1q.get(instruction_props_key, 0),
+                        )
+                    )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
         for k, props in props_2q.items():
             for fidelity in props.twoQubitGateFidelity:
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
                 edge = tuple(indices[int(q)] for q in k.split("-"))
                 instruction_props_2q[gate_name][edge] = InstructionProperties(
-                    # Use highest known error rate
                     error=max(1 - fidelity.fidelity, instruction_props_2q[gate_name].get(edge, 0))
                 )
+
+    default_props_1q = {(i,): None for i in indices.values()}
+    if not instruction_props_measurement:
+        instruction_props_measurement.update(default_props_1q)
+    if not instruction_props_1q:
+        instruction_props_1q.update(default_props_1q)
 
     target = Target(
         description=description,
         num_qubits=len(qubit_properties or indices),
         qubit_properties=qubit_properties or None,
     )
-
-    if not instruction_props_1q:
-        instruction_props_1q.update({(i,): None for i in indices.values()})
     # TODO: Use gate calibrations if available
     for operation in properties.paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
@@ -519,8 +535,7 @@ def _qpu_target(device: AwsDevice, description: str):
 
     # Add measurement if not already added
     if "measure" not in target:
-        # TODO: Only use readout error
-        target.add_instruction(Measure(), instruction_props_1q)
+        target.add_instruction(Measure(), instruction_props_measurement)
     return target
 
 
