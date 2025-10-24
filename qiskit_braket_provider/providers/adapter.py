@@ -1,6 +1,7 @@
 """Util function for provider."""
 
 import warnings
+from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from math import inf, pi
 from numbers import Number
@@ -20,7 +21,7 @@ from qiskit.circuit import (
 )
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
-from qiskit.transpiler import PassManager, Target
+from qiskit.transpiler import InstructionProperties, PassManager, QubitProperties, Target
 from qiskit_ionq import add_equivalences, ionq_gates
 from sympy import Add, Expr, Mul, Pow, Symbol
 
@@ -42,7 +43,13 @@ from braket.device_schema.rigetti import (
     RigettiDeviceCapabilitiesV2,
 )
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
-from braket.devices import LocalSimulator
+from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 import (
+    StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV1,
+)
+from braket.device_schema.standardized_gate_model_qpu_device_properties_v2 import (
+    StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV2,
+)
+from braket.devices import Device, LocalSimulator
 from braket.ir.openqasm import Program
 from braket.ir.openqasm.modifiers import Control
 from braket.parametric import FreeParameter, FreeParameterExpression, Parameterizable
@@ -403,8 +410,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
         Target: Target for Qiskit backend
     """
     return _simulator_target(
-        f"Target for Amazon Braket local simulator: {simulator.name}",
-        simulator.properties,
+        simulator, f"Target for Amazon Braket local simulator: {simulator.name}"
     )
 
 
@@ -419,18 +425,17 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     """
     match device.type:
         case AwsDeviceType.QPU:
-            return _qpu_target(f"Target for Amazon Braket QPU: {device.name}", device.properties)
+            return _qpu_target(device, f"Target for Amazon Braket QPU: {device.name}")
         case AwsDeviceType.SIMULATOR:
-            return _simulator_target(
-                f"Target for Amazon Braket simulator: {device.name}", device.properties
-            )
+            return _simulator_target(device, f"Target for Amazon Braket simulator: {device.name}")
     raise QiskitBraketException(
         "Cannot convert to target. "
         f"{device.properties.__class__} device capabilities are not supported."
     )
 
 
-def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapabilities):
+def _simulator_target(device: Device, description: str):
+    properties: GateModelSimulatorDeviceCapabilities = device.properties
     target = Target(description=description, num_qubits=properties.paradigm.qubitCount)
     action = (
         properties.action.get(DeviceActionType.OPENQASM)
@@ -454,92 +459,93 @@ def _simulator_target(description: str, properties: GateModelSimulatorDeviceCapa
     return target
 
 
-def _qpu_target(description: str, properties: DeviceCapabilities):
-    paradigm = properties.paradigm
-    qubit_count = paradigm.qubitCount
-    target = Target(description=description, num_qubits=qubit_count)
+def _qpu_target(device: AwsDevice, description: str):
+    properties: DeviceCapabilities = device.properties
+    topology = device.topology_graph
+    standardized = properties.standardized
+    indices = {q: i for i, q in enumerate(sorted(topology.nodes))}
 
-    # TODO: Build target from AwsDevice.topology_graph instead of paradigm properties
-    connectivity = paradigm.connectivity
-    connectivity_graph = (
-        _contiguous_qubit_indices(connectivity.connectivityGraph)
-        if not connectivity.fullyConnected
-        else None
+    qubit_properties = []
+    instruction_props_measurement = {}
+    instruction_props_1q = {}
+    instruction_props_2q = defaultdict(dict)
+    default_instruction_props = InstructionProperties(error=0)
+    # TODO: Support V3 standardized properties
+    if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
+        props_1q = standardized.oneQubitProperties
+        props_2q = standardized.twoQubitProperties
+        for q in sorted(int(q) for q in props_1q):
+            props = props_1q[str(q)]
+            key = (indices[q],)
+            for fidelity in props.oneQubitFidelity:
+                match fidelity.fidelityType.name.lower():
+                    case "readout":
+                        instruction_props_measurement[key] = InstructionProperties(
+                            # Use highest known error rate
+                            error=max(
+                                1 - fidelity.fidelity,
+                                instruction_props_measurement.get(
+                                    key, default_instruction_props
+                                ).error,
+                            )
+                        )
+                    case name if "readout_error" in name:
+                        continue
+                    case _:
+                        instruction_props_1q[key] = InstructionProperties(
+                            error=max(
+                                1 - fidelity.fidelity,
+                                instruction_props_1q.get(key, default_instruction_props).error,
+                            )
+                        )
+            qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
+        for k, props in props_2q.items():
+            for fidelity in props.twoQubitGateFidelity:
+                gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
+                edge = tuple(indices[int(q)] for q in k.split("-"))
+                instruction_props_2q[gate_name][edge] = InstructionProperties(
+                    error=max(
+                        1 - fidelity.fidelity,
+                        instruction_props_2q[gate_name].get(edge, default_instruction_props).error,
+                    )
+                )
+
+    default_props_1q = {(i,): None for i in indices.values()}
+    if not instruction_props_measurement:
+        instruction_props_measurement.update(default_props_1q)
+    if not instruction_props_1q:
+        instruction_props_1q.update(default_props_1q)
+
+    target = Target(
+        description=description,
+        num_qubits=len(qubit_properties or indices),
+        qubit_properties=qubit_properties or None,
     )
-
     # TODO: Use gate calibrations if available
-    for operation in paradigm.nativeGateSet:
+    for operation in properties.paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
-            match instruction.num_qubits:
+            match num_qubits := instruction.num_qubits:
                 case 1:
-                    target.add_instruction(instruction, {(i,): None for i in range(qubit_count)})
+                    target.add_instruction(instruction, instruction_props_1q)
                 case 2:
+                    gate_props = instruction_props_2q.get(instruction.name)
                     target.add_instruction(
                         instruction,
-                        _2q_instruction_properties(qubit_count, connectivity_graph),
+                        (
+                            {edge: props for edge, props in gate_props.items()}
+                            if gate_props
+                            else {(indices[q0], indices[q1]): None for q0, q1 in topology.edges}
+                        ),
+                    )
+                case _:
+                    warnings.warn(
+                        f"Instruction {instruction.name} has {num_qubits} qubits and cannot be added to target"
                     )
 
-    target.add_instruction(Measure(), {(i,): None for i in range(qubit_count)})
+    # Add measurement if not already added
+    if "measure" not in target:
+        target.add_instruction(Measure(), instruction_props_measurement)
     return target
-
-
-def _2q_instruction_properties(qubit_count, connectivity_graph):
-    instruction_props = {}
-
-    # building coupling map for fully connected device
-    if not connectivity_graph:
-        for src in range(qubit_count):
-            for dst in range(qubit_count):
-                if src != dst:
-                    instruction_props[(src, dst)] = None
-                    instruction_props[(dst, src)] = None
-
-    # building coupling map for device with connectivity graph
-    else:
-        for src, connections in connectivity_graph.items():
-            for dst in connections:
-                instruction_props[(int(src), int(dst))] = None
-
-    return instruction_props
-
-
-def _contiguous_qubit_indices(connectivity_graph: dict) -> dict:
-    """Device qubit indices may be noncontiguous (label between x0 and x7, x being
-    the number of the octagon) while the Qiskit transpiler creates and/or
-    handles coupling maps with contiguous indices. This function converts the
-    noncontiguous connectivity graph from Aspen to a contiguous one.
-
-    Args:
-        connectivity_graph (dict): connectivity graph from Aspen. For example
-            4 qubit system, the connectivity graph will be:
-                {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
-                "7": ["0","1","2"]}
-
-    Returns:
-        dict: Connectivity graph with contiguous indices. For example for an
-        input connectivity graph with noncontiguous indices (qubit 0, 1, 2 and
-        then qubit 7) as shown here:
-            {"0": ["1", "2", "7"], "1": ["0","2","7"], "2": ["0","1","7"],
-            "7": ["0","1","2"]}
-        the qubit index 7 will be mapped to qubit index 3 for the qiskit
-        transpilation step. Thereby the resultant contiguous qubit indices
-        output will be:
-            {"0": ["1", "2", "3"], "1": ["0","2","3"], "2": ["0","1","3"],
-            "3": ["0","1","2"]}
-    """
-    # Creates list of existing qubit indices which are noncontiguous.
-    indices = sorted(
-        int(i) for i in set.union(*[{k} | set(v) for k, v in connectivity_graph.items()])
-    )
-    # Creates a list of contiguous indices for number of qubits.
-    map_list = list(range(len(indices)))
-    # Creates a dictionary to remap the noncontiguous indices to contiguous.
-    mapper = dict(zip(indices, map_list))
-    # Performs the remapping from the noncontiguous to the contiguous indices.
-    contiguous_connectivity_graph = {
-        mapper[int(k)]: [mapper[int(v)] for v in val] for k, val in connectivity_graph.items()
-    }
-    return contiguous_connectivity_graph
 
 
 def to_braket(
@@ -576,8 +582,11 @@ def to_braket(
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous.
-        optimization_level (int): The optimization level to pass to `qiskit.transpile`.
-            Default: 0 (no optimization).
+        optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:
+            0: no optimization (default) - basic translation, no optimization, trivial layout
+            1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+            2: medium optimization - better routing (noise aware) and commutative cancellation
+            3: high optimization - gate resynthesis and unitary-breaking passes
         callback (Callable | None): A callback function that will be called after each transpiler
             pass execution. Default: `None`.
         num_processes (int | None): The maximum number of parallel transpilation processes for
