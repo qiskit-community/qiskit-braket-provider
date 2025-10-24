@@ -617,10 +617,12 @@
 <span class="sd">            shots : number of measurement repetitions for the BraketAwsBackend</span>
 <span class="sd">            verbatim : submit as a verbatim circuit (i.e. no transpilation)</span>
 <span class="sd">            native : use the Qiskit transpiler to compile to a verbatim native circuit</span>
-<span class="sd">            optimization_level : Qiskit transpiler optimization level</span>
+<span class="sd">                with noise aware transpilation when available and optimization_level &gt; 2</span>
+<span class="sd">            optimization_level : Qiskit transpiler optimization level (see adapter.py)</span>
 <span class="sd">            callback : function for the Qiskit transpiler</span>
 <span class="sd">            num_processes : allow for parallel transpilation</span>
-<span class="sd">            pass_manager : user-specified PassManager for the Qiskit transpiler (creates verbatim)</span>
+<span class="sd">            pass_manager : user-specified PassManager for the Qiskit transpiler</span>
+<span class="sd">                (creates verbatim)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">):</span>
