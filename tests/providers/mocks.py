@@ -121,7 +121,7 @@ MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.p
                     },
                 ],
             },
-            "3": {
+            "2": {
                 "T1": {"value": 28.9, "unit": "us"},
                 "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
                 "oneQubitFidelity": [

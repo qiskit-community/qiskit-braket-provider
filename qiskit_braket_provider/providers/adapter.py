@@ -466,7 +466,7 @@ def _qpu_target(device: AwsDevice, description: str):
     indices = {q: i for i, q in enumerate(sorted(topology.nodes))}
 
     qubit_properties = []
-    instruction_props_1q = []
+    instruction_props_1q = {}
     instruction_props_2q = defaultdict(dict)
     # TODO: Support V3 standardized properties
     if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
@@ -474,11 +474,9 @@ def _qpu_target(device: AwsDevice, description: str):
         props_2q = standardized.twoQubitProperties
         for q in sorted(int(q) for q in props_1q):
             props = props_1q[str(q)]
-            instruction_props_1q.append(
-                InstructionProperties(
-                    # Use highest known error rate
-                    error=max(1 - fidelity.fidelity for fidelity in props.oneQubitFidelity)
-                )
+            instruction_props_1q[(indices[q],)] = InstructionProperties(
+                # Use highest known error rate
+                error=max(1 - fidelity.fidelity for fidelity in props.oneQubitFidelity)
             )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
         for k, props in props_2q.items():
@@ -496,17 +494,14 @@ def _qpu_target(device: AwsDevice, description: str):
         qubit_properties=qubit_properties or None,
     )
 
-    props_1q = (
-        {(q,): properties for q, properties in enumerate(instruction_props_1q)}
-        if instruction_props_1q
-        else {(i,): None for i in indices.values()}
-    )
+    if not instruction_props_1q:
+        instruction_props_1q.update({(i,): None for i in indices.values()})
     # TODO: Use gate calibrations if available
     for operation in properties.paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
             match num_qubits := instruction.num_qubits:
                 case 1:
-                    target.add_instruction(instruction, props_1q)
+                    target.add_instruction(instruction, instruction_props_1q)
                 case 2:
                     gate_props = instruction_props_2q.get(instruction.name)
                     target.add_instruction(
@@ -525,7 +520,7 @@ def _qpu_target(device: AwsDevice, description: str):
     # Add measurement if not already added
     if "measure" not in target:
         # TODO: Only use readout error
-        target.add_instruction(Measure(), props_1q)
+        target.add_instruction(Measure(), instruction_props_1q)
     return target
 
 
