@@ -124,6 +124,12 @@ MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.p
                         "fidelity": 0.903,
                         "standardError": None,
                     },
+                    {
+                        "fidelityType": {"name": "READOUT_ERROR_0_1"},
+                        "fidelity": 0.05,
+                        "standardError": None,
+                    },
+
                 ],
             },
             "2": {
@@ -143,6 +149,11 @@ MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.p
                     {
                         "fidelityType": {"name": "READOUT"},
                         "fidelity": 0.867,
+                        "standardError": None,
+                    },
+                    {
+                        "fidelityType": {"name": "READOUT_ERROR_0_1"},
+                        "fidelity": 0.05,
                         "standardError": None,
                     },
                 ],

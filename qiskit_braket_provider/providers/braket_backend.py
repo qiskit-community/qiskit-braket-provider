@@ -363,10 +363,12 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             shots : number of measurement repetitions for the BraketAwsBackend
             verbatim : submit as a verbatim circuit (i.e. no transpilation)
             native : use the Qiskit transpiler to compile to a verbatim native circuit
-            optimization_level : Qiskit transpiler optimization level
+                with noise aware transpilation when available and optimization_level > 2
+            optimization_level : Qiskit transpiler optimization level (see adapter.py)
             callback : function for the Qiskit transpiler
             num_processes : allow for parallel transpilation
-            pass_manager : user-specified PassManager for the Qiskit transpiler (creates verbatim)
+            pass_manager : user-specified PassManager for the Qiskit transpiler
+                (creates verbatim)
         """
 
         if isinstance(run_input, QuantumCircuit):
