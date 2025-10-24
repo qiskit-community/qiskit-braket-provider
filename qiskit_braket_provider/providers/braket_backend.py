@@ -99,7 +99,8 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
             name: name of backend
             **fields: extra fields
         """
-        super().__init__(LocalSimulator(backend=name), name, **fields)
+        simulator = LocalSimulator(backend=name)
+        super().__init__(simulator, name or simulator.name, **fields)
         self._target = local_simulator_to_target(self._device)
         self._gateset = self.get_gateset()
         self.status = self._device.status
@@ -218,9 +219,10 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             raise ValueError("Must specify either arn or device")
         if arn and device:
             raise ValueError("Can only specify one of arn and device")
+        aws_device = AwsDevice(arn) if arn else device
         super().__init__(
-            AwsDevice(arn) if arn else device,
-            name,
+            aws_device,
+            name or aws_device.name,
             provider=provider,
             description=description,
             online_date=online_date,
