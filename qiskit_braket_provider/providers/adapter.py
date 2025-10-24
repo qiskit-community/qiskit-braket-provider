@@ -473,7 +473,7 @@ def _qpu_target(device: AwsDevice, description: str):
         props_1q = standardized.oneQubitProperties
         props_2q = standardized.twoQubitProperties
         for q in sorted(int(q) for q in props_1q):
-            props = props_1q[f"{q}"]
+            props = props_1q[str(q)]
             instruction_props_1q.append(
                 InstructionProperties(
                     # Use highest known error rate
