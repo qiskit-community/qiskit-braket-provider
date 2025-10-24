@@ -476,25 +476,21 @@ def _qpu_target(device: AwsDevice, description: str):
         props_2q = standardized.twoQubitProperties
         for q in sorted(int(q) for q in props_1q):
             props = props_1q[str(q)]
-            instruction_props_key = (indices[q],)
+            key = (indices[q],)
             for fidelity in props.oneQubitFidelity:
                 if "readout" in fidelity.fidelityType.name.lower():
-                    instruction_props_measurement[instruction_props_key] = InstructionProperties(
+                    instruction_props_measurement[key] = InstructionProperties(
                         # Use highest known error rate
                         error=max(
                             1 - fidelity.fidelity,
-                            instruction_props_measurement.get(
-                                instruction_props_key, default_instruction_props
-                            ).error,
+                            instruction_props_measurement.get(key, default_instruction_props).error,
                         )
                     )
                 else:
-                    instruction_props_1q[instruction_props_key] = InstructionProperties(
+                    instruction_props_1q[key] = InstructionProperties(
                         error=max(
                             1 - fidelity.fidelity,
-                            instruction_props_1q.get(
-                                instruction_props_key, default_instruction_props
-                            ).error,
+                            instruction_props_1q.get(key, default_instruction_props).error,
                         )
                     )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
