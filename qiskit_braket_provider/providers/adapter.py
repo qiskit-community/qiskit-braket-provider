@@ -469,6 +469,7 @@ def _qpu_target(device: AwsDevice, description: str):
     instruction_props_measurement = {}
     instruction_props_1q = {}
     instruction_props_2q = defaultdict(dict)
+    default_instruction_props = InstructionProperties(error=0)
     # TODO: Support V3 standardized properties
     if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
         props_1q = standardized.oneQubitProperties
@@ -482,14 +483,18 @@ def _qpu_target(device: AwsDevice, description: str):
                         # Use highest known error rate
                         error=max(
                             1 - fidelity.fidelity,
-                            instruction_props_measurement.get(instruction_props_key, 0),
+                            instruction_props_measurement.get(
+                                instruction_props_key, default_instruction_props
+                            ).error,
                         )
                     )
                 else:
                     instruction_props_1q[instruction_props_key] = InstructionProperties(
                         error=max(
                             1 - fidelity.fidelity,
-                            instruction_props_1q.get(instruction_props_key, 0),
+                            instruction_props_1q.get(
+                                instruction_props_key, default_instruction_props
+                            ).error,
                         )
                     )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
@@ -498,7 +503,10 @@ def _qpu_target(device: AwsDevice, description: str):
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
                 edge = tuple(indices[int(q)] for q in k.split("-"))
                 instruction_props_2q[gate_name][edge] = InstructionProperties(
-                    error=max(1 - fidelity.fidelity, instruction_props_2q[gate_name].get(edge, 0))
+                    error=max(
+                        1 - fidelity.fidelity,
+                        instruction_props_2q[gate_name].get(edge, default_instruction_props).error,
+                    )
                 )
 
     default_props_1q = {(i,): None for i in indices.values()}
