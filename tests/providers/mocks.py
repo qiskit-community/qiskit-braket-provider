@@ -7,6 +7,7 @@ from collections import Counter
 
 import numpy as np
 
+from braket.device_schema import StandardizedGateModelQpuDeviceProperties
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.task_result import ProgramSetTaskResult, TaskMetadata
@@ -21,8 +22,7 @@ TN1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/tn1"
 RIGETTI_REGION = "us-west-1"
 SIMULATOR_REGION = "us-west-1"
 
-
-RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON = {
+MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES_JSON = {
     "braketSchemaHeader": {
         "name": "braket.device_schema.rigetti.rigetti_device_capabilities",
         "version": "1",
@@ -58,48 +58,111 @@ RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON = {
     },
     "deviceParameters": {},
 }
-
-RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES = RigettiDeviceCapabilities.parse_obj(
-    RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON
+MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES = RigettiDeviceCapabilities.parse_obj(
+    MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES_JSON
 )
-
-RIGETTI_MOCK_GATE_MODEL_QPU = {
+MOCK_RIGETTI_GATE_MODEL_QPU = {
     "deviceName": "Aspen-10",
     "deviceType": "QPU",
     "providerName": "provider1",
     "deviceStatus": "OFFLINE",
     "deviceArn": RIGETTI_ARN,
-    "deviceCapabilities": RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES.json(),
+    "deviceCapabilities": MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.json(),
 }
-
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON: dict = copy.deepcopy(
-    RIGETTI_MOCK_GATE_MODEL_QPU_CAPABILITIES_JSON
+MOCK_RIGETTI_M_3_QPU_CAPABILITIES_JSON: dict = copy.deepcopy(
+    MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES_JSON
 )
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
+MOCK_RIGETTI_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
     "supportedOperations"
 ] = ["RX", "RZ", "CP", "CZ", "XY"]
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
+MOCK_RIGETTI_M_3_QPU_CAPABILITIES_JSON["action"]["braket.ir.openqasm.program"][
     "supportedModifiers"
 ] = [{"name": "ctrl", "max_qubits": 4}]
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["qubitCount"] = 4
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON["paradigm"]["connectivity"]["connectivityGraph"] = {
+MOCK_RIGETTI_M_3_QPU_CAPABILITIES_JSON["paradigm"]["qubitCount"] = 4
+MOCK_RIGETTI_M_3_QPU_CAPABILITIES_JSON["paradigm"]["connectivity"]["connectivityGraph"] = {
     "0": ["1", "2", "7"],
     "1": ["0", "2", "7"],
     "2": ["0", "1", "7"],
     "7": ["0", "1", "2"],
 }
-RIGETTI_MOCK_M_3_QPU_CAPABILITIES = RigettiDeviceCapabilities.parse_obj(
-    RIGETTI_MOCK_M_3_QPU_CAPABILITIES_JSON
+MOCK_RIGETTI_M_3_QPU_CAPABILITIES = RigettiDeviceCapabilities.parse_obj(
+    MOCK_RIGETTI_M_3_QPU_CAPABILITIES_JSON
 )
-
 MOCK_RIGETTI_GATE_MODEL_M_3_QPU = {
     "deviceName": "Aspen-M-3",
     "deviceType": "QPU",
     "providerName": "provider1",
     "deviceStatus": "ONLINE",
     "deviceArn": RIGETTI_ASPEN_ARN,
-    "deviceCapabilities": RIGETTI_MOCK_M_3_QPU_CAPABILITIES.json(),
+    "deviceCapabilities": MOCK_RIGETTI_M_3_QPU_CAPABILITIES.json(),
 }
+MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.parse_obj(
+    {
+        "braketSchemaHeader": {
+            "name": "braket.device_schema.standardized_gate_model_qpu_device_properties",
+            "version": "1",
+        },
+        "oneQubitProperties": {
+            "1": {
+                "T1": {"value": 28.9, "standardError": 0.01, "unit": "us"},
+                "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
+                "oneQubitFidelity": [
+                    {
+                        "fidelityType": {
+                            "name": "RANDOMIZED_BENCHMARKING",
+                            "description": "uses a standard RB technique",
+                        },
+                        "fidelity": 0.9993,
+                    },
+                    {
+                        "fidelityType": {"name": "READOUT"},
+                        "fidelity": 0.903,
+                        "standardError": None,
+                    },
+                ],
+            },
+            "2": {
+                "T1": {"value": 28.9, "unit": "us"},
+                "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
+                "oneQubitFidelity": [
+                    {
+                        "fidelityType": {"name": "RANDOMIZED_BENCHMARKING"},
+                        "fidelity": 0.9986,
+                        "standardError": None,
+                    },
+                    {
+                        "fidelityType": {"name": "READOUT"},
+                        "fidelity": 0.867,
+                        "standardError": None,
+                    },
+                ],
+            },
+        },
+        "twoQubitProperties": {
+            "1-2": {
+                "twoQubitGateFidelity": [
+                    {
+                        "direction": {"control": 0, "target": 1},
+                        "gateName": "CNOT",
+                        "fidelity": 0.877,
+                        "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                    }
+                ]
+            },
+            "2-5": {
+                "twoQubitGateFidelity": [
+                    {
+                        "direction": {"control": 0, "target": 7},
+                        "gateName": "CNOT",
+                        "fidelity": 0.877,
+                        "standardError": 0.001,
+                        "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                    }
+                ]
+            },
+        },
+    }
+)
 
 MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON = {
     "braketSchemaHeader": {
@@ -126,11 +189,9 @@ MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON = {
     "paradigm": {"qubitCount": 30},
     "deviceParameters": {},
 }
-
 MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES = GateModelSimulatorDeviceCapabilities.parse_obj(
     MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON
 )
-
 MOCK_GATE_MODEL_SIMULATOR_SV = {
     "deviceName": "sv1",
     "deviceType": "SIMULATOR",
@@ -139,7 +200,6 @@ MOCK_GATE_MODEL_SIMULATOR_SV = {
     "deviceArn": SV1_ARN,
     "deviceCapabilities": MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES.json(),
 }
-
 MOCK_GATE_MODEL_SIMULATOR_TN = {
     "deviceName": "tn1",
     "deviceType": "SIMULATOR",

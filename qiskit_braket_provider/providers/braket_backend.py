@@ -99,7 +99,8 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
             name: name of backend
             **fields: extra fields
         """
-        super().__init__(LocalSimulator(backend=name), name, **fields)
+        simulator = LocalSimulator(backend=name)
+        super().__init__(simulator, name or simulator.name, **fields)
         self._target = local_simulator_to_target(self._device)
         self._gateset = self.get_gateset()
         self.status = self._device.status
@@ -141,7 +142,9 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(self, run_input: QuantumCircuit | list[QuantumCircuit], **options) -> BraketQuantumTask:
+    def run(
+        self, run_input: QuantumCircuit | list[QuantumCircuit], *, shots: int = 1024, **options
+    ) -> BraketQuantumTask:
         convert_input = [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         verbatim = options.pop("verbatim", False)
         circuits: list[Circuit] = [
@@ -149,7 +152,6 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
             for circ in convert_input
         ]
 
-        shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
         if "meas_level" in options:
@@ -218,9 +220,10 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             raise ValueError("Must specify either arn or device")
         if arn and device:
             raise ValueError("Can only specify one of arn and device")
+        aws_device = AwsDevice(arn) if arn else device
         super().__init__(
-            AwsDevice(arn) if arn else device,
-            name,
+            aws_device,
+            name or aws_device.name,
             provider=provider,
             description=description,
             online_date=online_date,
@@ -341,7 +344,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def run(
         self,
         run_input: QuantumCircuit | list[QuantumCircuit],
-        shots: int = 10,
+        shots: int | None = None,
         verbatim: bool = False,
         native: bool = False,
         *,
