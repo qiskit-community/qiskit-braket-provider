@@ -477,15 +477,17 @@ def _qpu_target(device: AwsDevice, description: str):
             instruction_props_1q.append(
                 InstructionProperties(
                     # Use highest known error rate
-                    error=max(1 - f.fidelity for f in props.oneQubitFidelity)
+                    error=max(1 - fidelity.fidelity for fidelity in props.oneQubitFidelity)
                 )
             )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
-        for edge, props in props_2q.items():
+        for k, props in props_2q.items():
             for fidelity in props.twoQubitGateFidelity:
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
-                instruction_props_2q[gate_name][tuple(indices[int(q)] for q in edge.split("-"))] = (
-                    InstructionProperties(error=1 - fidelity.fidelity)
+                edge = tuple(indices[int(q)] for q in k.split("-"))
+                instruction_props_2q[gate_name][edge] = InstructionProperties(
+                    # Use highest known error rate
+                    error=max(1 - fidelity.fidelity, instruction_props_2q[gate_name].get(edge, 0))
                 )
 
     target = Target(
