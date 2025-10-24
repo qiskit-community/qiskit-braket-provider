@@ -469,36 +469,45 @@ def _qpu_target(device: AwsDevice, description: str):
     instruction_props_measurement = {}
     instruction_props_1q = {}
     instruction_props_2q = defaultdict(dict)
+    default_instruction_props = InstructionProperties(error=0)
     # TODO: Support V3 standardized properties
     if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
         props_1q = standardized.oneQubitProperties
         props_2q = standardized.twoQubitProperties
         for q in sorted(int(q) for q in props_1q):
             props = props_1q[str(q)]
-            instruction_props_key = (indices[q],)
+            key = (indices[q],)
             for fidelity in props.oneQubitFidelity:
-                if "readout" in fidelity.fidelityType.name.lower():
-                    instruction_props_measurement[instruction_props_key] = InstructionProperties(
-                        # Use highest known error rate
-                        error=max(
-                            1 - fidelity.fidelity,
-                            instruction_props_measurement.get(instruction_props_key, 0),
+                match fidelity.fidelityType.name.lower():
+                    case "readout":
+                        instruction_props_measurement[key] = InstructionProperties(
+                            # Use highest known error rate
+                            error=max(
+                                1 - fidelity.fidelity,
+                                instruction_props_measurement.get(
+                                    key, default_instruction_props
+                                ).error,
+                            )
                         )
-                    )
-                else:
-                    instruction_props_1q[instruction_props_key] = InstructionProperties(
-                        error=max(
-                            1 - fidelity.fidelity,
-                            instruction_props_1q.get(instruction_props_key, 0),
+                    case name if "readout_error" in name:
+                        continue
+                    case _:
+                        instruction_props_1q[key] = InstructionProperties(
+                            error=max(
+                                1 - fidelity.fidelity,
+                                instruction_props_1q.get(key, default_instruction_props).error,
+                            )
                         )
-                    )
             qubit_properties.append(QubitProperties(t1=props.T1.value, t2=props.T2.value))
         for k, props in props_2q.items():
             for fidelity in props.twoQubitGateFidelity:
                 gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
                 edge = tuple(indices[int(q)] for q in k.split("-"))
                 instruction_props_2q[gate_name][edge] = InstructionProperties(
-                    error=max(1 - fidelity.fidelity, instruction_props_2q[gate_name].get(edge, 0))
+                    error=max(
+                        1 - fidelity.fidelity,
+                        instruction_props_2q[gate_name].get(edge, default_instruction_props).error,
+                    )
                 )
 
     default_props_1q = {(i,): None for i in indices.values()}
@@ -573,8 +582,11 @@ def to_braket(
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous.
-        optimization_level (int): The optimization level to pass to `qiskit.transpile`.
-            Default: 0 (no optimization).
+        optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:
+            0: no optimization (default) - basic translation, no optimization, trivial layout
+            1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+            2: medium optimization - better routing (noise aware) and commutative cancellation
+            3: high optimization - gate resynthesis and unitary-breaking passes
         callback (Callable | None): A callback function that will be called after each transpiler
             pass execution. Default: `None`.
         num_processes (int | None): The maximum number of parallel transpilation processes for
