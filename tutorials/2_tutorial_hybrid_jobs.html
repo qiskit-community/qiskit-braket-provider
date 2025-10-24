@@ -258,7 +258,7 @@ qiskit-braket provider.</p>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoLocal</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendEstimator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendEstimatorV2</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.quantum_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparsePauliOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.minimum_eigensolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">VQE</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLSQP</span>
@@ -273,7 +273,7 @@ qiskit-braket provider.</p>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nd">@hybrid_job</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">sv1</span><span class="o">.</span><span class="n">arn</span><span class="p">,</span> <span class="n">include_modules</span><span class="o">=</span><span class="s2">&quot;qiskit_algorithms&quot;</span><span class="p">)</span>
@@ -292,7 +292,7 @@ qiskit-braket provider.</p>
         <span class="p">],</span>
     <span class="p">)</span>
 
-    <span class="n">estimator</span> <span class="o">=</span> <span class="n">BackendEstimator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shots&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+    <span class="n">estimator</span> <span class="o">=</span> <span class="n">BackendEstimatorV2</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;default_precision&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">})</span>
     <span class="n">ansatz</span> <span class="o">=</span> <span class="n">TwoLocal</span><span class="p">(</span><span class="n">rotation_blocks</span><span class="o">=</span><span class="s2">&quot;ry&quot;</span><span class="p">,</span> <span class="n">entanglement_blocks</span><span class="o">=</span><span class="s2">&quot;cz&quot;</span><span class="p">)</span>
     <span class="n">slsqp</span> <span class="o">=</span> <span class="n">SLSQP</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
@@ -319,7 +319,7 @@ qiskit-braket provider.</p>
 <h2>Running your job<a class="headerlink" href="#Running-your-job" title="Link to this heading">¶</a></h2>
 <p>Amazon Braket provides a container for Hybrid Jobs with the Qiskit-Braket provider preinstalled. We can start your hybrid job by executing the decorated function <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">job</span> <span class="o">=</span> <span class="n">main</span><span class="p">()</span>
@@ -327,7 +327,7 @@ qiskit-braket provider.</p>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
@@ -340,28 +340,28 @@ qiskit-braket provider.</p>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;VQE&#39;: {&#39;eigenvalue&#39;: -0.644964795023488,
-         &#39;optimal_parameters&#39;: [4.1404100559572345,
-                                2.429160127975507,
-                                -2.2387955544001814,
-                                -3.3773914956176405,
-                                -2.0835781442626446,
-                                -0.684829663754746,
-                                1.513976624453238,
-                                -3.7320799934099953],
-         &#39;optimal_point&#39;: [4.1404100559572345,
-                           2.429160127975507,
-                           -2.2387955544001814,
-                           -3.3773914956176405,
-                           -2.0835781442626446,
-                           -0.684829663754746,
-                           1.513976624453238,
-                           -3.7320799934099953],
-         &#39;optimal_value&#39;: -0.644964795023488}}
+{&#39;VQE&#39;: {&#39;eigenvalue&#39;: -0.8313108616052497,
+         &#39;optimal_parameters&#39;: [2.9023333807957403,
+                                -2.3382025632041454,
+                                -2.8582366784216995,
+                                1.6415290038248314,
+                                0.15719218864851658,
+                                -2.8968111266519774,
+                                -5.273734801107682,
+                                -6.143328105810579],
+         &#39;optimal_point&#39;: [2.9023333807957403,
+                           -2.3382025632041454,
+                           -2.8582366784216995,
+                           1.6415290038248314,
+                           0.15719218864851658,
+                           -2.8968111266519774,
+                           -5.273734801107682,
+                           -6.143328105810579],
+         &#39;optimal_value&#39;: -0.8313108616052497}}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract data for visualization</span>

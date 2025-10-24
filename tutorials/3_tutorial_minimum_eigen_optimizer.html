@@ -248,16 +248,15 @@
 <h2>About this notebook and the adaptation to Amazon Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend" title="Link to this heading">¶</a></h2>
 <p>The original version of this notebook is accessible at <a class="reference external" href="https://github.com/qiskit-community/qiskit-optimization/blob/stable/0.6/docs/tutorials/03_minimum_eigen_optimizer.ipynb">docs/tutorials/03_minimum_eigen_optimizer.ipynb</a>. The only changes made to the original notebook are contained in the first cell and in cell #6 where we pass the <code class="docutils literal notranslate"><span class="pre">BackendSampler</span></code> object to execute the tasks on Amazon Braket SV1 simulator.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendSampler</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendSamplerV2</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketProvider</span>
 
-<span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSampler</span><span class="p">(</span>
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSamplerV2</span><span class="p">(</span>
     <span class="n">backend</span><span class="o">=</span><span class="n">BraketProvider</span><span class="p">()</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">),</span>
-    <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shots&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">},</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -295,9 +294,6 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAOA</span><span class="p">,</span> <span class="n">NumPyMinimumEigensolver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">COBYLA</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuadraticProgram</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MinimumEigenOptimizer</span><span class="p">,</span>
@@ -305,6 +301,9 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
     <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">,</span>
     <span class="n">SolutionSample</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.minimum_eigensolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">QAOA</span><span class="p">,</span> <span class="n">NumPyMinimumEigensolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">COBYLA</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
 </pre></div>
 </div>
 </div>
@@ -337,6 +336,7 @@ Subject to
 
   Binary variables (3)
     x y z
+
 </pre></div></div>
 </div>
 <p>Next we translate this QUBO into an Ising operator. This results not only in a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> but also in a constant offset to be taken into account to shift the resulting value.</p>
@@ -388,6 +388,7 @@ Subject to
 
   Binary variables (3)
     x0 x1 x2
+
 </pre></div></div>
 </div>
 <p>This translator allows, for instance, one to translate a <code class="docutils literal notranslate"><span class="pre">SparsePauliOp</span></code> to a <code class="docutils literal notranslate"><span class="pre">QuadraticProgram</span></code> and then solve the problem with other algorithms that are not based on the Ising Hamiltonian representation, such as the <code class="docutils literal notranslate"><span class="pre">GroverOptimizer</span></code>.</p>
@@ -395,7 +396,7 @@ Subject to
 <section id="Solving-a-QUBO-with-the-MinimumEigenOptimizer">
 <h2>Solving a QUBO with the MinimumEigenOptimizer<a class="headerlink" href="#Solving-a-QUBO-with-the-MinimumEigenOptimizer" title="Link to this heading">¶</a></h2>
 <p>We start by initializing the <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code> we want to use.</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
@@ -404,6 +405,15 @@ Subject to
 <span class="n">exact_mes</span> <span class="o">=</span> <span class="n">NumPyMinimumEigensolver</span><span class="p">()</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/qiskit_optimization/minimum_eigensolvers/qaoa.py:122: UserWarning: Using Sampler V2 (other than StatevectorSampler) without a pass_manager may result in an error. Consider providing a pass_manager for proper circuit transpilation.
+  super().__init__(
+</pre></div></div>
 </div>
 <p>Then, we use the <code class="docutils literal notranslate"><span class="pre">MinimumEigensolver</span></code> to create <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code>.</p>
 <div class="nbinput nblast docutils container">
@@ -440,6 +450,23 @@ status: SUCCESS
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;qiskit_optimization.algorithms.minimum_eigen_optimizer.MinimumEigenOptimizer at 0x15f4fef60&gt;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">qaoa_result</span> <span class="o">=</span> <span class="n">qaoa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">qaoa_result</span><span class="o">.</span><span class="n">prettyprint</span><span class="p">())</span>
 </pre></div>
@@ -450,8 +477,158 @@ status: SUCCESS
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:438: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -469,7 +646,7 @@ status: SUCCESS
 <p><code class="docutils literal notranslate"><span class="pre">OptimizationResult</span></code> provides useful information in the form of <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code>s (here denoted as <em>samples</em>). Each <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code> contains information about the input values (<code class="docutils literal notranslate"><span class="pre">x</span></code>), the corresponding objective function value (<code class="docutils literal notranslate"><span class="pre">fval</span></code>), the fraction of samples corresponding to that input (<code class="docutils literal notranslate"><span class="pre">probability</span></code>), and the solution <code class="docutils literal notranslate"><span class="pre">status</span></code> (<code class="docutils literal notranslate"><span class="pre">SUCCESS</span></code>, <code class="docutils literal notranslate"><span class="pre">FAILURE</span></code>, <code class="docutils literal notranslate"><span class="pre">INFEASIBLE</span></code>). Multiple samples corresponding to the same input are consolidated into a single <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code> (with its
 <code class="docutils literal notranslate"><span class="pre">probability</span></code> attribute being the aggregate fraction of samples represented by that <code class="docutils literal notranslate"><span class="pre">SolutionSample</span></code>).</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;variable order:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">variables</span><span class="p">])</span>
@@ -484,18 +661,19 @@ status: SUCCESS
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 variable order: [&#39;x&#39;, &#39;y&#39;, &#39;z&#39;]
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.446, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.141, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.24, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.093, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.02, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.042, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.431640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.193359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.13671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.14453125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.056640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0068359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.001953125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <p>We may also want to filter samples according to their status or probabilities.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">get_filtered_samples</span><span class="p">(</span>
@@ -508,7 +686,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_samples</span> <span class="o">=</span> <span class="n">get_filtered_samples</span><span class="p">(</span>
@@ -526,18 +704,18 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.446, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.141, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.24, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.093, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.02, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.042, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.431640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.193359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.13671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.14453125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.056640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0068359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <p>If we want to obtain a better perspective of the results, statistics is very helpful, both with respect to the objective function values and their respective probabilities. Thus, mean and standard deviation are the very basics for understanding the results.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">fval</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">qaoa_result</span><span class="o">.</span><span class="n">samples</span><span class="p">]</span>
@@ -546,7 +724,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
@@ -554,16 +732,16 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-1.1428571428571428
+1.5
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">fvals</span><span class="p">)</span>
@@ -571,17 +749,17 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-1.8070158058105026
+1.9364916731037085
 </pre></div></div>
 </div>
 <p>Finally, despite all the number-crunching, visualization is usually the best early-analysis approach.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
@@ -593,22 +771,22 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;x=0 y=1 z=0&#39;: 0.446,
- &#39;x=1 y=1 z=0&#39;: 0.141,
- &#39;x=0 y=0 z=0&#39;: 0.24,
- &#39;x=1 y=0 z=0&#39;: 0.093,
- &#39;x=1 y=0 z=1&#39;: 0.02,
- &#39;x=0 y=1 z=1&#39;: 0.042,
- &#39;x=0 y=0 z=1&#39;: 0.018}
+{&#39;x=0 y=1 z=0&#39;: 0.431640625,
+ &#39;x=0 y=0 z=0&#39;: 0.193359375,
+ &#39;x=1 y=1 z=0&#39;: 0.13671875,
+ &#39;x=1 y=0 z=0&#39;: 0.14453125,
+ &#39;x=0 y=0 z=1&#39;: 0.0283203125,
+ &#39;x=1 y=0 z=1&#39;: 0.056640625,
+ &#39;x=0 y=1 z=1&#39;: 0.0068359375}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">samples_for_plot</span><span class="p">)</span>
@@ -616,11 +794,11 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_33_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_33_0.png" />
+<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_34_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_34_0.png" />
 </div>
 </div>
 </section>
@@ -631,7 +809,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 <p>In the following, we show how to use the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> using the two <code class="docutils literal notranslate"><span class="pre">MinimumEigenOptimizer</span></code>s introduced before.</p>
 <p>First, we construct the <code class="docutils literal notranslate"><span class="pre">RecursiveMinimumEigenOptimizer</span></code> such that it reduces the problem size from 3 variables to 1 variable and then uses the exact solver for the last variable. Then we call <code class="docutils literal notranslate"><span class="pre">solve</span></code> to optimize the considered problem.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa</span> <span class="o">=</span> <span class="n">RecursiveMinimumEigenOptimizer</span><span class="p">(</span><span class="n">qaoa</span><span class="p">,</span> <span class="n">min_num_vars</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_num_vars_optimizer</span><span class="o">=</span><span class="n">exact</span><span class="p">)</span>
@@ -639,7 +817,7 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rqaoa_result</span> <span class="o">=</span> <span class="n">rqaoa</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">qubo</span><span class="p">)</span>
@@ -652,8 +830,254 @@ SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.018, status=&lt;Op
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:438: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
+/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
+  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -667,7 +1091,7 @@ status: SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">filtered_samples</span> <span class="o">=</span> <span class="n">get_filtered_samples</span><span class="p">(</span>
@@ -679,7 +1103,7 @@ status: SUCCESS
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">samples_for_plot</span> <span class="o">=</span> <span class="p">{</span>
@@ -691,7 +1115,7 @@ status: SUCCESS
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -700,7 +1124,7 @@ status: SUCCESS
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plot_histogram</span><span class="p">(</span><span class="n">samples_for_plot</span><span class="p">)</span>
@@ -708,11 +1132,11 @@ status: SUCCESS
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_41_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_41_0.png" />
+<img alt="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_42_0.png" src="../_images/tutorials_3_tutorial_minimum_eigen_optimizer_42_0.png" />
 </div>
 </div>
 </section>
