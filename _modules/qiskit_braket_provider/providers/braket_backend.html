@@ -346,7 +346,8 @@
 <span class="sd">            name: name of backend</span>
 <span class="sd">            **fields: extra fields</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">name</span><span class="p">),</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
+        <span class="n">simulator</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">simulator</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">local_simulator_to_target</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">status</span></div>
@@ -389,7 +390,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">control_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Control channel is not supported by </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">run_input</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>
         <span class="n">convert_input</span> <span class="o">=</span> <span class="p">[</span><span class="n">run_input</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">run_input</span><span class="p">)</span>
         <span class="n">verbatim</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;verbatim&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="n">circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
@@ -397,7 +400,6 @@
             <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">convert_input</span>
         <span class="p">]</span>
 
-        <span class="n">shots</span> <span class="o">=</span> <span class="n">options</span><span class="p">[</span><span class="s2">&quot;shots&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;shots&quot;</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">else</span> <span class="mi">1024</span>
         <span class="k">if</span> <span class="n">shots</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">circuits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">state_vector</span><span class="p">(),</span> <span class="n">circuits</span><span class="p">))</span>
         <span class="k">if</span> <span class="s2">&quot;meas_level&quot;</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
@@ -471,9 +473,10 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify either arn or device&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">arn</span> <span class="ow">and</span> <span class="n">device</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can only specify one of arn and device&quot;</span><span class="p">)</span>
+        <span class="n">aws_device</span> <span class="o">=</span> <span class="n">AwsDevice</span><span class="p">(</span><span class="n">arn</span><span class="p">)</span> <span class="k">if</span> <span class="n">arn</span> <span class="k">else</span> <span class="n">device</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">AwsDevice</span><span class="p">(</span><span class="n">arn</span><span class="p">)</span> <span class="k">if</span> <span class="n">arn</span> <span class="k">else</span> <span class="n">device</span><span class="p">,</span>
-            <span class="n">name</span><span class="p">,</span>
+            <span class="n">aws_device</span><span class="p">,</span>
+            <span class="n">name</span> <span class="ow">or</span> <span class="n">aws_device</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">provider</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
             <span class="n">online_date</span><span class="o">=</span><span class="n">online_date</span><span class="p">,</span>
@@ -595,7 +598,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">run_input</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span>
-        <span class="n">shots</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">native</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -605,18 +608,18 @@
         <span class="n">pass_manager</span><span class="p">:</span> <span class="n">PassManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">options</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot; Execute QuantumCircuits on a BraketAwsBackend</span>
-<span class="sd">         </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute QuantumCircuits on a BraketAwsBackend</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            run_input : QuantumCircuit or list of QuantumCircuits</span>
 
 <span class="sd">        Kwargs:</span>
 <span class="sd">            shots : number of measurement repetitions for the BraketAwsBackend</span>
 <span class="sd">            verbatim : submit as a verbatim circuit (i.e. no transpilation)</span>
-<span class="sd">            native : use the Qiskit transpiler to compile to a verbatim native circuit </span>
+<span class="sd">            native : use the Qiskit transpiler to compile to a verbatim native circuit</span>
 <span class="sd">            optimization_level : Qiskit transpiler optimization level</span>
-<span class="sd">            callback : function for the Qiskit transpiler </span>
-<span class="sd">            num_processes : allow for parallel transpilation </span>
+<span class="sd">            callback : function for the Qiskit transpiler</span>
+<span class="sd">            num_processes : allow for parallel transpilation</span>
 <span class="sd">            pass_manager : user-specified PassManager for the Qiskit transpiler (creates verbatim)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
