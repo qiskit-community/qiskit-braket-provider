@@ -142,7 +142,9 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
     def control_channel(self, qubits: Iterable[int]):
         raise NotImplementedError(f"Control channel is not supported by {self.name}.")
 
-    def run(self, run_input: QuantumCircuit | list[QuantumCircuit], **options) -> BraketQuantumTask:
+    def run(
+        self, run_input: QuantumCircuit | list[QuantumCircuit], *, shots: int = 1024, **options
+    ) -> BraketQuantumTask:
         convert_input = [run_input] if isinstance(run_input, QuantumCircuit) else list(run_input)
         verbatim = options.pop("verbatim", False)
         circuits: list[Circuit] = [
@@ -150,7 +152,6 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
             for circ in convert_input
         ]
 
-        shots = options["shots"] if "shots" in options else 1024
         if shots == 0:
             circuits = list(map(lambda x: x.state_vector(), circuits))
         if "meas_level" in options:
@@ -343,7 +344,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def run(
         self,
         run_input: QuantumCircuit | list[QuantumCircuit],
-        shots: int = 10,
+        shots: int | None = None,
         verbatim: bool = False,
         native: bool = False,
         *,
