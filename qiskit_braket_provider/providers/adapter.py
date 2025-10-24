@@ -495,19 +495,18 @@ def _qpu_target(device: AwsDevice, description: str):
         num_qubits=len(qubit_properties or indices),
         qubit_properties=qubit_properties or None,
     )
+
+    props_1q = (
+        {(q,): properties for q, properties in enumerate(instruction_props_1q)}
+        if instruction_props_1q
+        else {(i,): None for i in indices.values()}
+    )
     # TODO: Use gate calibrations if available
     for operation in properties.paradigm.nativeGateSet:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower(), None):
             match num_qubits := instruction.num_qubits:
                 case 1:
-                    target.add_instruction(
-                        instruction,
-                        (
-                            {(q,): properties for q, properties in enumerate(instruction_props_1q)}
-                            if instruction_props_1q
-                            else {(i,): None for i in indices.values()}
-                        ),
-                    )
+                    target.add_instruction(instruction, props_1q)
                 case 2:
                     gate_props = instruction_props_2q.get(instruction.name)
                     target.add_instruction(
@@ -525,15 +524,8 @@ def _qpu_target(device: AwsDevice, description: str):
 
     # Add measurement if not already added
     if "measure" not in target:
-        target.add_instruction(
-            Measure(),
-            (
-                # TODO: Only use readout error
-                {(q,): properties for q, properties in enumerate(instruction_props_1q)}
-                if instruction_props_1q
-                else {(i,): None for i in indices.values()}
-            ),
-        )
+        # TODO: Only use readout error
+        target.add_instruction(Measure(), props_1q)
     return target
 
 
