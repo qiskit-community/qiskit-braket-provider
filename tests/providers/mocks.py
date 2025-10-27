@@ -129,7 +129,6 @@ MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.p
                         "fidelity": 0.05,
                         "standardError": None,
                     },
-
                 ],
             },
             "2": {
