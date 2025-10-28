@@ -172,7 +172,18 @@ MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.p
             "2-5": {
                 "twoQubitGateFidelity": [
                     {
-                        "direction": {"control": 0, "target": 7},
+                        "direction": {"control": 2, "target": 5},
+                        "gateName": "CNOT",
+                        "fidelity": 0.877,
+                        "standardError": 0.001,
+                        "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                    }
+                ]
+            },
+            "5-6": {
+                "twoQubitGateFidelity": [
+                    {
+                        "direction": {"control": 5, "target": 6},
                         "gateName": "CNOT",
                         "fidelity": 0.877,
                         "standardError": 0.001,
