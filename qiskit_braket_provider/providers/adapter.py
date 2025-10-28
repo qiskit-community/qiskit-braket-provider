@@ -30,7 +30,6 @@ import braket.circuits.noises as braket_noises
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice, AwsDeviceType
 from braket.circuits import Circuit, Instruction, measure
-from braket.circuits.angled_gate import AngledGate
 from braket.default_simulator.openqasm.interpreter import Interpreter
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
@@ -550,36 +549,44 @@ def _qpu_target(device: AwsDevice, description: str):
     return target
 
 
-def _get_angle_restrictions(device: AwsDevice, qubit_indices: dict[int, int]):
+def _get_angle_restrictions(
+    device: AwsDevice, qubit_indices: dict[int, int]
+) -> dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]]:
     cal = device.gate_calibrations
     parameter_restrictions = defaultdict(lambda: defaultdict(set))
     for gate, target in cal.pulse_sequences if cal else {}:
         gate_name = _BRAKET_TO_QISKIT_NAMES[gate.name.lower()]
         qubits = tuple(qubit_indices[q] for q in target)
-        match gate:
-            case AngledGate(angle=angle):
-                if isinstance(angle, FreeParameterExpression):
-                    parameter_restrictions[gate_name][None].add(qubits)
-                else:
-                    parameter_restrictions[gate_name][angle].add(qubits)
+        if isinstance(gate, Parameterizable):
+            param_key = tuple(
+                param.name if isinstance(param, FreeParameter) else param
+                for param in gate.parameters
+            )
+            parameter_restrictions[gate_name][tuple(param_key)].add(qubits)
     return parameter_restrictions
 
 
 def _add_instruction_to_target(
     target: Target,
     instruction: QiskitInstruction,
-    gate_parameters: dict[float | None, set[tuple[int, ...]]],
+    gate_parameters: dict[tuple[float | str, ...], set[tuple[int, ...]]],
     gate_props: dict[tuple[int, ...], InstructionProperties],
 ) -> None:
     if gate_parameters:
-        for angle, qubits in gate_parameters.items():
-            props = {edge: props for edge, props in gate_props.items() if edge in qubits}
+        for params, qubits in gate_parameters.items():
+            props = {q: props for q, props in gate_props.items() if q in qubits}
             instruction_copy = instruction.copy()
-            instruction_copy.params = [angle] if angle is not None else instruction_copy.params
+            instruction_copy.params = [
+                Parameter(param) if isinstance(param, str) else param for param in params
+            ]
             target.add_instruction(
                 instruction_copy,
                 props,
-                name=f"{instruction.name}({angle})" if angle is not None else None,
+                name=(
+                    f"{instruction.name}({', '.join(str(param) for param in params)})"
+                    if len(params) > 1 or not isinstance(params[0], str)
+                    else None
+                ),
             )
     else:
         target.add_instruction(instruction, gate_props)
