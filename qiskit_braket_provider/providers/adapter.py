@@ -258,7 +258,11 @@ _Translatable = QuantumCircuit | Circuit | Program | str
 
 class _SubstitutedTarget(Target):
     def __new__(
-        cls, description, num_qubits, qubit_properties, gate_substitutions: dict[str, Gate]
+        cls,
+        description: str,
+        num_qubits: int,
+        qubit_properties: list[QubitProperties],
+        gate_substitutions: dict[str, Gate]
     ):
         out = super(_SubstitutedTarget, cls).__new__(
             cls,
@@ -271,7 +275,11 @@ class _SubstitutedTarget(Target):
         return out
 
     def __init__(
-        self, description, num_qubits, qubit_properties, gate_substitutions: dict[str, Gate]
+        self,
+        description: str,
+        num_qubits: int,
+        qubit_properties: list[QubitProperties],
+        gate_substitutions: dict[str, Gate]
     ):
         super().__init__(
             description=description,
