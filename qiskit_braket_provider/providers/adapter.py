@@ -297,6 +297,9 @@ class _SubstitutedTarget(Target):
             self._gate_substitutions,
         )
 
+    def _substitute(self, circuits: QuantumCircuit | Iterable[QuantumCircuit]):
+        return self._pass_manager.run(circuits)
+
 
 class _SubstituteGates(TransformationPass):
     def __init__(self, gate_substitutions: dict[str, Gate]):
@@ -304,6 +307,8 @@ class _SubstituteGates(TransformationPass):
         self._gate_substitutions = gate_substitutions
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
+        if not self._gate_substitutions:
+            return dag
         for node in dag.op_nodes():
             op_name = node.op.name
             if op_name in self._gate_substitutions:
@@ -770,8 +775,8 @@ def to_braket(
                 callback=callback,
                 num_processes=num_processes,
             )
-    if target and isinstance(target, _SubstitutedTarget) and target._gate_substitutions:
-        circuit = target._pass_manager.run(circuit)
+    if isinstance(target, _SubstitutedTarget):
+        circuit = target._substitute(circuit)
     translated = [
         _translate_to_braket(
             circ, target, qubit_labels, verbatim, basis_gates, angle_restrictions, pass_manager
