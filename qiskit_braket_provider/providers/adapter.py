@@ -290,7 +290,12 @@ class _SubstitutedTarget(Target):
         self._pass_manager = PassManager([_SubstituteGates(gate_substitutions)])
 
     def __getnewargs__(self):
-        return self.description, self.num_qubits, self.qubit_properties, self._gate_substitutions
+        return (
+            self.description,
+            len(self.qubit_properties) if self.qubit_properties else self.num_qubits,
+            self.qubit_properties,
+            self._gate_substitutions,
+        )
 
 
 class _SubstituteGates(TransformationPass):

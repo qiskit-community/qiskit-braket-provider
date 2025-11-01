@@ -694,6 +694,12 @@ class TestBraketAwsBackend(TestCase):
         )
         device.gate_calibrations = None
         backend = BraketAwsBackend(device=device)
+        target = backend.target
         deep = copy.deepcopy(backend)
+        deep_target = deep.target
         self.assertEqual(deep._device, backend._device)
+        self.assertEqual(deep_target.num_qubits, target.num_qubits)
+        self.assertEqual(deep_target.instructions, target.instructions)
+        self.assertEqual(deep_target.operations, target.operations)
+        self.assertEqual(deep_target.operation_names, target.operation_names)
         self.assertNotEqual(deep, backend)
