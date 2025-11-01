@@ -244,7 +244,7 @@ class TestBraketAwsBackend(TestCase):
         self.assertEqual(device.run_batch.call_count, 2)
 
     def test_run_multiple_circuits_program_set(self):
-        """Tests run with multiple circuits"""
+        """Tests run with multiple circuits for a device that supports program sets"""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
         device.properties.action["braket.ir.openqasm.program_set"] = {
