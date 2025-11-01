@@ -631,7 +631,7 @@ class TestBraketAwsBackend(TestCase):
                     Circuit().rz(0, -np.pi / 2).rx(0, -np.pi / 2).rz(0, -np.pi / 2)
                 ),
             )
-            target._pass_manager.run = lambda dag: dag
+            target._pass_manager.run = lambda circuits: circuits
             self.assertEqual(
                 to_braket(qc, target=target),
                 Circuit().add_verbatim_box(Circuit().rz(0, -np.pi / 2).vi(0).rz(0, -np.pi / 2)),
