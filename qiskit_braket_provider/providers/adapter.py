@@ -570,6 +570,7 @@ def _qpu_target(device: AwsDevice, description: str):
                 )
 
     default_props_1q = {(i,): None for i in indices.values()}
+    default_props_2q = {(indices[q0], indices[q1]): None for q0, q1 in topology.edges}
     if not instruction_props_measurement:
         instruction_props_measurement.update(default_props_1q)
     if not instruction_props_1q:
@@ -609,10 +610,7 @@ def _qpu_target(device: AwsDevice, description: str):
                         target,
                         instruction,
                         parameter_restrictions[braket_name],
-                        instruction_props_2q.get(
-                            gate_name,
-                            {(indices[q0], indices[q1]): None for q0, q1 in topology.edges},
-                        ),
+                        instruction_props_2q.get(gate_name, default_props_2q),
                     )
                 case _:
                     warnings.warn(
