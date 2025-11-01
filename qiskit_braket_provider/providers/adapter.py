@@ -262,7 +262,7 @@ class _SubstitutedTarget(Target):
         description: str,
         num_qubits: int,
         qubit_properties: list[QubitProperties],
-        gate_substitutions: dict[str, Gate]
+        gate_substitutions: dict[str, Gate],
     ):
         out = super(_SubstitutedTarget, cls).__new__(
             cls,
@@ -279,7 +279,7 @@ class _SubstitutedTarget(Target):
         description: str,
         num_qubits: int,
         qubit_properties: list[QubitProperties],
-        gate_substitutions: dict[str, Gate]
+        gate_substitutions: dict[str, Gate],
     ):
         super().__init__(
             description=description,
@@ -645,18 +645,18 @@ def _get_gate_substitutions(
     parameter_restrictions: dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]],
 ) -> dict[str, Gate]:
     substitutions = {}
-    for gate, restrictions in parameter_restrictions.items():
+    for gate_name, restrictions in parameter_restrictions.items():
         for restriction in restrictions:
-            if (gate, restriction) in _TRANSPILER_GATE_SUBSTITUTIONS:
-                if _TRANSPILER_GATE_SUBSTITUTIONS[gate, restriction].name not in substitutions:
-                    substitution = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate].copy()
+            if (gate_name, restriction) in _TRANSPILER_GATE_SUBSTITUTIONS:
+                if (
+                    gate := _TRANSPILER_GATE_SUBSTITUTIONS[gate_name, restriction].name
+                ) not in substitutions:
+                    substitution = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name].copy()
                     substitution.params = [
                         Parameter(param) if isinstance(param, str) else param
                         for param in restriction
                     ]
-                    substitutions[_TRANSPILER_GATE_SUBSTITUTIONS[gate, restriction].name] = (
-                        substitution
-                    )
+                    substitutions[gate] = substitution
     return substitutions
 
 
