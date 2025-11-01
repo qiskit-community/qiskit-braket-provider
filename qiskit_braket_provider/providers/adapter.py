@@ -637,16 +637,14 @@ def _get_gate_substitutions(
     substitutions = {}
     for gate_name, restrictions in parameter_restrictions.items():
         for restriction in restrictions:
-            if (gate_name, restriction) in _TRANSPILER_GATE_SUBSTITUTIONS:
-                if (
-                    gate := _TRANSPILER_GATE_SUBSTITUTIONS[gate_name, restriction].name
-                ) not in substitutions:
-                    substitution = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name].copy()
-                    substitution.params = [
-                        Parameter(param) if isinstance(param, str) else param
-                        for param in restriction
-                    ]
-                    substitutions[gate] = substitution
+            if (gate_name, restriction) in _TRANSPILER_GATE_SUBSTITUTIONS and (
+                gate := _TRANSPILER_GATE_SUBSTITUTIONS[gate_name, restriction].name
+            ) not in substitutions:
+                substitution = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate_name].copy()
+                substitution.params = [
+                    Parameter(param) if isinstance(param, str) else param for param in restriction
+                ]
+                substitutions[gate] = substitution
     return substitutions
 
 
