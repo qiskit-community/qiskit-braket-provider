@@ -1,5 +1,6 @@
 certifi>=2021.5.30
-qiskit>=0.34.2, <2.2.3
+# Unpin after fixing Target subclassing errors
+qiskit>=0.34.2, <2.2.2
 qiskit-ionq>=0.5.2
 amazon-braket-sdk>=1.99.0
 
