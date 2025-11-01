@@ -766,7 +766,7 @@ def to_braket(
                 callback=callback,
                 num_processes=num_processes,
             )
-    if target and isinstance(target, _SubstitutedTarget) and target._gate_substitutions:
+    if target and isinstance(target, _SubstitutedTarget):
         circuit = target._pass_manager.run(circuit)
     translated = [
         _translate_to_braket(
