@@ -289,6 +289,9 @@ class _SubstitutedTarget(Target):
         self._gate_substitutions = gate_substitutions
         self._pass_manager = PassManager([_SubstituteGates(gate_substitutions)])
 
+    def __getnewargs__(self):
+        return self.description, self.num_qubits, self.qubit_properties, self._gate_substitutions
+
 
 class _SubstituteGates(TransformationPass):
     def __init__(self, gate_substitutions: dict[str, Gate]):
@@ -577,21 +580,11 @@ def _qpu_target(device: AwsDevice, description: str):
         instruction_props_1q.update(default_props_1q)
 
     parameter_restrictions = _get_parameter_restrictions(device, indices)
-    num_qubits = len(qubit_properties or indices)
-    gate_substitutions = _get_gate_substitutions(parameter_restrictions)
-    target = (
-        _SubstitutedTarget(
-            description=description,
-            num_qubits=num_qubits,
-            qubit_properties=qubit_properties or None,
-            gate_substitutions=gate_substitutions,
-        )
-        if gate_substitutions
-        else Target(
-            description=description,
-            num_qubits=num_qubits,
-            qubit_properties=qubit_properties or None,
-        )
+    target = _SubstitutedTarget(
+        description=description,
+        num_qubits=len(qubit_properties or indices),
+        qubit_properties=qubit_properties or None,
+        gate_substitutions=_get_gate_substitutions(parameter_restrictions),
     )
     for operation in properties.paradigm.nativeGateSet:
         braket_name = operation.lower()
@@ -772,7 +765,7 @@ def to_braket(
                 callback=callback,
                 num_processes=num_processes,
             )
-    if target and isinstance(target, _SubstitutedTarget):
+    if target and isinstance(target, _SubstitutedTarget) and target._gate_substitutions:
         circuit = target._pass_manager.run(circuit)
     translated = [
         _translate_to_braket(
