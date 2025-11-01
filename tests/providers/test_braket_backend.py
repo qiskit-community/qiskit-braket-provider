@@ -626,7 +626,7 @@ class TestBraketAwsBackend(TestCase):
             qc.h(0)
             self.assertEqual(
                 to_braket(qc, target=target),
-                # Qubit have note been passed, so the qubit used is 0 instead of 1
+                # Qubit labels have not been passed, so the qubit used is 0 instead of 1
                 Circuit().add_verbatim_box(
                     Circuit().rz(0, -np.pi / 2).rx(0, -np.pi / 2).rz(0, -np.pi / 2)
                 ),
