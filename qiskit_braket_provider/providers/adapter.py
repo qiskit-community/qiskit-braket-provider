@@ -264,7 +264,7 @@ class _SubstitutedTarget(Target):
         qubit_properties: list[QubitProperties],
         gate_substitutions: dict[str, Gate],
     ):
-        out = super().__new__(cls, description, num_qubits)
+        out = super().__new__(cls, description, num_qubits, qubit_properties=qubit_properties)
         out._gate_substitutions = gate_substitutions
         out._pass_manager = PassManager([_SubstituteGates(gate_substitutions)])
         return out
