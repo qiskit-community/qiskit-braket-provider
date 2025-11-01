@@ -102,7 +102,6 @@ _BRAKET_TO_QISKIT_NAMES = {
     "unitary": "unitary",
     "kraus": "kraus",
 }
-_QISKIT_TO_BRAKET_NAMES = {v: k for k, v in _BRAKET_TO_QISKIT_NAMES.items()}
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
     1: {
