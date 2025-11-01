@@ -10,6 +10,7 @@ import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
+from qiskit._accelerate.circuit import DAGCircuit
 from qiskit.circuit import (
     CircuitInstruction,
     ControlledGate,
@@ -21,7 +22,13 @@ from qiskit.circuit import (
 )
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
-from qiskit.transpiler import InstructionProperties, PassManager, QubitProperties, Target
+from qiskit.transpiler import (
+    InstructionProperties,
+    PassManager,
+    QubitProperties,
+    Target,
+    TransformationPass,
+)
 from qiskit_ionq import add_equivalences, ionq_gates
 from sympy import Add, Expr, Mul, Pow, Symbol
 
@@ -95,6 +102,7 @@ _BRAKET_TO_QISKIT_NAMES = {
     "unitary": "unitary",
     "kraus": "kraus",
 }
+_QISKIT_TO_BRAKET_NAMES = {v: k for k, v in _BRAKET_TO_QISKIT_NAMES.items()}
 
 _CONTROLLED_GATES_BY_QUBIT_COUNT = {
     1: {
@@ -239,7 +247,53 @@ _BRAKET_SUPPORTED_NOISES = [
     # "twoqubitpaulichannel" no to_open qasm support yet
 ]
 
+_TRANSPILER_GATE_SUBSTITUTIONS: dict[tuple[str, tuple[float | str, ...]], Gate] = {
+    ("rx", (pi,)): qiskit_gates.XGate(),
+    ("rx", (-pi,)): qiskit_gates.XGate(),
+    ("rx", (pi / 2,)): qiskit_gates.SXGate(),
+    ("rx", (-pi / 2,)): qiskit_gates.SXdgGate(),
+}
+
 _Translatable = QuantumCircuit | Circuit | Program | str
+
+
+class _SubstitutedTarget(Target):
+    def __new__(
+        cls, description, num_qubits, qubit_properties, gate_substitutions: dict[str, Gate]
+    ):
+        out = super(_SubstitutedTarget, cls).__new__(
+            cls,
+            description=description,
+            num_qubits=num_qubits,
+            qubit_properties=qubit_properties,
+        )
+        out._gate_substitutions = gate_substitutions
+        out._pass_manager = PassManager([_SubstituteGates(gate_substitutions)])
+        return out
+
+    def __init__(
+        self, description, num_qubits, qubit_properties, gate_substitutions: dict[str, Gate]
+    ):
+        super().__init__(
+            description=description,
+            num_qubits=num_qubits,
+            qubit_properties=qubit_properties,
+        )
+        self._gate_substitutions = gate_substitutions
+        self._pass_manager = PassManager([_SubstituteGates(gate_substitutions)])
+
+
+class _SubstituteGates(TransformationPass):
+    def __init__(self, gate_substitutions: dict[str, Gate]):
+        super().__init__()
+        self._gate_substitutions = gate_substitutions
+
+    def run(self, dag: DAGCircuit) -> DAGCircuit:
+        for node in dag.op_nodes():
+            op_name = node.op.name
+            if op_name in self._gate_substitutions:
+                dag.substitute_node(node, self._gate_substitutions[op_name])
+        return dag
 
 
 class _QiskitProgramContext(AbstractProgramContext):
@@ -514,25 +568,40 @@ def _qpu_target(device: AwsDevice, description: str):
     if not instruction_props_1q:
         instruction_props_1q.update(default_props_1q)
 
-    target = Target(
-        description=description,
-        num_qubits=len(qubit_properties or indices),
-        qubit_properties=qubit_properties or None,
+    parameter_restrictions = _get_parameter_restrictions(device, indices)
+    num_qubits = len(qubit_properties or indices)
+    gate_substitutions = _get_gate_substitutions(parameter_restrictions)
+    target = (
+        _SubstitutedTarget(
+            description=description,
+            num_qubits=num_qubits,
+            qubit_properties=qubit_properties or None,
+            gate_substitutions=gate_substitutions,
+        )
+        if gate_substitutions
+        else Target(
+            description=description,
+            num_qubits=num_qubits,
+            qubit_properties=qubit_properties or None,
+        )
     )
-    parameter_restrictions = _get_angle_restrictions(device, indices)
     for operation in properties.paradigm.nativeGateSet:
-        if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower()):
+        braket_name = operation.lower()
+        if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(braket_name):
             gate_name = instruction.name
             match num_qubits := instruction.num_qubits:
                 case 1:
-                    _add_instruction_to_target(
-                        target, instruction, parameter_restrictions[gate_name], instruction_props_1q
-                    )
-                case 2:
-                    _add_instruction_to_target(
+                    _add_instruction_to_qpu_target(
                         target,
                         instruction,
-                        parameter_restrictions[gate_name],
+                        parameter_restrictions[braket_name],
+                        instruction_props_1q,
+                    )
+                case 2:
+                    _add_instruction_to_qpu_target(
+                        target,
+                        instruction,
+                        parameter_restrictions[braket_name],
                         instruction_props_2q.get(
                             gate_name,
                             {(indices[q0], indices[q1]): None for q0, q1 in topology.edges},
@@ -549,24 +618,42 @@ def _qpu_target(device: AwsDevice, description: str):
     return target
 
 
-def _get_angle_restrictions(
+def _get_parameter_restrictions(
     device: AwsDevice, qubit_indices: dict[int, int]
 ) -> dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]]:
     cal = device.gate_calibrations
     parameter_restrictions = defaultdict(lambda: defaultdict(set))
     for gate, target in cal.pulse_sequences if cal else {}:
-        gate_name = _BRAKET_TO_QISKIT_NAMES[gate.name.lower()]
         qubits = tuple(qubit_indices[q] for q in target)
         if isinstance(gate, Parameterizable):
             param_key = tuple(
                 param.name if isinstance(param, FreeParameter) else param
                 for param in gate.parameters
             )
-            parameter_restrictions[gate_name][tuple(param_key)].add(qubits)
+            parameter_restrictions[gate.name.lower()][tuple(param_key)].add(qubits)
     return parameter_restrictions
 
 
-def _add_instruction_to_target(
+def _get_gate_substitutions(
+    parameter_restrictions: dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]],
+) -> dict[str, Gate]:
+    substitutions = {}
+    for gate, restrictions in parameter_restrictions.items():
+        for restriction in restrictions:
+            if (gate, restriction) in _TRANSPILER_GATE_SUBSTITUTIONS:
+                if _TRANSPILER_GATE_SUBSTITUTIONS[gate, restriction].name not in substitutions:
+                    substitution = _BRAKET_GATE_NAME_TO_QISKIT_GATE[gate].copy()
+                    substitution.params = [
+                        Parameter(param) if isinstance(param, str) else param
+                        for param in restriction
+                    ]
+                    substitutions[_TRANSPILER_GATE_SUBSTITUTIONS[gate, restriction].name] = (
+                        substitution
+                    )
+    return substitutions
+
+
+def _add_instruction_to_qpu_target(
     target: Target,
     instruction: QiskitInstruction,
     gate_parameters: dict[tuple[float | str, ...], set[tuple[int, ...]]],
@@ -579,15 +666,15 @@ def _add_instruction_to_target(
             instruction_copy.params = [
                 Parameter(param) if isinstance(param, str) else param for param in params
             ]
-            target.add_instruction(
-                instruction_copy,
-                props,
-                name=(
-                    f"{instruction.name}({', '.join(str(param) for param in params)})"
-                    if len(params) > 1 or not isinstance(params[0], str)
-                    else None
-                ),
+            instruction_to_add = _TRANSPILER_GATE_SUBSTITUTIONS.get(
+                (instruction.name, params), instruction_copy
             )
+            instruction_name = instruction_to_add.name
+            if instruction_name in target:
+                for k in (instruction_target := target[instruction_name]).keys() - props.keys():
+                    instruction_target.pop(k)
+            else:
+                target.add_instruction(instruction_to_add, props)
     else:
         target.add_instruction(instruction, gate_props)
 
@@ -680,6 +767,8 @@ def to_braket(
                 callback=callback,
                 num_processes=num_processes,
             )
+    if target and isinstance(target, _SubstitutedTarget) and target._gate_substitutions:
+        circuit = target._pass_manager.run(circuit)
     translated = [
         _translate_to_braket(
             circ, target, qubit_labels, verbatim, basis_gates, angle_restrictions, pass_manager

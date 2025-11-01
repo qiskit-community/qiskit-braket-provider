@@ -28,7 +28,11 @@ from braket.registers import QubitSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit_braket_provider import BraketProvider, exception, version
 from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
-from qiskit_braket_provider.providers.adapter import aws_device_to_target, native_gate_connectivity
+from qiskit_braket_provider.providers.adapter import (
+    aws_device_to_target,
+    native_gate_connectivity,
+    to_braket,
+)
 from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from tests.providers.mocks import (
     MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES,
@@ -593,9 +597,15 @@ class TestBraketAwsBackend(TestCase):
             num_qubits = len(topology_graph)
             self.assertEqual(target.num_qubits, num_qubits)
             self.assertEqual(
-                len(target.operations), len({g for g, _ in gate_calibrations.pulse_sequences}) + 1
+                # measure adds 1 instruction, but rx(pi) and rx(-pi) have the same equivalent,
+                # subtracting 1; as a result, the number of operations in the target should be
+                # equal to the number of pulse sequence keys
+                len(target.operations),
+                len({g for g, _ in gate_calibrations.pulse_sequences}),
             )
             properties_1q = MOCK_RIGETTI_STANARDIZED_PROPERTIES.oneQubitProperties
+            self.assertTrue({"x", "sx", "sxdg"}.issubset(target.operation_names))
+            self.assertTrue("rx" not in target.operation_names)
             num_instructions_1q = len(
                 [
                     g
@@ -607,9 +617,20 @@ class TestBraketAwsBackend(TestCase):
                 len(target.instructions),
                 num_instructions_1q
                 + len(MOCK_RIGETTI_STANARDIZED_PROPERTIES.twoQubitProperties)
-                + len(properties_1q),
+                + len(properties_1q)
+                - 2,  # Only use intersection of qubits for Rx(pi) and Rx(-pi)
             )
             self.assertIn("Target for Amazon Braket QPU", target.description)
+
+            qc = QuantumCircuit(1)
+            qc.h(0)
+            self.assertEqual(
+                to_braket(qc, target=target),
+                # Qubit have note been passed, so the qubit used is 0 instead of 1
+                Circuit().add_verbatim_box(
+                    Circuit().rz(0, -np.pi / 2).rx(0, -np.pi / 2).rz(0, -np.pi / 2)
+                ),
+            )
 
     def test_target_invalid_device(self):
         """Tests target."""
