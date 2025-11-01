@@ -575,7 +575,7 @@ def _qpu_target(device: AwsDevice, description: str):
                 )
 
     default_props_1q = {(i,): None for i in indices.values()}
-    default_props_2q = {(indices[v], indices[w]): None for v, w in topology.edges}
+    default_props_2q = {(indices[u], indices[v]): None for u, v in topology.edges}
     if not instruction_props_measurement:
         instruction_props_measurement.update(default_props_1q)
     if not instruction_props_1q:
