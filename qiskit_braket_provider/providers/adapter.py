@@ -10,7 +10,6 @@ import numpy as np
 import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
-from qiskit._accelerate.circuit import DAGCircuit
 from qiskit.circuit import (
     CircuitInstruction,
     ControlledGate,
@@ -22,6 +21,7 @@ from qiskit.circuit import (
 )
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
+from qiskit.dagcircuit import DAGCircuit
 from qiskit.transpiler import (
     InstructionProperties,
     PassManager,
