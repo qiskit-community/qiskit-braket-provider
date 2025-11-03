@@ -561,15 +561,42 @@ class TestBraketAwsBackend(TestCase):
         mock_device = Mock()
         mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
         mock_device.properties.paradigm.nativeGateSet.append("cswap")
+        mock_device.gate_calibrations = None
+        mock_device.type = "QPU"
+        topology_graph = topology_graph_from_capabilites(
+            MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
+        )
+        mock_device.topology_graph = topology_graph
+
+        with self.assertWarns(UserWarning):
+            target = aws_device_to_target(mock_device)
+            num_qubits = len(topology_graph)
+            num_native_gates_unsupported = 1  # Needs to match number of 3q+ gates in capabilities
+            num_native_gates = (
+                len(mock_device.properties.paradigm.nativeGateSet) - num_native_gates_unsupported
+            )
+            num_native_gates_2q = 1  # Needs to match number of 2q gates in capabilities
+            self.assertEqual(target.num_qubits, num_qubits)
+            self.assertEqual(len(target.operations), num_native_gates + 1)
+            self.assertEqual(
+                len(target.instructions),
+                (num_native_gates - num_native_gates_2q + 1) * num_qubits
+                + num_native_gates_2q * len(topology_graph.edges),
+            )
+            self.assertIn("Target for Amazon Braket QPU", target.description)
+
+    def test_target_with_gate_calibrations(self):
+        """Tests target with gate calibrations and substitutions."""
+        mock_device = Mock()
+        mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
+        mock_device.properties.paradigm.nativeGateSet.append("cswap")
         mock_device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES
         theta = FreeParameter("theta")
         pulse = PulseSequence()
         gate_calibrations = GateCalibrations(
             {
                 (gates.Rx(np.pi / 2), QubitSet(1)): pulse,
-                (gates.Rx(np.pi / 2), QubitSet(2)): pulse,
                 (gates.Rx(np.pi / 2), QubitSet(5)): pulse,
-                (gates.Rx(-np.pi / 2), QubitSet(1)): pulse,
                 (gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
                 (gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
                 (gates.Rx(np.pi), QubitSet(1)): pulse,
@@ -580,9 +607,9 @@ class TestBraketAwsBackend(TestCase):
                 (gates.Rx(-np.pi), QubitSet(6)): pulse,
                 (gates.Rz(theta), QubitSet(1)): pulse,
                 (gates.Rz(theta), QubitSet(2)): pulse,
-                (gates.Rz(theta), QubitSet(5)): pulse,
                 (gates.CNot(), QubitSet([1, 2])): pulse,
                 (gates.CNot(), QubitSet([2, 5])): pulse,
+                (gates.CSwap(), QubitSet([1, 2, 5])): pulse,
             }
         )
         mock_device.gate_calibrations = gate_calibrations
@@ -603,11 +630,11 @@ class TestBraketAwsBackend(TestCase):
                 ),
             )
             self.assertEqual(
+                len(target.operations),
                 # measure adds 1 instruction, but rx(pi) and rx(-pi) have the same equivalent,
                 # subtracting 1; as a result, the number of operations in the target should be
                 # equal to the number of pulse sequence keys
-                len(target.operations),
-                len({g for g, _ in gate_calibrations.pulse_sequences}),
+                len({g for g, _ in gate_calibrations.pulse_sequences if g.qubit_count < 3}),
             )
             properties_1q = MOCK_RIGETTI_STANARDIZED_PROPERTIES.oneQubitProperties
             self.assertTrue({"x", "sx", "sxdg"}.issubset(target.operation_names))

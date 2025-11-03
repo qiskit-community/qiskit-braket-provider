@@ -257,33 +257,12 @@ _Translatable = QuantumCircuit | Circuit | Program | str
 
 
 class _SubstitutedTarget(Target):
-    def __new__(
-        cls,
-        # TODO: replace with args and kwargs
-        description: str,
-        num_qubits: int,
-        qubit_properties: list[QubitProperties],
-    ):
-        out = super().__new__(cls, description, num_qubits, qubit_properties=qubit_properties)
-        gate_substitutes: dict[str, dict[tuple[int, ...], QiskitInstruction]] = {}
+    def __new__(cls, *args, **kwargs):
+        out = super().__new__(cls, *args, **kwargs)
+        gate_substitutes = {}
         out._gate_substitutes = gate_substitutes
         out._pass_manager = PassManager([_SubstituteGates(gate_substitutes)])
         return out
-
-    def __init__(
-        self,
-        description: str,
-        num_qubits: int,
-        qubit_properties: list[QubitProperties],
-    ):
-        super().__init__()
-
-    def __getnewargs__(self):
-        return (
-            self.description,
-            len(self.qubit_properties) if self.qubit_properties else self.num_qubits,
-            self.qubit_properties,
-        )
 
     def _substitute(self, circuits: QuantumCircuit | Iterable[QuantumCircuit]):
         return self._pass_manager.run(circuits)
