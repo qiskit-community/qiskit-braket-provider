@@ -566,18 +566,18 @@ class TestBraketAwsBackend(TestCase):
         pulse = PulseSequence()
         gate_calibrations = GateCalibrations(
             {
-                (gates.Rx(np.pi), QubitSet(1)): pulse,
-                (gates.Rx(np.pi), QubitSet(2)): pulse,
-                (gates.Rx(np.pi), QubitSet(5)): pulse,
+                (gates.Rx(np.pi / 2), QubitSet(1)): pulse,
                 (gates.Rx(np.pi / 2), QubitSet(2)): pulse,
                 (gates.Rx(np.pi / 2), QubitSet(5)): pulse,
-                (gates.Rx(np.pi / 2), QubitSet(6)): pulse,
-                (gates.Rx(-np.pi), QubitSet(1)): pulse,
-                (gates.Rx(-np.pi), QubitSet(5)): pulse,
-                (gates.Rx(-np.pi), QubitSet(6)): pulse,
                 (gates.Rx(-np.pi / 2), QubitSet(1)): pulse,
                 (gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
                 (gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
+                (gates.Rx(np.pi), QubitSet(1)): pulse,
+                (gates.Rx(np.pi), QubitSet(5)): pulse,
+                (gates.Rx(np.pi), QubitSet(6)): pulse,
+                (gates.Rx(-np.pi), QubitSet(2)): pulse,
+                (gates.Rx(-np.pi), QubitSet(5)): pulse,
+                (gates.Rx(-np.pi), QubitSet(6)): pulse,
                 (gates.Rz(theta), QubitSet(1)): pulse,
                 (gates.Rz(theta), QubitSet(2)): pulse,
                 (gates.Rz(theta), QubitSet(5)): pulse,
@@ -623,8 +623,8 @@ class TestBraketAwsBackend(TestCase):
                 len(target.instructions),
                 num_instructions_1q
                 + len(MOCK_RIGETTI_STANARDIZED_PROPERTIES.twoQubitProperties)
-                + len(properties_1q)
-                - 2,  # Only use intersection of qubits for Rx(pi) and Rx(-pi)
+                + len(properties_1q)  # measurements
+                - 1,  # gate in 2q properties not present in calibrations
             )
             self.assertIn("Target for Amazon Braket QPU", target.description)
 
@@ -634,13 +634,13 @@ class TestBraketAwsBackend(TestCase):
                 to_braket(qc, target=target),
                 # Qubit labels have not been passed, so the qubit used is 0 instead of 1
                 Circuit().add_verbatim_box(
-                    Circuit().rz(0, -np.pi / 2).rx(0, -np.pi / 2).rz(0, -np.pi / 2)
+                    Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
                 ),
             )
             target._pass_manager.run = lambda circuits: circuits
             self.assertEqual(
                 to_braket(qc, target=target),
-                Circuit().add_verbatim_box(Circuit().rz(0, -np.pi / 2).vi(0).rz(0, -np.pi / 2)),
+                Circuit().add_verbatim_box(Circuit().rz(0, np.pi / 2).v(0).rz(0, np.pi / 2)),
             )
 
     def test_target_invalid_device(self):

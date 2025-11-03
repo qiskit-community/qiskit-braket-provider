@@ -572,7 +572,6 @@ def _qpu_target(device: AwsDevice, description: str):
         instruction_props_1q.update(default_props_1q)
 
     parameter_restrictions = _get_parameter_restrictions(device, indices)
-    print(qubit_properties)
     target = _SubstitutedTarget(
         description=description,
         num_qubits=len(qubit_properties or indices),
