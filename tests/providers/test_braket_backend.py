@@ -14,18 +14,25 @@ from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BackendEstimatorV2
 from qiskit.quantum_info import SparsePauliOp, Statevector
-from qiskit.transpiler import Target
+from qiskit.transpiler import PassManager, Target
 from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 from qiskit_algorithms.optimizers import SLSQP
 
 from braket.aws import AwsDevice, AwsQuantumTaskBatch
 from braket.aws.queue_information import QueueDepthInfo, QueueType
-from braket.circuits import Circuit
+from braket.circuits import Circuit, GateCalibrations, gates
+from braket.parametric import FreeParameter
 from braket.program_sets import ProgramSet
+from braket.pulse import PulseSequence
+from braket.registers import QubitSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 from qiskit_braket_provider import BraketProvider, exception, version
 from qiskit_braket_provider.providers import BraketAwsBackend, BraketLocalBackend
-from qiskit_braket_provider.providers.adapter import aws_device_to_target, native_gate_connectivity
+from qiskit_braket_provider.providers.adapter import (
+    aws_device_to_target,
+    native_gate_connectivity,
+    to_braket,
+)
 from qiskit_braket_provider.providers.braket_backend import AWSBraketBackend
 from tests.providers.mocks import (
     MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES,
@@ -80,6 +87,7 @@ class TestBraketAwsBackend(TestCase):
         """Tests device backend."""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
         device.type = "QPU"
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -184,6 +192,7 @@ class TestBraketAwsBackend(TestCase):
         """Test that a deprecation warning is raised when initializing AWSBraketBackend"""
         mock_aws_device = Mock(spec=AwsDevice)
         mock_aws_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        mock_aws_device.gate_calibrations = None
         mock_aws_device.type = "QPU"
         mock_aws_device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -207,6 +216,7 @@ class TestBraketAwsBackend(TestCase):
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
         device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES
+        device.gate_calibrations = None
         device.type = "QPU"
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -234,7 +244,7 @@ class TestBraketAwsBackend(TestCase):
         self.assertEqual(device.run_batch.call_count, 2)
 
     def test_run_multiple_circuits_program_set(self):
-        """Tests run with multiple circuits"""
+        """Tests run with multiple circuits for a device that supports program sets"""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
         device.properties.action["braket.ir.openqasm.program_set"] = {
@@ -244,6 +254,7 @@ class TestBraketAwsBackend(TestCase):
             "maximumTotalShots": 1000000,
         }
         device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES
+        device.gate_calibrations = None
         device.type = "QPU"
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -272,6 +283,7 @@ class TestBraketAwsBackend(TestCase):
         """Tests run with pass_manager"""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
         device.type = "QPU"
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -298,6 +310,7 @@ class TestBraketAwsBackend(TestCase):
         """Tests run with invalid input to run"""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
         device.type = "QPU"
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -420,6 +433,7 @@ class TestBraketAwsBackend(TestCase):
         """Test method for retrieving job task IDs."""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
         device.type = "QPU"
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -501,6 +515,7 @@ class TestBraketAwsBackend(TestCase):
         """Tests running circuit with native mode"""
         mock_device = Mock()
         mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        mock_device.gate_calibrations = None
         mock_device.type = "QPU"
         mock_device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -546,6 +561,7 @@ class TestBraketAwsBackend(TestCase):
         mock_device = Mock()
         mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
         mock_device.properties.paradigm.nativeGateSet.append("cswap")
+        mock_device.gate_calibrations = None
         mock_device.type = "QPU"
         topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
@@ -569,6 +585,91 @@ class TestBraketAwsBackend(TestCase):
             )
             self.assertIn("Target for Amazon Braket QPU", target.description)
 
+    def test_target_with_gate_calibrations(self):
+        """Tests target with gate calibrations and substitutions."""
+        mock_device = Mock()
+        mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
+        mock_device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES
+        theta = FreeParameter("theta")
+        pulse = PulseSequence()
+        gate_calibrations = GateCalibrations(
+            {
+                (gates.Rx(np.pi / 2), QubitSet(1)): pulse,
+                (gates.Rx(np.pi / 2), QubitSet(5)): pulse,
+                (gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
+                (gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
+                (gates.Rx(np.pi), QubitSet(1)): pulse,
+                (gates.Rx(np.pi), QubitSet(5)): pulse,
+                (gates.Rx(np.pi), QubitSet(6)): pulse,
+                (gates.Rx(-np.pi), QubitSet(2)): pulse,
+                (gates.Rx(-np.pi), QubitSet(5)): pulse,
+                (gates.Rx(-np.pi), QubitSet(6)): pulse,
+                (gates.Ry(1.23), QubitSet(1)): pulse,
+                (gates.Rz(theta), QubitSet(1)): pulse,
+                (gates.Rz(theta), QubitSet(2)): pulse,
+                (gates.CNot(), QubitSet([1, 2])): pulse,
+                (gates.CNot(), QubitSet([2, 5])): pulse,
+                (gates.CSwap(), QubitSet([1, 2, 5])): pulse,
+            }
+        )
+        mock_device.gate_calibrations = gate_calibrations
+        mock_device.type = "QPU"
+        topology_graph = topology_graph_from_capabilites(
+            MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
+        )
+        mock_device.topology_graph = topology_graph
+
+        with self.assertWarns(UserWarning):
+            target = aws_device_to_target(mock_device)
+            self.assertEqual(
+                target.num_qubits,
+                len(
+                    set.union(
+                        *[set(q) for _, q in gate_calibrations.pulse_sequences if len(q) == 2]
+                    )
+                ),
+            )
+            self.assertEqual(
+                len(target.operations),
+                # measure adds 1 instruction, but rx(pi) and rx(-pi) have the same equivalent,
+                # subtracting 1; as a result, the number of operations in the target should be
+                # equal to the number of pulse sequence keys
+                len({g for g, _ in gate_calibrations.pulse_sequences if g.qubit_count < 3}),
+            )
+            properties_1q = MOCK_RIGETTI_STANARDIZED_PROPERTIES.oneQubitProperties
+            self.assertTrue({"x", "sx", "sxdg"}.issubset(target.operation_names))
+            self.assertTrue("rx" not in target.operation_names)
+            num_instructions_1q = len(
+                [
+                    g
+                    for g, q in gate_calibrations.pulse_sequences
+                    if (len(q) == 1 and str(int(q[0])) in properties_1q)
+                ]
+            )
+            self.assertEqual(
+                len(target.instructions),
+                num_instructions_1q
+                + len(MOCK_RIGETTI_STANARDIZED_PROPERTIES.twoQubitProperties)
+                + len(properties_1q)  # measurements
+                - 1,  # gate in 2q properties not present in calibrations
+            )
+            self.assertIn("Target for Amazon Braket QPU", target.description)
+
+            qc = QuantumCircuit(1)
+            qc.h(0)
+            self.assertEqual(
+                to_braket(qc, target=target),
+                # Qubit labels have not been passed, so the qubit used is 0 instead of 1
+                Circuit().add_verbatim_box(
+                    Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
+                ),
+            )
+            target._pass_manager = PassManager()
+            self.assertEqual(
+                to_braket(qc, target=target),
+                Circuit().add_verbatim_box(Circuit().rz(0, np.pi / 2).v(0).rz(0, np.pi / 2)),
+            )
+
     def test_target_invalid_device(self):
         """Tests target."""
         mock_device = Mock()
@@ -585,6 +686,7 @@ class TestBraketAwsBackend(TestCase):
         qubit_count = 2
         mock_device.properties.paradigm.qubitCount = qubit_count
         mock_device.properties.paradigm.nativeGateSet = ["CNOT"]
+        mock_device.gate_calibrations = None
         mock_device.type = "QPU"
         mock_device.topology_graph = complete_graph(qubit_count, create_using=DiGraph())
         backend = BraketAwsBackend(device=mock_device)
@@ -628,7 +730,14 @@ class TestBraketAwsBackend(TestCase):
         device.topology_graph = topology_graph_from_capabilites(
             MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph
         )
+        device.gate_calibrations = None
         backend = BraketAwsBackend(device=device)
+        target = backend.target
         deep = copy.deepcopy(backend)
+        deep_target = deep.target
         self.assertEqual(deep._device, backend._device)
+        self.assertEqual(deep_target.num_qubits, target.num_qubits)
+        self.assertEqual(deep_target.instructions, target.instructions)
+        self.assertEqual(deep_target.operations, target.operations)
+        self.assertEqual(deep_target.operation_names, target.operation_names)
         self.assertNotEqual(deep, backend)

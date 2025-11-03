@@ -152,8 +152,8 @@ class TestBraketProvider(TestCase):
         self.assertTrue(result)
 
     @patch("braket.aws.aws_device.AwsDevice.get_devices")
-    def test_discontinous_qubit_indices_qiskit_transpilation(self, mock_get_devices):
-        """Tests circuit transpilation with discontiguous qubit indices."""
+    def test_noncontigous_qubit_indices_qiskit_transpilation(self, mock_get_devices):
+        """Tests circuit transpilation with noncontiguous qubit indices."""
 
         mock_m_3_device = Mock()
         mock_m_3_device.name = MOCK_RIGETTI_GATE_MODEL_M_3_QPU["deviceName"]
@@ -166,6 +166,7 @@ class TestBraketProvider(TestCase):
         mock_m_3_device_properties.service = Mock()
         mock_m_3_device_properties.service.updatedAt = "2023-06-02T17:00:00+00:00"
         mock_m_3_device.properties = mock_m_3_device_properties
+        mock_m_3_device.gate_calibrations = None
         mock_m_3_device.type = "QPU"
 
         g = from_dict_of_lists(
