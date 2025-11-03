@@ -14,7 +14,7 @@ from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BackendEstimatorV2
 from qiskit.quantum_info import SparsePauliOp, Statevector
-from qiskit.transpiler import Target
+from qiskit.transpiler import PassManager, Target
 from qiskit_algorithms.minimum_eigensolvers import VQE, VQEResult
 from qiskit_algorithms.optimizers import SLSQP
 
@@ -664,7 +664,7 @@ class TestBraketAwsBackend(TestCase):
                     Circuit().rz(0, np.pi / 2).rx(0, np.pi / 2).rz(0, np.pi / 2)
                 ),
             )
-            target._pass_manager.run = lambda circuits: circuits
+            target._pass_manager = PassManager()
             self.assertEqual(
                 to_braket(qc, target=target),
                 Circuit().add_verbatim_box(Circuit().rz(0, np.pi / 2).v(0).rz(0, np.pi / 2)),
