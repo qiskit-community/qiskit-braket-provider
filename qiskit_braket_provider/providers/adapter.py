@@ -557,45 +557,21 @@ def _qpu_target(device: AwsDevice, description: str):
         qubit_properties=qubit_properties or None,
     )
     if parameter_restrictions:
-        for braket_name, restrictions in parameter_restrictions.items():
-            if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(braket_name):
-                gate_name = instruction.name
-                match num_qubits := instruction.num_qubits:
-                    case 1:
-                        _add_instruction_with_restrictions_to_target(
-                            target,
-                            instruction,
-                            braket_name,
-                            restrictions,
-                            instruction_props_1q,
-                        )
-                    case 2:
-                        _add_instruction_with_restrictions_to_target(
-                            target,
-                            instruction,
-                            braket_name,
-                            restrictions,
-                            instruction_props_2q.get(gate_name, default_props_2q),
-                        )
-                    case _:
-                        warnings.warn(
-                            f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
-                        )
+        _add_instructions_parameter_restrictions(
+            target,
+            parameter_restrictions,
+            instruction_props_1q,
+            instruction_props_2q,
+            default_props_2q,
+        )
     else:
-        for operation in properties.paradigm.nativeGateSet:
-            if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower()):
-                gate_name = instruction.name
-                match num_qubits := instruction.num_qubits:
-                    case 1:
-                        target.add_instruction(instruction, instruction_props_1q)
-                    case 2:
-                        target.add_instruction(
-                            instruction, instruction_props_2q.get(gate_name, default_props_2q)
-                        )
-                    case _:
-                        warnings.warn(
-                            f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
-                        )
+        _add_instructions_no_parameter_restrictions(
+            target,
+            properties.paradigm.nativeGateSet,
+            instruction_props_1q,
+            instruction_props_2q,
+            default_props_2q,
+        )
 
     # Add measurement if not already added
     if "measure" not in target:
@@ -607,7 +583,7 @@ def _build_instruction_props_2q(
     standardized: StandardizedPropertiesV1 | StandardizedPropertiesV2,
     indices: dict[int, int],
     default_properties: InstructionProperties,
-) -> dict[str, dict[tuple[int, int], float]]:
+) -> dict[str, dict[tuple[int, int], InstructionProperties]]:
     instruction_props_2q = defaultdict(dict)
     for k, props in standardized.twoQubitProperties.items():
         for fidelity in props.twoQubitGateFidelity:
@@ -649,7 +625,40 @@ def _get_parameter_restrictions(
     return parameter_restrictions
 
 
-def _add_instruction_with_restrictions_to_target(
+def _add_instructions_parameter_restrictions(
+    target: _SubstitutedTarget,
+    parameter_restrictions: dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]],
+    instruction_props_1q: dict[tuple[int], InstructionProperties],
+    instruction_props_2q: dict[str, dict[tuple[int, int], InstructionProperties]],
+    default_props_2q: dict[tuple[int, int], InstructionProperties | None],
+) -> None:
+    for braket_name, restrictions in parameter_restrictions.items():
+        if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(braket_name):
+            gate_name = instruction.name
+            match num_qubits := instruction.num_qubits:
+                case 1:
+                    _add_instruction_parameter_restriction(
+                        target,
+                        instruction,
+                        braket_name,
+                        restrictions,
+                        instruction_props_1q,
+                    )
+                case 2:
+                    _add_instruction_parameter_restriction(
+                        target,
+                        instruction,
+                        braket_name,
+                        restrictions,
+                        instruction_props_2q.get(gate_name, default_props_2q),
+                    )
+                case _:
+                    warnings.warn(
+                        f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
+                    )
+
+
+def _add_instruction_parameter_restriction(
     target: _SubstitutedTarget,
     instruction: QiskitInstruction,
     braket_name: str,
@@ -676,6 +685,29 @@ def _add_instruction_with_restrictions_to_target(
                 target._gate_substitutes[substitute_name] = {q: instruction_copy for q in props}
         else:
             target.add_instruction(instruction_copy, props)
+
+
+def _add_instructions_no_parameter_restrictions(
+    target: _SubstitutedTarget,
+    native_gateset: set[str],
+    instruction_props_1q: dict[tuple[int], InstructionProperties],
+    instruction_props_2q: dict[str, dict[tuple[int, int], InstructionProperties]],
+    default_props_2q: dict[tuple[int, int], InstructionProperties | None],
+) -> None:
+    for operation in native_gateset:
+        if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower()):
+            gate_name = instruction.name
+            match num_qubits := instruction.num_qubits:
+                case 1:
+                    target.add_instruction(instruction, instruction_props_1q)
+                case 2:
+                    target.add_instruction(
+                        instruction, instruction_props_2q.get(gate_name, default_props_2q)
+                    )
+                case _:
+                    warnings.warn(
+                        f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
+                    )
 
 
 def to_braket(
