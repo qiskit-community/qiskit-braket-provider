@@ -594,8 +594,14 @@ class TestBraketAwsBackend(TestCase):
 
         with self.assertWarns(UserWarning):
             target = aws_device_to_target(mock_device)
-            num_qubits = len(topology_graph)
-            self.assertEqual(target.num_qubits, num_qubits)
+            self.assertEqual(
+                target.num_qubits,
+                len(
+                    set.union(
+                        *[set(q) for _, q in gate_calibrations.pulse_sequences if len(q) == 2]
+                    )
+                ),
+            )
             self.assertEqual(
                 # measure adds 1 instruction, but rx(pi) and rx(-pi) have the same equivalent,
                 # subtracting 1; as a result, the number of operations in the target should be
