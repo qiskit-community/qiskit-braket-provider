@@ -589,7 +589,6 @@ class TestBraketAwsBackend(TestCase):
         """Tests target with gate calibrations and substitutions."""
         mock_device = Mock()
         mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
-        mock_device.properties.paradigm.nativeGateSet.append("cswap")
         mock_device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES
         theta = FreeParameter("theta")
         pulse = PulseSequence()
@@ -605,6 +604,7 @@ class TestBraketAwsBackend(TestCase):
                 (gates.Rx(-np.pi), QubitSet(2)): pulse,
                 (gates.Rx(-np.pi), QubitSet(5)): pulse,
                 (gates.Rx(-np.pi), QubitSet(6)): pulse,
+                (gates.Ry(1.23), QubitSet(1)): pulse,
                 (gates.Rz(theta), QubitSet(1)): pulse,
                 (gates.Rz(theta), QubitSet(2)): pulse,
                 (gates.CNot(), QubitSet([1, 2])): pulse,

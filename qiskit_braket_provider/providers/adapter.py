@@ -443,6 +443,7 @@ def _get_controlled_gateset(base_gateset: set[str], max_qubits: int | None = Non
     }
 
 
+# TODO: move target construction to a dedicated file; AwsDevice target construction is getting big
 def local_simulator_to_target(simulator: LocalSimulator) -> Target:
     """Converts properties of a Braket LocalSimulator into a Qiskit Target object.
 
@@ -637,7 +638,7 @@ def _add_instructions_parameter_restrictions(
             gate_name = instruction.name
             match num_qubits := instruction.num_qubits:
                 case 1:
-                    _add_instruction_parameter_restriction(
+                    _add_single_instruction_parameter_restriction(
                         target,
                         instruction,
                         braket_name,
@@ -645,7 +646,7 @@ def _add_instructions_parameter_restrictions(
                         instruction_props_1q,
                     )
                 case 2:
-                    _add_instruction_parameter_restriction(
+                    _add_single_instruction_parameter_restriction(
                         target,
                         instruction,
                         braket_name,
@@ -658,7 +659,7 @@ def _add_instructions_parameter_restrictions(
                     )
 
 
-def _add_instruction_parameter_restriction(
+def _add_single_instruction_parameter_restriction(
     target: _SubstitutedTarget,
     instruction: QiskitInstruction,
     braket_name: str,
