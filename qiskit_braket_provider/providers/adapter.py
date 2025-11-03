@@ -727,6 +727,12 @@ def to_braket(
 ) -> Circuit | list[Circuit]:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
+    The recommended way to use this method is to minimally pass in a target (instead of basis gates
+    and connectivity) and qubit labels. The former ensures that the translated circuit is actually
+    supported by the device (and doesn't, for example, include unsupported parameters for gates).
+    The latter guarantees that the output Braket circuit uses the qubit labels of the Braket device,
+    which are not necessarily contiguous.
+
     Args:
         circuit (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket circuit(s)
             or OpenQASM 3 program(s) to transpile and translate to Braket.
