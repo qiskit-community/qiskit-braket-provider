@@ -445,10 +445,9 @@ class TestBraketEstimator(unittest.TestCase):
         # Compare results for the first (and only) PUB
         self.assertTrue(
             np.allclose(
-                # TODO: the calls to `reversed` should not be necessary
-                [list(reversed(arr)) for arr in self.estimator.run(
+                self.estimator.run(
                     [(chsh_circuit, reshaped_ops, individual_phases)]
-                ).result()[0].data.evs],
+                ).result()[0].data.evs,
                 BackendEstimatorV2(backend=self.backend).run(
                     [(chsh_circuit, reshaped_ops, individual_phases)]
                 ).result()[0].data.evs,

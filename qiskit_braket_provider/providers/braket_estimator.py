@@ -266,12 +266,12 @@ class BraketEstimator(BaseEstimatorV2):
         """
         result = []
         for obs_dict in obs_list:
-            pauli = SparsePauliOp.from_list(obs_dict.items()).paulis
+            sp = SparsePauliOp.from_list(obs_dict.items()).paulis
+            pauli = str(Pauli((np.logical_or.reduce(sp.z), np.logical_or.reduce(sp.x))))
+            last_qubit = len(pauli) - 1
             pauli_ops = [
-                _PAULI_MAP[pauli_char](i)
-                for i, pauli_char in enumerate(
-                    str(Pauli((np.logical_or.reduce(pauli.z), np.logical_or.reduce(pauli.x))))
-                )
+                _PAULI_MAP[pauli_char](last_qubit - i)
+                for i, pauli_char in enumerate(pauli)
                 if pauli_char != "I"
             ]
 
