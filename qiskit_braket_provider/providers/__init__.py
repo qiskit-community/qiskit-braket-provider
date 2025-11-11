@@ -25,6 +25,8 @@ from .adapter import to_qiskit as to_qiskit
 from .braket_backend import AWSBraketBackend as AWSBraketBackend
 from .braket_backend import BraketAwsBackend as BraketAwsBackend
 from .braket_backend import BraketLocalBackend as BraketLocalBackend
+from .braket_estimator import BraketEstimator as BraketEstimator
+from .braket_estimator_job import BraketEstimatorJob as BraketEstimatorJob
 from .braket_job import AmazonBraketTask as AmazonBraketTask
 from .braket_job import AWSBraketJob as AWSBraketJob
 from .braket_provider import AWSBraketProvider as AWSBraketProvider
