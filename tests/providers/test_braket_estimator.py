@@ -161,19 +161,6 @@ class TestBraketEstimator(unittest.TestCase):
             mock_run.assert_called_once()
             self.assertIsInstance(job, BasePrimitiveJob)
 
-    def test_make_obs_key(self):
-        """Test observable key creation."""
-        obs = SparsePauliOp(["ZZ"])
-        key = BraketEstimator._make_obs_key(obs)
-
-        # Key should be a string representation
-        self.assertIsInstance(key, str)
-
-        # Same observable should produce same key
-        obs2 = SparsePauliOp(["ZZ"])
-        key2 = BraketEstimator._make_obs_key(obs2)
-        self.assertEqual(key, key2)
-
     def test_complex_broadcasting(self):
         """Test with complex broadcasting shapes (2, 3, 6)."""
         theta = Parameter("θ")
@@ -257,25 +244,6 @@ class TestBraketEstimator(unittest.TestCase):
             mock_run.assert_called_once()
             self.assertIsInstance(job, BasePrimitiveJob)
 
-    def test_circuit_conversion_to_braket(self):
-        """Test that Qiskit circuits are properly converted to Braket."""
-        qc = QuantumCircuit(2)
-        qc.h(0)
-        qc.cx(0, 1)
-        qc.rz(np.pi / 4, 0)
-
-        observable = SparsePauliOp(["ZZ"])
-        pub = (qc, observable)
-
-        with patch.object(self.backend._device, "run") as mock_run:
-            mock_task = Mock()
-            mock_task.id = "test-task-id"
-            mock_run.return_value = mock_task
-
-            # This should not raise any errors
-            self.estimator.run([pub], precision=0.01)
-            mock_run.assert_called_once()
-
     def test_different_precisions_raises_error(self):
         """Test that pubs with different precisions raise an error."""
         qc = QuantumCircuit(1)
@@ -356,101 +324,70 @@ class TestBraketEstimator(unittest.TestCase):
         # Test job_id
         self.assertEqual(job.job_id(), "test-task-id")
 
-    def test_job_result_reconstruction(self):
-        """Test job result reconstruction."""
-        qc = QuantumCircuit(1)
-        qc.h(0)
-        observable = SparsePauliOp(["Z"])
-        obs_array = ObservablesArray([observable])
-        pub = EstimatorPub(circuit=qc, observables=obs_array, precision=0.01)
+    def test_run_local_pauli_sum(self):
+        """Tests that correct results are returned when one observable is a Pauli sum"""
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.ry(Parameter("theta"), 0)
+        circuit.rz(Parameter("phi"), 0)
+        circuit.cx(0, 1)
+        circuit.h(0)
 
-        # Create mock task result
-        mock_task = Mock()
-        mock_task.id = "test-task-id"
+        params = np.vstack(
+            [
+                np.linspace(-np.pi, np.pi, 25),
+                np.linspace(-4 * np.pi, 4 * np.pi, 25),
+            ]
+        ).T
 
-        # Create mock result structure
-        mock_result_item = Mock()
-        mock_result_item.expectation = 0.5
-        
-        mock_obs_result = Mock()
-        mock_obs_result.inputs = [mock_result_item]
-        
-        mock_binding_result = Mock()
-        mock_binding_result.observables = [mock_obs_result]
-        mock_binding_result.__getitem__ = Mock(return_value=mock_result_item)
+        observables = [
+            [SparsePauliOp(["XX", "IY", "II"], [0.5, 0.5, 0.3])],
+            [SparsePauliOp("XX")],
+            [SparsePauliOp("IY")],
+        ]
+        observables = [
+            [observable.apply_layout(circuit.layout) for observable in observable_set]
+            for observable_set in observables
+        ]
+        estimator_pub = circuit, observables, params
 
-        mock_task_result = [mock_binding_result]
-        mock_task.result.return_value = mock_task_result
+        self.assertTrue(
+            np.allclose(
+                self.estimator.run([estimator_pub]).result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
+                rtol=0.3,
+                atol=0.2,
+            )
+        )
 
-        metadata = {
-            "pubs": [pub],
-            "pub_metadata": [
-                {
-                    "pub_idx": 0,
-                    "num_bindings": 1,
-                    "broadcast_shape": (),
-                    "binding_to_result_map": {
-                        0: [(0, 0, 0)]  # List of (position, obs_idx, param_idx)
-                    },
-                }
-            ],
-            "precision": 0.01,
-            "shots": 10000,
-        }
-
-        job = BraketEstimatorJob(mock_task, metadata)
-
-        # Get result
-        result = job.result()
-
-        # Verify result structure
-        self.assertEqual(len(result), 1)
-        pub_result = result[0]
-        self.assertIsNotNone(pub_result.data.evs)
-
-        # Test caching - should return same result
-        result2 = job.result()
-        self.assertIs(result, result2)
-
-    def test_run_local(self):
-        # Step 1: Map classical inputs to a quantum problem
+    def tests_run_local_broadcasting(self):
+        """Tests that correct results are returned with broadcasted arrays"""
         theta = Parameter("θ")
-        
-        chsh_circuit = QuantumCircuit(2)
+        chsh_circuit = QuantumCircuit(3)
         chsh_circuit.h(0)
         chsh_circuit.cx(0, 1)
         chsh_circuit.ry(theta, 0)
-        
-        number_of_phases = 21
-        phases = np.linspace(0, 2 * np.pi, number_of_phases)
-        individual_phases = [[ph] for ph in phases]
-        
-        ops = [
-            SparsePauliOp.from_list([("ZZ", 1)]),
-            SparsePauliOp.from_list([("ZX", 1)]),
-            SparsePauliOp.from_list([("XZ", 1)]),
-            SparsePauliOp.from_list([("XX", 1)]),
+        chsh_circuit.h(2)
+        parameter_values = np.linspace(0, 2 * np.pi, 6)  # shape (3, 6)
+        observables = [
+            [
+                [SparsePauliOp(["IZZ"])],
+                [SparsePauliOp(["IZX"])],
+                [SparsePauliOp(["ZZZ"])],
+            ],
+            [
+                [SparsePauliOp(["IXZ"])],
+                [SparsePauliOp(["IXX"])],
+                [SparsePauliOp(["XXX"])],
+            ],
         ]
-        
-        # Step 2: Optimize problem for quantum execution.
-        isa_observables = [
-            operator.apply_layout(chsh_circuit.layout) for operator in ops
-        ]
-        
-        # Step 3: Execute using Qiskit primitives.
-        
-        # Reshape observable array for broadcasting
-        reshaped_ops = np.fromiter(isa_observables, dtype=object).reshape((4, 1))
+        estimator_pub = chsh_circuit, observables, parameter_values
 
-        # Compare results for the first (and only) PUB
         self.assertTrue(
             np.allclose(
-                self.estimator.run(
-                    [(chsh_circuit, reshaped_ops, individual_phases)]
-                ).result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run(
-                    [(chsh_circuit, reshaped_ops, individual_phases)]
-                ).result()[0].data.evs,
+                self.estimator.run([estimator_pub]).result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,
             )

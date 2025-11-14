@@ -17,7 +17,7 @@ from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.quantum_info import Pauli, SparsePauliOp
 
 from braket.circuits import Observable
-from braket.circuits.observables import TensorProduct, X, Y, Z
+from braket.circuits.observables import I, Sum, TensorProduct, X, Y, Z
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from qiskit_braket_provider.providers.adapter import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
@@ -88,6 +88,7 @@ class BraketEstimator(BaseEstimatorV2):
                     "num_bindings": len(bindings),
                     "broadcast_shape": metadata["broadcast_shape"],
                     "binding_to_result_map": metadata["binding_to_result_map"],
+                    "sum_binding_indices": metadata["sum_binding_indices"],
                 }
             )
 
@@ -102,7 +103,7 @@ class BraketEstimator(BaseEstimatorV2):
 
         return BraketEstimatorJob(
             self._backend._device.run(ProgramSet(all_bindings, shots_per_executable=shots)),
-            metadata
+            metadata,
         )
 
     @staticmethod
@@ -146,11 +147,13 @@ class BraketEstimator(BaseEstimatorV2):
         observables = np.asarray(pub.observables)
         param_values = pub.parameter_values
 
-        observables_broadcast, param_indices_broadcast = np.broadcast_arrays(
-            observables,
-            np.fromiter(np.ndindex(shape := param_values.shape), dtype=object).reshape(shape),
-        ) if param_values.shape != () else (
-            observables, np.empty(observables.shape, dtype=object)
+        observables_broadcast, param_indices_broadcast = (
+            np.broadcast_arrays(
+                observables,
+                np.fromiter(np.ndindex(shape := param_values.shape), dtype=object).reshape(shape),
+            )
+            if param_values.shape != ()
+            else (observables, np.empty(observables.shape, dtype=object))
         )
 
         obs_keys = {BraketEstimator._make_obs_key(obs): obs for obs in observables.flatten()}
@@ -164,6 +167,7 @@ class BraketEstimator(BaseEstimatorV2):
 
         bindings = []
         binding_to_result_map = {}
+        sum_binding_indices = set()
         processed_obs_keys = set()
 
         # TODO: group mutually commuting observables
@@ -178,43 +182,55 @@ class BraketEstimator(BaseEstimatorV2):
                 ok
                 for ok, prs in obs_groups.items()
                 if (
-                    frozenset(pi for _, pi in prs) == param_indices
-                    and ok not in processed_obs_keys
+                    frozenset(pi for _, pi in prs) == param_indices and ok not in processed_obs_keys
                 )
             ]
             processed_obs_keys.update(matching_obs_keys)
+            param_idx_map = {pk: idx for idx, pk in enumerate(param_indices)}
+
+            circuit = to_braket(
+                pub.circuit, target=target, verbatim=self._verbatim, qubit_labels=qubit_labels
+            )
+            observables = BraketEstimator._translate_observables(
+                [obs_keys[ok] for ok in matching_obs_keys]
+            )
+            parameter_sets = BraketEstimator._translate_parameters(
+                [param_values[pi] for pi in param_indices] if param_values.shape != () else None
+            )
+            binding_idx = len(bindings)
+            monomials = []
+            for ok, observable in zip(matching_obs_keys, observables):
+                if isinstance(observable, Sum):
+                    bindings.append(
+                        CircuitBinding(circuit, input_sets=parameter_sets, observables=observable)
+                    )
+                    # Map each position in the broadcast to its location in the binding result
+                    binding_to_result_map[binding_idx] = [
+                        (position, None, param_idx_map[pi]) for position, pi in obs_groups[ok]
+                    ]
+                    sum_binding_indices.add(binding_idx)
+                    binding_idx += 1
+                else:
+                    monomials.append((ok, observable))
+
+            obs_idx_map = {ok: idx for idx, (ok, _) in enumerate(monomials)}
 
             bindings.append(
                 CircuitBinding(
-                    to_braket(
-                        pub.circuit,
-                        target=target,
-                        verbatim=self._verbatim,
-                        qubit_labels=qubit_labels,
-                    ),
-                    input_sets=BraketEstimator._translate_parameters(
-                        [param_values[pi] for pi in param_indices]
-                        if param_values.shape != () else None
-                    ),
-                    observables=BraketEstimator._translate_observables(
-                        [obs_keys[ok] for ok in matching_obs_keys]
-                    ),
+                    circuit, input_sets=parameter_sets, observables=[obs for _, obs in monomials]
                 )
             )
-
-            obs_idx_map = {ok: idx for idx, ok in enumerate(matching_obs_keys)}
-            param_idx_map = {pk: idx for idx, pk in enumerate(param_indices)}
 
             # Map each position in the broadcast to its location in the binding result
             binding_to_result_map[len(bindings) - 1] = [
                 (position, obs_idx_map[ok], param_idx_map[pi])
-                for ok in matching_obs_keys
+                for ok, _ in monomials
                 for position, pi in obs_groups[ok]
             ]
-
         return bindings, {
             "broadcast_shape": observables_broadcast.shape,
             "binding_to_result_map": binding_to_result_map,
+            "sum_binding_indices": sum_binding_indices,
         }
 
     @staticmethod
@@ -244,7 +260,7 @@ class BraketEstimator(BaseEstimatorV2):
         """
         if param_list is None:
             return None
-            
+
         data = defaultdict(list)
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
@@ -266,15 +282,36 @@ class BraketEstimator(BaseEstimatorV2):
         """
         result = []
         for obs_dict in obs_list:
-            sp = SparsePauliOp.from_list(obs_dict.items()).paulis
-            pauli = str(Pauli((np.logical_or.reduce(sp.z), np.logical_or.reduce(sp.x))))
-            last_qubit = len(pauli) - 1
-            pauli_ops = [
-                _PAULI_MAP[pauli_char](last_qubit - i)
-                for i, pauli_char in enumerate(pauli)
-                if pauli_char != "I"
-            ]
-
-            if pauli_ops:
-                result.append(TensorProduct(pauli_ops))
+            sp = SparsePauliOp.from_list(obs_dict.items())
+            result.append(
+                Sum(
+                    [
+                        BraketEstimator._pauli_to_observable(pauli, np.real(coeff))
+                        for pauli, coeff in zip(sp.paulis, sp.coeffs)
+                    ]
+                )
+                if len(sp) > 1
+                else BraketEstimator._pauli_to_observable(sp.paulis[0], np.real(sp.coeffs[0]))
+            )
         return result
+
+    @staticmethod
+    def _pauli_to_observable(pauli: Pauli, coeff: float = 1.0) -> Observable:
+        """
+        Translate a single Pauli and a coefficient to a Braket observable.
+
+        Args:
+            pauli (Pauli): Pauli observable to translate.
+            coeff (float): Coefficient of the Pauli. Default: 1.
+
+        Returns:
+            Observable: Corresponding Braket observable
+        """
+        factors = [
+            _PAULI_MAP[pauli_char](i)
+            for i, pauli_char in enumerate(reversed(str(pauli)))
+            if pauli_char != "I"
+        ]
+        if not factors:
+            return I(0) * coeff  # Still include trivial term so expectation is correct
+        return (TensorProduct(factors) if len(factors) > 1 else factors[0]) * coeff

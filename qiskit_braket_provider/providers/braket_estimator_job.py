@@ -8,7 +8,7 @@ from braket.tasks import ProgramSetQuantumTaskResult, QuantumTask
 
 class BraketEstimatorJob(BasePrimitiveJob):
     """
-    Job class for BraketEstimatorV2.
+    Job class for BraketEstimator.
 
     This job wraps a Braket QuantumTask and reconstructs PrimitiveResult
     from the ProgramSetQuantumTaskResult.
@@ -124,17 +124,21 @@ class BraketEstimatorJob(BasePrimitiveJob):
             num_bindings = pub_meta["num_bindings"]
             broadcast_shape = pub_meta["broadcast_shape"]
             binding_map = pub_meta["binding_to_result_map"]
+            sum_binding_indices = pub_meta["sum_binding_indices"]
 
             evs = np.zeros(broadcast_shape, dtype=float)
             for local_binding_idx in range(num_bindings):
                 binding_result = task_result[binding_offset + local_binding_idx]
                 num_observables = len(binding_result.observables)
-                
+
                 for position, obs_idx, param_idx in binding_map[local_binding_idx]:
                     # CircuitBinding returns results organized by parameter sets
                     # For each parameter, we get all observables
-                    flat_idx = param_idx * num_observables + obs_idx
-                    evs[np.unravel_index(position, broadcast_shape)] = binding_result[flat_idx].expectation
+                    evs[np.unravel_index(position, broadcast_shape)] = (
+                        binding_result.expectation(param_idx)
+                        if local_binding_idx in sum_binding_indices
+                        else binding_result[param_idx * num_observables + obs_idx].expectation
+                    )
 
             pub_results.append(
                 PubResult(
