@@ -74,44 +74,8 @@ class TestBraketBackend(TestCase):
         self.assertEqual(repr(backend), "BraketBackend[default]")
 
 
-class TestBraketAwsBackend(TestCase):
-    """Tests BraketBackend."""
-
-    def test_device_backend(self):
-        """Tests device backend."""
-        device = Mock()
-        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
-        device.gate_calibrations = None
-        device.type = "QPU"
-        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
-        backend = BraketAwsBackend(device=device)
-        self.assertTrue(backend)
-        self.assertIsInstance(backend.target, Target)
-        self.assertIsNone(backend.max_circuits)
-        user_agent = f"QiskitBraketProvider/{version.__version__}"
-        device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
-        with self.assertRaises(NotImplementedError):
-            backend.dtm()
-        with self.assertRaises(NotImplementedError):
-            backend.meas_map()
-        with self.assertRaises(NotImplementedError):
-            backend.qubit_properties(0)
-        with self.assertRaises(NotImplementedError):
-            backend.drive_channel(0)
-        with self.assertRaises(NotImplementedError):
-            backend.acquire_channel(0)
-        with self.assertRaises(NotImplementedError):
-            backend.measure_channel(0)
-        with self.assertRaises(NotImplementedError):
-            backend.control_channel([0, 1])
-
-    def test_invalid_identifiers(self):
-        """Test the invalid identifiers of BraketAwsBackend."""
-        with self.assertRaises(ValueError):
-            BraketAwsBackend()
-
-        with self.assertRaises(ValueError):
-            BraketAwsBackend(arn="some_arn", device="some_device")
+class TestBraketLocalBackend(TestCase):
+    """Tests class for BraketLocalBackend."""
 
     def test_local_backend(self):
         """Tests local backend."""
@@ -179,6 +143,154 @@ class TestBraketAwsBackend(TestCase):
         self.assertTrue(
             np.allclose(result.get_statevector(), np.array([0, 0, inv_sqrt_2, inv_sqrt_2]))
         )
+
+    @patch(
+        "braket.devices.LocalSimulator.run",
+        side_effect=[
+            Mock(return_value=Mock(id="0", spec=LocalQuantumTask)),
+            Exception("Mock exception"),
+        ],
+    )
+    def test_local_backend_run_exception(self, braket_devices_run):
+        """Tests local backend with exception thrown during second run"""
+        backend = BraketLocalBackend(name="default")
+
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+
+        with self.assertRaises(Exception):
+            backend.run([circuit, circuit], shots=0)  # First run should pass
+        braket_devices_run.assert_called()
+
+    def test_meas_level_enum(self):
+        """Check that enum meas level can be successfully accessed without error"""
+        backend = BraketLocalBackend(name="default")
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        circuit.measure(0, 0)
+        backend.run(circuit, shots=10, meas_level=MockMeasLevelEnum.LEVEL_TWO)
+
+    def test_meas_level_2(self):
+        """Check that there's no error for asking for classified measurement results."""
+        backend = BraketLocalBackend(name="default")
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        circuit.measure(0, 0)
+        backend.run(circuit, shots=10, meas_level=2)
+
+    def test_meas_level_1(self):
+        """Check that there's an exception for asking for raw measurement results."""
+        backend = BraketLocalBackend(name="default")
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        circuit.measure(0, 0)
+        with self.assertRaises(exception.QiskitBraketException):
+            backend.run(circuit, shots=10, meas_level=1)
+
+    def test_vqe(self):
+        """Tests VQE."""
+        local_simulator = BraketLocalBackend(name="default")
+        h2_op = SparsePauliOp(
+            ["II", "IZ", "ZI", "ZZ", "XX"],
+            coeffs=[
+                -1.052373245772859,
+                0.39793742484318045,
+                -0.39793742484318045,
+                -0.01128010425623538,
+                0.18093119978423156,
+            ],
+        )
+
+        estimator = BackendEstimatorV2(backend=local_simulator)
+
+        ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
+        slsqp = SLSQP(maxiter=1)
+
+        vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)
+
+        result = vqe.compute_minimum_eigenvalue(h2_op)
+
+        self.assertIsInstance(result, VQEResult)
+        self.assertEqual(len(result.optimal_parameters), 8)
+        self.assertEqual(len(list(result.optimal_point)), 8)
+
+    def test_random_circuits(self):
+        """Tests with random circuits."""
+        backend = BraketLocalBackend(name="braket_sv")
+
+        for i in range(1, 10):
+            circuit = random_circuit(i, 5, seed=42)
+            qiskit_sv = Statevector(circuit)
+            with self.subTest(f"Random circuit with {i} qubits and 0 shots."):
+                self.assertTrue(
+                    np.allclose(
+                        backend.run(circuit, shots=0).result().get_statevector(),
+                        qiskit_sv.data,
+                    )
+                )
+            with self.subTest(f"Random circuit with {i} qubits and {(shots := 10000)} shots."):
+                braket_result = backend.run(circuit, shots=shots).result().get_counts()
+                qiskit_result = qiskit_sv.probabilities_dict()
+
+                combined_results = combine_dicts(
+                    {k: float(v) / shots for k, v in braket_result.items()},
+                    qiskit_result,
+                )
+
+                for key, values in combined_results.items():
+                    if len(values) == 1:
+                        self.assertTrue(
+                            values[0] < 0.05,
+                            f"Missing {key} key in one of the results.",
+                        )
+                    else:
+                        percent_diff = abs(((float(values[0]) - values[1]) / values[0]) * 100)
+                        abs_diff = abs(values[0] - values[1])
+                        self.assertTrue(
+                            percent_diff < 10 or abs_diff < 0.05,
+                            f"Key {key} with percent difference {percent_diff} "
+                            f"and absolute difference {abs_diff}. Original values {values}",
+                        )
+
+
+class TestBraketAwsBackend(TestCase):
+    """Tests class for BraketAwsBackend."""
+
+    def test_device_backend(self):
+        """Tests device backend."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        backend = BraketAwsBackend(device=device)
+        self.assertTrue(backend)
+        self.assertIsInstance(backend.target, Target)
+        self.assertIsNone(backend.max_circuits)
+        user_agent = f"QiskitBraketProvider/{version.__version__}"
+        device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
+        with self.assertRaises(NotImplementedError):
+            backend.dtm()
+        with self.assertRaises(NotImplementedError):
+            backend.meas_map()
+        with self.assertRaises(NotImplementedError):
+            backend.qubit_properties(0)
+        with self.assertRaises(NotImplementedError):
+            backend.drive_channel(0)
+        with self.assertRaises(NotImplementedError):
+            backend.acquire_channel(0)
+        with self.assertRaises(NotImplementedError):
+            backend.measure_channel(0)
+        with self.assertRaises(NotImplementedError):
+            backend.control_channel([0, 1])
+
+    def test_invalid_identifiers(self):
+        """Test the invalid identifiers of BraketAwsBackend."""
+        with self.assertRaises(ValueError):
+            BraketAwsBackend()
+
+        with self.assertRaises(ValueError):
+            BraketAwsBackend(arn="some_arn", device="some_device")
 
     def test_deprecation_warning_on_init(self):
         """Test that a deprecation warning is raised when initializing AWSBraketBackend"""
@@ -300,114 +412,6 @@ class TestBraketAwsBackend(TestCase):
         backend = BraketAwsBackend(device=device)
         with self.assertRaises(exception.QiskitBraketException):
             backend.run(1, shots=0)
-
-    @patch(
-        "braket.devices.LocalSimulator.run",
-        side_effect=[
-            Mock(return_value=Mock(id="0", spec=LocalQuantumTask)),
-            Exception("Mock exception"),
-        ],
-    )
-    def test_local_backend_run_exception(self, braket_devices_run):
-        """Tests local backend with exception thrown during second run"""
-        backend = BraketLocalBackend(name="default")
-
-        circuit = QuantumCircuit(1)
-        circuit.h(0)
-
-        with self.assertRaises(Exception):
-            backend.run([circuit, circuit], shots=0)  # First run should pass
-        braket_devices_run.assert_called()
-
-    def test_meas_level_enum(self):
-        """Check that enum meas level can be successfully accessed without error"""
-        backend = BraketLocalBackend(name="default")
-        circuit = QuantumCircuit(1, 1)
-        circuit.h(0)
-        circuit.measure(0, 0)
-        backend.run(circuit, shots=10, meas_level=MockMeasLevelEnum.LEVEL_TWO)
-
-    def test_meas_level_2(self):
-        """Check that there's no error for asking for classified measurement results."""
-        backend = BraketLocalBackend(name="default")
-        circuit = QuantumCircuit(1, 1)
-        circuit.h(0)
-        circuit.measure(0, 0)
-        backend.run(circuit, shots=10, meas_level=2)
-
-    def test_meas_level_1(self):
-        """Check that there's an exception for asking for raw measurement results."""
-        backend = BraketLocalBackend(name="default")
-        circuit = QuantumCircuit(1, 1)
-        circuit.h(0)
-        circuit.measure(0, 0)
-        with self.assertRaises(exception.QiskitBraketException):
-            backend.run(circuit, shots=10, meas_level=1)
-
-    def test_vqe(self):
-        """Tests VQE."""
-        local_simulator = BraketLocalBackend(name="default")
-        h2_op = SparsePauliOp(
-            ["II", "IZ", "ZI", "ZZ", "XX"],
-            coeffs=[
-                -1.052373245772859,
-                0.39793742484318045,
-                -0.39793742484318045,
-                -0.01128010425623538,
-                0.18093119978423156,
-            ],
-        )
-
-        estimator = BackendEstimatorV2(backend=local_simulator)
-
-        ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
-        slsqp = SLSQP(maxiter=1)
-
-        vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)
-
-        result = vqe.compute_minimum_eigenvalue(h2_op)
-
-        self.assertIsInstance(result, VQEResult)
-        self.assertEqual(len(result.optimal_parameters), 8)
-        self.assertEqual(len(list(result.optimal_point)), 8)
-
-    def test_random_circuits(self):
-        """Tests with random circuits."""
-        backend = BraketLocalBackend(name="braket_sv")
-
-        for i in range(1, 10):
-            circuit = random_circuit(i, 5, seed=42)
-            qiskit_sv = Statevector(circuit)
-            with self.subTest(f"Random circuit with {i} qubits and 0 shots."):
-                self.assertTrue(
-                    np.allclose(
-                        backend.run(circuit, shots=0).result().get_statevector(),
-                        qiskit_sv.data,
-                    )
-                )
-            with self.subTest(f"Random circuit with {i} qubits and {(shots := 10000)} shots."):
-                braket_result = backend.run(circuit, shots=shots).result().get_counts()
-                qiskit_result = qiskit_sv.probabilities_dict()
-
-                combined_results = combine_dicts(
-                    {k: float(v) / shots for k, v in braket_result.items()},
-                    qiskit_result,
-                )
-
-                for key, values in combined_results.items():
-                    if len(values) == 1:
-                        self.assertTrue(
-                            values[0] < 0.05,
-                            f"Missing {key} key in one of the results.",
-                        )
-                    else:
-                        percent_diff = abs(((float(values[0]) - values[1]) / values[0]) * 100)
-                        abs_diff = abs(values[0] - values[1])
-                        self.assertTrue(
-                            percent_diff < 10 or abs_diff < 0.05,
-                            f"Key {key} with percent difference {percent_diff} "
-                            f"and absolute difference {abs_diff}. Original values {values}",
-                        )
 
     @patch("qiskit_braket_provider.providers.braket_backend.AwsQuantumTask")
     @patch("qiskit_braket_provider.providers.braket_backend.BraketQuantumTask")
