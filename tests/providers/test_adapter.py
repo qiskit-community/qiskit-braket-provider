@@ -19,6 +19,7 @@ from braket.circuits import Circuit, Gate, GateCalibrations, Instruction, gates
 from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
+from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 import GateFidelity2Q
 from braket.devices import LocalSimulator
 from braket.experimental_capabilities import EnableExperimentalCapability
 from braket.ir.openqasm import Program
@@ -118,7 +119,17 @@ class TestAdapter(TestCase):
         """Tests target with gate calibrations and substitutions."""
         mock_device = Mock()
         mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
-        mock_device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES
+        mock_device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES.copy()
+        mock_device.properties.standardized.twoQubitProperties["1-2"].twoQubitGateFidelity.append(
+            GateFidelity2Q.parse_obj(
+                {
+                    "direction": {"control": 0, "target": 1},
+                    "gateName": "Two_Qubit_Clifford",
+                    "fidelity": 0.877,
+                    "fidelityType": {"name": "SIMULTANEOUS_INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                }
+            )
+        )
         theta = FreeParameter("theta")
         pulse = PulseSequence()
         gate_calibrations = GateCalibrations(
