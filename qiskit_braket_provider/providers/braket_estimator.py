@@ -123,15 +123,13 @@ class BraketEstimator(BaseEstimatorV2):
 
     def _pub_to_circuit_bindings(self, pub: EstimatorPub) -> tuple[list[CircuitBinding], dict]:
         """
-        Convert an EstimatorPub to a list of CircuitBinding objects.
+        Convert an EstimatorPub to a list of CircuitBindings.
 
         Since a CircuitBinding only takes one-dimensional parameter and observable arrays,
         multiple CircuitBindings are necessary to capture all the data in an EstimatorPub,
-        whose parameter values and observables can take arbitrary shapes, so long as they
-        are broadcastable.
+        whose parameter values and observables can take any broadcastable shapes.
 
-        Each pair in the broadcasted parameter values and observables appears in
-        at most one CircuitBinding.
+        Each broadcasted (parameter values, observable) pair appears in at most one CircuitBinding.
 
         Args:
             pub (EstimatorPub): The EstimatorPub to convert.
@@ -142,7 +140,7 @@ class BraketEstimator(BaseEstimatorV2):
         """
         backend = self._backend
         target = backend.target
-        qubit_labels = getattr(backend, "qubit_labels", None)
+        qubit_labels = backend.qubit_labels
 
         observables = np.asarray(pub.observables)
         param_values = pub.parameter_values
@@ -194,8 +192,10 @@ class BraketEstimator(BaseEstimatorV2):
             observables = BraketEstimator._translate_observables(
                 [obs_keys[ok] for ok in matching_obs_keys]
             )
-            parameter_sets = BraketEstimator._translate_parameters(
-                [param_values[pi] for pi in param_indices] if param_values.shape != () else None
+            parameter_sets = (
+                BraketEstimator._translate_parameters([param_values[pi] for pi in param_indices])
+                if param_values.shape != ()
+                else None
             )
             binding_idx = len(bindings)
             monomials = []
@@ -213,8 +213,6 @@ class BraketEstimator(BaseEstimatorV2):
                 else:
                     monomials.append((ok, observable))
 
-            obs_idx_map = {ok: idx for idx, (ok, _) in enumerate(monomials)}
-
             bindings.append(
                 CircuitBinding(
                     circuit, input_sets=parameter_sets, observables=[obs for _, obs in monomials]
@@ -222,6 +220,7 @@ class BraketEstimator(BaseEstimatorV2):
             )
 
             # Map each position in the broadcast to its location in the binding result
+            obs_idx_map = {ok: idx for idx, (ok, _) in enumerate(monomials)}
             binding_to_result_map[len(bindings) - 1] = [
                 (position, obs_idx_map[ok], param_idx_map[pi])
                 for ok, _ in monomials
@@ -247,20 +246,16 @@ class BraketEstimator(BaseEstimatorV2):
         return str(sorted(obs_val.items())) if isinstance(obs_val, dict) else str(obs_val)
 
     @staticmethod
-    def _translate_parameters(param_list: list[BindingsArray] | None) -> ParameterSets | None:
+    def _translate_parameters(param_list: list[BindingsArray]) -> ParameterSets:
         """
         Translate parameter values to Braket ParameterSets.
 
         Args:
-            param_list (list[BindingsArray] | None): List of parameter value arrays,
-                or None if no parameters.
+            param_list (list[BindingsArray]): List of parameter value arrays.
 
         Returns:
-            ParameterSets | None: Braket ParameterSets object, or None if no parameters.
+            ParameterSets: Braket ParameterSets object.
         """
-        if param_list is None:
-            return None
-
         data = defaultdict(list)
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
