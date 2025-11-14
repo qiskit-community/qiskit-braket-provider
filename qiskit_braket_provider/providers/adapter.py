@@ -243,7 +243,7 @@ _BRAKET_SUPPORTED_NOISES = [
     "paulichannel",
     "twoqubitdepolarizing",
     "twoqubitdephasing",
-    # "twoqubitpaulichannel" no to_open qasm support yet
+    # "twoqubitpaulichannel" no to_openqasm support yet
 ]
 
 _TRANSPILER_GATE_SUBSTITUTES: dict[tuple[str, tuple[float | str, ...]], Gate] = {
@@ -588,14 +588,14 @@ def _build_instruction_props_2q(
     instruction_props_2q = defaultdict(dict)
     for k, props in standardized.twoQubitProperties.items():
         for fidelity in props.twoQubitGateFidelity:
-            gate_name = _BRAKET_TO_QISKIT_NAMES[fidelity.gateName.lower()]
-            edge = tuple(indices[int(q)] for q in k.split("-"))
-            instruction_props_2q[gate_name][edge] = InstructionProperties(
-                error=max(
-                    1 - fidelity.fidelity,
-                    instruction_props_2q[gate_name].get(edge, default_properties).error,
+            if gate_name := _BRAKET_TO_QISKIT_NAMES.get(fidelity.gateName.lower()):
+                edge = tuple(indices[int(q)] for q in k.split("-"))
+                instruction_props_2q[gate_name][edge] = InstructionProperties(
+                    error=max(
+                        1 - fidelity.fidelity,
+                        instruction_props_2q[gate_name].get(edge, default_properties).error,
+                    )
                 )
-            )
     # Standardized 2q gate props assume bidirectionality
     for edge_props in instruction_props_2q.values():
         edge_props.update(
