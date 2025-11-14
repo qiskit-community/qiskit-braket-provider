@@ -369,7 +369,9 @@ class TestBraketEstimator(unittest.TestCase):
         chsh_circuit.cx(0, 1)
         chsh_circuit.ry(theta, 0)
         chsh_circuit.h(2)
-        parameter_values = np.linspace(0, 2 * np.pi, 6)  # shape (3, 6)
+        parameter_values = np.array(  # shape (3, 6)
+            [np.linspace(0, 2 * np.pi, 6), np.linspace(0, np.pi, 6), np.linspace(0, np.pi / 2, 6)]
+        )
         observables = [
             [
                 [SparsePauliOp(["IZZ"])],
