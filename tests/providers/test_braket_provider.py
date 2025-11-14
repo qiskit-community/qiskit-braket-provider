@@ -14,13 +14,15 @@ from qiskit.providers.exceptions import QiskitBackendNotFoundError
 from braket.aws import AwsDevice, AwsDeviceType, AwsQuantumTaskBatch, AwsSession
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
 from braket.circuits import Circuit
-from qiskit_braket_provider.providers import BraketProvider, to_braket, to_qiskit
-from qiskit_braket_provider.providers.braket_backend import (
+from qiskit_braket_provider import (
+    AWSBraketProvider,
     BraketAwsBackend,
-    BraketBackend,
     BraketLocalBackend,
+    BraketProvider,
+    to_braket,
+    to_qiskit,
 )
-from qiskit_braket_provider.providers.braket_provider import AWSBraketProvider
+from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from tests.providers.mocks import (
     MOCK_GATE_MODEL_SIMULATOR_SV,
     MOCK_GATE_MODEL_SIMULATOR_TN,

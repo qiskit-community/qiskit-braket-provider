@@ -8,13 +8,13 @@ from qiskit.providers import JobStatus
 
 from braket.aws import AwsQuantumTask
 from braket.aws.queue_information import QuantumTaskQueueInfo, QueueType
-from qiskit_braket_provider.providers import (
+from qiskit_braket_provider import (
     AmazonBraketTask,
     AWSBraketJob,
+    BraketAwsBackend,
     BraketLocalBackend,
     BraketQuantumTask,
 )
-from qiskit_braket_provider.providers.braket_backend import BraketAwsBackend
 from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
 from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK, MOCK_PROGRAM_SET_QUANTUM_TASK
 

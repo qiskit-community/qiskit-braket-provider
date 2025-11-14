@@ -6,6 +6,7 @@ import uuid
 from collections import Counter
 
 import numpy as np
+from networkx import DiGraph, from_dict_of_lists, relabel_nodes
 
 from braket.device_schema import StandardizedGateModelQpuDeviceProperties
 from braket.device_schema.rigetti import RigettiDeviceCapabilities
@@ -60,6 +61,13 @@ MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES_JSON = {
 }
 MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES = RigettiDeviceCapabilities.parse_obj(
     MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES_JSON
+)
+MOCK_RIGETTI_TOPOLOGY_GRAPH = relabel_nodes(
+    g := from_dict_of_lists(
+        MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.paradigm.connectivity.connectivityGraph,
+        create_using=DiGraph(),
+    ),
+    {n: int(n) for n in g.nodes},
 )
 MOCK_RIGETTI_GATE_MODEL_QPU = {
     "deviceName": "Aspen-10",
