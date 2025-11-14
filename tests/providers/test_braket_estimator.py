@@ -342,7 +342,7 @@ class TestBraketEstimator(unittest.TestCase):
         ).T
 
         observables = [
-            [SparsePauliOp(["XX", "IY", "II"], [0.5, 0.5, 0.3])],
+            [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
             [SparsePauliOp("XX")],
             [SparsePauliOp("IY")],
         ]
@@ -376,12 +376,12 @@ class TestBraketEstimator(unittest.TestCase):
             [
                 [SparsePauliOp(["IZZ"])],
                 [SparsePauliOp(["IZX"])],
-                [SparsePauliOp(["ZZZ"])],
+                [SparsePauliOp(["III"])],
             ],
             [
                 [SparsePauliOp(["IXZ"])],
                 [SparsePauliOp(["IXX"])],
-                [SparsePauliOp(["XXX"])],
+                [SparsePauliOp(["YYY"])],
             ],
         ]
         estimator_pub = chsh_circuit, observables, parameter_values
