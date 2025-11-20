@@ -34,7 +34,6 @@ class BraketSamplerJob(BasePrimitiveJob):
             metadata (dict): Metadata needed to reconstruct results, including:
                 - pubs: List of EstimatorPub objects
                 - pub_metadata: List of metadata dicts for each pub
-                - precision: Target precision
                 - shots: Number of shots used
         """
         super().__init__(job_id=task.id)
@@ -75,9 +74,9 @@ class BraketSamplerJob(BasePrimitiveJob):
                         start = item.start
                         arrays[item.creg_name][index] = np.flip(
                             np.packbits(
-                                samples[:, start:start + item.num_bits], axis=1, bitorder="little"
+                                samples[:, start : start + item.num_bits], axis=1, bitorder="little"
                             ),
-                            axis=-1
+                            axis=-1,
                         )
                 pub_results.append(
                     PubResult(
@@ -86,7 +85,7 @@ class BraketSamplerJob(BasePrimitiveJob):
                                 item.creg_name: BitArray(arrays[item.creg_name], item.num_bits)
                                 for item in meas_info
                             },
-                            shape=shape
+                            shape=shape,
                         ),
                         metadata={"shots": shots, "circuit_metadata": circuit.metadata},
                     )

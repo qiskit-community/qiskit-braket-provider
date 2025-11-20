@@ -21,6 +21,14 @@ class BraketSampler(BaseSamplerV2):
     def run(
         self, pubs: Iterable[SamplerPubLike], *, shots: int | None = _DEFAULT_SHOTS
     ) -> BraketSamplerJob:
+        """
+        Samples circuits with multiple parameter values.
+        Args:
+            pubs (Iterable[SamplerPubLike]): An iterable of SamplerPubLike objects to sample.
+            shots (int): Number of shots to run for each circuit. Default: 1024
+        Returns:
+            BraketSamplerJob: A job object containing the sample results.
+        """
         coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
         pub_shots = BraketSampler._pub_shots(coerced_pubs)
         circuit_bindings = []
@@ -34,7 +42,7 @@ class BraketSampler(BaseSamplerV2):
             self._backend._device.run(
                 ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable)
             ),
-            {"pubs": coerced_pubs, "pub_metadata": pub_metadata, "shots": shots_per_executable}
+            {"pubs": coerced_pubs, "pub_metadata": pub_metadata, "shots": shots_per_executable},
         )
 
     @staticmethod
@@ -54,7 +62,6 @@ class BraketSampler(BaseSamplerV2):
             else None
         )
         return CircuitBinding(to_braket(pub.circuit), input_sets=parameter_sets), param_indices
-
 
     @staticmethod
     def _translate_parameters(param_list: list[BindingsArray]) -> ParameterSets:
