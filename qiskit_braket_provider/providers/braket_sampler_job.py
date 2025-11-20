@@ -58,8 +58,8 @@ class BraketSamplerJob(BasePrimitiveJob):
             ):
                 circuit = pub.circuit
                 meas_info, max_num_bytes = BraketSamplerJob._analyze_circuit(circuit)
-                shape = metadata["shape"]
-                indices = metadata["indices"]
+                shape = pub_meta["shape"]
+                indices = pub_meta["indices"]
                 # measurements = np.zeros(shape + (shots, 1), dtype=float)
                 # for index, entry in zip(indices, pub_result.entries):
                 #     measurements[index] = np.packbits(entry.measurements)

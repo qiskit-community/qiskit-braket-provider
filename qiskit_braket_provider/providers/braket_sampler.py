@@ -11,36 +11,38 @@ from qiskit_braket_provider import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob
 
+_DEFAULT_SHOTS = 1024
+
 
 class BraketSampler(BaseSamplerV2):
     def __init__(self, backend: BraketBackend):
         self._backend = backend
 
     def run(
-        self, pubs: Iterable[SamplerPubLike], *, shots: int | None = None
+        self, pubs: Iterable[SamplerPubLike], *, shots: int | None = _DEFAULT_SHOTS
     ) -> BraketSamplerJob:
         coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
-        BraketSampler._validate_pubs(coerced_pubs)
+        pub_shots = BraketSampler._pub_shots(coerced_pubs)
         circuit_bindings = []
         pub_metadata = []
         for pub in coerced_pubs:
             circuit_binding, indices = self._pub_to_circuit_binding(pub)
             circuit_bindings.append(circuit_binding)
             pub_metadata.append({"indices": indices, "shape": pub.shape})
-        program_set = ProgramSet(
-            circuit_bindings,
-            shots_per_executable=shots,
-        )
+        shots_per_executable = pub_shots if pub_shots is not None else shots
         return BraketSamplerJob(
-            self._backend._device.run(program_set),
-            {"pubs": coerced_pubs, "pub_metadata": pub_metadata, "shots": shots}
+            self._backend._device.run(
+                ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable)
+            ),
+            {"pubs": coerced_pubs, "pub_metadata": pub_metadata, "shots": shots_per_executable}
         )
 
     @staticmethod
-    def _validate_pubs(pubs: list[SamplerPub]):
-        for pub in pubs:
-            if pub.shots:
-                raise ValueError("Per-pub shots not supported")
+    def _pub_shots(pubs: list[SamplerPub]):
+        shots_values = {pub.shots for pub in pubs}
+        if len(shots_values) > 1:
+            raise ValueError(f"All pubs must have the same shots, got: {shots_values}")
+        return list(shots_values)[0]
 
     @staticmethod
     def _pub_to_circuit_binding(pub: SamplerPub) -> tuple[CircuitBinding, np.ndarray]:
