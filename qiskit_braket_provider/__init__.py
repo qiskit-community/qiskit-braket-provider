@@ -19,9 +19,6 @@ from .providers import (
     BraketEstimator as BraketEstimator,
 )
 from .providers import (
-    BraketEstimatorJob as BraketEstimatorJob,
-)
-from .providers import (
     BraketLocalBackend as BraketLocalBackend,
 )
 from .providers import (
