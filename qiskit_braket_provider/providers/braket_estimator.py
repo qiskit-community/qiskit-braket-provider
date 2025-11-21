@@ -1,24 +1,37 @@
 import math
 from collections import defaultdict
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 import numpy as np
-from qiskit.primitives import BaseEstimatorV2, EstimatorPubLike
+from qiskit.primitives import BaseEstimatorV2, DataBin, EstimatorPubLike, PrimitiveResult, PubResult
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.quantum_info import SparsePauliOp
 
 from braket.circuits.observables import Sum
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
+from braket.tasks import ProgramSetQuantumTaskResult
 from qiskit_braket_provider.providers.adapter import to_braket, translate_sparse_pauli_op
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
-from qiskit_braket_provider.providers.braket_estimator_job import (
-    BraketEstimatorJob,
-    _JobMetadata,
-    _PubMetadata,
-)
+from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
 _DEFAULT_PRECISION = 0.015625
+
+
+@dataclass
+class _PubMetadata:
+    num_bindings: int
+    binding_to_result_map: dict[int, tuple[tuple[int, ...], int, int]]
+    sum_binding_indices: set[int]
+
+
+@dataclass
+class _JobMetadata:
+    pubs: list[EstimatorPub]
+    pub_metadata: list[_PubMetadata]
+    precision: float
+    shots: int
 
 
 class BraketEstimator(BaseEstimatorV2):
@@ -57,7 +70,7 @@ class BraketEstimator(BaseEstimatorV2):
 
     def run(
         self, pubs: Iterable[EstimatorPubLike], *, precision: float = _DEFAULT_PRECISION
-    ) -> BraketEstimatorJob:
+    ) -> BraketPrimitiveTask:
         """
         Run estimation on the given pubs.
 
@@ -67,7 +80,7 @@ class BraketEstimator(BaseEstimatorV2):
                 Default: to 0.015625
 
         Returns:
-            BraketEstimatorJob: A job object containing the estimation results.
+            BraketPrimitiveTask: A job object containing the estimation results.
         """
         coerced_pubs = [EstimatorPub.coerce(pub, precision) for pub in pubs]
         BraketEstimator._validate_pubs(coerced_pubs)
@@ -89,15 +102,15 @@ class BraketEstimator(BaseEstimatorV2):
             )
 
         shots = int(math.ceil(1.0 / precision**2))
-        return BraketEstimatorJob(
+        return BraketPrimitiveTask(
             self._backend._device.run(
                 ProgramSet(all_bindings, shots_per_executable=shots), **self._options
             ),
-            _JobMetadata(
-                pubs=coerced_pubs,
-                pub_metadata=pub_metadata,
-                precision=precision,
-                shots=shots,
+            lambda result: BraketEstimator._translate_result(
+                result,
+                _JobMetadata(
+                    pubs=coerced_pubs, pub_metadata=pub_metadata, precision=precision, shots=shots
+                ),
             ),
         )
 
@@ -259,3 +272,59 @@ class BraketEstimator(BaseEstimatorV2):
                 for param, val in zip(k, v):
                     data[param].append(val)
         return ParameterSets(data)
+
+    @staticmethod
+    def _translate_result(
+        task_result: ProgramSetQuantumTaskResult, metadata: _JobMetadata
+    ) -> PrimitiveResult[PubResult]:
+        """
+        Reconstruct PrimitiveResult from Braket task results.
+
+        Args:
+            task_result (ProgramSetQuantumTaskResult): The result of a Braket program set task
+            metadata (_JobMetadata): Metadata needed to reconstruct results, including:
+                - circuits: List of QuantumCircuits
+                - pub_metadata: List of metadata for each pub
+                - precision: Target precision
+                - shots: Number of shots used
+
+        Returns:
+            PrimitiveResult[PubResult]: PrimitiveResult containing PubResult for each pub.
+        """
+
+        pub_results = []
+        binding_offset = 0
+
+        for pub, pub_meta in zip(metadata.pubs, metadata.pub_metadata):
+            num_bindings = pub_meta.num_bindings
+            broadcast_shape = pub.shape
+            binding_map = pub_meta.binding_to_result_map
+            sum_binding_indices = pub_meta.sum_binding_indices
+
+            evs = np.zeros(broadcast_shape, dtype=float)
+            for local_binding_idx in range(num_bindings):
+                binding_result = task_result[binding_offset + local_binding_idx]
+                num_observables = len(binding_result.observables)
+
+                for position, obs_idx, param_idx in binding_map[local_binding_idx]:
+                    # CircuitBinding returns results organized by parameter sets
+                    # For each parameter, we get all observables
+                    evs[np.unravel_index(position, broadcast_shape)] = (
+                        binding_result.expectation(param_idx)
+                        if local_binding_idx in sum_binding_indices
+                        else binding_result[param_idx * num_observables + obs_idx].expectation
+                    )
+
+            pub_results.append(
+                PubResult(
+                    DataBin(evs=evs, shape=broadcast_shape),
+                    metadata={
+                        "target_precision": metadata.precision,
+                        "shots": metadata.shots,
+                        "circuit_metadata": pub.circuit.metadata,
+                    },
+                )
+            )
+            binding_offset += num_bindings
+
+        return PrimitiveResult(pub_results)

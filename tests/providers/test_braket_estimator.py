@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
-from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob
+from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob, PrimitiveResult
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.containers.observables_array import ObservablesArray
@@ -16,7 +16,7 @@ from qiskit.quantum_info import SparsePauliOp
 from braket.program_sets import ProgramSet
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_estimator import BraketEstimator
-from qiskit_braket_provider.providers.braket_estimator_job import BraketEstimatorJob, _JobMetadata
+from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
 
 class TestBraketEstimator(TestCase):
@@ -293,9 +293,7 @@ class TestBraketEstimator(TestCase):
         mock_task.id = "test-task-id"
         mock_task.state.return_value = "RUNNING"
 
-        job = BraketEstimatorJob(
-            mock_task, _JobMetadata(pubs=[], pub_metadata=[], precision=0.01, shots=10000)
-        )
+        job = BraketPrimitiveTask(mock_task, lambda result: PrimitiveResult([]))
 
         # Test status methods
         self.assertEqual(job.status(), JobStatus.RUNNING)
