@@ -30,3 +30,4 @@ from .braket_job import AWSBraketJob as AWSBraketJob
 from .braket_provider import AWSBraketProvider as AWSBraketProvider
 from .braket_provider import BraketProvider as BraketProvider
 from .braket_quantum_task import BraketQuantumTask as BraketQuantumTask
+from .braket_sampler import BraketSampler as BraketSampler
