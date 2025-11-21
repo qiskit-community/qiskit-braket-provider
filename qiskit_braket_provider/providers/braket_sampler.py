@@ -70,9 +70,11 @@ class BraketSampler(BaseSamplerV2):
     ) -> BraketPrimitiveTask:
         """
         Samples circuits with multiple parameter values.
+
         Args:
             pubs (Iterable[SamplerPubLike]): An iterable of SamplerPubLike objects to sample.
             shots (int): Number of shots to run for each circuit. Default: 1024
+
         Returns:
             BraketPrimitiveTask: A job object containing the sample results.
         """
@@ -131,8 +133,10 @@ class BraketSampler(BaseSamplerV2):
     def _translate_parameters(param_list: list[BindingsArray]) -> ParameterSets:
         """
         Translate parameter values to Braket ParameterSets.
+
         Args:
             param_list (list[BindingsArray]): List of parameter value arrays.
+
         Returns:
             ParameterSets: Braket ParameterSets object.
         """

@@ -65,7 +65,7 @@ class BraketEstimator(BaseEstimatorV2):
         self, pubs: Iterable[EstimatorPubLike], *, precision: float = _DEFAULT_PRECISION
     ) -> BraketPrimitiveTask:
         """
-        Run estimation on the given pubs.
+        Run estimator on the given pubs.
 
         Args:
             pubs (Iterable[EstimatorPubLike]): An iterable of EstimatorPubLike objects to estimate.
@@ -73,7 +73,7 @@ class BraketEstimator(BaseEstimatorV2):
                 Default: to 0.015625
 
         Returns:
-            BraketPrimitiveTask: A job object containing the estimation results.
+            BraketPrimitiveTask: A job object containing the estimator results.
         """
         coerced_pubs = [EstimatorPub.coerce(pub) for pub in pubs]
         pub_precision = BraketEstimator._pub_precision(coerced_pubs)
@@ -139,6 +139,7 @@ class BraketEstimator(BaseEstimatorV2):
         observables = np.asarray(pub.observables)
         param_values = pub.parameter_values
 
+        obs_keys = {BraketEstimator._make_obs_key(obs): obs for obs in observables.flatten()}
         observables_broadcast, param_indices_broadcast = (
             np.broadcast_arrays(
                 observables,
@@ -147,8 +148,6 @@ class BraketEstimator(BaseEstimatorV2):
             if param_values.shape != ()
             else (observables, np.empty(observables.shape, dtype=object))
         )
-
-        obs_keys = {BraketEstimator._make_obs_key(obs): obs for obs in observables.flatten()}
 
         # Group parameter sets with the same observable
         obs_groups = defaultdict(list)
