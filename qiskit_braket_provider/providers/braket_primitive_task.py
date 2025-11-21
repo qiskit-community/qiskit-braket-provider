@@ -9,9 +9,9 @@ from qiskit_braket_provider.providers.braket_quantum_task import _TASK_STATUS_MA
 
 class BraketPrimitiveTask(BasePrimitiveJob[PrimitiveResult[PubResult], JobStatus]):
     """
-    Job class for Braket-native primitive.
+    Job class for Braket-native primitives.
 
-    This class wraps a Braket QuantumTask and reconstructs PrimitiveResult
+    This class wraps a Braket QuantumTask and constructs a PrimitiveResult
     from the ProgramSetQuantumTaskResult.
     """
 
@@ -21,7 +21,7 @@ class BraketPrimitiveTask(BasePrimitiveJob[PrimitiveResult[PubResult], JobStatus
         result_translator: Callable[[ProgramSetQuantumTaskResult], PrimitiveResult],
     ):
         """
-        Initialize the estimator task.
+        Initialize the task.
 
         Args:
             task (QuantumTask): The Braket QuantumTask
