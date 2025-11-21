@@ -15,8 +15,31 @@ _DEFAULT_SHOTS = 1024
 
 
 class BraketSampler(BaseSamplerV2):
-    def __init__(self, backend: BraketBackend):
+    def __init__(
+        self,
+        backend: BraketBackend,
+        *,
+        verbatim: bool = False,
+        optimization_level: int = 0,
+        **options,
+    ):
+        """
+        Initialize the Braket sampler.
+
+        Args:
+            backend (BraketBackend): The Braket backend to run circuits on.
+            verbatim (bool): Whether to translate the circuit without any modification, in other
+                words without transpiling it. Default: False.
+            optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:
+                0: no optimization (default) - basic translation, no optimization, trivial layout
+                1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+                2: medium optimization - better routing (noise aware) and commutative cancellation
+                3: high optimization - gate resynthesis and unitary-breaking passes
+        """
         self._backend = backend
+        self._verbatim = verbatim
+        self._optimization_level = optimization_level
+        self._options = options
 
     def run(
         self, pubs: Iterable[SamplerPubLike], *, shots: int | None = _DEFAULT_SHOTS
@@ -40,7 +63,8 @@ class BraketSampler(BaseSamplerV2):
         shots_per_executable = pub_shots if pub_shots is not None else shots
         return BraketSamplerJob(
             self._backend._device.run(
-                ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable)
+                ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable),
+                **self._options,
             ),
             _JobMetadata(
                 pubs=coerced_pubs, parameter_indices=parameter_indices, shots=shots_per_executable
@@ -54,8 +78,7 @@ class BraketSampler(BaseSamplerV2):
             raise ValueError(f"All pubs must have the same shots, got: {shots_values}")
         return list(shots_values)[0]
 
-    @staticmethod
-    def _pub_to_circuit_binding(pub: SamplerPub) -> tuple[CircuitBinding, np.ndarray]:
+    def _pub_to_circuit_binding(self, pub: SamplerPub) -> tuple[CircuitBinding, np.ndarray]:
         param_values = pub.parameter_values
         param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
         parameter_sets = (
@@ -63,7 +86,16 @@ class BraketSampler(BaseSamplerV2):
             if param_values.shape != ()
             else None
         )
-        return CircuitBinding(to_braket(pub.circuit), input_sets=parameter_sets), param_indices
+        backend = self._backend
+        return CircuitBinding(
+            to_braket(
+                pub.circuit,
+                target=backend.target,
+                verbatim=self._verbatim,
+                optimization_level=self._optimization_level,
+            ),
+            input_sets=parameter_sets,
+        ), param_indices
 
     @staticmethod
     def _translate_parameters(param_list: list[BindingsArray]) -> ParameterSets:

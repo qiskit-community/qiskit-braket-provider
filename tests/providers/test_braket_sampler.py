@@ -15,6 +15,8 @@ from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob
 
 
 class TestBraketSampler(TestCase):
+    """Tests for BraketSampler."""
+
     def setUp(self):
         """Set up test fixtures."""
         self.backend = BraketLocalBackend()
