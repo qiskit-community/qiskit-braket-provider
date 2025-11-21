@@ -100,17 +100,17 @@ class TestBraketSampler(TestCase):
         data = self.sampler.run([pub]).result()[0].data
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
         for index in np.ndindex(pub.shape):
-            for bit_arrays, bit_arrays_backend in [
+            for reg, reg_backend in [
                 (data.creg_a, data_backend.creg_a),
                 (data.creg_b, data_backend.creg_b),
             ]:
-                bit_array = bit_arrays[index]
-                shots = bit_array.num_shots
+                bit_array = reg[index]
                 counts = bit_array.get_int_counts()
+                shots = bit_array.num_shots
 
-                bit_array_backend = bit_arrays_backend[index]
-                shots_backend = bit_array_backend.num_shots
+                bit_array_backend = reg_backend[index]
                 counts_backend = bit_array_backend.get_int_counts()
+                shots_backend = bit_array_backend.num_shots
 
                 self.assertEqual(counts.keys(), counts_backend.keys())
                 for k, v in counts.items():
