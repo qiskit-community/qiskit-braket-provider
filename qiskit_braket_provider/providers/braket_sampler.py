@@ -7,7 +7,7 @@ from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
-from qiskit_braket_provider import to_braket
+from qiskit_braket_provider.providers.adapter import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob, _JobMetadata
 
