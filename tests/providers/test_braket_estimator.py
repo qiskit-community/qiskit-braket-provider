@@ -20,6 +20,8 @@ from qiskit_braket_provider.providers.braket_estimator_job import BraketEstimato
 
 
 class TestBraketEstimator(TestCase):
+    """Tests for BraketEstimator."""
+
     def setUp(self):
         """Set up test fixtures."""
         self.backend = BraketLocalBackend()

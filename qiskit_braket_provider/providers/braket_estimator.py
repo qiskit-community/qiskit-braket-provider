@@ -6,12 +6,11 @@ import numpy as np
 from qiskit.primitives import BaseEstimatorV2, EstimatorPubLike
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
-from qiskit.quantum_info import Pauli, SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp
 
-from braket.circuits import Observable as BraketObservable
-from braket.circuits.observables import I, Sum, TensorProduct, X, Y, Z
+from braket.circuits.observables import Sum
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
-from qiskit_braket_provider.providers.adapter import to_braket
+from qiskit_braket_provider.providers.adapter import to_braket, translate_sparse_pauli_op
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_estimator_job import (
     BraketEstimatorJob,
@@ -19,11 +18,6 @@ from qiskit_braket_provider.providers.braket_estimator_job import (
     _PubMetadata,
 )
 
-_PAULI_MAP = {
-    "X": X,
-    "Y": Y,
-    "Z": Z,
-}
 _DEFAULT_PRECISION = 0.015625
 
 
@@ -36,7 +30,12 @@ class BraketEstimator(BaseEstimatorV2):
     """
 
     def __init__(
-        self, backend: BraketBackend, *, verbatim: bool = False, optimization_level: int = 0
+        self,
+        backend: BraketBackend,
+        *,
+        verbatim: bool = False,
+        optimization_level: int = 0,
+        **options,
     ):
         """
         Initialize the Braket estimator.
@@ -54,6 +53,7 @@ class BraketEstimator(BaseEstimatorV2):
         self._backend = backend
         self._verbatim = verbatim
         self._optimization_level = optimization_level
+        self._options = options
 
     def run(
         self, pubs: Iterable[EstimatorPubLike], *, precision: float = _DEFAULT_PRECISION
@@ -90,7 +90,9 @@ class BraketEstimator(BaseEstimatorV2):
 
         shots = int(math.ceil(1.0 / precision**2))
         return BraketEstimatorJob(
-            self._backend._device.run(ProgramSet(all_bindings, shots_per_executable=shots)),
+            self._backend._device.run(
+                ProgramSet(all_bindings, shots_per_executable=shots), **self._options
+            ),
             _JobMetadata(
                 pubs=coerced_pubs,
                 pub_metadata=pub_metadata,
@@ -134,10 +136,6 @@ class BraketEstimator(BaseEstimatorV2):
             The circuit bindings, pub shape, a map of binding index to array positions,
             and the indices of bindings with Pauli sum observables.
         """
-        backend = self._backend
-        target = backend.target
-        qubit_labels = backend.qubit_labels
-
         observables = np.asarray(pub.observables)
         param_values = pub.parameter_values
 
@@ -181,12 +179,18 @@ class BraketEstimator(BaseEstimatorV2):
             processed_obs_keys.update(matching_obs_keys)
             param_idx_map = {pk: idx for idx, pk in enumerate(param_indices)}
 
+            backend = self._backend
             circuit = to_braket(
-                pub.circuit, target=target, verbatim=self._verbatim, qubit_labels=qubit_labels
+                pub.circuit,
+                target=backend.target,
+                verbatim=self._verbatim,
+                qubit_labels=backend.qubit_labels,
+                optimization_level=self._optimization_level,
             )
-            observables = BraketEstimator._translate_observables(
-                [obs_keys[ok] for ok in matching_obs_keys]
-            )
+            braket_observables = [
+                translate_sparse_pauli_op(SparsePauliOp.from_list(obs_keys[ok].items()))
+                for ok in matching_obs_keys
+            ]
             parameter_sets = (
                 BraketEstimator._translate_parameters([param_values[pi] for pi in param_indices])
                 if param_values.shape != ()
@@ -194,7 +198,7 @@ class BraketEstimator(BaseEstimatorV2):
             )
             binding_idx = len(bindings)
             monomials = []
-            for ok, observable in zip(matching_obs_keys, observables):
+            for ok, observable in zip(matching_obs_keys, braket_observables):
                 if isinstance(observable, Sum):
                     bindings.append(
                         CircuitBinding(circuit, input_sets=parameter_sets, observables=observable)
@@ -255,51 +259,3 @@ class BraketEstimator(BaseEstimatorV2):
                 for param, val in zip(k, v):
                     data[param].append(val)
         return ParameterSets(data)
-
-    @staticmethod
-    def _translate_observables(obs_list: list) -> list[BraketObservable]:
-        """
-        Translate a list of Qiskit observables to Braket observables.
-
-        Args:
-            obs_list (list): List of observables from an ObservablesArray.
-                Each observable is a dict mapping Pauli strings to coefficients.
-
-        Returns:
-            list[BraketObservable]: List of Braket Observable objects (one per input observable).
-        """
-        result = []
-        for obs_dict in obs_list:
-            sp = SparsePauliOp.from_list(obs_dict.items())
-            result.append(
-                Sum(
-                    [
-                        BraketEstimator._pauli_to_observable(pauli, np.real(coeff))
-                        for pauli, coeff in zip(sp.paulis, sp.coeffs)
-                    ]
-                )
-                if len(sp) > 1
-                else BraketEstimator._pauli_to_observable(sp.paulis[0], np.real(sp.coeffs[0]))
-            )
-        return result
-
-    @staticmethod
-    def _pauli_to_observable(pauli: Pauli, coeff: float = 1.0) -> BraketObservable:
-        """
-        Translate a single Pauli and a coefficient to a Braket observable.
-
-        Args:
-            pauli (Pauli): Pauli observable to translate.
-            coeff (float): Coefficient of the Pauli. Default: 1.
-
-        Returns:
-            BraketObservable: Corresponding Braket observable
-        """
-        factors = [
-            _PAULI_MAP[pauli_char](i)
-            for i, pauli_char in enumerate(reversed(str(pauli)))
-            if pauli_char != "I"
-        ]
-        if not factors:
-            return I(0) * coeff  # Still include trivial term so expectation is correct
-        return (TensorProduct(factors) if len(factors) > 1 else factors[0]) * coeff
