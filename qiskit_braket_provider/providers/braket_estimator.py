@@ -1,4 +1,3 @@
-import math
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -95,7 +94,7 @@ class BraketEstimator(BaseEstimatorV2):
             )
 
         shots = int(
-            math.ceil(1.0 / (pub_precision if pub_precision is not None else precision) ** 2)
+            np.ceil(1.0 / (pub_precision if pub_precision is not None else precision) ** 2)
         )
         return BraketPrimitiveTask(
             self._backend._device.run(
