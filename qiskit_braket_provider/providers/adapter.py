@@ -35,23 +35,11 @@ from sympy import Add, Expr, Mul, Pow, Symbol
 
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice, AwsDeviceType
-from braket.circuits import (
-    Circuit,
-    Instruction,
-    measure,
-)
-from braket.circuits import (
-    Observable as BraketObservable,
-)
-from braket.circuits import (
-    gates as braket_gates,
-)
-from braket.circuits import (
-    noises as braket_noises,
-)
-from braket.circuits import (
-    observables as braket_observables,
-)
+from braket.circuits import Circuit, Instruction, measure
+from braket.circuits import Observable as BraketObservable
+from braket.circuits import gates as braket_gates
+from braket.circuits import noises as braket_noises
+from braket.circuits import observables as braket_observables
 from braket.default_simulator.openqasm.interpreter import Interpreter
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
@@ -60,10 +48,7 @@ from braket.device_schema import (
     OpenQASMDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
-from braket.device_schema.rigetti import (
-    RigettiDeviceCapabilities,
-    RigettiDeviceCapabilitiesV2,
-)
+from braket.device_schema.rigetti import RigettiDeviceCapabilities, RigettiDeviceCapabilitiesV2
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 import (
     StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV1,
