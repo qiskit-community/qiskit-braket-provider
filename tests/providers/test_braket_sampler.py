@@ -98,15 +98,11 @@ class TestBraketSampler(TestCase):
         pub = SamplerPub.coerce((chsh_circuit, parameter_values))
 
         data = self.sampler.run([pub]).result()[0].data
-        bit_array_a = data.creg_a
-        bit_array_b = data.creg_b
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
-        bit_array_a_backend = data_backend.creg_a
-        bit_array_b_backend = data_backend.creg_b
         for index in np.ndindex(pub.shape):
             for bit_arrays, bit_arrays_backend in [
-                (bit_array_a, bit_array_a_backend),
-                (bit_array_b, bit_array_b_backend),
+                (data.creg_a, data_backend.creg_a),
+                (data.creg_b, data_backend.creg_b),
             ]:
                 bit_array = bit_arrays[index]
                 shots = bit_array.num_shots
