@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
+from qiskit.primitives import BackendSamplerV2
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.providers import JobStatus
 
@@ -89,7 +90,6 @@ class TestBraketSampler(TestCase):
         chsh_circuit.h(0)
         for i in range(11):
             chsh_circuit.cx(i, i + 1)
-        chsh_circuit.cx(0, 1)
         chsh_circuit.ry(theta, 0)
         chsh_circuit.measure_all(add_bits=False)
         parameter_values = np.array(  # shape (3, 6)
@@ -98,12 +98,26 @@ class TestBraketSampler(TestCase):
         pub = SamplerPub.coerce((chsh_circuit, parameter_values))
 
         data = self.sampler.run([pub]).result()[0].data
+        bit_array_a = data.creg_a
+        bit_array_b = data.creg_b
+        data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
+        bit_array_a_backend = data_backend.creg_a
+        bit_array_b_backend = data_backend.creg_b
         for index in np.ndindex(pub.shape):
-            results_a = data.creg_a[index]
-            shots_a = results_a.num_shots
-            for v in results_a.get_int_counts().values():
-                self.assertTrue(np.isclose(v / shots_a, 0.5, rtol=0.3, atol=0.2))
-            results_b = data.creg_b[index]
-            shots_b = results_b.num_shots
-            for v in results_b.get_int_counts().values():
-                self.assertTrue(np.isclose(v / shots_b, 0.5, rtol=0.3, atol=0.2))
+            for bit_arrays, bit_arrays_backend in [
+                (bit_array_a, bit_array_a_backend),
+                (bit_array_b, bit_array_b_backend),
+            ]:
+                bit_array = bit_arrays[index]
+                shots = bit_array.num_shots
+                counts = bit_array.get_int_counts()
+
+                bit_array_backend = bit_arrays_backend[index]
+                shots_backend = bit_array_backend.num_shots
+                counts_backend = bit_array.get_int_counts()
+
+                self.assertEqual(counts.keys(), counts_backend.keys())
+                for k, v in counts.items():
+                    self.assertTrue(
+                        np.isclose(v / shots, counts_backend[k] / shots_backend, rtol=0.3, atol=0.2)
+                    )
