@@ -16,12 +16,16 @@ from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.quantum_info import Pauli, SparsePauliOp
 
-from braket.circuits import Observable
+from braket.circuits import Observable as BraketObservable
 from braket.circuits.observables import I, Sum, TensorProduct, X, Y, Z
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from qiskit_braket_provider.providers.adapter import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
-from qiskit_braket_provider.providers.braket_estimator_job import BraketEstimatorJob
+from qiskit_braket_provider.providers.braket_estimator_job import (
+    BraketEstimatorJob,
+    _JobMetadata,
+    _PubMetadata,
+)
 
 _PAULI_MAP = {
     "X": X,
@@ -79,31 +83,28 @@ class BraketEstimator(BaseEstimatorV2):
         all_bindings = []
         pub_metadata = []  # Track which bindings belong to which pub
 
-        for pub_idx, pub in enumerate(coerced_pubs):
-            bindings, metadata = self._pub_to_circuit_bindings(pub)
+        for pub in coerced_pubs:
+            bindings, binding_to_result_map, sum_binding_indices = self._pub_to_circuit_bindings(
+                pub
+            )
             all_bindings.extend(bindings)
             pub_metadata.append(
-                {
-                    "pub_idx": pub_idx,
-                    "num_bindings": len(bindings),
-                    "broadcast_shape": metadata["broadcast_shape"],
-                    "binding_to_result_map": metadata["binding_to_result_map"],
-                    "sum_binding_indices": metadata["sum_binding_indices"],
-                }
+                _PubMetadata(
+                    num_bindings=len(bindings),
+                    binding_to_result_map=binding_to_result_map,
+                    sum_binding_indices=sum_binding_indices,
+                )
             )
 
         shots = int(math.ceil(1.0 / precision**2))
-        # Metadata for result reconstruction
-        metadata = {
-            "pubs": coerced_pubs,
-            "pub_metadata": pub_metadata,
-            "precision": precision,
-            "shots": shots,
-        }
-
         return BraketEstimatorJob(
             self._backend._device.run(ProgramSet(all_bindings, shots_per_executable=shots)),
-            metadata,
+            _JobMetadata(
+                pubs=coerced_pubs,
+                pub_metadata=pub_metadata,
+                precision=precision,
+                shots=shots,
+            ),
         )
 
     @staticmethod
@@ -121,7 +122,9 @@ class BraketEstimator(BaseEstimatorV2):
         if len(precisions) > 1:
             raise ValueError(f"All pubs must have the same precision, got: {precisions}")
 
-    def _pub_to_circuit_bindings(self, pub: EstimatorPub) -> tuple[list[CircuitBinding], dict]:
+    def _pub_to_circuit_bindings(
+        self, pub: EstimatorPub
+    ) -> tuple[list[CircuitBinding], dict[int, tuple[tuple[int, ...], int, int]], set[int]]:
         """
         Convert an EstimatorPub to a list of CircuitBindings.
 
@@ -135,8 +138,9 @@ class BraketEstimator(BaseEstimatorV2):
             pub (EstimatorPub): The EstimatorPub to convert.
 
         Returns:
-            tuple[list[CircuitBinding], dict]: A tuple of CircuitBindings
-            and the metadata needed to reconstruct results.
+            tuple[list[CircuitBinding], dict[int, tuple[tuple[int, ...], int, int]], set[int]]:
+            The circuit bindings, pub shape, a map of binding index to array positions,
+            and the indices of bindings with Pauli sum observables.
         """
         backend = self._backend
         target = backend.target
@@ -168,7 +172,6 @@ class BraketEstimator(BaseEstimatorV2):
         sum_binding_indices = set()
         processed_obs_keys = set()
 
-        # TODO: group mutually commuting observables
         for obs_key, pairs in obs_groups.items():
             if obs_key in processed_obs_keys:
                 continue
@@ -226,11 +229,7 @@ class BraketEstimator(BaseEstimatorV2):
                 for ok, _ in monomials
                 for position, pi in obs_groups[ok]
             ]
-        return bindings, {
-            "broadcast_shape": observables_broadcast.shape,
-            "binding_to_result_map": binding_to_result_map,
-            "sum_binding_indices": sum_binding_indices,
-        }
+        return bindings, binding_to_result_map, sum_binding_indices
 
     @staticmethod
     def _make_obs_key(obs_val: SparsePauliOp | dict[str, float]) -> str:
@@ -264,7 +263,7 @@ class BraketEstimator(BaseEstimatorV2):
         return ParameterSets(data)
 
     @staticmethod
-    def _translate_observables(obs_list: list) -> list[Observable]:
+    def _translate_observables(obs_list: list) -> list[BraketObservable]:
         """
         Translate a list of Qiskit observables to Braket observables.
 
@@ -273,7 +272,7 @@ class BraketEstimator(BaseEstimatorV2):
                 Each observable is a dict mapping Pauli strings to coefficients.
 
         Returns:
-            list[Observable]: List of Braket Observable objects (one per input observable).
+            list[BraketObservable]: List of Braket Observable objects (one per input observable).
         """
         result = []
         for obs_dict in obs_list:
@@ -291,7 +290,7 @@ class BraketEstimator(BaseEstimatorV2):
         return result
 
     @staticmethod
-    def _pauli_to_observable(pauli: Pauli, coeff: float = 1.0) -> Observable:
+    def _pauli_to_observable(pauli: Pauli, coeff: float = 1.0) -> BraketObservable:
         """
         Translate a single Pauli and a coefficient to a Braket observable.
 
@@ -300,7 +299,7 @@ class BraketEstimator(BaseEstimatorV2):
             coeff (float): Coefficient of the Pauli. Default: 1.
 
         Returns:
-            Observable: Corresponding Braket observable
+            BraketObservable: Corresponding Braket observable
         """
         factors = [
             _PAULI_MAP[pauli_char](i)

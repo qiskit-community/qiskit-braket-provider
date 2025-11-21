@@ -10,6 +10,7 @@ from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.containers.observables_array import ObservablesArray
+from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 
 from braket.program_sets import ProgramSet
@@ -300,7 +301,7 @@ class TestBraketEstimator(unittest.TestCase):
         job = BraketEstimatorJob(mock_task, metadata)
 
         # Test status methods
-        self.assertEqual(job.status(), "RUNNING")
+        self.assertEqual(job.status(), JobStatus.RUNNING)
         self.assertTrue(job.running())
         self.assertFalse(job.done())
         self.assertFalse(job.cancelled())
@@ -308,12 +309,17 @@ class TestBraketEstimator(unittest.TestCase):
 
         # Test completed state
         mock_task.state.return_value = "COMPLETED"
-        self.assertTrue(job.done())
-        self.assertTrue(job.in_final_state())
+        self.assertEqual(job.status(), JobStatus.DONE)
         self.assertFalse(job.running())
+        self.assertTrue(job.done())
+        self.assertFalse(job.cancelled())
+        self.assertTrue(job.in_final_state())
 
         # Test cancelled state
         mock_task.state.return_value = "CANCELLED"
+        self.assertEqual(job.status(), JobStatus.CANCELLED)
+        self.assertFalse(job.running())
+        self.assertFalse(job.done())
         self.assertTrue(job.cancelled())
         self.assertTrue(job.in_final_state())
 
