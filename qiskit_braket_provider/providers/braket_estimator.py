@@ -35,13 +35,6 @@ class _JobMetadata:
 
 
 class BraketEstimator(BaseEstimatorV2):
-    """
-    Efficient Braket implementation of Qiskit's BaseEstimatorV2.
-
-    This estimator converts EstimatorPub objects to Braket ProgramSet objects
-    using efficient broadcasting to minimize redundant CircuitBinding objects.
-    """
-
     def __init__(
         self,
         backend: BraketBackend,
