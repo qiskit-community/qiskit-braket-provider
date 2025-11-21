@@ -100,7 +100,8 @@ class TestBraketSampler(TestCase):
         data = self.sampler.run([pub]).result()[0].data
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
         for reg, reg_backend in [
-            (data.creg_a, data_backend.creg_a), (data.creg_b, data_backend.creg_b)
+            (data.creg_a, data_backend.creg_a),
+            (data.creg_b, data_backend.creg_b),
         ]:
             for index in np.ndindex(pub.shape):
                 bit_array = reg[index]
