@@ -20,7 +20,7 @@ from qiskit_braket_provider.providers.adapter import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
-_DEFAULT_SHOTS = 1024
+_DEFAULT_SHOTS = 1024  # Same value as BackendSamplerV2
 
 
 @dataclass
@@ -76,7 +76,7 @@ class BraketSampler(BaseSamplerV2):
         Returns:
             BraketPrimitiveTask: A job object containing the sample results.
         """
-        coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
+        coerced_pubs = [SamplerPub.coerce(pub) for pub in pubs]
         pub_shots = BraketSampler._pub_shots(coerced_pubs)
         circuit_bindings = []
         parameter_indices = []
@@ -101,7 +101,7 @@ class BraketSampler(BaseSamplerV2):
         )
 
     @staticmethod
-    def _pub_shots(pubs: list[SamplerPub]):
+    def _pub_shots(pubs: list[SamplerPub]) -> int:
         shots_values = {pub.shots for pub in pubs}
         if len(shots_values) > 1:
             raise ValueError(f"All pubs must have the same shots, got: {shots_values}")

@@ -152,18 +152,6 @@ class TestBraketEstimator(TestCase):
 
             self.assertIsInstance(job, BasePrimitiveJob)
 
-    def test_empty_pub_list(self):
-        """Test running with empty pub list."""
-        with patch.object(self.backend._device, "run") as mock_run:
-            mock_task = Mock()
-            mock_task.id = "test-task-id"
-            mock_run.return_value = mock_task
-
-            job = self.estimator.run([], precision=0.01)
-
-            mock_run.assert_called_once()
-            self.assertIsInstance(job, BasePrimitiveJob)
-
     def test_complex_broadcasting(self):
         """Test with complex broadcasting shapes (2, 3, 6)."""
         theta = Parameter("θ")

@@ -16,7 +16,7 @@ from qiskit_braket_provider.providers.adapter import to_braket, translate_sparse
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
-_DEFAULT_PRECISION = 0.015625
+_DEFAULT_PRECISION = 0.015625  # Same value as BackendEstimatorV2
 
 
 @dataclass
@@ -82,8 +82,8 @@ class BraketEstimator(BaseEstimatorV2):
         Returns:
             BraketPrimitiveTask: A job object containing the estimation results.
         """
-        coerced_pubs = [EstimatorPub.coerce(pub, precision) for pub in pubs]
-        BraketEstimator._validate_pubs(coerced_pubs)
+        coerced_pubs = [EstimatorPub.coerce(pub) for pub in pubs]
+        pub_precision = BraketEstimator._pub_precision(coerced_pubs)
 
         all_bindings = []
         pub_metadata = []  # Track which bindings belong to which pub
@@ -101,7 +101,9 @@ class BraketEstimator(BaseEstimatorV2):
                 )
             )
 
-        shots = int(math.ceil(1.0 / precision**2))
+        shots = int(
+            math.ceil(1.0 / (pub_precision if pub_precision is not None else precision) ** 2)
+        )
         return BraketPrimitiveTask(
             self._backend._device.run(
                 ProgramSet(all_bindings, shots_per_executable=shots), **self._options
@@ -115,19 +117,11 @@ class BraketEstimator(BaseEstimatorV2):
         )
 
     @staticmethod
-    def _validate_pubs(pubs: list[EstimatorPub]) -> None:
-        """
-        Validate that pubs meet requirements.
-
-        Args:
-            pubs (list[EstimatorPub]): List of EstimatorPub objects to validate.
-
-        Raises:
-            ValueError: If pubs have different precisions.
-        """
-        precisions = {pub.precision for pub in pubs if pub.precision is not None}
-        if len(precisions) > 1:
-            raise ValueError(f"All pubs must have the same precision, got: {precisions}")
+    def _pub_precision(pubs: list[EstimatorPub]) -> float:
+        precision_values = {pub.precision for pub in pubs}
+        if len(precision_values) > 1:
+            raise ValueError(f"All pubs must have the same precision, got: {precision_values}")
+        return list(precision_values)[0]
 
     def _pub_to_circuit_bindings(
         self, pub: EstimatorPub

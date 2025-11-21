@@ -1026,7 +1026,16 @@ def _validate_name_conflicts(parameters):
         )
 
 
-def translate_sparse_pauli_op(op: SparsePauliOp):
+def translate_sparse_pauli_op(op: SparsePauliOp) -> BraketObservable:
+    """
+    Translate a SparsePauliOp to a Braket observable.
+
+    Args:
+        op (SparsePauliOp): Operation to translate.
+
+    Returns:
+        BraketObservable: Corresponding Braket observable.
+    """
     return (
         braket_observables.Sum(
             [_translate_pauli(pauli, np.real(coeff)) for pauli, coeff in zip(op.paulis, op.coeffs)]
@@ -1045,7 +1054,7 @@ def _translate_pauli(pauli: Pauli, coeff: float = 1.0) -> BraketObservable:
         coeff (float): Coefficient of the Pauli. Default: 1.
 
     Returns:
-        BraketObservable: Corresponding Braket observable
+        BraketObservable: Corresponding Braket observable.
     """
     factors = [
         _PAULI_MAP[pauli_char](i)
