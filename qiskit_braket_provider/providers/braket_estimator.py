@@ -216,19 +216,21 @@ class BraketEstimator(BaseEstimatorV2):
                 else:
                     monomials.append((ok, observable))
 
-            bindings.append(
-                CircuitBinding(
-                    circuit, input_sets=parameter_sets, observables=[obs for _, obs in monomials]
+            if monomials:
+                bindings.append(
+                    CircuitBinding(
+                        circuit,
+                        input_sets=parameter_sets,
+                        observables=[obs for _, obs in monomials],
+                    )
                 )
-            )
-
-            # Map each position in the broadcast to its location in the binding result
-            obs_idx_map = {ok: idx for idx, (ok, _) in enumerate(monomials)}
-            binding_to_result_map[len(bindings) - 1] = [
-                (position, obs_idx_map[ok], param_idx_map[pi])
-                for ok, _ in monomials
-                for position, pi in obs_groups[ok]
-            ]
+                # Map each position in the broadcast to its location in the binding result
+                obs_idx_map = {ok: idx for idx, (ok, _) in enumerate(monomials)}
+                binding_to_result_map[len(bindings) - 1] = [
+                    (position, obs_idx_map[ok], param_idx_map[pi])
+                    for ok, _ in monomials
+                    for position, pi in obs_groups[ok]
+                ]
         return bindings, binding_to_result_map, sum_binding_indices
 
     @staticmethod

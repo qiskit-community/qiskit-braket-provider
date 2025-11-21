@@ -16,7 +16,7 @@ from qiskit.quantum_info import SparsePauliOp
 from braket.program_sets import ProgramSet
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_estimator import BraketEstimator
-from qiskit_braket_provider.providers.braket_estimator_job import BraketEstimatorJob
+from qiskit_braket_provider.providers.braket_estimator_job import BraketEstimatorJob, _JobMetadata
 
 
 class TestBraketEstimator(unittest.TestCase):
@@ -291,14 +291,9 @@ class TestBraketEstimator(unittest.TestCase):
         mock_task.id = "test-task-id"
         mock_task.state.return_value = "RUNNING"
 
-        metadata = {
-            "pubs": [],
-            "pub_metadata": [],
-            "precision": 0.01,
-            "shots": 10000,
-        }
-
-        job = BraketEstimatorJob(mock_task, metadata)
+        job = BraketEstimatorJob(
+            mock_task, _JobMetadata(pubs=[], pub_metadata=[], precision=0.01, shots=10000)
+        )
 
         # Test status methods
         self.assertEqual(job.status(), JobStatus.RUNNING)
@@ -351,6 +346,42 @@ class TestBraketEstimator(unittest.TestCase):
             [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
             [SparsePauliOp("XX")],
             [SparsePauliOp("IY")],
+        ]
+        observables = [
+            [observable.apply_layout(circuit.layout) for observable in observable_set]
+            for observable_set in observables
+        ]
+        estimator_pub = circuit, observables, params
+
+        self.assertTrue(
+            np.allclose(
+                self.estimator.run([estimator_pub]).result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
+                rtol=0.3,
+                atol=0.2,
+            )
+        )
+
+    def test_run_local_all_pauli_sums(self):
+        """Tests that correct results are returned when all observables are Pauli sums"""
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.ry(Parameter("theta"), 0)
+        circuit.rz(Parameter("phi"), 0)
+        circuit.cx(0, 1)
+        circuit.h(0)
+
+        params = np.vstack(
+            [
+                np.linspace(-np.pi, np.pi, 25),
+                np.linspace(-4 * np.pi, 4 * np.pi, 25),
+            ]
+        ).T
+
+        observables = [
+            [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
+            [SparsePauliOp(["YY", "ZI", "XY"], [0.5, 0.5, 0.1])],
         ]
         observables = [
             [observable.apply_layout(circuit.layout) for observable in observable_set]
