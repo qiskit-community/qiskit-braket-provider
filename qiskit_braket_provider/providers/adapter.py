@@ -1026,13 +1026,13 @@ def _validate_name_conflicts(parameters):
         )
 
 
-def translate_sparse_pauli_op(sp: SparsePauliOp):
+def translate_sparse_pauli_op(op: SparsePauliOp):
     return (
         braket_observables.Sum(
-            [_translate_pauli(pauli, np.real(coeff)) for pauli, coeff in zip(sp.paulis, sp.coeffs)]
+            [_translate_pauli(pauli, np.real(coeff)) for pauli, coeff in zip(op.paulis, op.coeffs)]
         )
-        if len(sp) > 1
-        else _translate_pauli(sp.paulis[0], np.real(sp.coeffs[0]))
+        if len(op) > 1
+        else _translate_pauli(op.paulis[0], np.real(op.coeffs[0]))
     )
 
 

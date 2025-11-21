@@ -14,8 +14,10 @@ from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
 from qiskit.transpiler import PassManager, Target
 from qiskit_ionq import ionq_gates
 
-import braket.circuits.noises as braket_noises
-from braket.circuits import Circuit, Gate, GateCalibrations, Instruction, gates
+from braket.circuits import Circuit, Gate, GateCalibrations, Instruction
+from braket.circuits import gates as braket_gates
+from braket.circuits import noises as braket_noises
+from braket.circuits import observables as braket_observables
 from braket.circuits.angled_gate import AngledGate, DoubleAngledGate, TripleAngledGate
 from braket.device_schema.ionq import IonqDeviceCapabilities
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
@@ -37,6 +39,7 @@ from qiskit_braket_provider.providers.adapter import (
     convert_qiskit_to_braket_circuit,
     convert_qiskit_to_braket_circuits,
     native_angle_restrictions,
+    translate_sparse_pauli_op,
 )
 from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
 from tests.providers.mocks import (
@@ -134,22 +137,22 @@ class TestAdapter(TestCase):
         pulse = PulseSequence()
         gate_calibrations = GateCalibrations(
             {
-                (gates.Rx(np.pi / 2), QubitSet(1)): pulse,
-                (gates.Rx(np.pi / 2), QubitSet(5)): pulse,
-                (gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
-                (gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
-                (gates.Rx(np.pi), QubitSet(1)): pulse,
-                (gates.Rx(np.pi), QubitSet(5)): pulse,
-                (gates.Rx(np.pi), QubitSet(6)): pulse,
-                (gates.Rx(-np.pi), QubitSet(2)): pulse,
-                (gates.Rx(-np.pi), QubitSet(5)): pulse,
-                (gates.Rx(-np.pi), QubitSet(6)): pulse,
-                (gates.Ry(1.23), QubitSet(1)): pulse,
-                (gates.Rz(theta), QubitSet(1)): pulse,
-                (gates.Rz(theta), QubitSet(2)): pulse,
-                (gates.CNot(), QubitSet([1, 2])): pulse,
-                (gates.CNot(), QubitSet([2, 5])): pulse,
-                (gates.CSwap(), QubitSet([1, 2, 5])): pulse,
+                (braket_gates.Rx(np.pi / 2), QubitSet(1)): pulse,
+                (braket_gates.Rx(np.pi / 2), QubitSet(5)): pulse,
+                (braket_gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
+                (braket_gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
+                (braket_gates.Rx(np.pi), QubitSet(1)): pulse,
+                (braket_gates.Rx(np.pi), QubitSet(5)): pulse,
+                (braket_gates.Rx(np.pi), QubitSet(6)): pulse,
+                (braket_gates.Rx(-np.pi), QubitSet(2)): pulse,
+                (braket_gates.Rx(-np.pi), QubitSet(5)): pulse,
+                (braket_gates.Rx(-np.pi), QubitSet(6)): pulse,
+                (braket_gates.Ry(1.23), QubitSet(1)): pulse,
+                (braket_gates.Rz(theta), QubitSet(1)): pulse,
+                (braket_gates.Rz(theta), QubitSet(2)): pulse,
+                (braket_gates.CNot(), QubitSet([1, 2])): pulse,
+                (braket_gates.CNot(), QubitSet([2, 5])): pulse,
+                (braket_gates.CSwap(), QubitSet([1, 2, 5])): pulse,
             }
         )
         mock_device.gate_calibrations = gate_calibrations
@@ -1105,6 +1108,32 @@ class TestAdapter(TestCase):
 
             braket_circuit = to_braket(qc, verbatim=True)
             self.assertGreater(len(braket_circuit.instructions), 0)
+
+    def test_translate_sparse_pauli_op(self):
+        """Tests that observables are correctly translated."""
+        self.assertEqual(
+            translate_sparse_pauli_op(
+                SparsePauliOp.from_list([("XIIZI", 1), ("IYIIY", 2), ("IIIII", -4), ("IIXII", 1)])
+            ),
+            (
+                braket_observables.Z(1) @ braket_observables.X(4)
+                + braket_observables.Y(0) @ braket_observables.Y(3) * 2
+                - braket_observables.I(0) * 4
+                + braket_observables.X(2)
+            ),
+        )
+        self.assertEqual(
+            translate_sparse_pauli_op(SparsePauliOp.from_list([("XIIZI", 3)])),
+            braket_observables.Z(1) @ braket_observables.X(4) * 3,
+        )
+        self.assertEqual(
+            translate_sparse_pauli_op(SparsePauliOp.from_list([("IIIII", -1)])),
+            braket_observables.I(0) * -1,
+        )
+        self.assertEqual(
+            translate_sparse_pauli_op(SparsePauliOp.from_list([("IIXII", 1)])),
+            braket_observables.X(2),
+        )
 
 
 class TestFromBraket(TestCase):
