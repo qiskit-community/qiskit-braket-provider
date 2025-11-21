@@ -110,7 +110,7 @@ class TestBraketSampler(TestCase):
 
                 bit_array_backend = bit_arrays_backend[index]
                 shots_backend = bit_array_backend.num_shots
-                counts_backend = bit_array.get_int_counts()
+                counts_backend = bit_array_backend.get_int_counts()
 
                 self.assertEqual(counts.keys(), counts_backend.keys())
                 for k, v in counts.items():
