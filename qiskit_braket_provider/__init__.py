@@ -28,6 +28,9 @@ from .providers import (
     BraketQuantumTask as BraketQuantumTask,
 )
 from .providers import (
+    BraketSampler as BraketSampler,
+)
+from .providers import (
     to_braket as to_braket,
 )
 from .providers import (
