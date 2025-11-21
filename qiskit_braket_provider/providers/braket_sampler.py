@@ -3,7 +3,6 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import numpy as np
-from qiskit import QuantumCircuit
 from qiskit.primitives import (
     BaseSamplerV2,
     BitArray,
@@ -167,11 +166,16 @@ class BraketSampler(BaseSamplerV2):
             task_result.entries, metadata.pubs, metadata.parameter_indices
         ):
             circuit = pub.circuit
-            meas_info, max_num_bytes = BraketSampler._analyze_circuit(circuit)
+            meas_info = [
+                _MeasureInfo(
+                    creg_name=creg.name,
+                    num_bits=(num_bits := creg.size),
+                    num_bytes=num_bits // 8 + (num_bits % 8 > 0),
+                    start=circuit.find_bit(creg[0]).index if num_bits != 0 else 0,
+                )
+                for creg in circuit.cregs
+            ]
             shape = pub.shape
-            # measurements = np.zeros(shape + (shots, 1), dtype=float)
-            # for index, entry in zip(indices, pub_result.entries):
-            #     measurements[index] = np.packbits(entry.measurements)
             memory_array = np.array(
                 [executable_result.measurements for executable_result in pub_result]
             )
@@ -201,27 +205,3 @@ class BraketSampler(BaseSamplerV2):
                 )
             )
         return PrimitiveResult(pub_results)
-
-    @staticmethod
-    def _analyze_circuit(circuit: QuantumCircuit) -> tuple[list[_MeasureInfo], int]:
-        """Analyzes the information for each creg in a circuit."""
-        meas_info = []
-        max_num_bits = 0
-        for creg in circuit.cregs:
-            num_bits = creg.size
-            start = circuit.find_bit(creg[0]).index if num_bits != 0 else 0
-            meas_info.append(
-                _MeasureInfo(
-                    creg_name=creg.name,
-                    num_bits=num_bits,
-                    num_bytes=BraketSampler._min_bytes(num_bits),
-                    start=start,
-                )
-            )
-            max_num_bits = max(max_num_bits, start + num_bits)
-        return meas_info, BraketSampler._min_bytes(max_num_bits)
-
-    @staticmethod
-    def _min_bytes(num_bits: int) -> int:
-        """Return the minimum number of bytes needed to store ``num_bits``."""
-        return num_bits // 8 + (num_bits % 8 > 0)
