@@ -92,6 +92,7 @@ class BraketSampler(BaseSamplerV2):
                 pub.circuit,
                 target=backend.target,
                 verbatim=self._verbatim,
+                qubit_labels=backend.qubit_labels,
                 optimization_level=self._optimization_level,
             ),
             input_sets=parameter_sets,
