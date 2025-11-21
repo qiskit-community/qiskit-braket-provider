@@ -16,6 +16,9 @@ from .providers import (
     BraketAwsBackend as BraketAwsBackend,
 )
 from .providers import (
+    BraketEstimator as BraketEstimator,
+)
+from .providers import (
     BraketLocalBackend as BraketLocalBackend,
 )
 from .providers import (
@@ -23,6 +26,9 @@ from .providers import (
 )
 from .providers import (
     BraketQuantumTask as BraketQuantumTask,
+)
+from .providers import (
+    BraketSampler as BraketSampler,
 )
 from .providers import (
     to_braket as to_braket,
