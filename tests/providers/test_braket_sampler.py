@@ -7,10 +7,11 @@ import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 from qiskit.primitives.containers.sampler_pub import SamplerPub
+from qiskit.providers import JobStatus
 
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_sampler import BraketSampler
-from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob
+from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob, _JobMetadata
 
 
 class TestBraketBackend(unittest.TestCase):
@@ -43,17 +44,10 @@ class TestBraketBackend(unittest.TestCase):
         mock_task.id = "test-task-id"
         mock_task.state.return_value = "RUNNING"
 
-        metadata = {
-            "pubs": [],
-            "pub_metadata": [],
-            "precision": 0.01,
-            "shots": 10000,
-        }
-
-        job = BraketSamplerJob(mock_task, metadata)
+        job = BraketSamplerJob(mock_task, _JobMetadata(pubs=[], parameter_indices=[], shots=10000))
 
         # Test status methods
-        self.assertEqual(job.status(), "RUNNING")
+        self.assertEqual(job.status(), JobStatus.RUNNING)
         self.assertTrue(job.running())
         self.assertFalse(job.done())
         self.assertFalse(job.cancelled())
@@ -61,12 +55,17 @@ class TestBraketBackend(unittest.TestCase):
 
         # Test completed state
         mock_task.state.return_value = "COMPLETED"
-        self.assertTrue(job.done())
-        self.assertTrue(job.in_final_state())
+        self.assertEqual(job.status(), JobStatus.DONE)
         self.assertFalse(job.running())
+        self.assertTrue(job.done())
+        self.assertFalse(job.cancelled())
+        self.assertTrue(job.in_final_state())
 
         # Test cancelled state
         mock_task.state.return_value = "CANCELLED"
+        self.assertEqual(job.status(), JobStatus.CANCELLED)
+        self.assertFalse(job.running())
+        self.assertFalse(job.done())
         self.assertTrue(job.cancelled())
         self.assertTrue(job.in_final_state())
 
@@ -104,3 +103,7 @@ class TestBraketBackend(unittest.TestCase):
             shots_a = results_a.num_shots
             for v in results_a.get_int_counts().values():
                 self.assertTrue(np.isclose(v / shots_a, 0.5, rtol=0.3, atol=0.2))
+            results_b = data.creg_b[index]
+            shots_b = results_b.num_shots
+            for v in results_b.get_int_counts().values():
+                self.assertTrue(np.isclose(v / shots_b, 0.5, rtol=0.3, atol=0.2))

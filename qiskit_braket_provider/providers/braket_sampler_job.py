@@ -5,8 +5,18 @@ from dataclasses import dataclass
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.primitives import BasePrimitiveJob, BitArray, DataBin, PrimitiveResult, PubResult
+from qiskit.primitives.containers.sampler_pub import SamplerPub
+from qiskit.providers import JobStatus
 
-from braket.tasks import ProgramSetQuantumTaskResult, QuantumTask
+from braket.tasks import QuantumTask
+from qiskit_braket_provider.providers.braket_quantum_task import _TASK_STATUS_MAP
+
+
+@dataclass
+class _JobMetadata:
+    pubs: list[SamplerPub]
+    parameter_indices: list[tuple[int, ...]]
+    shots: int
 
 
 @dataclass
@@ -17,7 +27,7 @@ class _MeasureInfo:
     start: int
 
 
-class BraketSamplerJob(BasePrimitiveJob):
+class BraketSamplerJob(BasePrimitiveJob[PrimitiveResult[PubResult], JobStatus]):
     """
     Job class for BraketSampler.
 
@@ -25,15 +35,15 @@ class BraketSamplerJob(BasePrimitiveJob):
     from the ProgramSetQuantumTaskResult.
     """
 
-    def __init__(self, task: QuantumTask, metadata: dict):
+    def __init__(self, task: QuantumTask, metadata: _JobMetadata):
         """
         Initialize the estimator job.
 
         Args:
             task (QuantumTask): The Braket QuantumTask
-            metadata (dict): Metadata needed to reconstruct results, including:
+            metadata (_JobMetadata): Metadata needed to reconstruct results, including:
                 - pubs: List of EstimatorPub objects
-                - pub_metadata: List of metadata dicts for each pub
+                - parameter_indices: List of n-dimensional parameter indices
                 - shots: Number of shots used
         """
         super().__init__(job_id=task.id)
@@ -47,59 +57,17 @@ class BraketSamplerJob(BasePrimitiveJob):
         Returns:
             PrimitiveResult: PrimitiveResult containing PubResult for each pub.
         """
-        task_result: ProgramSetQuantumTaskResult = self._task.result()
         if self._result is None:
-            metadata = self._metadata
-            shots = metadata["shots"]
-            pub_results = []
-            for pub_result, pub, pub_meta in zip(
-                task_result.entries, metadata["pubs"], metadata["pub_metadata"]
-            ):
-                circuit = pub.circuit
-                meas_info, max_num_bytes = BraketSamplerJob._analyze_circuit(circuit)
-                shape = pub_meta["shape"]
-                indices = pub_meta["indices"]
-                # measurements = np.zeros(shape + (shots, 1), dtype=float)
-                # for index, entry in zip(indices, pub_result.entries):
-                #     measurements[index] = np.packbits(entry.measurements)
-                memory_array = np.array(
-                    [executable_result.measurements for executable_result in pub_result]
-                )
-                arrays = {
-                    item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
-                    for item in meas_info
-                }
-                for samples, index in zip(memory_array, indices):
-                    for item in meas_info:
-                        start = item.start
-                        arrays[item.creg_name][index] = np.flip(
-                            np.packbits(
-                                samples[:, start : start + item.num_bits], axis=1, bitorder="little"
-                            ),
-                            axis=-1,
-                        )
-                pub_results.append(
-                    PubResult(
-                        DataBin(
-                            **{
-                                item.creg_name: BitArray(arrays[item.creg_name], item.num_bits)
-                                for item in meas_info
-                            },
-                            shape=shape,
-                        ),
-                        metadata={"shots": shots, "circuit_metadata": circuit.metadata},
-                    )
-                )
-            self._result = PrimitiveResult(pub_results)
+            self._result = self._reconstruct_results()
         return self._result
 
-    def status(self):
+    def status(self) -> JobStatus:
         """
         Get the status of the job.
         Returns:
-            Job status string.
+            JobStatus: Job status string.
         """
-        return self._task.state()
+        return self._get_job_status()
 
     def cancel(self):
         """Cancel the job."""
@@ -109,7 +77,7 @@ class BraketSamplerJob(BasePrimitiveJob):
         """
         Get the job ID.
         Returns:
-            Job ID string.
+            str: Job ID string.
         """
         return self._task.id
 
@@ -117,36 +85,86 @@ class BraketSamplerJob(BasePrimitiveJob):
         """
         Check if the job is done.
         Returns:
-            True if the job is done, False otherwise.
+            bool: True if the job is done, False otherwise.
         """
-        state = self._task.state()
-        return state in ["COMPLETED", "FAILED", "CANCELLED"]
+        return self._get_job_status() == JobStatus.DONE
 
     def running(self) -> bool:
         """
         Check if the job is running.
         Returns:
-            True if the job is running, False otherwise.
+            bool: True if the job is running, False otherwise.
         """
-        return self._task.state() == "RUNNING"
+        return self._get_job_status() == JobStatus.RUNNING
 
     def cancelled(self) -> bool:
         """
         Check if the job was cancelled.
         Returns:
-            True if the job was cancelled, False otherwise.
+            bool: True if the job was cancelled, False otherwise.
         """
-        state = self._task.state()
-        return state in ["CANCELLED", "CANCELLING"]
+        return self._get_job_status() == JobStatus.CANCELLED
 
     def in_final_state(self) -> bool:
         """
         Check if the job is in a final state.
         Returns:
-            True if the job is in a final state, False otherwise.
+            bool: True if the job is in a final state, False otherwise.
         """
-        state = self._task.state()
-        return state in ["COMPLETED", "FAILED", "CANCELLED"]
+        return self._get_job_status() in [JobStatus.DONE, JobStatus.ERROR, JobStatus.CANCELLED]
+
+    def _reconstruct_results(self) -> PrimitiveResult:
+        """
+        Reconstruct PrimitiveResult from Braket task results.
+        Returns:
+            PrimitiveResult: PrimitiveResult containing PubResult for each pub.
+        """
+        task_result = self._task.result()
+        metadata = self._metadata
+
+        shots = metadata.shots
+        pub_results = []
+        for pub_result, pub, indices in zip(
+            task_result.entries, metadata.pubs, metadata.parameter_indices
+        ):
+            circuit = pub.circuit
+            meas_info, max_num_bytes = BraketSamplerJob._analyze_circuit(circuit)
+            shape = pub.shape
+            # measurements = np.zeros(shape + (shots, 1), dtype=float)
+            # for index, entry in zip(indices, pub_result.entries):
+            #     measurements[index] = np.packbits(entry.measurements)
+            memory_array = np.array(
+                [executable_result.measurements for executable_result in pub_result]
+            )
+            arrays = {
+                item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
+                for item in meas_info
+            }
+            for samples, index in zip(memory_array, indices):
+                for item in meas_info:
+                    start = item.start
+                    arrays[item.creg_name][index] = np.flip(
+                        np.packbits(
+                            samples[:, start : start + item.num_bits], axis=1, bitorder="little"
+                        ),
+                        axis=-1,
+                    )
+            pub_results.append(
+                PubResult(
+                    DataBin(
+                        **{
+                            item.creg_name: BitArray(arrays[item.creg_name], item.num_bits)
+                            for item in meas_info
+                        },
+                        shape=shape,
+                    ),
+                    metadata={"shots": shots, "circuit_metadata": circuit.metadata},
+                )
+            )
+        return PrimitiveResult(pub_results)
+
+    def _get_job_status(self) -> JobStatus:
+        return _TASK_STATUS_MAP[self._task.state()]
 
     @staticmethod
     def _analyze_circuit(circuit: QuantumCircuit) -> tuple[list[_MeasureInfo], int]:

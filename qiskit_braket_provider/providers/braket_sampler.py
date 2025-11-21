@@ -9,7 +9,7 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from qiskit_braket_provider import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
-from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob
+from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob, _JobMetadata
 
 _DEFAULT_SHOTS = 1024
 
@@ -32,17 +32,19 @@ class BraketSampler(BaseSamplerV2):
         coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
         pub_shots = BraketSampler._pub_shots(coerced_pubs)
         circuit_bindings = []
-        pub_metadata = []
+        parameter_indices = []
         for pub in coerced_pubs:
             circuit_binding, indices = self._pub_to_circuit_binding(pub)
             circuit_bindings.append(circuit_binding)
-            pub_metadata.append({"indices": indices, "shape": pub.shape})
+            parameter_indices.append(indices)
         shots_per_executable = pub_shots if pub_shots is not None else shots
         return BraketSamplerJob(
             self._backend._device.run(
                 ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable)
             ),
-            {"pubs": coerced_pubs, "pub_metadata": pub_metadata, "shots": shots_per_executable},
+            _JobMetadata(
+                pubs=coerced_pubs, parameter_indices=parameter_indices, shots=shots_per_executable
+            ),
         )
 
     @staticmethod
