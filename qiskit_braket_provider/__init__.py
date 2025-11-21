@@ -16,6 +16,9 @@ from .providers import (
     BraketAwsBackend as BraketAwsBackend,
 )
 from .providers import (
+    BraketEstimator as BraketEstimator,
+)
+from .providers import (
     BraketLocalBackend as BraketLocalBackend,
 )
 from .providers import (
