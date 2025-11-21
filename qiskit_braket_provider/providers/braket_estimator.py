@@ -1,11 +1,3 @@
-"""
-Efficient BaseEstimatorV2 implementation for Braket.
-
-This implementation uses the same broadcasting efficiency principles as the
-bar function to minimize redundant CircuitBinding objects while ensuring
-perfect utilization.
-"""
-
 import math
 from collections import defaultdict
 from collections.abc import Iterable

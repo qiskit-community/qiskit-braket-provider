@@ -1,5 +1,3 @@
-"""Job class for BraketEstimator."""
-
 from dataclasses import dataclass
 
 import numpy as np
