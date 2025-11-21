@@ -1,17 +1,42 @@
 from collections import defaultdict
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 import numpy as np
-from qiskit.primitives import BaseSamplerV2, SamplerPubLike
+from qiskit import QuantumCircuit
+from qiskit.primitives import (
+    BaseSamplerV2,
+    BitArray,
+    DataBin,
+    PrimitiveResult,
+    PubResult,
+    SamplerPubLike,
+)
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
+from braket.tasks import ProgramSetQuantumTaskResult
 from qiskit_braket_provider.providers.adapter import to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
-from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob, _JobMetadata
+from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
 _DEFAULT_SHOTS = 1024
+
+
+@dataclass
+class _JobMetadata:
+    pubs: list[SamplerPub]
+    parameter_indices: list[tuple[int, ...]]
+    shots: int
+
+
+@dataclass
+class _MeasureInfo:
+    creg_name: str
+    num_bits: int
+    num_bytes: int
+    start: int
 
 
 class BraketSampler(BaseSamplerV2):
@@ -43,14 +68,14 @@ class BraketSampler(BaseSamplerV2):
 
     def run(
         self, pubs: Iterable[SamplerPubLike], *, shots: int | None = _DEFAULT_SHOTS
-    ) -> BraketSamplerJob:
+    ) -> BraketPrimitiveTask:
         """
         Samples circuits with multiple parameter values.
         Args:
             pubs (Iterable[SamplerPubLike]): An iterable of SamplerPubLike objects to sample.
             shots (int): Number of shots to run for each circuit. Default: 1024
         Returns:
-            BraketSamplerJob: A job object containing the sample results.
+            BraketPrimitiveTask: A job object containing the sample results.
         """
         coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
         pub_shots = BraketSampler._pub_shots(coerced_pubs)
@@ -61,13 +86,18 @@ class BraketSampler(BaseSamplerV2):
             circuit_bindings.append(circuit_binding)
             parameter_indices.append(indices)
         shots_per_executable = pub_shots if pub_shots is not None else shots
-        return BraketSamplerJob(
+        return BraketPrimitiveTask(
             self._backend._device.run(
                 ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable),
                 **self._options,
             ),
-            _JobMetadata(
-                pubs=coerced_pubs, parameter_indices=parameter_indices, shots=shots_per_executable
+            lambda result: BraketSampler._translate_result(
+                result,
+                _JobMetadata(
+                    pubs=coerced_pubs,
+                    parameter_indices=parameter_indices,
+                    shots=shots_per_executable,
+                ),
             ),
         )
 
@@ -113,3 +143,85 @@ class BraketSampler(BaseSamplerV2):
                 for param, val in zip(k, v):
                     data[param].append(val)
         return ParameterSets(data)
+
+    @staticmethod
+    def _translate_result(
+        task_result: ProgramSetQuantumTaskResult, metadata: _JobMetadata
+    ) -> PrimitiveResult[PubResult]:
+        """
+        Reconstruct PrimitiveResult from Braket task results.
+
+        Args:
+            task_result (ProgramSetQuantumTaskResult): The result of a Braket program set task
+            metadata (_JobMetadata): Metadata needed to reconstruct results, including:
+                - pubs: List of EstimatorPub objects
+                - parameter_indices: List of n-dimensional parameter indices
+                - shots: Number of shots used
+
+        Returns:
+            PrimitiveResult[PubResult]: PrimitiveResult containing PubResult for each pub.
+        """
+        shots = metadata.shots
+        pub_results = []
+        for pub_result, pub, indices in zip(
+            task_result.entries, metadata.pubs, metadata.parameter_indices
+        ):
+            circuit = pub.circuit
+            meas_info, max_num_bytes = BraketSampler._analyze_circuit(circuit)
+            shape = pub.shape
+            # measurements = np.zeros(shape + (shots, 1), dtype=float)
+            # for index, entry in zip(indices, pub_result.entries):
+            #     measurements[index] = np.packbits(entry.measurements)
+            memory_array = np.array(
+                [executable_result.measurements for executable_result in pub_result]
+            )
+            arrays = {
+                item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
+                for item in meas_info
+            }
+            for samples, index in zip(memory_array, indices):
+                for item in meas_info:
+                    start = item.start
+                    arrays[item.creg_name][index] = np.flip(
+                        np.packbits(
+                            samples[:, start : start + item.num_bits], axis=1, bitorder="little"
+                        ),
+                        axis=-1,
+                    )
+            pub_results.append(
+                PubResult(
+                    DataBin(
+                        **{
+                            item.creg_name: BitArray(arrays[item.creg_name], item.num_bits)
+                            for item in meas_info
+                        },
+                        shape=shape,
+                    ),
+                    metadata={"shots": shots, "circuit_metadata": circuit.metadata},
+                )
+            )
+        return PrimitiveResult(pub_results)
+
+    @staticmethod
+    def _analyze_circuit(circuit: QuantumCircuit) -> tuple[list[_MeasureInfo], int]:
+        """Analyzes the information for each creg in a circuit."""
+        meas_info = []
+        max_num_bits = 0
+        for creg in circuit.cregs:
+            num_bits = creg.size
+            start = circuit.find_bit(creg[0]).index if num_bits != 0 else 0
+            meas_info.append(
+                _MeasureInfo(
+                    creg_name=creg.name,
+                    num_bits=num_bits,
+                    num_bytes=BraketSampler._min_bytes(num_bits),
+                    start=start,
+                )
+            )
+            max_num_bits = max(max_num_bits, start + num_bits)
+        return meas_info, BraketSampler._min_bytes(max_num_bits)
+
+    @staticmethod
+    def _min_bytes(num_bits: int) -> int:
+        """Return the minimum number of bytes needed to store ``num_bits``."""
+        return num_bits // 8 + (num_bits % 8 > 0)

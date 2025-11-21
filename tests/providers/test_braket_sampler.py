@@ -1,18 +1,15 @@
 """Tests for BraketSampler."""
 
 from unittest import TestCase
-from unittest.mock import Mock
 
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 from qiskit.primitives import BackendSamplerV2
 from qiskit.primitives.containers.sampler_pub import SamplerPub
-from qiskit.providers import JobStatus
 
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_sampler import BraketSampler
-from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob, _JobMetadata
 
 
 class TestBraketSampler(TestCase):
@@ -38,44 +35,6 @@ class TestBraketSampler(TestCase):
             self.sampler.run([(qc, [0, 1, 2, 3], 100), (qc, [0, 1, 2, 3], 200)])
 
         self.assertIn("same shots", str(context.exception))
-
-    def test_job_status_methods(self):
-        """Test job status methods."""
-        mock_task = Mock()
-        mock_task.id = "test-task-id"
-        mock_task.state.return_value = "RUNNING"
-
-        job = BraketSamplerJob(mock_task, _JobMetadata(pubs=[], parameter_indices=[], shots=10000))
-
-        # Test status methods
-        self.assertEqual(job.status(), JobStatus.RUNNING)
-        self.assertTrue(job.running())
-        self.assertFalse(job.done())
-        self.assertFalse(job.cancelled())
-        self.assertFalse(job.in_final_state())
-
-        # Test completed state
-        mock_task.state.return_value = "COMPLETED"
-        self.assertEqual(job.status(), JobStatus.DONE)
-        self.assertFalse(job.running())
-        self.assertTrue(job.done())
-        self.assertFalse(job.cancelled())
-        self.assertTrue(job.in_final_state())
-
-        # Test cancelled state
-        mock_task.state.return_value = "CANCELLED"
-        self.assertEqual(job.status(), JobStatus.CANCELLED)
-        self.assertFalse(job.running())
-        self.assertFalse(job.done())
-        self.assertTrue(job.cancelled())
-        self.assertTrue(job.in_final_state())
-
-        # Test cancel method
-        job.cancel()
-        mock_task.cancel.assert_called_once()
-
-        # Test job_id
-        self.assertEqual(job.job_id(), "test-task-id")
 
     def test_run_local(self):
         """Tests that correct results are returned for circuits with multiple registers"""
