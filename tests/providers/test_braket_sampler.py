@@ -1,6 +1,6 @@
-"""Tests for BraketEstimator."""
+"""Tests for BraketSampler."""
 
-import unittest
+from unittest import TestCase
 from unittest.mock import Mock
 
 import numpy as np
@@ -14,9 +14,7 @@ from qiskit_braket_provider.providers.braket_sampler import BraketSampler
 from qiskit_braket_provider.providers.braket_sampler_job import BraketSamplerJob, _JobMetadata
 
 
-class TestBraketBackend(unittest.TestCase):
-    """Test class for BraketBackend."""
-
+class TestBraketSampler(TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.backend = BraketLocalBackend()
