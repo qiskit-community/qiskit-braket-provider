@@ -51,10 +51,18 @@ class TestBraketSampler(TestCase):
             chsh_circuit.cx(i, i + 1)
         chsh_circuit.ry(theta, 0)
         chsh_circuit.measure_all(add_bits=False)
-        parameter_values = np.array(  # shape (3, 6)
-            [np.linspace(0, 2 * np.pi, 6), np.linspace(0, np.pi, 6), np.linspace(np.pi, 2 * np.pi, 6)]
+        pub = SamplerPub.coerce(
+            (
+                chsh_circuit,
+                np.array(  # shape (3, 6)
+                    [
+                        np.linspace(0, 2 * np.pi, 6),
+                        np.linspace(0, np.pi, 6),
+                        np.linspace(np.pi, 2 * np.pi, 6),
+                    ]
+                ),
+            )
         )
-        pub = SamplerPub.coerce((chsh_circuit, parameter_values))
 
         data = self.sampler.run([pub]).result()[0].data
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
