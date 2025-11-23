@@ -40,10 +40,10 @@ class TestBraketSampler(TestCase):
         """Tests that correct results are returned for circuits with multiple registers"""
         theta = Parameter("θ")
 
-        qreg_a = QuantumRegister(9, "qreg_a")
-        qreg_b = QuantumRegister(3, "qreg_b")
-        creg_a = ClassicalRegister(2, "creg_a")
-        creg_b = ClassicalRegister(10, "creg_b")
+        qreg_a = QuantumRegister(3, "qreg_a")
+        qreg_b = QuantumRegister(9, "qreg_b")
+        creg_a = ClassicalRegister(10, "creg_a")
+        creg_b = ClassicalRegister(2, "creg_b")
 
         chsh_circuit = QuantumCircuit(qreg_a, qreg_b, creg_a, creg_b)
         chsh_circuit.h(0)
@@ -52,7 +52,7 @@ class TestBraketSampler(TestCase):
         chsh_circuit.ry(theta, 0)
         chsh_circuit.measure_all(add_bits=False)
         parameter_values = np.array(  # shape (3, 6)
-            [np.linspace(0, 2 * np.pi, 6), np.linspace(0, np.pi, 6), np.linspace(0, np.pi / 2, 6)]
+            [np.linspace(0, 2 * np.pi, 6), np.linspace(0, np.pi, 6), np.linspace(np.pi, 2 * np.pi, 6)]
         )
         pub = SamplerPub.coerce((chsh_circuit, parameter_values))
 
