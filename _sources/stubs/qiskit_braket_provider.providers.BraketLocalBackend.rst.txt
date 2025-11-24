@@ -43,6 +43,7 @@
       ~BraketLocalBackend.operations
       ~BraketLocalBackend.options
       ~BraketLocalBackend.provider
+      ~BraketLocalBackend.qubit_labels
       ~BraketLocalBackend.target
       ~BraketLocalBackend.version
       ~BraketLocalBackend.name
