@@ -22,6 +22,7 @@ from qiskit.circuit import (
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.dagcircuit import DAGCircuit
+from qiskit.quantum_info import Pauli, SparsePauliOp
 from qiskit.transpiler import (
     InstructionProperties,
     PassManager,
@@ -32,11 +33,13 @@ from qiskit.transpiler import (
 from qiskit_ionq import add_equivalences, ionq_gates
 from sympy import Add, Expr, Mul, Pow, Symbol
 
-import braket.circuits.gates as braket_gates
-import braket.circuits.noises as braket_noises
 from braket import experimental_capabilities as braket_expcaps
 from braket.aws import AwsDevice, AwsDeviceType
 from braket.circuits import Circuit, Instruction, measure
+from braket.circuits import Observable as BraketObservable
+from braket.circuits import gates as braket_gates
+from braket.circuits import noises as braket_noises
+from braket.circuits import observables as braket_observables
 from braket.default_simulator.openqasm.interpreter import Interpreter
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
@@ -45,10 +48,7 @@ from braket.device_schema import (
     OpenQASMDeviceActionProperties,
 )
 from braket.device_schema.ionq import IonqDeviceCapabilities
-from braket.device_schema.rigetti import (
-    RigettiDeviceCapabilities,
-    RigettiDeviceCapabilitiesV2,
-)
+from braket.device_schema.rigetti import RigettiDeviceCapabilities, RigettiDeviceCapabilitiesV2
 from braket.device_schema.simulators import GateModelSimulatorDeviceCapabilities
 from braket.device_schema.standardized_gate_model_qpu_device_properties_v1 import (
     StandardizedGateModelQpuDeviceProperties as StandardizedPropertiesV1,
@@ -251,6 +251,12 @@ _TRANSPILER_GATE_SUBSTITUTES: dict[tuple[str, tuple[float | str, ...]], Gate] = 
     ("rx", (-pi,)): qiskit_gates.XGate(),
     ("rx", (pi / 2,)): qiskit_gates.SXGate(),
     ("rx", (-pi / 2,)): qiskit_gates.SXdgGate(),
+}
+
+_PAULI_MAP = {
+    "X": braket_observables.X,
+    "Y": braket_observables.Y,
+    "Z": braket_observables.Z,
 }
 
 _Translatable = QuantumCircuit | Circuit | Program | str
@@ -1003,6 +1009,48 @@ def _validate_name_conflicts(parameters):
             "ParameterVector elements are renamed from v[i] to v_i, which resulted "
             "in a conflict with another parameter. Please rename your parameters."
         )
+
+
+def translate_sparse_pauli_op(op: SparsePauliOp) -> BraketObservable:
+    """
+    Translate a SparsePauliOp to a Braket observable.
+
+    Args:
+        op (SparsePauliOp): Operation to translate.
+
+    Returns:
+        BraketObservable: Corresponding Braket observable.
+    """
+    return (
+        braket_observables.Sum(
+            [_translate_pauli(pauli, np.real(coeff)) for pauli, coeff in zip(op.paulis, op.coeffs)]
+        )
+        if len(op) > 1
+        else _translate_pauli(op.paulis[0], np.real(op.coeffs[0]))
+    )
+
+
+def _translate_pauli(pauli: Pauli, coeff: float = 1.0) -> BraketObservable:
+    """
+    Translate a single Pauli and a coefficient to a Braket observable.
+
+    Args:
+        pauli (Pauli): Pauli observable to translate.
+        coeff (float): Coefficient of the Pauli. Default: 1.
+
+    Returns:
+        BraketObservable: Corresponding Braket observable.
+    """
+    factors = [
+        _PAULI_MAP[pauli_char](i)
+        for i, pauli_char in enumerate(reversed(str(pauli)))
+        if pauli_char != "I"
+    ]
+    if not factors:
+        return (
+            braket_observables.I(0) * coeff
+        )  # Still include trivial term so expectation is correct
+    return (braket_observables.TensorProduct(factors) if len(factors) > 1 else factors[0]) * coeff
 
 
 def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -> QuantumCircuit:

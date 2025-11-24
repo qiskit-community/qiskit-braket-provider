@@ -50,6 +50,15 @@ class BraketBackend(BackendV2, ABC, Generic[T]):
     def __repr__(self):
         return f"BraketBackend[{self.name}]"
 
+    @property
+    def qubit_labels(self) -> tuple[int, ...] | None:
+        """
+        tuple[int, ...] | None: The qubit labels of the underlying device, in ascending order.
+
+        Unlike the qubits in the target, these labels are not necessarily contiguous.
+        """
+        return None
+
     def _validate_meas_level(self, meas_level: enum.Enum | int):
         if isinstance(meas_level, enum.Enum):
             meas_level = meas_level.value
@@ -271,11 +280,6 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
 
     @property
     def qubit_labels(self) -> tuple[int, ...] | None:
-        """
-        tuple[int, ...] | None: The qubit labels of the underlying device, in ascending order.
-
-        Unlike the qubits in the target, these labels are not necessarily contiguous.
-        """
         return self._qubit_labels
 
     @classmethod
