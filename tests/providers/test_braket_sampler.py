@@ -49,19 +49,25 @@ class TestBraketSampler(TestCase):
             circuit.cx(i, i + 1)
         circuit.ry(Parameter("θ"), 0)
         circuit.measure_all(add_bits=False)
+
+        num_steps = 6
         pub = (
             circuit,
             np.array(  # shape (3, 6)
                 [
-                    np.linspace(0, 2 * np.pi, 6),
-                    np.linspace(0, np.pi, 6),
-                    np.linspace(np.pi, 2 * np.pi, 6),
+                    np.linspace(0, 2 * np.pi, num_steps),
+                    np.linspace(0, np.pi, num_steps),
+                    np.linspace(np.pi, 2 * np.pi, num_steps),
                 ]
             ),
         )
         coerced = SamplerPub.coerce(pub)
 
-        data = self.sampler.run([pub]).result()[0].data
+        task = self.sampler.run([pub])
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 1)
+        self.assertEqual(len(program_set[0]), coerced.size)
+        data = task.result()[0].data
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
         for reg, reg_backend in [
             (data.creg_a, data_backend.creg_a),

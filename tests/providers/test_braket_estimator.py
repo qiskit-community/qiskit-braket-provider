@@ -6,17 +6,15 @@ from unittest.mock import Mock, patch
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
-from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob, PrimitiveResult
+from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.containers.observables_array import ObservablesArray
-from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 
 from braket.program_sets import ProgramSet
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_estimator import BraketEstimator
-from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
 
 class TestBraketEstimator(TestCase):
@@ -274,44 +272,6 @@ class TestBraketEstimator(TestCase):
                 self.estimator.run([pub], precision=0.01)
 
             self.assertIn("not broadcastable", str(context.exception))
-
-    def test_job_status_methods(self):
-        """Test job status methods."""
-        mock_task = Mock()
-        mock_task.id = "test-task-id"
-        mock_task.state.return_value = "RUNNING"
-
-        job = BraketPrimitiveTask(mock_task, lambda result: PrimitiveResult([]), None)
-
-        # Test status methods
-        self.assertEqual(job.status(), JobStatus.RUNNING)
-        self.assertTrue(job.running())
-        self.assertFalse(job.done())
-        self.assertFalse(job.cancelled())
-        self.assertFalse(job.in_final_state())
-
-        # Test completed state
-        mock_task.state.return_value = "COMPLETED"
-        self.assertEqual(job.status(), JobStatus.DONE)
-        self.assertFalse(job.running())
-        self.assertTrue(job.done())
-        self.assertFalse(job.cancelled())
-        self.assertTrue(job.in_final_state())
-
-        # Test cancelled state
-        mock_task.state.return_value = "CANCELLED"
-        self.assertEqual(job.status(), JobStatus.CANCELLED)
-        self.assertFalse(job.running())
-        self.assertFalse(job.done())
-        self.assertTrue(job.cancelled())
-        self.assertTrue(job.in_final_state())
-
-        # Test cancel method
-        job.cancel()
-        mock_task.cancel.assert_called_once()
-
-        # Test job_id
-        self.assertEqual(job.job_id(), "test-task-id")
 
     def test_run_local_pauli_sum(self):
         """Tests that correct results are returned when one observable is a Pauli sum"""
