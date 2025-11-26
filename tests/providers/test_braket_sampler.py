@@ -51,18 +51,17 @@ class TestBraketSampler(TestCase):
             chsh_circuit.cx(i, i + 1)
         chsh_circuit.ry(theta, 0)
         chsh_circuit.measure_all(add_bits=False)
-        pub = SamplerPub.coerce(
-            (
-                chsh_circuit,
-                np.array(  # shape (3, 6)
-                    [
-                        np.linspace(0, 2 * np.pi, 6),
-                        np.linspace(0, np.pi, 6),
-                        np.linspace(np.pi, 2 * np.pi, 6),
-                    ]
-                ),
-            )
+        pub = (
+            chsh_circuit,
+            np.array(  # shape (3, 6)
+                [
+                    np.linspace(0, 2 * np.pi, 6),
+                    np.linspace(0, np.pi, 6),
+                    np.linspace(np.pi, 2 * np.pi, 6),
+                ]
+            ),
         )
+        coerced = SamplerPub.coerce(pub)
 
         data = self.sampler.run([pub]).result()[0].data
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
@@ -70,7 +69,7 @@ class TestBraketSampler(TestCase):
             (data.creg_a, data_backend.creg_a),
             (data.creg_b, data_backend.creg_b),
         ]:
-            for index in np.ndindex(pub.shape):
+            for index in np.ndindex(coerced.shape):
                 bit_array = reg[index]
                 counts = bit_array.get_int_counts()
                 shots = bit_array.num_shots
