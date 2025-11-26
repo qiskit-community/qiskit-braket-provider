@@ -395,11 +395,10 @@ class TestBraketEstimator(TestCase):
 
     def test_run_local_broadcasting(self):
         """Tests that correct results are returned with broadcasted arrays"""
-        theta = Parameter("θ")
         circuit = QuantumCircuit(3)
         circuit.h(0)
         circuit.cx(0, 1)
-        circuit.ry(theta, 0)
+        circuit.ry(Parameter("θ"), 0)
         circuit.h(2)
 
         num_steps = 6

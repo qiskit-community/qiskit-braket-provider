@@ -38,21 +38,19 @@ class TestBraketSampler(TestCase):
 
     def test_run_local(self):
         """Tests that correct results are returned for circuits with multiple registers"""
-        theta = Parameter("θ")
-
-        qreg_a = QuantumRegister(3, "qreg_a")
-        qreg_b = QuantumRegister(9, "qreg_b")
-        creg_a = ClassicalRegister(10, "creg_a")
-        creg_b = ClassicalRegister(2, "creg_b")
-
-        chsh_circuit = QuantumCircuit(qreg_a, qreg_b, creg_a, creg_b)
-        chsh_circuit.h(0)
+        circuit = QuantumCircuit(
+            QuantumRegister(3, "qreg_a"),
+            QuantumRegister(9, "qreg_b"),
+            ClassicalRegister(10, "creg_a"),
+            ClassicalRegister(2, "creg_b"),
+        )
+        circuit.h(0)
         for i in range(11):
-            chsh_circuit.cx(i, i + 1)
-        chsh_circuit.ry(theta, 0)
-        chsh_circuit.measure_all(add_bits=False)
+            circuit.cx(i, i + 1)
+        circuit.ry(Parameter("θ"), 0)
+        circuit.measure_all(add_bits=False)
         pub = (
-            chsh_circuit,
+            circuit,
             np.array(  # shape (3, 6)
                 [
                     np.linspace(0, 2 * np.pi, 6),
