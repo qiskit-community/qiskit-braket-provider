@@ -38,39 +38,42 @@ class TestBraketSampler(TestCase):
 
     def test_run_local(self):
         """Tests that correct results are returned for circuits with multiple registers"""
-        theta = Parameter("θ")
-
-        qreg_a = QuantumRegister(3, "qreg_a")
-        qreg_b = QuantumRegister(9, "qreg_b")
-        creg_a = ClassicalRegister(10, "creg_a")
-        creg_b = ClassicalRegister(2, "creg_b")
-
-        chsh_circuit = QuantumCircuit(qreg_a, qreg_b, creg_a, creg_b)
-        chsh_circuit.h(0)
-        for i in range(11):
-            chsh_circuit.cx(i, i + 1)
-        chsh_circuit.ry(theta, 0)
-        chsh_circuit.measure_all(add_bits=False)
-        pub = SamplerPub.coerce(
-            (
-                chsh_circuit,
-                np.array(  # shape (3, 6)
-                    [
-                        np.linspace(0, 2 * np.pi, 6),
-                        np.linspace(0, np.pi, 6),
-                        np.linspace(np.pi, 2 * np.pi, 6),
-                    ]
-                ),
-            )
+        circuit = QuantumCircuit(
+            QuantumRegister(3, "qreg_a"),
+            QuantumRegister(9, "qreg_b"),
+            ClassicalRegister(10, "creg_a"),
+            ClassicalRegister(2, "creg_b"),
         )
+        circuit.h(0)
+        for i in range(11):
+            circuit.cx(i, i + 1)
+        circuit.ry(Parameter("θ"), 0)
+        circuit.measure_all(add_bits=False)
 
-        data = self.sampler.run([pub]).result()[0].data
+        num_steps = 6
+        pub = (
+            circuit,
+            np.array(  # shape (3, 6)
+                [
+                    np.linspace(0, 2 * np.pi, num_steps),
+                    np.linspace(0, np.pi, num_steps),
+                    np.linspace(np.pi, 2 * np.pi, num_steps),
+                ]
+            ),
+        )
+        coerced = SamplerPub.coerce(pub)
+
+        task = self.sampler.run([pub])
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 1)
+        self.assertEqual(len(program_set[0]), coerced.size)
+        data = task.result()[0].data
         data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
         for reg, reg_backend in [
             (data.creg_a, data_backend.creg_a),
             (data.creg_b, data_backend.creg_b),
         ]:
-            for index in np.ndindex(pub.shape):
+            for index in np.ndindex(coerced.shape):
                 bit_array = reg[index]
                 counts = bit_array.get_int_counts()
                 shots = bit_array.num_shots

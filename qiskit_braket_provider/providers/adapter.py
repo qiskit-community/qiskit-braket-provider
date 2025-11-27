@@ -321,7 +321,7 @@ class _QiskitProgramContext(AbstractProgramContext):
         )
         if params:
             gate.params = params
-        gate = gate.power(float(power))
+        gate = gate.power(float(power)) if power != 1 else gate
         if ctrl_modifiers:
             gate = gate.control(
                 len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
