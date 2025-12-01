@@ -15,9 +15,11 @@ Provider classes and functions
     :toctree: ../stubs/
 
     BraketAwsBackend
+    BraketEstimator
     BraketLocalBackend
     BraketProvider
     BraketQuantumTask
+    BraketSampler
 """
 
 from .adapter import to_braket as to_braket
