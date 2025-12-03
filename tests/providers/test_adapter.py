@@ -1148,10 +1148,7 @@ class TestFromBraket(TestCase):
             to_qiskit(circuit)
 
     def test_all_standard_gates(self):
-        """
-        Tests Braket to Qiskit conversion with standard gates.
-        """
-
+        """Tests Braket to Qiskit conversion with standard gates."""
         gate_set = {
             attr
             for attr in dir(Gate)
@@ -1212,24 +1209,21 @@ class TestFromBraket(TestCase):
                 self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_parametric_gates(self):
-        """
-        Tests braket to qiskit conversion with free parameters.
-        """
-        braket_circuit = Circuit().rx(0, FreeParameter("alpha"))
+        """Tests Braket to Qiskit conversion with free parameters."""
+        braket_circuit = Circuit().rx(0, FreeParameter("alpha")).ry(0, FreeParameter("alpha"))
         qiskit_circuit = to_qiskit(braket_circuit)
 
         uuid = qiskit_circuit.parameters[0].uuid
 
         expected_qiskit_circuit = QuantumCircuit(1)
         expected_qiskit_circuit.rx(Parameter("alpha", uuid=uuid), 0)
+        expected_qiskit_circuit.ry(Parameter("alpha", uuid=uuid), 0)
 
         expected_qiskit_circuit.measure_all()
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_parametric_pow_gate(self):
-        """
-        Test braket to qiskit with powers of parameters
-        """
+        """Tests Braket to Qiskit conversion with powers of parameters."""
         braket_circuit = Circuit().rx(0, FreeParameter("alpha") ** 2)
         qiskit_circuit = to_qiskit(braket_circuit)
 
@@ -1242,6 +1236,7 @@ class TestFromBraket(TestCase):
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_unsupported_parameter_division(self):
+        """Tests if TypeError is raised for parameter division."""
         braket_circuit = Circuit().rx(0, 1j * FreeParameter("alpha"))
         with pytest.raises(
             TypeError,
@@ -1250,9 +1245,7 @@ class TestFromBraket(TestCase):
             to_qiskit(braket_circuit)
 
     def test_unitary(self):
-        """
-        Tests braket to qiskit conversion with UnitaryGate.
-        """
+        """Tests Braket to Qiskit conversion with UnitaryGate."""
         braket_circuit = Circuit().h(0).unitary([0, 1], Gate.CNot().to_matrix())
         qiskit_circuit = to_qiskit(braket_circuit)
 
@@ -1264,9 +1257,7 @@ class TestFromBraket(TestCase):
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_control_modifier(self):
-        """
-        Tests braket to qiskit conversion with controlled gates.
-        """
+        """Tests Braket to Qiskit conversion with controlled gates."""
         braket_circuit = Circuit().x(1, control=[0])
         qiskit_circuit = to_qiskit(braket_circuit)
 
@@ -1278,9 +1269,7 @@ class TestFromBraket(TestCase):
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_unused_middle_qubit(self):
-        """
-        Tests braket to qiskit conversion with non-continuous qubit registers.
-        """
+        """Tests Braket to Qiskit conversion with non-continuous qubit registers."""
         braket_circuit = Circuit().x(3, control=[0, 2], control_state="10")
         qiskit_circuit = to_qiskit(braket_circuit)
 
@@ -1292,9 +1281,7 @@ class TestFromBraket(TestCase):
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_control_modifier_with_control_state(self):
-        """
-        Tests braket to qiskit conversion with controlled gates and control state.
-        """
+        """Tests Braket to Qiskit conversion with controlled gates and control state."""
         braket_circuit = Circuit().x(3, control=[0, 1, 2], control_state="100")
         qiskit_circuit = to_qiskit(braket_circuit)
 
@@ -1306,9 +1293,7 @@ class TestFromBraket(TestCase):
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
     def test_power(self):
-        """
-        Tests braket to qiskit conversion with gate exponentiation.
-        """
+        """Tests Braket to Qiskit conversion with gate exponentiation."""
         braket_circuit = Circuit().x(0, power=0.5)
         qiskit_circuit = to_qiskit(braket_circuit)
 
@@ -1321,7 +1306,6 @@ class TestFromBraket(TestCase):
 
     def test_unsupported_braket_gate(self):
         """Tests if TypeError is raised for unsupported Braket gate."""
-
         gate = getattr(Gate, "CNot")
         op = gate()
         instr = Instruction(op, range(2))

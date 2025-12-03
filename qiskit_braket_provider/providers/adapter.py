@@ -2,8 +2,8 @@
 
 import warnings
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Sequence
-from math import inf, pi
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from math import inf, pi, prod
 from numbers import Number
 
 import numpy as np
@@ -275,7 +275,7 @@ class _SubstitutedTarget(Target):
 
 
 class _SubstituteGates(TransformationPass):
-    def __init__(self, gate_substitutes: dict[str, dict[tuple[int, ...], QiskitInstruction]]):
+    def __init__(self, gate_substitutes: Mapping[str, Mapping[tuple[int, ...], QiskitInstruction]]):
         super().__init__()
         self._gate_substitutes = gate_substitutes
 
@@ -295,6 +295,7 @@ class _QiskitProgramContext(AbstractProgramContext):
     def __init__(self):
         super().__init__()
         self._circuit = QuantumCircuit()
+        self._param_map = {}
 
     @property
     def circuit(self):
@@ -329,7 +330,7 @@ class _QiskitProgramContext(AbstractProgramContext):
         self._circuit.append(CircuitInstruction(gate, target))
 
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
-        return _sympy_to_qiskit(value) if isinstance(value, Expr) else value
+        return _sympy_to_qiskit(value, self._param_map) if isinstance(value, Expr) else value
 
     def add_measure(self, target: tuple[int], classical_targets: Iterable[int] = None):
         for iter, qubit in enumerate(target):
@@ -588,7 +589,7 @@ def _qpu_target(device: AwsDevice, description: str):
 
 def _build_instruction_props_2q(
     standardized: StandardizedPropertiesV1 | StandardizedPropertiesV2,
-    indices: dict[int, int],
+    indices: Mapping[int, int],
     default_properties: InstructionProperties,
 ) -> dict[str, dict[tuple[int, int], InstructionProperties]]:
     instruction_props_2q = defaultdict(dict)
@@ -614,7 +615,7 @@ def _build_instruction_props_2q(
 
 
 def _get_parameter_restrictions(
-    device: AwsDevice, qubit_indices: dict[int, int]
+    device: AwsDevice, qubit_indices: Mapping[int, int]
 ) -> dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]]:
     cal = device.gate_calibrations
     parameter_restrictions = defaultdict(lambda: defaultdict(set))
@@ -634,10 +635,10 @@ def _get_parameter_restrictions(
 
 def _add_instructions_parameter_restrictions(
     target: _SubstitutedTarget,
-    parameter_restrictions: dict[str, dict[tuple[float | str, ...], set[tuple[int, ...]]]],
-    instruction_props_1q: dict[tuple[int], InstructionProperties],
-    instruction_props_2q: dict[str, dict[tuple[int, int], InstructionProperties]],
-    default_props_2q: dict[tuple[int, int], InstructionProperties | None],
+    parameter_restrictions: Mapping[str, Mapping[tuple[float | str, ...], set[tuple[int, ...]]]],
+    instruction_props_1q: Mapping[tuple[int], InstructionProperties],
+    instruction_props_2q: Mapping[str, Mapping[tuple[int, int], InstructionProperties]],
+    default_props_2q: Mapping[tuple[int, int], InstructionProperties | None],
 ) -> None:
     for braket_name, restrictions in parameter_restrictions.items():
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(braket_name):
@@ -669,8 +670,8 @@ def _add_single_instruction_parameter_restriction(
     target: _SubstitutedTarget,
     instruction: QiskitInstruction,
     braket_name: str,
-    restrictions: dict[tuple[float | str, ...], set[tuple[int, ...]]],
-    gate_properties: dict[tuple[int, ...], InstructionProperties],
+    restrictions: Mapping[tuple[float | str, ...], set[tuple[int, ...]]],
+    gate_properties: Mapping[tuple[int, ...], InstructionProperties],
 ) -> None:
     for restriction, qubits in restrictions.items():
         props = {q: props for q, props in gate_properties.items() if q in qubits}
@@ -697,9 +698,9 @@ def _add_single_instruction_parameter_restriction(
 def _add_instructions_no_parameter_restrictions(
     target: _SubstitutedTarget,
     native_gateset: set[str],
-    instruction_props_1q: dict[tuple[int], InstructionProperties],
-    instruction_props_2q: dict[str, dict[tuple[int, int], InstructionProperties]],
-    default_props_2q: dict[tuple[int, int], InstructionProperties | None],
+    instruction_props_1q: Mapping[tuple[int], InstructionProperties],
+    instruction_props_2q: Mapping[str, Mapping[tuple[int, int], InstructionProperties]],
+    default_props_2q: Mapping[tuple[int, int], InstructionProperties | None],
 ) -> None:
     for operation in native_gateset:
         if instruction := _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower()):
@@ -722,7 +723,7 @@ def to_braket(
     basis_gates: Iterable[str] | None = None,
     verbatim: bool = False,
     connectivity: list[list[int]] | None = None,
-    angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None = None,
+    angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None = None,
     *,
     target: Target | None = None,
     qubit_labels: Sequence[int] | None = None,
@@ -749,7 +750,7 @@ def to_braket(
             words without transpiling it. Default: False.
         connectivity (list[list[int]] | None): If provided, will transpile to a circuit
             with this connectivity. Default: `None`.
-        angle_restrictions (dict[str, dict[int, set[float] | tuple[float, float]]] | None):
+        angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: `None`.
         target (Target | None): A backend transpiler target. Can only be provided
@@ -828,13 +829,13 @@ def _translate_to_braket(
     qubit_labels: Sequence[int] | None,
     verbatim: bool,
     basis_gates: Iterable[str] | None,
-    angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None,
+    angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None,
     pass_manager: PassManager | None,
 ) -> Circuit:
     # Verify that ParameterVector would not collide with scalar variables after renaming.
     _validate_name_conflicts(circuit.parameters)
     # Handle qiskit to braket conversion
-    measured_qubits: dict[int, int] = {}
+    measured_qubits = {}
     braket_circuit = Circuit()
     qubit_labels = qubit_labels or _default_qubit_labels(circuit)
     for circuit_instruction in circuit.data:
@@ -956,7 +957,7 @@ def _create_free_parameters(operation):
 def _validate_angle_restrictions(
     gate_name: str,
     params: Iterable,
-    angle_restrictions: dict[str, dict[int, set[float] | tuple[float, float]]] | None,
+    angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None,
 ) -> None:
     """Validate gate parameter angles against a restriction map.
 
@@ -1077,6 +1078,7 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
     )
     qiskit_circuit = QuantumCircuit(circuit.qubit_count, num_measurements)
     qubit_map = {int(qubit): index for index, qubit in enumerate(sorted(circuit.qubits))}
+    parameter_map = {}
     cbit = 0
     for instruction in circuit.instructions:
         operator = instruction.operator
@@ -1087,7 +1089,9 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
             gate = _create_qiskit_unitary(operator.to_matrix())
         else:
             gate = _create_qiskit_gate(
-                gate_name, operator.parameters if isinstance(operator, Parameterizable) else []
+                gate_name,
+                (operator.parameters if isinstance(operator, Parameterizable) else []),
+                parameter_map,
             )
         if (power := instruction.power) != 1:
             gate = gate**power
@@ -1120,17 +1124,21 @@ def _create_qiskit_kraus(gate_params: list[np.ndarray]) -> Instruction:
     return qiskit_qi.Kraus(gate_params)
 
 
-def _sympy_to_qiskit(expr: Mul | Add | Symbol | Pow) -> ParameterExpression | Parameter:
+def _sympy_to_qiskit(
+    expr: Expr, param_map: Mapping[str, Parameter]
+) -> ParameterExpression | Parameter:
     """convert a sympy expression to qiskit Parameters recursively"""
     match expr:
-        case Mul():
-            return _sympy_to_qiskit(expr.args[0]) * _sympy_to_qiskit(expr.args[1])
-        case Add():
-            return _sympy_to_qiskit(expr.args[0]) + _sympy_to_qiskit(expr.args[1])
-        case Symbol():
-            return Parameter(expr.name)
-        case Pow():
-            return _sympy_to_qiskit(expr.args[0]) ** int(expr.args[1])
+        case Symbol(name=name):
+            if name not in param_map:
+                param_map[name] = Parameter(name)
+            return param_map[name]
+        case Add(args=args):
+            return sum(_sympy_to_qiskit(arg, param_map) for arg in args)
+        case Mul(args=args):
+            return prod(_sympy_to_qiskit(arg, param_map) for arg in args)
+        case Pow(base=base, exp=exp):
+            return _sympy_to_qiskit(base, param_map) ** int(exp)
         case obj if getattr(obj, "is_real", False):
             return float(obj)
     raise TypeError(f"unrecognized parameter type in conversion: {type(expr)}")
@@ -1150,7 +1158,9 @@ def _reverse_endianness(matrix: np.ndarray):
 
 
 def _create_qiskit_gate(
-    gate_name: str, gate_params: list[float | FreeParameterExpression]
+    gate_name: str,
+    gate_params: list[float | FreeParameterExpression],
+    param_map: Mapping[str, Parameter],
 ) -> Instruction:
     gate_instance = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name)
     if not gate_instance:
@@ -1162,7 +1172,7 @@ def _create_qiskit_gate(
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
         new_gate_params.append(
-            _sympy_to_qiskit(coeff * value.expression)
+            _sympy_to_qiskit(coeff * value.expression, param_map)
             if isinstance(value, FreeParameterExpression)
             else coeff * value
         )
