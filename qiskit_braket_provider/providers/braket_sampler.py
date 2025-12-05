@@ -111,13 +111,6 @@ class BraketSampler(BaseSamplerV2):
 
     def _translate_pub(self, pub: SamplerPub) -> tuple[CircuitBinding | Circuit, np.ndarray | None]:
         backend = self._backend
-        circuit = to_braket(
-            pub.circuit,
-            target=backend.target,
-            verbatim=self._verbatim,
-            qubit_labels=backend.qubit_labels,
-            optimization_level=self._optimization_level,
-        )
         param_values = pub.parameter_values
         param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
         parameter_sets = (
@@ -125,11 +118,16 @@ class BraketSampler(BaseSamplerV2):
             if param_values.data
             else None
         )
-        return (
-            (CircuitBinding(circuit, input_sets=parameter_sets), param_indices)
-            if parameter_sets
-            else (circuit, [None])
-        )
+        return CircuitBinding(
+            to_braket(
+                pub.circuit,
+                target=backend.target,
+                verbatim=self._verbatim,
+                qubit_labels=backend.qubit_labels,
+                optimization_level=self._optimization_level,
+            ),
+            input_sets=parameter_sets,
+        ), param_indices
 
     @staticmethod
     def _translate_parameters(param_list: list[BindingsArray]) -> ParameterSets:
@@ -189,18 +187,10 @@ class BraketSampler(BaseSamplerV2):
                 item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
                 for item in meas_info
             }
-            for i, samples in enumerate(measurements):
-                if indices is not None:
-                    for item in meas_info:
-                        start = item.start
-                        arrays[item.creg_name][indices[i]] = np.flip(
-                            np.packbits(
-                                samples[:, start : start + item.num_bits], axis=1, bitorder="little"
-                            ),
-                            axis=-1,
-                        )
-                else:
-                    arrays[item.creg_name][0] = np.flip(
+            for samples, index in zip(measurements, indices):
+                for item in meas_info:
+                    start = item.start
+                    arrays[item.creg_name][index] = np.flip(
                         np.packbits(
                             samples[:, start : start + item.num_bits], axis=1, bitorder="little"
                         ),
