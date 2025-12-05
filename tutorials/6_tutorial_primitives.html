@@ -1,0 +1,695 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Transpiling circuits and programs to Braket" href="5_tutorial_transpilation.html" />
+
+    <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
+        <title>Braket-native primitives - Qiskit-Braket provider 0.9.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-ecosystem.css?v=745c5aa7" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #ffffff;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="../_static/js/web-components/top-nav-bar.js"></script></head>
+  <body>
+    
+    <script>document.body.dataset.theme = "light";</script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <defs><style>.cls-1{fill:none;}</style></defs>
+      <path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6H20V26H4ZM28,26H22V6h6Z"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <defs><style>.cls-1{fill:none;}</style></defs>
+      <rect x="4" y="6" width="24" height="2"/>
+      <rect x="4" y="24" width="24" height="2"/>
+      <rect x="4" y="12" width="24" height="2"/>
+      <rect x="4" y="18" width="24" height="2"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg version="1.1" id="icon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+         viewBox="0 0 32 32" style="enable-background:new 0 0 32 32;" xml:space="preserve"><polygon points="22,16 12,26 10.6,24.6 19.2,16 10.6,7.4 12,6 " stroke="currentColor"/>
+      <rect id="_x3C_Transparent_Rectangle_x3E_" fill="none" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-new-tab" viewBox="0 0 32 32">
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <defs>
+        <style>
+          .cls-1 {
+            fill: none;
+          }
+        </style>
+      </defs>
+      <path fill="#6929C4" d="M26,28H6a2.0027,2.0027,0,0,1-2-2V6A2.0027,2.0027,0,0,1,6,4H16V6H6V26H26V16h2V26A2.0027,2.0027,0,0,1,26,28Z"/>
+      <polygon fill="#6929C4" points="20 2 20 4 26.586 4 18 12.586 19.414 14 28 5.414 28 12 30 12 30 2 20 2"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Qiskit-Braket provider 0.9.0</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky">
+<a class="sidebar-brand" href="../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">Qiskit-Braket provider 0.9.0</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home</a></li>
+</ul>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../apidocs/index.html">API References</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of API References</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../apidocs/providers.html">Provider module (<code class="xref py py-mod docutils literal notranslate"><span class="pre">qiskit_braket_provider.providers</span></code>)</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Provider module (qiskit_braket_provider.providers)</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketAwsBackend.html">qiskit_braket_provider.providers.BraketAwsBackend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketEstimator.html">qiskit_braket_provider.providers.BraketEstimator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketLocalBackend.html">qiskit_braket_provider.providers.BraketLocalBackend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Braket-native primitives</a></li>
+</ul>
+
+</div></div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="Braket-native-primitives">
+<h1>Braket-native primitives<a class="headerlink" href="#Braket-native-primitives" title="Link to this heading">¶</a></h1>
+<p>In this notebook, we will learn how to use the BraketEstimator and BraketSampler primitives to run Qiskit workloads on Amazon Braket. Under the hood, these primitives run <a class="reference external" href="https://docs.aws.amazon.com/braket/latest/developerguide/braket-constructing-circuit.html#braket-program-set">program sets</a> with parametrized circuits and lists of input parameter values, which can be significantly more efficient than their BackendEstimator and BackendSampler counterparts, which bind the parameter values of
+the circuits first, resulting in a copy of a circuit for <em>each of its input parameter values</em>.</p>
+<p>We begin by importing all required classes and functions.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import matplotlib.pyplot as plt
+import numpy as np
+from qiskit.circuit import ClassicalRegister, Parameter, QuantumCircuit, QuantumRegister
+from qiskit.quantum_info import SparsePauliOp
+
+from qiskit_braket_provider import BraketEstimator, BraketLocalBackend, BraketSampler
+</pre></div>
+</div>
+</div>
+<section id="BraketEstimator">
+<h2>BraketEstimator<a class="headerlink" href="#BraketEstimator" title="Link to this heading">¶</a></h2>
+<p>An estimator primitive computes the expectation values of one or multiple observables with respect to states prepared by quantum circuits. The circuits may be parametrized, with input values specified alongside the circuit and observable. The BraketEstimator constructs and runs a program set from the given estimator PUBs, which are (circuit, observable, parameter (optional)) triplets.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>backend = BraketLocalBackend()
+estimator = BraketEstimator(backend=backend)
+</pre></div>
+</div>
+</div>
+<p>Now, let’s define a parametrized circuit with single parameter. We will measure this circuit with four observables and sweep through 25 parameter values:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>circuit = QuantumCircuit(2)
+circuit.h(0)
+circuit.cx(0, 1)
+circuit.ry(Parameter(&quot;θ&quot;), 0)
+
+parameters = [[ph] for ph in np.linspace(0, 2 * np.pi, 25)]
+observables = [
+    [SparsePauliOp(&quot;ZZ&quot;)],
+    [SparsePauliOp(&quot;ZX&quot;)],
+    [SparsePauliOp(&quot;XZ&quot;)],
+    [SparsePauliOp(&quot;XX&quot;, -1)],  # Multiply by -1 to distinguish from ZZ
+]
+
+estimator_pub = circuit, observables, parameters
+</pre></div>
+</div>
+</div>
+<p>We can then see how the expectation of each observable varies with the parameters:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>task = estimator.run([estimator_pub], precision=0.015625)
+evs = task.result()[0].data.evs
+fig = plt.figure()
+plt.plot(parameters, evs[0], label=&quot;ZZ&quot;)
+plt.plot(parameters, evs[1], &quot;tab:orange&quot;, label=&quot;ZX&quot;)
+plt.plot(parameters, evs[2], &quot;tab:green&quot;, label=&quot;XZ&quot;)
+plt.plot(parameters, evs[3], &quot;tab:red&quot;, label=&quot;XX&quot;)
+plt.xlabel(r&quot;$\theta$&quot;)
+plt.ylabel(r&quot;$\langle H \rangle_\theta$&quot;)
+fig.legend(loc=&quot;upper left&quot;, bbox_to_anchor=(0.9, 0.6))
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x311fcebc0&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_6_tutorial_primitives_7_1.png" src="../_images/tutorials_6_tutorial_primitives_7_1.png" />
+</div>
+</div>
+<p>The resulting program set consists of a single program with 100 executables from taking the Cartesian product of the observables and parameters.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>program_set = task.program_set
+print(f&quot;Number of programs: {len(program_set)}&quot;)
+print(f&quot;Number of executables: {len(program_set[0])}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Number of programs: 1
+Number of executables: 100
+</pre></div></div>
+</div>
+<p>In the previous example, every observable was a single-term Pauli operator. However, observables can also be multi-term Hamiltonians:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>parameters = [[ph] for ph in np.linspace(0, 2 * np.pi, 20)]
+observables = [
+    [SparsePauliOp(&quot;ZX&quot;)],
+    [SparsePauliOp(&quot;XZ&quot;)],
+    [SparsePauliOp([&quot;ZX&quot;, &quot;XZ&quot;], [0.3, 0.8])],
+]
+</pre></div>
+</div>
+</div>
+<p>The red line shows the expectation value of the Hamiltonian, which is a linear combination of <span class="math notranslate nohighlight">\(ZX\)</span> (orange) and <span class="math notranslate nohighlight">\(XZ\)</span> (green):</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>task = estimator.run([(circuit, observables, parameters)], precision=0.015625)
+evs = task.result()[0].data.evs
+fig = plt.figure()
+plt.plot(parameters, evs[0], &quot;tab:orange&quot;, label=&quot;ZX&quot;)
+plt.plot(parameters, evs[1], &quot;tab:green&quot;, label=&quot;XZ&quot;)
+plt.plot(parameters, evs[2], &quot;tab:red&quot;, label=&quot;0.3 ZX + 0.8 XZ&quot;)
+plt.xlabel(r&quot;$\theta$&quot;)
+plt.ylabel(r&quot;$\langle H \rangle_\theta$&quot;)
+fig.legend(loc=&quot;upper left&quot;, bbox_to_anchor=(0.9, 0.6))
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;matplotlib.legend.Legend at 0x311fcd990&gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_6_tutorial_primitives_13_1.png" src="../_images/tutorials_6_tutorial_primitives_13_1.png" />
+</div>
+</div>
+<p>Each Hamiltonian will get a dedicated program in the program set, and each term of the Hamiltonian will be a separate executable; as such, the PUB we just ran generates two programs:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>program_set = task.program_set
+print(f&quot;Number of programs: {len(program_set)}\n&quot;)
+print(f&quot;Hamiltonian in first program: {program_set[0].observables}&quot;)
+print(f&quot;Number of executables in first program: {len(program_set[0])}\n&quot;)
+print(f&quot;Observables in second program: {program_set[1].observables}&quot;)
+print(f&quot;Number of executables second program: {len(program_set[1])}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Number of programs: 2
+
+Hamiltonian in first program: Sum(TensorProduct(Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)]))), TensorProduct(X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)]))))
+Number of executables in first program: 40
+
+Observables in second program: [TensorProduct(X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)]))), TensorProduct(Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)])))]
+Number of executables second program: 40
+</pre></div></div>
+</div>
+<p>Note: Hamiltonian programs appear first in the list, but the order is corrected by the estimator’s postprocessing.</p>
+<p>So far, we’ve only looked at examples where the observables and parameters are both 1-dimensional, which allows them to be paired in a Cartesian product. However, Qiskit allows observables and parameters to be of arbitrary shape, so long as they are <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">broadcastable</a>.</p>
+<div><p><img alt="74db4d642a7e415cba7c23e1ce417f2c" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
+<figcaption><p>Source: <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules</a></p>
+</figcaption></div><p>Since programs in program sets only encode Cartesian products, a single PUB may require multiple programs to capture the full broadcasted combination:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>circuit = QuantumCircuit(2)
+circuit.h(0)
+circuit.cx(0, 1)
+circuit.ry(Parameter(&quot;theta&quot;), 0)
+circuit.rz(Parameter(&quot;phi&quot;), 0)
+circuit.cx(0, 1)
+circuit.h(0)
+
+parameter_values = np.stack(  # shape (3, 6)
+    [
+        np.array(
+            [np.linspace(-np.pi, np.pi, 6), np.linspace(-np.pi, 0, 6), np.linspace(0, np.pi / 2, 6)]
+        ),
+        np.array(
+            [
+                np.linspace(-4 * np.pi, 4 * np.pi, 6),
+                np.linspace(-4 * np.pi, 0, 6),
+                np.linspace(0, 4 * np.pi / 2, 6),
+            ]
+        ),
+    ],
+    axis=-1,
+)
+observables = [  # shape (2, 3, 1)
+    [
+        [SparsePauliOp([&quot;XX&quot;, &quot;IY&quot;], [0.5, 0.5])],
+        [SparsePauliOp(&quot;XX&quot;)],
+        [SparsePauliOp(&quot;IY&quot;)],
+    ],
+    [
+        [SparsePauliOp(&quot;ZZ&quot;)],
+        [SparsePauliOp([&quot;ZZ&quot;, &quot;IX&quot;], [0.5, 0.5])],
+        [SparsePauliOp(&quot;IX&quot;)],
+    ],
+]
+</pre></div>
+</div>
+</div>
+<p>We see that the shape of the result is the broadcasted shape of the observables and parameters:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>task = estimator.run([(circuit, observables, parameter_values)], precision=0.015625)
+evs = task.result()[0].data.evs
+evs.shape
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(2, 3, 6)
+</pre></div></div>
+</div>
+<p>In the (2, 3, 6) array in the diagram above, the broadcasted array is shown as two sheets standing back-to-back, where each sheet has different observables. However, the array can also be interpreted as a vertical stack of three “layers”, where each layer shares the same parameter values; this second interpretation is how the Cartesian products are “sliced out” in the program set.</p>
+<ul class="simple">
+<li><p>The top layer gets two programs, one for the Hamiltonian and one for the monomial</p></li>
+<li><p>The same goes for the middle layer</p></li>
+<li><p>The bottom layer gets a single program because both observables are monomials</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>program_set = task.program_set
+print(f&quot;Number of programs: {len(program_set)}\n&quot;)
+print(f&quot;Hamiltonian in first program: {program_set[0].observables}&quot;)
+print(f&quot;Observables in second program: {program_set[1].observables}&quot;)
+print(f&quot;Hamiltonian in third program: {program_set[2].observables}&quot;)
+print(f&quot;Observables in fourth program: {program_set[3].observables}&quot;)
+print(f&quot;Observables in fifth program: {program_set[4].observables}&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Number of programs: 5
+
+Hamiltonian in first program: Sum(Y(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), TensorProduct(X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)]))))
+Observables in second program: [TensorProduct(Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)])))]
+Hamiltonian in third program: Sum(X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), TensorProduct(Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), Z(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)]))))
+Observables in fourth program: [TensorProduct(X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(1)])))]
+Observables in fifth program: [Y(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)])), X(&#39;qubit_count&#39;: 1, &#39;target&#39;: QubitSet([Qubit(0)]))]
+</pre></div></div>
+</div>
+</section>
+<section id="BraketSampler">
+<h2>BraketSampler<a class="headerlink" href="#BraketSampler" title="Link to this heading">¶</a></h2>
+<p>The sampler primitive samples the output of one or more quantum circuits, which may be parametrized if the input values are specified as well.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>sampler = BraketSampler(backend=backend)
+</pre></div>
+</div>
+</div>
+<p>As with the estimator, the parameters can be of any shape, and the results of running a sampler pub (circuit, parameters) will be of the same shape as the parameter array. We now run a 12-qubit version of the circuit from the first estimator example:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>circuit = QuantumCircuit(
+    QuantumRegister(3, &quot;qreg_a&quot;),
+    QuantumRegister(9, &quot;qreg_b&quot;),
+    ClassicalRegister(10, &quot;creg_a&quot;),
+    ClassicalRegister(2, &quot;creg_b&quot;),
+)
+circuit.h(0)
+for i in range(11):
+    circuit.cx(i, i + 1)
+circuit.ry(Parameter(&quot;θ&quot;), 0)
+circuit.measure_all(add_bits=False)
+parameter_values = np.array(  # shape (3, 7)
+    [np.linspace(0, 2 * np.pi, 7), np.linspace(0, np.pi, 7), np.linspace(np.pi, 2 * np.pi, 7)]
+)
+
+result = sampler.run([(circuit, parameter_values)], shots=1024).result()
+data = result[0].data
+data.shape
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:860: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+(3, 7)
+</pre></div></div>
+</div>
+<p>Looking at the first classical register, we see that its (marginal) probability distribution varies over <span class="math notranslate nohighlight">\(\theta\)</span> as</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\mathbfit{p}(\theta) = \frac{1}{2} \left[ \cos^2(\theta),\, \sin^2(\theta),\, 0, \cdots,\, 0,\, \sin^2(\theta),\, \cos^2(\theta) \right]\]</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>fig, axs = plt.subplots(3, 7, figsize=(21, 7))
+fig.tight_layout()
+for index in np.ndindex(data.shape):
+    x = []
+    y = []
+    counts = dict(data.creg_a[index].get_int_counts())
+    for i in {0, 1, 1022, 1023}:
+        counts.setdefault(i, 0)
+    for k, v in sorted(counts.items()):
+        x.append(str(k))
+        y.append(v)
+    axs[index].bar(x, y)
+    axs[index].set_ylim(0, 600)
+    axs[index].set_title(f&quot;θ={round(parameter_values[index] * 6 / np.pi) / 6 : .2f}π&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_6_tutorial_primitives_27_0.png" src="../_images/tutorials_6_tutorial_primitives_27_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        <div class="related-pages">
+          
+          <a class="prev-page" href="5_tutorial_transpilation.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Transpiling circuits and programs to Braket</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Braket-native primitives</a><ul>
+<li><a class="reference internal" href="#BraketEstimator">BraketEstimator</a></li>
+<li><a class="reference internal" href="#BraketSampler">BraketSampler</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=39bb1c6d"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/qiskit-sphinx-theme.js?v=4d77b8ca"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>
