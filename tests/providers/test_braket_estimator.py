@@ -6,17 +6,15 @@ from unittest.mock import Mock, patch
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
-from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob, PrimitiveResult
+from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.containers.observables_array import ObservablesArray
-from qiskit.providers import JobStatus
 from qiskit.quantum_info import SparsePauliOp
 
 from braket.program_sets import ProgramSet
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_estimator import BraketEstimator
-from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
 
 class TestBraketEstimator(TestCase):
@@ -275,75 +273,41 @@ class TestBraketEstimator(TestCase):
 
             self.assertIn("not broadcastable", str(context.exception))
 
-    def test_job_status_methods(self):
-        """Test job status methods."""
-        mock_task = Mock()
-        mock_task.id = "test-task-id"
-        mock_task.state.return_value = "RUNNING"
-
-        job = BraketPrimitiveTask(mock_task, lambda result: PrimitiveResult([]))
-
-        # Test status methods
-        self.assertEqual(job.status(), JobStatus.RUNNING)
-        self.assertTrue(job.running())
-        self.assertFalse(job.done())
-        self.assertFalse(job.cancelled())
-        self.assertFalse(job.in_final_state())
-
-        # Test completed state
-        mock_task.state.return_value = "COMPLETED"
-        self.assertEqual(job.status(), JobStatus.DONE)
-        self.assertFalse(job.running())
-        self.assertTrue(job.done())
-        self.assertFalse(job.cancelled())
-        self.assertTrue(job.in_final_state())
-
-        # Test cancelled state
-        mock_task.state.return_value = "CANCELLED"
-        self.assertEqual(job.status(), JobStatus.CANCELLED)
-        self.assertFalse(job.running())
-        self.assertFalse(job.done())
-        self.assertTrue(job.cancelled())
-        self.assertTrue(job.in_final_state())
-
-        # Test cancel method
-        job.cancel()
-        mock_task.cancel.assert_called_once()
-
-        # Test job_id
-        self.assertEqual(job.job_id(), "test-task-id")
-
     def test_run_local_pauli_sum(self):
         """Tests that correct results are returned when one observable is a Pauli sum"""
         circuit = QuantumCircuit(2)
         circuit.h(0)
         circuit.cx(0, 1)
-        circuit.ry(Parameter("theta"), 0)
-        circuit.rz(Parameter("phi"), 0)
+        circuit.ry(Parameter("θ[0]"), 0)
+        circuit.rz(Parameter("θ[1]"), 0)
         circuit.cx(0, 1)
         circuit.h(0)
 
-        params = np.vstack(
+        num_params = 20
+        estimator_pub = (
+            circuit,
             [
-                np.linspace(-np.pi, np.pi, 25),
-                np.linspace(-4 * np.pi, 4 * np.pi, 25),
-            ]
-        ).T
+                [SparsePauliOp("ZZ")],
+                [SparsePauliOp("ZX")],
+                [SparsePauliOp("XZ")],
+                [SparsePauliOp(["ZX", "XZ"], [0.3, 0.8])],
+            ],
+            np.vstack(
+                [
+                    np.linspace(-np.pi, np.pi, num_params),
+                    np.linspace(-4 * np.pi, 4 * np.pi, num_params),
+                ]
+            ).T,
+        )
 
-        observables = [
-            [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
-            [SparsePauliOp("XX")],
-            [SparsePauliOp("IY")],
-        ]
-        observables = [
-            [observable.apply_layout(circuit.layout) for observable in observable_set]
-            for observable_set in observables
-        ]
-        estimator_pub = circuit, observables, params
-
+        task = self.estimator.run([estimator_pub])
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 2)
+        self.assertEqual(len(program_set[0]), num_params * 2)
+        self.assertEqual(len(program_set[1]), num_params * 3)
         self.assertTrue(
             np.allclose(
-                self.estimator.run([estimator_pub]).result()[0].data.evs,
+                task.result()[0].data.evs,
                 BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,
@@ -360,60 +324,67 @@ class TestBraketEstimator(TestCase):
         circuit.cx(0, 1)
         circuit.h(0)
 
-        params = np.vstack(
+        num_params = 20
+        estimator_pub = (
+            circuit,
             [
-                np.linspace(-np.pi, np.pi, 25),
-                np.linspace(-4 * np.pi, 4 * np.pi, 25),
-            ]
-        ).T
+                [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
+                [SparsePauliOp(["YY", "ZI", "XY"], [0.5, 0.5, 0.1])],
+            ],
+            np.vstack(
+                [
+                    np.linspace(-np.pi, np.pi, num_params),
+                    np.linspace(-4 * np.pi, 4 * np.pi, num_params),
+                ]
+            ).T,
+        )
 
-        observables = [
-            [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
-            [SparsePauliOp(["YY", "ZI", "XY"], [0.5, 0.5, 0.1])],
-        ]
-        observables = [
-            [observable.apply_layout(circuit.layout) for observable in observable_set]
-            for observable_set in observables
-        ]
-        estimator_pub = circuit, observables, params
-
+        task = self.estimator.run([estimator_pub])
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 2)
+        self.assertEqual(len(program_set[0]), num_params * 2)
+        self.assertEqual(len(program_set[1]), num_params * 3)
         self.assertTrue(
             np.allclose(
-                self.estimator.run([estimator_pub]).result()[0].data.evs,
+                task.result()[0].data.evs,
                 BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,
             )
         )
 
-    def tests_run_local_broadcasting(self):
+    def test_run_local_broadcasting(self):
         """Tests that correct results are returned with broadcasted arrays"""
-        theta = Parameter("θ")
-        chsh_circuit = QuantumCircuit(3)
-        chsh_circuit.h(0)
-        chsh_circuit.cx(0, 1)
-        chsh_circuit.ry(theta, 0)
-        chsh_circuit.h(2)
-        parameter_values = np.array(  # shape (3, 6)
-            [np.linspace(0, 2 * np.pi, 6), np.linspace(0, np.pi, 6), np.linspace(0, np.pi / 2, 6)]
-        )
-        observables = [
-            [
-                [SparsePauliOp(["IZZ"])],
-                [SparsePauliOp(["IZX"])],
-                [SparsePauliOp(["III"])],
-            ],
-            [
-                [SparsePauliOp(["IXZ"])],
-                [SparsePauliOp(["IXX"])],
-                [SparsePauliOp(["YYY"])],
-            ],
-        ]
-        estimator_pub = chsh_circuit, observables, parameter_values
+        circuit = QuantumCircuit(3)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.ry(Parameter("θ"), 0)
+        circuit.h(2)
 
+        num_steps = 6
+        estimator_pub = (
+            circuit,
+            [
+                [[SparsePauliOp(["IZZ"])], [SparsePauliOp(["IZX"])], [SparsePauliOp(["III"])]],
+                [[SparsePauliOp(["IXZ"])], [SparsePauliOp(["IXX"])], [SparsePauliOp(["YYY"])]],
+            ],
+            np.array(  # shape (3, 6)
+                [
+                    np.linspace(0, 2 * np.pi, num_steps),
+                    np.linspace(0, np.pi, num_steps),
+                    np.linspace(np.pi, 2 * np.pi, num_steps),
+                ]
+            ),
+        )
+
+        task = self.estimator.run([estimator_pub])
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 3)
+        for entry in task.program_set:
+            self.assertEqual(len(entry), num_steps * 2)
         self.assertTrue(
             np.allclose(
-                self.estimator.run([estimator_pub]).result()[0].data.evs,
+                task.result()[0].data.evs,
                 BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,

@@ -3,6 +3,7 @@ from collections.abc import Callable
 from qiskit.primitives import BasePrimitiveJob, PrimitiveResult, PubResult
 from qiskit.providers import JobStatus
 
+from braket.program_sets import ProgramSet
 from braket.tasks import ProgramSetQuantumTaskResult, QuantumTask
 from qiskit_braket_provider.providers.braket_quantum_task import _TASK_STATUS_MAP
 
@@ -19,6 +20,7 @@ class BraketPrimitiveTask(BasePrimitiveJob[PrimitiveResult[PubResult], JobStatus
         self,
         task: QuantumTask,
         result_translator: Callable[[ProgramSetQuantumTaskResult], PrimitiveResult],
+        program_set: ProgramSet,
     ):
         """
         Initialize the task.
@@ -27,11 +29,18 @@ class BraketPrimitiveTask(BasePrimitiveJob[PrimitiveResult[PubResult], JobStatus
             task (QuantumTask): The Braket QuantumTask
             result_translator (Callable[[ProgramSetQuantumTaskResult], PrimitiveResult]): Function
                 to convert the result of the Braket task to a Qiskit primitive result.
+            program_set (ProgramSet): The program set that was run by this task
         """
         super().__init__(job_id=task.id)
         self._task = task
         self._result_translator = result_translator
+        self._program_set = program_set
         self._result = None
+
+    @property
+    def program_set(self) -> ProgramSet:
+        """ProgramSet: The program set that was run by this task"""
+        return self._program_set
 
     def result(self) -> PrimitiveResult:
         if self._result is None:

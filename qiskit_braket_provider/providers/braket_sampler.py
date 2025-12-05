@@ -16,7 +16,7 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from braket.tasks import ProgramSetQuantumTaskResult
-from qiskit_braket_provider.providers.adapter import to_braket
+from qiskit_braket_provider.providers.adapter import rename_parameter, to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
@@ -87,11 +87,9 @@ class BraketSampler(BaseSamplerV2):
             circuit_bindings.append(circuit_binding)
             parameter_indices.append(indices)
         shots_per_executable = pub_shots if pub_shots is not None else shots
+        program_set = ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable)
         return BraketPrimitiveTask(
-            self._backend._device.run(
-                ProgramSet(circuit_bindings, shots_per_executable=shots_per_executable),
-                **self._options,
-            ),
+            self._backend._device.run(program_set, **self._options),
             lambda result: BraketSampler._translate_result(
                 result,
                 _JobMetadata(
@@ -100,6 +98,7 @@ class BraketSampler(BaseSamplerV2):
                     shots=shots_per_executable,
                 ),
             ),
+            program_set,
         )
 
     @staticmethod
@@ -144,7 +143,7 @@ class BraketSampler(BaseSamplerV2):
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
                 for param, val in zip(k, v):
-                    data[param].append(val)
+                    data[rename_parameter(param)].append(val)
         return ParameterSets(data)
 
     @staticmethod
