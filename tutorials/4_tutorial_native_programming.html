@@ -210,8 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1"><a class="reference internal" href="6_tutorial_primitives.html">Braket-native primitives</a></li>
 </ul>
@@ -249,8 +247,9 @@
           <section id="Native-Programming">
 <h1>Native Programming<a class="headerlink" href="#Native-Programming" title="Link to this heading">¶</a></h1>
 <p>When working with quantum circuits, you’ll encounter situations where you need your code to run exactly as written, without the compiler making any optimizations. This is where verbatim compilation becomes essential. There are several use cases: when benchmarking quantum hardware, you need precise control over which specific gates execute on the device since any compiler optimizations could introduce variables that make your performance measurements meaningless. In error mitigation protocols,
-you might need to insert what looks like redundant operations that a circuit optimizer would normally remove, but these “redundant” steps are actually crucial for techniques like zero-noise extrapolation to work properly. Additionally, calibration and characterization experiments require verbatim execution because you’re often testing specific gate implementations or noise properties that would be obscured if the compiler substitutes different gates. Advanced quantum protocols like dynamical
+you might need to insert what looks like redundant operations that a circuit optimizer would normally remove, but these “redundant” steps are actually crucial for techniques like zero-noise extrapolation to work properly. Additionally, calibration and characterization experiments require verbatim execution because you’re often testing specific gate implementations or noise properties that woul be obscured if the compiler substitutes different gates. Advanced quantum protocols like dynamical
 decoupling or composite pulse sequences also need precise timing and gate ordering preserved exactly as programmed to maintain their effectiveness. To prevent the compiler from modifying your circuits, you can use AWS Braket’s <code class="docutils literal notranslate"><span class="pre">#pragma</span> <span class="pre">braket</span> <span class="pre">verbatim</span></code> directive around the critical sections of your OpenQASM code, or if you’re using the Qiskit-Braket provider, simply set <code class="docutils literal notranslate"><span class="pre">verbatim=True</span></code> in your backend’s run your circuit as how you intend to.</p>
+<p>We begin by importing all required classes and functions and starting the cost tracker.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
@@ -270,8 +269,7 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 </pre></div>
 </div>
 </div>
-<section id="Function-for-Plotting-Coupling-map">
-<h2>Function for Plotting Coupling map<a class="headerlink" href="#Function-for-Plotting-Coupling-map" title="Link to this heading">¶</a></h2>
+<p>Next, we’ll define a function for plotting a device’s coupling map:</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -305,10 +303,7 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 </pre></div>
 </div>
 </div>
-</section>
-<section id="Set-up-the-Braket-Provider">
-<h2>Set up the Braket Provider<a class="headerlink" href="#Set-up-the-Braket-Provider" title="Link to this heading">¶</a></h2>
-<p>This step initializes the Braket provider and lists all available backends. These are the quantum devices or simulators that you can use.</p>
+<p>We now initialize the Braket provider and list all available backends. These are the quantum devices or simulators that we can use.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -327,15 +322,12 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 [BraketBackend[Ankaa-3], BraketBackend[Aria 1], BraketBackend[Aria 2], BraketBackend[Forte 1], BraketBackend[Forte Enterprise 1], BraketBackend[Garnet], BraketBackend[SV1], BraketBackend[TN1], BraketBackend[dm1]]
 </pre></div></div>
 </div>
-</section>
-</section>
-<section id="Superconducting-Qubits-based-Quantum-Systems">
-<h1>Superconducting Qubits based Quantum Systems<a class="headerlink" href="#Superconducting-Qubits-based-Quantum-Systems" title="Link to this heading">¶</a></h1>
+<section id="Superconducting-Quantum-Systems">
+<h2>Superconducting Quantum Systems<a class="headerlink" href="#Superconducting-Quantum-Systems" title="Link to this heading">¶</a></h2>
 <section id="Rigetti-Ankaa-3">
-<h2>Rigetti Ankaa-3<a class="headerlink" href="#Rigetti-Ankaa-3" title="Link to this heading">¶</a></h2>
-</section>
+<h3>Rigetti Ankaa-3<a class="headerlink" href="#Rigetti-Ankaa-3" title="Link to this heading">¶</a></h3>
 <section id="Native-Gates">
-<h2>Native Gates<a class="headerlink" href="#Native-Gates" title="Link to this heading">¶</a></h2>
+<h4>Native Gates<a class="headerlink" href="#Native-Gates" title="Link to this heading">¶</a></h4>
 <p>Retrieve the native gate set supported by the Ankaa-3 device. This includes only those gates that are natively implemented in hardware.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -357,10 +349,7 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 </div>
 </section>
 <section id="Coupling-Map">
-<h2>Coupling Map<a class="headerlink" href="#Coupling-Map" title="Link to this heading">¶</a></h2>
-</section>
-<section id="Visualize-Ankaa-3-Coupling-Map">
-<h2>Visualize Ankaa-3 Coupling Map<a class="headerlink" href="#Visualize-Ankaa-3-Coupling-Map" title="Link to this heading">¶</a></h2>
+<h4>Coupling Map<a class="headerlink" href="#Coupling-Map" title="Link to this heading">¶</a></h4>
 <p>This code block extracts and plots the connectivity (coupling map) of qubits for the Ankaa-3 quantum device.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -374,12 +363,13 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_4_tutorial_native_programming_14_0.png" src="../_images/tutorials_4_tutorial_native_programming_14_0.png" />
+<img alt="../_images/tutorials_4_tutorial_native_programming_9_0.png" src="../_images/tutorials_4_tutorial_native_programming_9_0.png" />
 </div>
 </div>
 </section>
+</section>
 <section id="IQM-Garnet">
-<h2>IQM Garnet<a class="headerlink" href="#IQM-Garnet" title="Link to this heading">¶</a></h2>
+<h3>IQM Garnet<a class="headerlink" href="#IQM-Garnet" title="Link to this heading">¶</a></h3>
 <p>Retrieve the native gate set supported by the Garnet device. This includes only those gates that are natively implemented in hardware.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -399,9 +389,8 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 {&#39;r&#39;, &#39;cz&#39;}
 </pre></div></div>
 </div>
-</section>
-<section id="Visualize-Garnet-Coupling-Map">
-<h2>Visualize Garnet Coupling Map<a class="headerlink" href="#Visualize-Garnet-Coupling-Map" title="Link to this heading">¶</a></h2>
+<section id="id1">
+<h4>Coupling Map<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
 <p>This code block extracts and plots the connectivity (coupling map) of qubits for the Garnet quantum device.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -415,18 +404,18 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_4_tutorial_native_programming_19_0.png" src="../_images/tutorials_4_tutorial_native_programming_19_0.png" />
+<img alt="../_images/tutorials_4_tutorial_native_programming_13_0.png" src="../_images/tutorials_4_tutorial_native_programming_13_0.png" />
 </div>
 </div>
 </section>
 </section>
-<section id="Trapped-Ion-Based-Quantum-Systems">
-<h1>Trapped Ion Based Quantum Systems<a class="headerlink" href="#Trapped-Ion-Based-Quantum-Systems" title="Link to this heading">¶</a></h1>
+</section>
+<section id="Trapped-Ion-Quantum-Systems">
+<h2>Trapped-Ion Quantum Systems<a class="headerlink" href="#Trapped-Ion-Quantum-Systems" title="Link to this heading">¶</a></h2>
 <section id="IonQ-Aria-1">
-<h2>IonQ Aria-1<a class="headerlink" href="#IonQ-Aria-1" title="Link to this heading">¶</a></h2>
-</section>
-<section id="id1">
-<h2>Native Gates<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<h3>IonQ Aria-1<a class="headerlink" href="#IonQ-Aria-1" title="Link to this heading">¶</a></h3>
+<section id="id2">
+<h4>Native Gates<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h4>
 <p>Retrieve the native gate set supported by the Aria-1 device. This includes only those gates that are natively implemented in hardware.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
@@ -447,8 +436,8 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 </pre></div></div>
 </div>
 </section>
-<section id="id2">
-<h2>Coupling Map<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
+<section id="id3">
+<h4>Coupling Map<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h4>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
@@ -461,19 +450,19 @@ decoupling or composite pulse sequences also need precise timing and gate orderi
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_4_tutorial_native_programming_26_0.png" src="../_images/tutorials_4_tutorial_native_programming_26_0.png" />
+<img alt="../_images/tutorials_4_tutorial_native_programming_17_0.png" src="../_images/tutorials_4_tutorial_native_programming_17_0.png" />
 </div>
 </div>
 </section>
 <section id="Running-Normally-on-Aria-1-Quantum-Hardware">
-<h2>Running Normally on Aria-1 Quantum Hardware<a class="headerlink" href="#Running-Normally-on-Aria-1-Quantum-Hardware" title="Link to this heading">¶</a></h2>
+<h4>Running Normally on Aria-1 Quantum Hardware<a class="headerlink" href="#Running-Normally-on-Aria-1-Quantum-Hardware" title="Link to this heading">¶</a></h4>
 <p>Let’s try creating bell state</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[|\Phi^+\rangle = \frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)\]</div>
 </div>
-<p>Can be created using a simple two-gate quantum circuit. Starting with both qubits in the <span class="math notranslate nohighlight">\(|00\rangle\)</span> state, first apply a Hadamard gate to the first qubit to create the superposition on <span class="math notranslate nohighlight">\(\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)\)</span>, then apply a CNOT gate with the first qubit as control and second as target. The Hadamard gate puts the first qubit into an equal superposition of <span class="math notranslate nohighlight">\(|0\rangle\)</span> and <span class="math notranslate nohighlight">\(|1\rangle\)</span>, while the subsequent CNOT gate entangles the qubits by flipping the
-second qubit only when the first is in state <span class="math notranslate nohighlight">\(|1\rangle\)</span>, resulting in the maximally entangled Bell state where both qubits are perfectly correlated.</p>
+<p>Can be created using a simple two-gate quantum circuit. Starting with both qubits in the <span class="math notranslate nohighlight">\(|00\rangle\)</span> state, first apply a Hadamard gate to the first qubit to create the superposition on <span class="math notranslate nohighlight">\(\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)\)</span>, then apply a CNOT gate with the first qubit as control and second as target. The Hadamard gate puts the first qubit into an equal superposition of <span class="math notranslate nohighlight">\(|0\rangle\)</span> and <span class="math notranslate nohighlight">\(|1\rangle\)</span>, while the subsequent CNOT gate entangles the qubits by flipping
+the second qubit only when the first is in state <span class="math notranslate nohighlight">\(|1\rangle\)</span>, resulting in the maximally entangled Bell state where both qubits are perfectly correlated.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -490,7 +479,7 @@ second qubit only when the first is in state <span class="math notranslate nohig
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_4_tutorial_native_programming_29_0.png" src="../_images/tutorials_4_tutorial_native_programming_29_0.png" />
+<img alt="../_images/tutorials_4_tutorial_native_programming_19_0.png" src="../_images/tutorials_4_tutorial_native_programming_19_0.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -514,13 +503,13 @@ second qubit only when the first is in state <span class="math notranslate nohig
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_4_tutorial_native_programming_31_0.png" src="../_images/tutorials_4_tutorial_native_programming_31_0.png" />
+<img alt="../_images/tutorials_4_tutorial_native_programming_21_0.png" src="../_images/tutorials_4_tutorial_native_programming_21_0.png" />
 </div>
 </div>
 <p>When circuits use non-native gates, they must be automatically decomposed into hardware-supported operations, which increases circuit depth, introduces additional noise, and reduces fidelity. By designing circuits with native gates in mind, programmers can minimize decomposition overhead, reduce execution time, and achieve higher-quality results. Additionally, using native gates provides “what-you-submit-is-what-you-get control” by bypassing compiler optimizations.</p>
 </section>
 <section id="Running-with-Native-Gates-&amp;-Verbatim-Compilation">
-<h2>Running with Native Gates &amp; Verbatim Compilation<a class="headerlink" href="#Running-with-Native-Gates-&-Verbatim-Compilation" title="Link to this heading">¶</a></h2>
+<h4>Running with Native Gates &amp; Verbatim Compilation<a class="headerlink" href="#Running-with-Native-Gates-&-Verbatim-Compilation" title="Link to this heading">¶</a></h4>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
@@ -540,7 +529,7 @@ second qubit only when the first is in state <span class="math notranslate nohig
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/tutorials_4_tutorial_native_programming_34_0.png" src="../_images/tutorials_4_tutorial_native_programming_34_0.png" />
+<img alt="../_images/tutorials_4_tutorial_native_programming_23_0.png" src="../_images/tutorials_4_tutorial_native_programming_23_0.png" />
 </div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -552,8 +541,11 @@ second qubit only when the first is in state <span class="math notranslate nohig
 </pre></div>
 </div>
 </div>
+</section>
+</section>
+</section>
 <section id="Conclusion">
-<h3>Conclusion<a class="headerlink" href="#Conclusion" title="Link to this heading">¶</a></h3>
+<h2>Conclusion<a class="headerlink" href="#Conclusion" title="Link to this heading">¶</a></h2>
 <p>This notebook introduced the basic functionality of verbatim compilation of Amazon Braket, that allows you to run circuits or subcircuits to be executed exactly as defined without any compiler modifications.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
@@ -585,7 +577,6 @@ Note: Charges shown are estimates based on your Amazon Braket simulator and quan
 Estimated cost to run this example: 1.100 USD
 </pre></div></div>
 </div>
-</section>
 </section>
 </section>
 
@@ -644,28 +635,29 @@ Estimated cost to run this example: 1.100 USD
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Native Programming</a><ul>
-<li><a class="reference internal" href="#Function-for-Plotting-Coupling-map">Function for Plotting Coupling map</a></li>
-<li><a class="reference internal" href="#Set-up-the-Braket-Provider">Set up the Braket Provider</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a><ul>
-<li><a class="reference internal" href="#Rigetti-Ankaa-3">Rigetti Ankaa-3</a></li>
+<li><a class="reference internal" href="#Superconducting-Quantum-Systems">Superconducting Quantum Systems</a><ul>
+<li><a class="reference internal" href="#Rigetti-Ankaa-3">Rigetti Ankaa-3</a><ul>
 <li><a class="reference internal" href="#Native-Gates">Native Gates</a></li>
 <li><a class="reference internal" href="#Coupling-Map">Coupling Map</a></li>
-<li><a class="reference internal" href="#Visualize-Ankaa-3-Coupling-Map">Visualize Ankaa-3 Coupling Map</a></li>
-<li><a class="reference internal" href="#IQM-Garnet">IQM Garnet</a></li>
-<li><a class="reference internal" href="#Visualize-Garnet-Coupling-Map">Visualize Garnet Coupling Map</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a><ul>
-<li><a class="reference internal" href="#IonQ-Aria-1">IonQ Aria-1</a></li>
-<li><a class="reference internal" href="#id1">Native Gates</a></li>
-<li><a class="reference internal" href="#id2">Coupling Map</a></li>
+<li><a class="reference internal" href="#IQM-Garnet">IQM Garnet</a><ul>
+<li><a class="reference internal" href="#id1">Coupling Map</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Trapped-Ion-Quantum-Systems">Trapped-Ion Quantum Systems</a><ul>
+<li><a class="reference internal" href="#IonQ-Aria-1">IonQ Aria-1</a><ul>
+<li><a class="reference internal" href="#id2">Native Gates</a></li>
+<li><a class="reference internal" href="#id3">Coupling Map</a></li>
 <li><a class="reference internal" href="#Running-Normally-on-Aria-1-Quantum-Hardware">Running Normally on Aria-1 Quantum Hardware</a></li>
-<li><a class="reference internal" href="#Running-with-Native-Gates-&amp;-Verbatim-Compilation">Running with Native Gates &amp; Verbatim Compilation</a><ul>
-<li><a class="reference internal" href="#Conclusion">Conclusion</a></li>
+<li><a class="reference internal" href="#Running-with-Native-Gates-&amp;-Verbatim-Compilation">Running with Native Gates &amp; Verbatim Compilation</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Conclusion">Conclusion</a></li>
 </ul>
 </li>
 </ul>

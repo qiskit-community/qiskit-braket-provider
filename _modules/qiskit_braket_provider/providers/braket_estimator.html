@@ -209,8 +209,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/6_tutorial_primitives.html">Braket-native primitives</a></li>
 </ul>
@@ -310,6 +308,8 @@
 <span class="sd">                2: medium optimization - better routing (noise aware) and commutative cancellation</span>
 <span class="sd">                3: high optimization - gate resynthesis and unitary-breaking passes</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">backend</span><span class="o">.</span><span class="n">_supports_program_sets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Braket device must support program sets&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim</span> <span class="o">=</span> <span class="n">verbatim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimization_level</span> <span class="o">=</span> <span class="n">optimization_level</span>
@@ -337,9 +337,7 @@
         <span class="n">pub_metadata</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Track which bindings belong to which pub</span>
 
         <span class="k">for</span> <span class="n">pub</span> <span class="ow">in</span> <span class="n">coerced_pubs</span><span class="p">:</span>
-            <span class="n">bindings</span><span class="p">,</span> <span class="n">binding_to_result_map</span><span class="p">,</span> <span class="n">sum_binding_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pub_to_circuit_bindings</span><span class="p">(</span>
-                <span class="n">pub</span>
-            <span class="p">)</span>
+            <span class="n">bindings</span><span class="p">,</span> <span class="n">binding_to_result_map</span><span class="p">,</span> <span class="n">sum_binding_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_translate_pub</span><span class="p">(</span><span class="n">pub</span><span class="p">)</span>
             <span class="n">all_bindings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">bindings</span><span class="p">)</span>
             <span class="n">pub_metadata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">_PubMetadata</span><span class="p">(</span>
@@ -369,7 +367,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All pubs must have the same precision, got: </span><span class="si">{</span><span class="n">precision_values</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">precision_values</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_pub_to_circuit_bindings</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_translate_pub</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">pub</span><span class="p">:</span> <span class="n">EstimatorPub</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">CircuitBinding</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -389,16 +387,24 @@
 <span class="sd">            The circuit bindings, pub shape, a map of binding index to array positions,</span>
 <span class="sd">            and the indices of bindings with Pauli sum observables.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">to_braket</span><span class="p">(</span>
+            <span class="n">pub</span><span class="o">.</span><span class="n">circuit</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">backend</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">verbatim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim</span><span class="p">,</span>
+            <span class="n">qubit_labels</span><span class="o">=</span><span class="n">backend</span><span class="o">.</span><span class="n">qubit_labels</span><span class="p">,</span>
+            <span class="n">optimization_level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimization_level</span><span class="p">,</span>
+        <span class="p">)</span>
+
         <span class="n">observables</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pub</span><span class="o">.</span><span class="n">observables</span><span class="p">)</span>
         <span class="n">param_values</span> <span class="o">=</span> <span class="n">pub</span><span class="o">.</span><span class="n">parameter_values</span>
-
         <span class="n">obs_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">BraketEstimator</span><span class="o">.</span><span class="n">_make_obs_key</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span> <span class="n">obs</span> <span class="k">for</span> <span class="n">obs</span> <span class="ow">in</span> <span class="n">observables</span><span class="o">.</span><span class="n">flatten</span><span class="p">()}</span>
         <span class="n">observables_broadcast</span><span class="p">,</span> <span class="n">param_indices_broadcast</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">broadcast_arrays</span><span class="p">(</span>
                 <span class="n">observables</span><span class="p">,</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="n">shape</span> <span class="o">:=</span> <span class="n">param_values</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">param_values</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">()</span>
+            <span class="k">if</span> <span class="n">param_values</span><span class="o">.</span><span class="n">data</span>
             <span class="k">else</span> <span class="p">(</span><span class="n">observables</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">observables</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">))</span>
         <span class="p">)</span>
 
@@ -431,14 +437,6 @@
             <span class="n">processed_obs_keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">matching_obs_keys</span><span class="p">)</span>
             <span class="n">param_idx_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">pk</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_indices</span><span class="p">)}</span>
 
-            <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span>
-            <span class="n">circuit</span> <span class="o">=</span> <span class="n">to_braket</span><span class="p">(</span>
-                <span class="n">pub</span><span class="o">.</span><span class="n">circuit</span><span class="p">,</span>
-                <span class="n">target</span><span class="o">=</span><span class="n">backend</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
-                <span class="n">verbatim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim</span><span class="p">,</span>
-                <span class="n">qubit_labels</span><span class="o">=</span><span class="n">backend</span><span class="o">.</span><span class="n">qubit_labels</span><span class="p">,</span>
-                <span class="n">optimization_level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimization_level</span><span class="p">,</span>
-            <span class="p">)</span>
             <span class="n">braket_observables</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">translate_sparse_pauli_op</span><span class="p">(</span><span class="n">SparsePauliOp</span><span class="o">.</span><span class="n">from_list</span><span class="p">(</span><span class="n">obs_keys</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
                 <span class="k">for</span> <span class="n">ok</span> <span class="ow">in</span> <span class="n">matching_obs_keys</span>
@@ -542,16 +540,16 @@
 
             <span class="n">evs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">broadcast_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">local_binding_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bindings</span><span class="p">):</span>
-                <span class="n">binding_result</span> <span class="o">=</span> <span class="n">task_result</span><span class="p">[</span><span class="n">binding_offset</span> <span class="o">+</span> <span class="n">local_binding_idx</span><span class="p">]</span>
-                <span class="n">num_observables</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">binding_result</span><span class="o">.</span><span class="n">observables</span><span class="p">)</span>
+                <span class="n">program_result</span> <span class="o">=</span> <span class="n">task_result</span><span class="p">[</span><span class="n">binding_offset</span> <span class="o">+</span> <span class="n">local_binding_idx</span><span class="p">]</span>
+                <span class="n">num_observables</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">program_result</span><span class="o">.</span><span class="n">observables</span><span class="p">)</span>
 
                 <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">obs_idx</span><span class="p">,</span> <span class="n">param_idx</span> <span class="ow">in</span> <span class="n">binding_map</span><span class="p">[</span><span class="n">local_binding_idx</span><span class="p">]:</span>
                     <span class="c1"># CircuitBinding returns results organized by parameter sets</span>
                     <span class="c1"># For each parameter, we get all observables</span>
                     <span class="n">evs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">broadcast_shape</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">binding_result</span><span class="o">.</span><span class="n">expectation</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
+                        <span class="n">program_result</span><span class="o">.</span><span class="n">expectation</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
                         <span class="k">if</span> <span class="n">local_binding_idx</span> <span class="ow">in</span> <span class="n">sum_binding_indices</span>
-                        <span class="k">else</span> <span class="n">binding_result</span><span class="p">[</span><span class="n">param_idx</span> <span class="o">*</span> <span class="n">num_observables</span> <span class="o">+</span> <span class="n">obs_idx</span><span class="p">]</span><span class="o">.</span><span class="n">expectation</span>
+                        <span class="k">else</span> <span class="n">program_result</span><span class="p">[</span><span class="n">param_idx</span> <span class="o">*</span> <span class="n">num_observables</span> <span class="o">+</span> <span class="n">obs_idx</span><span class="p">]</span><span class="o">.</span><span class="n">expectation</span>
                     <span class="p">)</span>
 
             <span class="n">pub_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>

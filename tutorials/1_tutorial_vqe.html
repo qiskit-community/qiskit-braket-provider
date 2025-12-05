@@ -210,8 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1"><a class="reference internal" href="6_tutorial_primitives.html">Braket-native primitives</a></li>
 </ul>
@@ -251,20 +249,19 @@
 <p>Let’s review an example of running algorithms using Qiskit on Braket devices.</p>
 <p>Qiskit provides a number of Algorithms and they are grouped by category according to the task they can perform. For instance Minimum Eigensolvers to find the smallest eigen value of an operator, for example ground state energy of a chemistry Hamiltonian or a solution to an optimization problem when expressed as an Ising Hamiltonian.</p>
 <p>Algorithms are configurable and often part of the configuration will be in the form of smaller building blocks, of which different instances of the building block type can be given. For instance with <code class="docutils literal notranslate"><span class="pre">VQE</span></code>, the Variational Quantum Eigensolver, it takes a trial wavefunction, in the form of a <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> and a classical optimizer among other things.</p>
-<p>Let’s take a look at an example to construct a VQE instance. Here <code class="docutils literal notranslate"><span class="pre">TwoLocal</span></code> is the variational form (trial wavefunction), a parameterized circuit which can be varied, and SLSQP a classical optimizer. Then we pass the Hamiltonian to <code class="docutils literal notranslate"><span class="pre">compute_minimum_eigenvalue</span></code> method of <code class="docutils literal notranslate"><span class="pre">VQE</span></code> to get result.</p>
-<p>Full example and explanation of algorithm detail you can find <a class="reference external" href="https://qiskit-community.github.io/qiskit-algorithms/tutorials/01_algorithms_introduction.html">here</a>.</p>
+<p>Let’s take a look at an example to construct a VQE instance. Here <code class="docutils literal notranslate"><span class="pre">n_local</span></code> is the variational form (trial wavefunction), a parameterized circuit which can be varied, and SLSQP a classical optimizer. Then we pass the Hamiltonian to <code class="docutils literal notranslate"><span class="pre">compute_minimum_eigenvalue</span></code> method of <code class="docutils literal notranslate"><span class="pre">VQE</span></code> to get result.</p>
+<p>You can find full examples and explanation of algorithm details <a class="reference external" href="https://qiskit-community.github.io/qiskit-algorithms/tutorials/01_algorithms_introduction.html">here</a>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoLocal</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendEstimatorV2</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">n_local</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.quantum_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparsePauliOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.minimum_eigensolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">VQE</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLSQP</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">BraketProvider</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketEstimator</span><span class="p">,</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">BraketProvider</span>
 
 <span class="n">seed</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="n">seed</span>
@@ -295,7 +292,7 @@ BraketBackend[default]
 <h2>Running VQE<a class="headerlink" href="#Running-VQE" title="Link to this heading">¶</a></h2>
 <p>More docs on VQE and algorithms <a class="reference external" href="https://qiskit-community.github.io/qiskit-algorithms/tutorials/01_algorithms_introduction.html#A-complete-working-example">https://qiskit-community.github.io/qiskit-algorithms/tutorials/01_algorithms_introduction.html#A-complete-working-example</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">H2_op</span> <span class="o">=</span> <span class="n">SparsePauliOp</span><span class="p">(</span>
@@ -309,14 +306,11 @@ BraketBackend[default]
     <span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">estimator</span> <span class="o">=</span> <span class="n">BackendEstimatorV2</span><span class="p">(</span>
-    <span class="n">backend</span><span class="o">=</span><span class="n">local_simulator</span><span class="p">,</span>
-    <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;seed_simulator&quot;</span><span class="p">:</span> <span class="n">seed</span><span class="p">},</span>
+<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="n">BraketEstimator</span><span class="p">(</span><span class="n">local_simulator</span><span class="p">),</span>
+    <span class="n">ansatz</span><span class="o">=</span><span class="n">n_local</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">rotation_blocks</span><span class="o">=</span><span class="s2">&quot;ry&quot;</span><span class="p">,</span> <span class="n">entanglement_blocks</span><span class="o">=</span><span class="s2">&quot;cz&quot;</span><span class="p">),</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">SLSQP</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
 <span class="p">)</span>
-<span class="n">ansatz</span> <span class="o">=</span> <span class="n">TwoLocal</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">rotation_blocks</span><span class="o">=</span><span class="s2">&quot;ry&quot;</span><span class="p">,</span> <span class="n">entanglement_blocks</span><span class="o">=</span><span class="s2">&quot;cz&quot;</span><span class="p">)</span>
-<span class="n">slsqp</span> <span class="o">=</span> <span class="n">SLSQP</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">,</span> <span class="n">ansatz</span><span class="o">=</span><span class="n">ansatz</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">slsqp</span><span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">H2_op</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
@@ -330,31 +324,23 @@ BraketBackend[default]
 <div class="highlight"><pre>
 {   &#39;aux_operators_evaluated&#39;: None,
     &#39;cost_function_evals&#39;: 9,
-    &#39;eigenvalue&#39;: -1.3792822927523654,
-    &#39;optimal_circuit&#39;: &lt;qiskit.circuit.library.n_local.two_local.TwoLocal object at 0x3143d76e0&gt;,
-    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[1]): -2.940960526404766,
-                              ParameterVectorElement(θ[3]): -1.2903442440134034,
-                              ParameterVectorElement(θ[5]): -4.710416180758196,
-                              ParameterVectorElement(θ[2]): 6.115830155139623,
-                              ParameterVectorElement(θ[4]): -2.1556830785333663,
-                              ParameterVectorElement(θ[6]): -4.882565275402284,
-                              ParameterVectorElement(θ[7]): 6.08932895996748,
-                              ParameterVectorElement(θ[0]): -1.227012055676525},
-    &#39;optimal_point&#39;: array([-1.22701206, -2.94096053,  6.11583016, -1.29034424, -2.15568308,
-       -4.71041618, -4.88256528,  6.08932896]),
-    &#39;optimal_value&#39;: -1.3792822927523654,
+    &#39;eigenvalue&#39;: -1.0774272657163853,
+    &#39;optimal_circuit&#39;: &lt;qiskit.circuit.quantumcircuit.QuantumCircuit object at 0x31776b1f0&gt;,
+    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[0]): 3.611860069224077,
+                              ParameterVectorElement(θ[1]): 4.19301252102391,
+                              ParameterVectorElement(θ[2]): 0.6019852007557844,
+                              ParameterVectorElement(θ[3]): 5.949536809130025,
+                              ParameterVectorElement(θ[4]): -3.3070470445355764,
+                              ParameterVectorElement(θ[5]): 1.8462931831829383,
+                              ParameterVectorElement(θ[6]): -5.466043598406607,
+                              ParameterVectorElement(θ[7]): 0.6984088030463615},
+    &#39;optimal_point&#39;: array([ 3.61186007,  4.19301252,  0.6019852 ,  5.94953681, -3.30704704,
+        1.84629318, -5.4660436 ,  0.6984088 ]),
+    &#39;optimal_value&#39;: -1.0774272657163853,
     &#39;optimizer_evals&#39;: None,
-    &#39;optimizer_result&#39;: &lt;qiskit_algorithms.optimizers.optimizer.OptimizerResult object at 0x315840f50&gt;,
-    &#39;optimizer_time&#39;: 0.34099888801574707}
+    &#39;optimizer_result&#39;: &lt;qiskit_algorithms.optimizers.optimizer.OptimizerResult object at 0x31776b190&gt;,
+    &#39;optimizer_time&#39;: 2.5222582817077637}
 </pre></div></div>
-</div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
 </div>
 </section>
 </section>

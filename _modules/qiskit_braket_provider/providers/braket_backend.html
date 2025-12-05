@@ -209,8 +209,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/6_tutorial_primitives.html">Braket-native primitives</a></li>
 </ul>
@@ -293,6 +291,9 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_supports_program_sets</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">DeviceActionType</span><span class="o">.</span><span class="n">OPENQASM_PROGRAM_SET</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">action</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;BraketBackend[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span>
@@ -505,10 +506,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">topology_graph</span>
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_supports_program_sets</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">DeviceActionType</span><span class="o">.</span><span class="n">OPENQASM_PROGRAM_SET</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">action</span>
-        <span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gateset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_gateset</span><span class="p">()</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BraketQuantumTask</span><span class="p">:</span>

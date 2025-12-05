@@ -210,8 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1"><a class="reference internal" href="6_tutorial_primitives.html">Braket-native primitives</a></li>
 </ul>
@@ -252,16 +250,12 @@
 <h2>About this notebook and the adaptation to Amazon Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend" title="Link to this heading">¶</a></h2>
 <p>The original version of this notebook is accessible at <a class="reference external" href="https://github.com/qiskit-community/qiskit-optimization/blob/stable/0.6/docs/tutorials/03_minimum_eigen_optimizer.ipynb">docs/tutorials/03_minimum_eigen_optimizer.ipynb</a>. The only changes made to the original notebook are contained in the first cell and in cell #6 where we pass the <code class="docutils literal notranslate"><span class="pre">BackendSampler</span></code> object to execute the tasks on Amazon Braket SV1 simulator.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">BackendSamplerV2</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">BraketSampler</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketProvider</span>
-
-<span class="n">sampler</span> <span class="o">=</span> <span class="n">BackendSamplerV2</span><span class="p">(</span>
-    <span class="n">backend</span><span class="o">=</span><span class="n">BraketProvider</span><span class="p">()</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">),</span>
-<span class="p">)</span>
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">BraketSampler</span><span class="p">(</span><span class="n">BraketLocalBackend</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -290,7 +284,7 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
 </section>
 <section id="Converting-a-QUBO-to-a-SparsePauliOp">
 <h2>Converting a QUBO to a SparsePauliOp<a class="headerlink" href="#Converting-a-QUBO-to-a-SparsePauliOp" title="Link to this heading">¶</a></h2>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
@@ -310,6 +304,15 @@ constraints as a quadratic penalty term to the objective. It should be mentioned
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_optimization.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/caw/anaconda3/lib/python3.10/site-packages/pandas/core/arrays/masked.py:61: UserWarning: Pandas requires version &#39;1.3.6&#39; or newer of &#39;bottleneck&#39; (version &#39;1.3.5&#39; currently installed).
+  from pandas.core import (
+</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -415,7 +418,7 @@ Subject to
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/qiskit_optimization/minimum_eigensolvers/qaoa.py:122: UserWarning: Using Sampler V2 (other than StatevectorSampler) without a pass_manager may result in an error. Consider providing a pass_manager for proper circuit transpilation.
+/Users/caw/anaconda3/lib/python3.10/site-packages/qiskit_optimization/minimum_eigensolvers/qaoa.py:122: UserWarning: Using Sampler V2 (other than StatevectorSampler) without a pass_manager may result in an error. Consider providing a pass_manager for proper circuit transpilation.
   super().__init__(
 </pre></div></div>
 </div>
@@ -464,7 +467,7 @@ status: SUCCESS
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;qiskit_optimization.algorithms.minimum_eigen_optimizer.MinimumEigenOptimizer at 0x15f4fef60&gt;
+&lt;qiskit_optimization.algorithms.minimum_eigen_optimizer.MinimumEigenOptimizer at 0x3292c1900&gt;
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -481,158 +484,8 @@ status: SUCCESS
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:860: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
   warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -665,13 +518,13 @@ status: SUCCESS
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 variable order: [&#39;x&#39;, &#39;y&#39;, &#39;z&#39;]
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.431640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.193359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.13671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.14453125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.056640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0068359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.4580078125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.2255859375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.12109375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.1044921875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.029296875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.03515625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0244140625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.001953125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
@@ -708,13 +561,13 @@ SolutionSample(x=array([1., 1., 1.]), fval=4.0, probability=0.001953125, status=
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.431640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.193359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.13671875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.14453125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0283203125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.056640625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
-SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0068359375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 0.]), fval=-2.0, probability=0.4580078125, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 0.]), fval=0.0, probability=0.2255859375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 1., 0.]), fval=0.0, probability=0.12109375, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 0.]), fval=1.0, probability=0.1044921875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([1., 0., 1.]), fval=3.0, probability=0.029296875, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.03515625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
+SolutionSample(x=array([0., 0., 1.]), fval=3.0, probability=0.0244140625, status=&lt;OptimizationResultStatus.SUCCESS: 0&gt;)
 </pre></div></div>
 </div>
 <p>If we want to obtain a better perspective of the results, statistics is very helpful, both with respect to the objective function values and their respective probabilities. Thus, mean and standard deviation are the very basics for understanding the results.</p>
@@ -780,13 +633,13 @@ SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0068359375, status
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;x=0 y=1 z=0&#39;: 0.431640625,
- &#39;x=0 y=0 z=0&#39;: 0.193359375,
- &#39;x=1 y=1 z=0&#39;: 0.13671875,
- &#39;x=1 y=0 z=0&#39;: 0.14453125,
- &#39;x=0 y=0 z=1&#39;: 0.0283203125,
- &#39;x=1 y=0 z=1&#39;: 0.056640625,
- &#39;x=0 y=1 z=1&#39;: 0.0068359375}
+{&#39;x=0 y=1 z=0&#39;: 0.4580078125,
+ &#39;x=0 y=0 z=0&#39;: 0.2255859375,
+ &#39;x=1 y=1 z=0&#39;: 0.12109375,
+ &#39;x=1 y=0 z=0&#39;: 0.1044921875,
+ &#39;x=1 y=0 z=1&#39;: 0.029296875,
+ &#39;x=0 y=1 z=1&#39;: 0.03515625,
+ &#39;x=0 y=0 z=1&#39;: 0.0244140625}
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -834,254 +687,8 @@ SolutionSample(x=array([0., 1., 1.]), fval=3.0, probability=0.0068359375, status
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:860: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
   warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
-/Users/sesmart/coding/development/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:673: UserWarning: The Qiskit circuit contains barrier instructions that are ignored.
-  warnings.warn(&#34;The Qiskit circuit contains barrier instructions that are ignored.&#34;)
-/Users/sesmart/.local/share/mise/installs/python/3.12.10/lib/python3.12/site-packages/braket/aws/aws_quantum_task.py:774: UserWarning: AwsQuantumTask.__init__ received unknown keyword args: [&#39;memory&#39;, &#39;seed_simulator&#39;]
-  return AwsQuantumTask(task_arn, aws_session, *args, **kwargs)
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">

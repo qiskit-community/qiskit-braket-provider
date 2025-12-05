@@ -210,8 +210,6 @@
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Braket-native primitives</a></li>
 </ul>
@@ -429,7 +427,7 @@ Number of executables second program: 40
 </div>
 <p>Note: Hamiltonian programs appear first in the list, but the order is corrected by the estimator’s postprocessing.</p>
 <p>So far, we’ve only looked at examples where the observables and parameters are both 1-dimensional, which allows them to be paired in a Cartesian product. However, Qiskit allows observables and parameters to be of arbitrary shape, so long as they are <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">broadcastable</a>.</p>
-<div><p><img alt="74db4d642a7e415cba7c23e1ce417f2c" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
+<div><p><img alt="69b3a3cf2a014ccfad207e79acce5fed" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
 <figcaption><p>Source: <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules</a></p>
 </figcaption></div><p>Since programs in program sets only encode Cartesian products, a single PUB may require multiple programs to capture the full broadcasted combination:</p>
 <div class="nbinput nblast docutils container">
@@ -606,7 +604,7 @@ for index in np.ndindex(data.shape):
         y.append(v)
     axs[index].bar(x, y)
     axs[index].set_ylim(0, 600)
-    axs[index].set_title(f&quot;θ={round(parameter_values[index] * 6 / np.pi) / 6 : .2f}π&quot;)
+    axs[index].set_title(f&quot;θ={round(parameter_values[index] * 6 / np.pi) / 6: .2f}π&quot;)
 </pre></div>
 </div>
 </div>

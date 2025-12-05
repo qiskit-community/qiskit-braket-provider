@@ -209,8 +209,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html#Superconducting-Qubits-based-Quantum-Systems">Superconducting Qubits based Quantum Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/4_tutorial_native_programming.html#Trapped-Ion-Based-Quantum-Systems">Trapped Ion Based Quantum Systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/5_tutorial_transpilation.html">Transpiling circuits and programs to Braket</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorials/6_tutorial_primitives.html">Braket-native primitives</a></li>
 </ul>
@@ -261,6 +259,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives.containers.bindings_array</span><span class="w"> </span><span class="kn">import</span> <span class="n">BindingsArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.primitives.containers.sampler_pub</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplerPub</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">Circuit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.program_sets</span><span class="w"> </span><span class="kn">import</span> <span class="n">CircuitBinding</span><span class="p">,</span> <span class="n">ParameterSets</span><span class="p">,</span> <span class="n">ProgramSet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProgramSetQuantumTaskResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider.providers.adapter</span><span class="w"> </span><span class="kn">import</span> <span class="n">rename_parameter</span><span class="p">,</span> <span class="n">to_braket</span>
@@ -311,6 +310,8 @@
 <span class="sd">                2: medium optimization - better routing (noise aware) and commutative cancellation</span>
 <span class="sd">                3: high optimization - gate resynthesis and unitary-breaking passes</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">backend</span><span class="o">.</span><span class="n">_supports_program_sets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Braket device must support program sets&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim</span> <span class="o">=</span> <span class="n">verbatim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimization_level</span> <span class="o">=</span> <span class="n">optimization_level</span>
@@ -335,7 +336,7 @@
         <span class="n">circuit_bindings</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">parameter_indices</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">pub</span> <span class="ow">in</span> <span class="n">coerced_pubs</span><span class="p">:</span>
-            <span class="n">circuit_binding</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pub_to_circuit_binding</span><span class="p">(</span><span class="n">pub</span><span class="p">)</span>
+            <span class="n">circuit_binding</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_translate_pub</span><span class="p">(</span><span class="n">pub</span><span class="p">)</span>
             <span class="n">circuit_bindings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">circuit_binding</span><span class="p">)</span>
             <span class="n">parameter_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
         <span class="n">shots_per_executable</span> <span class="o">=</span> <span class="n">pub_shots</span> <span class="k">if</span> <span class="n">pub_shots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">shots</span>
@@ -360,15 +361,15 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All pubs must have the same shots, got: </span><span class="si">{</span><span class="n">shots_values</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">shots_values</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_pub_to_circuit_binding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pub</span><span class="p">:</span> <span class="n">SamplerPub</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CircuitBinding</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_translate_pub</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pub</span><span class="p">:</span> <span class="n">SamplerPub</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CircuitBinding</span> <span class="o">|</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span>
         <span class="n">param_values</span> <span class="o">=</span> <span class="n">pub</span><span class="o">.</span><span class="n">parameter_values</span>
         <span class="n">param_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="n">param_values</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="n">parameter_sets</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">BraketSampler</span><span class="o">.</span><span class="n">_translate_parameters</span><span class="p">([</span><span class="n">param_values</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span> <span class="k">for</span> <span class="n">pi</span> <span class="ow">in</span> <span class="n">param_indices</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">param_values</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">()</span>
+            <span class="k">if</span> <span class="n">param_values</span><span class="o">.</span><span class="n">data</span>
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
-        <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span>
         <span class="k">return</span> <span class="n">CircuitBinding</span><span class="p">(</span>
             <span class="n">to_braket</span><span class="p">(</span>
                 <span class="n">pub</span><span class="o">.</span><span class="n">circuit</span><span class="p">,</span>
@@ -417,7 +418,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">shots</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">shots</span>
         <span class="n">pub_results</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">pub_result</span><span class="p">,</span> <span class="n">pub</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">program_result</span><span class="p">,</span> <span class="n">pub</span><span class="p">,</span> <span class="n">indices</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
             <span class="n">task_result</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">pubs</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">parameter_indices</span>
         <span class="p">):</span>
             <span class="n">circuit</span> <span class="o">=</span> <span class="n">pub</span><span class="o">.</span><span class="n">circuit</span>
@@ -431,14 +432,14 @@
                 <span class="k">for</span> <span class="n">creg</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">cregs</span>
             <span class="p">]</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="n">pub</span><span class="o">.</span><span class="n">shape</span>
-            <span class="n">memory_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">executable_result</span><span class="o">.</span><span class="n">measurements</span> <span class="k">for</span> <span class="n">executable_result</span> <span class="ow">in</span> <span class="n">pub_result</span><span class="p">]</span>
+            <span class="n">measurements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">executable_result</span><span class="o">.</span><span class="n">measurements</span> <span class="k">for</span> <span class="n">executable_result</span> <span class="ow">in</span> <span class="n">program_result</span><span class="p">]</span>
             <span class="p">)</span>
             <span class="n">arrays</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">item</span><span class="o">.</span><span class="n">creg_name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="n">shots</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">num_bytes</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">meas_info</span>
             <span class="p">}</span>
-            <span class="k">for</span> <span class="n">samples</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">memory_array</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">samples</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">measurements</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">meas_info</span><span class="p">:</span>
                     <span class="n">start</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">start</span>
                     <span class="n">arrays</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">creg_name</span><span class="p">][</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span>
@@ -447,6 +448,7 @@
                         <span class="p">),</span>
                         <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
                     <span class="p">)</span>
+
             <span class="n">pub_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">PubResult</span><span class="p">(</span>
                     <span class="n">DataBin</span><span class="p">(</span>
