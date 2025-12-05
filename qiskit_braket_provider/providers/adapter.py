@@ -943,14 +943,10 @@ def _default_qubit_labels(circuit: QuantumCircuit) -> tuple[int, ...]:
 def _create_free_parameters(operation):
     for i, param in enumerate(params := operation.params):
         match param:
-            case ParameterVectorElement():
-                renamed_param_name = rename_param_vector_element(param)
-                params[i] = FreeParameter(renamed_param_name)
-            case Parameter(name=name):
-                params[i] = FreeParameter(name)
+            case Parameter() | ParameterVectorElement():
+                params[i] = FreeParameter(rename_parameter(param))
             case ParameterExpression():
-                renamed_param_name = rename_param_vector_element(param)
-                params[i] = FreeParameterExpression(renamed_param_name)
+                params[i] = FreeParameterExpression(rename_parameter(param))
     return params
 
 
@@ -999,7 +995,7 @@ def _validate_angle_restrictions(
                 )
 
 
-def rename_param_vector_element(parameter: Parameter) -> str:
+def rename_parameter(parameter: Parameter) -> str:
     """Translates a parameter in a ParameterVector to a Braket-compatible parameter name.
 
     Args:
@@ -1012,7 +1008,7 @@ def rename_param_vector_element(parameter: Parameter) -> str:
 
 
 def _validate_name_conflicts(parameters):
-    renamed_parameters = {rename_param_vector_element(param) for param in parameters}
+    renamed_parameters = {rename_parameter(param) for param in parameters}
     if len(renamed_parameters) != len(parameters):
         raise ValueError(
             "ParameterVector elements are renamed from v[i] to v_i, which resulted "

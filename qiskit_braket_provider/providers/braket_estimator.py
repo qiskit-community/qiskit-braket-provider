@@ -12,7 +12,7 @@ from braket.circuits.observables import Sum
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from braket.tasks import ProgramSetQuantumTaskResult
 from qiskit_braket_provider.providers.adapter import (
-    rename_param_vector_element,
+    rename_parameter,
     to_braket,
     translate_sparse_pauli_op,
 )
@@ -257,7 +257,7 @@ class BraketEstimator(BaseEstimatorV2):
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
                 for param, val in zip(k, v):
-                    data[rename_param_vector_element(param)].append(val)
+                    data[rename_parameter(param)].append(val)
         return ParameterSets(data)
 
     @staticmethod

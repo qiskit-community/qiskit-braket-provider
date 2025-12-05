@@ -16,7 +16,7 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from braket.tasks import ProgramSetQuantumTaskResult
-from qiskit_braket_provider.providers.adapter import rename_param_vector_element, to_braket
+from qiskit_braket_provider.providers.adapter import rename_parameter, to_braket
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
 from qiskit_braket_provider.providers.braket_primitive_task import BraketPrimitiveTask
 
@@ -143,7 +143,7 @@ class BraketSampler(BaseSamplerV2):
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
                 for param, val in zip(k, v):
-                    data[rename_param_vector_element(param)].append(val)
+                    data[rename_parameter(param)].append(val)
         return ParameterSets(data)
 
     @staticmethod

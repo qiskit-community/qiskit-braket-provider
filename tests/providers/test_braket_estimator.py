@@ -278,8 +278,8 @@ class TestBraketEstimator(TestCase):
         circuit = QuantumCircuit(2)
         circuit.h(0)
         circuit.cx(0, 1)
-        circuit.ry(Parameter("theta"), 0)
-        circuit.rz(Parameter("phi"), 0)
+        circuit.ry(Parameter("θ[0]"), 0)
+        circuit.rz(Parameter("θ[1]"), 0)
         circuit.cx(0, 1)
         circuit.h(0)
 
