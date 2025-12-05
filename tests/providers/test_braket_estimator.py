@@ -25,10 +25,12 @@ class TestBraketEstimator(TestCase):
         self.backend = BraketLocalBackend()
         self.estimator = BraketEstimator(self.backend)
 
-    def test_initialization(self):
-        """Test estimator initialization."""
-        self.assertIsInstance(self.estimator, BraketEstimator)
-        self.assertEqual(self.estimator._backend, self.backend)
+    def test_program_sets_unsupported(self):
+        """Tests that initialization raises a ValueError if program sets aren't supported"""
+        backend = BraketLocalBackend()
+        backend._supports_program_sets = False
+        with self.assertRaises(ValueError):
+            BraketEstimator(backend)
 
     def test_simple_pub(self):
         """Test a simple pub with no broadcasting."""

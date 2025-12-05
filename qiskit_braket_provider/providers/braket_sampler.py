@@ -61,6 +61,8 @@ class BraketSampler(BaseSamplerV2):
                 2: medium optimization - better routing (noise aware) and commutative cancellation
                 3: high optimization - gate resynthesis and unitary-breaking passes
         """
+        if not backend._supports_program_sets:
+            raise ValueError("Braket device must support program sets")
         self._backend = backend
         self._verbatim = verbatim
         self._optimization_level = optimization_level
