@@ -46,6 +46,9 @@ class BraketBackend(BackendV2, ABC, Generic[T]):
     def __init__(self, device: T, name: str, **fields):
         super().__init__(name=name, **fields)
         self._device = device
+        self._supports_program_sets = (
+            DeviceActionType.OPENQASM_PROGRAM_SET in self._device.properties.action
+        )
 
     def __repr__(self):
         return f"BraketBackend[{self.name}]"
@@ -249,9 +252,6 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             else None
         )
         self._gateset = self.get_gateset()
-        self._supports_program_sets = (
-            DeviceActionType.OPENQASM_PROGRAM_SET in self._device.properties.action
-        )
 
     def retrieve_job(self, task_id: str) -> BraketQuantumTask:
         """Return a single job submitted to AWS backend.

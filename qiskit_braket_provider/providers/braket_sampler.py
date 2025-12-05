@@ -14,6 +14,7 @@ from qiskit.primitives import (
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 
+from braket.circuits import Circuit
 from braket.program_sets import CircuitBinding, ParameterSets, ProgramSet
 from braket.tasks import ProgramSetQuantumTaskResult
 from qiskit_braket_provider.providers.adapter import rename_parameter, to_braket
@@ -60,6 +61,8 @@ class BraketSampler(BaseSamplerV2):
                 2: medium optimization - better routing (noise aware) and commutative cancellation
                 3: high optimization - gate resynthesis and unitary-breaking passes
         """
+        if not backend._supports_program_sets:
+            raise ValueError("Braket device must support program sets")
         self._backend = backend
         self._verbatim = verbatim
         self._optimization_level = optimization_level
@@ -83,7 +86,7 @@ class BraketSampler(BaseSamplerV2):
         circuit_bindings = []
         parameter_indices = []
         for pub in coerced_pubs:
-            circuit_binding, indices = self._pub_to_circuit_binding(pub)
+            circuit_binding, indices = self._translate_pub(pub)
             circuit_bindings.append(circuit_binding)
             parameter_indices.append(indices)
         shots_per_executable = pub_shots if pub_shots is not None else shots
@@ -108,15 +111,15 @@ class BraketSampler(BaseSamplerV2):
             raise ValueError(f"All pubs must have the same shots, got: {shots_values}")
         return list(shots_values)[0]
 
-    def _pub_to_circuit_binding(self, pub: SamplerPub) -> tuple[CircuitBinding, np.ndarray]:
+    def _translate_pub(self, pub: SamplerPub) -> tuple[CircuitBinding | Circuit, np.ndarray | None]:
+        backend = self._backend
         param_values = pub.parameter_values
         param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
         parameter_sets = (
             BraketSampler._translate_parameters([param_values[pi] for pi in param_indices])
-            if param_values.shape != ()
+            if param_values.data
             else None
         )
-        backend = self._backend
         return CircuitBinding(
             to_braket(
                 pub.circuit,
@@ -165,7 +168,7 @@ class BraketSampler(BaseSamplerV2):
         """
         shots = metadata.shots
         pub_results = []
-        for pub_result, pub, indices in zip(
+        for program_result, pub, indices in zip(
             task_result.entries, metadata.pubs, metadata.parameter_indices
         ):
             circuit = pub.circuit
@@ -179,14 +182,14 @@ class BraketSampler(BaseSamplerV2):
                 for creg in circuit.cregs
             ]
             shape = pub.shape
-            memory_array = np.array(
-                [executable_result.measurements for executable_result in pub_result]
+            measurements = np.array(
+                [executable_result.measurements for executable_result in program_result]
             )
             arrays = {
                 item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
                 for item in meas_info
             }
-            for samples, index in zip(memory_array, indices):
+            for samples, index in zip(measurements, indices):
                 for item in meas_info:
                     start = item.start
                     arrays[item.creg_name][index] = np.flip(
@@ -195,6 +198,7 @@ class BraketSampler(BaseSamplerV2):
                         ),
                         axis=-1,
                     )
+
             pub_results.append(
                 PubResult(
                     DataBin(

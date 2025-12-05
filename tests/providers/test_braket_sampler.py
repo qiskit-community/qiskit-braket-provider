@@ -20,10 +20,12 @@ class TestBraketSampler(TestCase):
         self.backend = BraketLocalBackend()
         self.sampler = BraketSampler(self.backend)
 
-    def test_initialization(self):
-        """Test sampler initialization."""
-        self.assertIsInstance(self.sampler, BraketSampler)
-        self.assertEqual(self.sampler._backend, self.backend)
+    def test_program_sets_unsupported(self):
+        """Tests that initialization raises a ValueError if program sets aren't supported"""
+        backend = BraketLocalBackend()
+        backend._supports_program_sets = False
+        with self.assertRaises(ValueError):
+            BraketSampler(backend)
 
     def test_different_precisions_raises_error(self):
         """Test that pubs with different shots raise an error."""
