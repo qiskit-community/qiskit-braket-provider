@@ -85,9 +85,7 @@ class BraketEstimator(BaseEstimatorV2):
         pub_metadata = []  # Track which bindings belong to which pub
 
         for pub in coerced_pubs:
-            bindings, binding_to_result_map, sum_binding_indices = self._pub_to_circuit_bindings(
-                pub
-            )
+            bindings, binding_to_result_map, sum_binding_indices = self._translate_pub(pub)
             all_bindings.extend(bindings)
             pub_metadata.append(
                 _PubMetadata(
@@ -117,7 +115,7 @@ class BraketEstimator(BaseEstimatorV2):
             raise ValueError(f"All pubs must have the same precision, got: {precision_values}")
         return list(precision_values)[0]
 
-    def _pub_to_circuit_bindings(
+    def _translate_pub(
         self, pub: EstimatorPub
     ) -> tuple[list[CircuitBinding], dict[int, tuple[tuple[int, ...], int, int]], set[int]]:
         """
@@ -137,16 +135,24 @@ class BraketEstimator(BaseEstimatorV2):
             The circuit bindings, pub shape, a map of binding index to array positions,
             and the indices of bindings with Pauli sum observables.
         """
+        backend = self._backend
+        circuit = to_braket(
+            pub.circuit,
+            target=backend.target,
+            verbatim=self._verbatim,
+            qubit_labels=backend.qubit_labels,
+            optimization_level=self._optimization_level,
+        )
+
         observables = np.asarray(pub.observables)
         param_values = pub.parameter_values
-
         obs_keys = {BraketEstimator._make_obs_key(obs): obs for obs in observables.flatten()}
         observables_broadcast, param_indices_broadcast = (
             np.broadcast_arrays(
                 observables,
                 np.fromiter(np.ndindex(shape := param_values.shape), dtype=object).reshape(shape),
             )
-            if param_values.shape != ()
+            if param_values.data
             else (observables, np.empty(observables.shape, dtype=object))
         )
 
@@ -179,14 +185,6 @@ class BraketEstimator(BaseEstimatorV2):
             processed_obs_keys.update(matching_obs_keys)
             param_idx_map = {pk: idx for idx, pk in enumerate(param_indices)}
 
-            backend = self._backend
-            circuit = to_braket(
-                pub.circuit,
-                target=backend.target,
-                verbatim=self._verbatim,
-                qubit_labels=backend.qubit_labels,
-                optimization_level=self._optimization_level,
-            )
             braket_observables = [
                 translate_sparse_pauli_op(SparsePauliOp.from_list(obs_keys[ok].items()))
                 for ok in matching_obs_keys
@@ -290,16 +288,16 @@ class BraketEstimator(BaseEstimatorV2):
 
             evs = np.zeros(broadcast_shape, dtype=float)
             for local_binding_idx in range(num_bindings):
-                binding_result = task_result[binding_offset + local_binding_idx]
-                num_observables = len(binding_result.observables)
+                program_result = task_result[binding_offset + local_binding_idx]
+                num_observables = len(program_result.observables)
 
                 for position, obs_idx, param_idx in binding_map[local_binding_idx]:
                     # CircuitBinding returns results organized by parameter sets
                     # For each parameter, we get all observables
                     evs[np.unravel_index(position, broadcast_shape)] = (
-                        binding_result.expectation(param_idx)
+                        program_result.expectation(param_idx)
                         if local_binding_idx in sum_binding_indices
-                        else binding_result[param_idx * num_observables + obs_idx].expectation
+                        else program_result[param_idx * num_observables + obs_idx].expectation
                     )
 
             pub_results.append(
