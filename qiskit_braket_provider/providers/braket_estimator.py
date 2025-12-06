@@ -38,6 +38,11 @@ class _JobMetadata:
 
 
 class BraketEstimator(BaseEstimatorV2):
+    """
+    Runs provided quantum circuit and observable combinations on Amazon Braket devices
+    and computes their expectation values.
+    """
+
     def __init__(
         self,
         backend: BraketBackend,

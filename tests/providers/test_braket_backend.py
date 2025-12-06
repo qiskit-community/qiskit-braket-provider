@@ -1,4 +1,4 @@
-"""Tests for AWS Braket backends."""
+"""Tests for Amazon Braket backends."""
 
 import copy
 import unittest

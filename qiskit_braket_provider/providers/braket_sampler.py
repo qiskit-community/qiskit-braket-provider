@@ -40,6 +40,11 @@ class _MeasureInfo:
 
 
 class BraketSampler(BaseSamplerV2):
+    """
+    Runs provided quantum circuit and observable combinations on Amazon Braket devices
+    and returns samples of their outputs.
+    """
+
     def __init__(
         self,
         backend: BraketBackend,

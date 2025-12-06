@@ -1,4 +1,4 @@
-"""Tests for AWS Braket provider."""
+"""Tests for Amazon Braket provider."""
 
 import uuid
 from unittest import TestCase
