@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="How-to: run circuit on Braket devices" href="1_how_to_run_circuits_on_Braket_devices.html" /><link rel="prev" title="&lt;no title&gt;" href="index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="How-to: Run circuits on Braket devices" href="1_how_to_run_circuits_on_braket_devices.html" /><link rel="prev" title="&lt;no title&gt;" href="index.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>How-to: access AWS Braket devices - Qiskit-Braket provider 0.9.0</title>
+        <title>How-to: Access devices on Amazon Braket - Qiskit-Braket provider 0.9.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -191,22 +191,24 @@
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_how_to_run_circuits_on_braket_devices.html">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
@@ -244,19 +246,16 @@
           </label>
         </div>
         <article role="main">
-          <section id="How-to:-access-AWS-Braket-devices">
-<h1>How-to: access AWS Braket devices<a class="headerlink" href="#How-to:-access-AWS-Braket-devices" title="Link to this heading">¶</a></h1>
-<div class="line-block">
-<div class="line">In order to get access to AWS Braket devices through Qiskit you need to import <code class="docutils literal notranslate"><span class="pre">AWSBraketProvider</span></code> provider.</div>
-<div class="line">Provider gives you access to Braket backends.</div>
-</div>
+          <section id="How-to:-Access-devices-on-Amazon-Braket">
+<h1>How-to: Access devices on Amazon Braket<a class="headerlink" href="#How-to:-Access-devices-on-Amazon-Braket" title="Link to this heading">¶</a></h1>
+<p>In order to get access to Amazon Braket devices through Qiskit you can use the <code class="docutils literal notranslate"><span class="pre">BraketProvider</span></code>, which gives you a view of all available backends.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketProvider</span>
 </pre></div>
 </div>
 </div>
@@ -264,7 +263,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -285,16 +284,13 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-[BraketBackend[Aria 1],
- BraketBackend[Aspen-10],
- BraketBackend[Aspen-11],
- BraketBackend[Aspen-8],
- BraketBackend[Aspen-9],
- BraketBackend[Aspen-M-1],
- BraketBackend[Aspen-M-2],
- BraketBackend[Aspen-M-3],
- BraketBackend[Harmony],
- BraketBackend[Lucy],
+[BraketBackend[Ankaa-3],
+ BraketBackend[Aria 1],
+ BraketBackend[Emerald],
+ BraketBackend[Forte 1],
+ BraketBackend[Forte Enterprise 1],
+ BraketBackend[Garnet],
+ BraketBackend[IBEX Q1],
  BraketBackend[SV1],
  BraketBackend[TN1],
  BraketBackend[dm1]]
@@ -324,135 +320,101 @@
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 {&#39;backend version&#39;: 2,
+ &#39;description&#39;: &#39;AWS Device: Rigetti Ankaa-3.&#39;,
+ &#39;name&#39;: &#39;Ankaa-3&#39;,
+ &#39;number of qubits&#39;: 82,
+ &#39;online date&#39;: datetime.datetime(2025, 12, 5, 23, 9, 47, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;x&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;sx&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;sxdg&#39;, num_qubits=1, num_clbits=0, params=[]),
+                Instruction(name=&#39;rz&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;iswap&#39;, num_qubits=2, num_clbits=0, params=[])]}
+{&#39;backend version&#39;: 2,
  &#39;description&#39;: &#39;AWS Device: IonQ Aria 1.&#39;,
  &#39;name&#39;: &#39;Aria 1&#39;,
  &#39;number of qubits&#39;: 25,
- &#39;online date&#39;: datetime.datetime(2023, 6, 7, 11, 12, 40, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;x&#39;, num_qubits=1, num_clbits=0, params=[]),
-                Instruction(name=&#39;y&#39;, num_qubits=1, num_clbits=0, params=[]),
-                Instruction(name=&#39;z&#39;, num_qubits=1, num_clbits=0, params=[]),
-                Instruction(name=&#39;rx&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta)])]}
+ &#39;online date&#39;: datetime.datetime(2025, 9, 1, 0, 0, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;gpi&#39;, num_qubits=1, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045ad0&gt;]),
+                Instruction(name=&#39;gpi2&#39;, num_qubits=1, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045b30&gt;]),
+                Instruction(name=&#39;ms&#39;, num_qubits=2, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045b90&gt;, &lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045bf0&gt;, &lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045c50&gt;]),
+                Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[])]}
 {&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-10.&#39;,
- &#39;name&#39;: &#39;Aspen-10&#39;,
- &#39;number of qubits&#39;: 38,
- &#39;online date&#39;: datetime.datetime(2021, 12, 15, 19, 48, 30, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+ &#39;description&#39;: &#39;AWS Device: IQM Emerald.&#39;,
+ &#39;name&#39;: &#39;Emerald&#39;,
+ &#39;number of qubits&#39;: 54,
+ &#39;online date&#39;: datetime.datetime(2025, 12, 5, 7, 37, 9, 488573, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;r&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta), Parameter(phi)]),
+                CCPRx(angle_1, angle_2, feedback_key=feedback_key),
+                MeasureFF(feedback_key=feedback_key),
+                Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[])]}
 {&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-11.&#39;,
- &#39;name&#39;: &#39;Aspen-11&#39;,
- &#39;number of qubits&#39;: 48,
- &#39;online date&#39;: datetime.datetime(2022, 8, 17, 21, 25, 7, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+ &#39;description&#39;: &#39;AWS Device: IonQ Forte 1.&#39;,
+ &#39;name&#39;: &#39;Forte 1&#39;,
+ &#39;number of qubits&#39;: 36,
+ &#39;online date&#39;: datetime.datetime(2025, 11, 30, 0, 0, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;gpi&#39;, num_qubits=1, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045ad0&gt;]),
+                Instruction(name=&#39;gpi2&#39;, num_qubits=1, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045b30&gt;]),
+                Instruction(name=&#39;rzz&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[])]}
 {&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-8.&#39;,
- &#39;name&#39;: &#39;Aspen-8&#39;,
- &#39;number of qubits&#39;: 38,
- &#39;online date&#39;: None,
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+ &#39;description&#39;: &#39;AWS Device: IonQ Forte Enterprise 1.&#39;,
+ &#39;name&#39;: &#39;Forte Enterprise 1&#39;,
+ &#39;number of qubits&#39;: 36,
+ &#39;online date&#39;: datetime.datetime(2025, 12, 4, 0, 0, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;gpi&#39;, num_qubits=1, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045ad0&gt;]),
+                Instruction(name=&#39;gpi2&#39;, num_qubits=1, num_clbits=0, params=[&lt;qiskit._accelerate.circuit.ParameterExpression object at 0x15a045b30&gt;]),
+                Instruction(name=&#39;rzz&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[])]}
 {&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-9.&#39;,
- &#39;name&#39;: &#39;Aspen-9&#39;,
- &#39;number of qubits&#39;: 38,
- &#39;online date&#39;: datetime.datetime(2021, 11, 18, 16, 13, 30, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
+ &#39;description&#39;: &#39;AWS Device: IQM Garnet.&#39;,
+ &#39;name&#39;: &#39;Garnet&#39;,
+ &#39;number of qubits&#39;: 20,
+ &#39;online date&#39;: datetime.datetime(2025, 12, 5, 16, 50, 25, 692763, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;r&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta), Parameter(phi)]),
+                CCPRx(angle_1, angle_2, feedback_key=feedback_key),
+                MeasureFF(feedback_key=feedback_key),
+                Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[])]}
 {&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-M-1.&#39;,
- &#39;name&#39;: &#39;Aspen-M-1&#39;,
- &#39;number of qubits&#39;: 148,
- &#39;online date&#39;: datetime.datetime(2022, 6, 17, 20, 13, 38, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
-{&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-M-2.&#39;,
- &#39;name&#39;: &#39;Aspen-M-2&#39;,
- &#39;number of qubits&#39;: 148,
- &#39;online date&#39;: datetime.datetime(2023, 1, 20, 19, 31, 9, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
-{&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Rigetti Aspen-M-3.&#39;,
- &#39;name&#39;: &#39;Aspen-M-3&#39;,
- &#39;number of qubits&#39;: 148,
- &#39;online date&#39;: datetime.datetime(2023, 6, 13, 21, 35, 32, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;h&#39;, num_qubits=1, num_clbits=0, params=[])]}
-{&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: IonQ Harmony.&#39;,
- &#39;name&#39;: &#39;Harmony&#39;,
- &#39;number of qubits&#39;: 11,
- &#39;online date&#39;: datetime.datetime(2023, 6, 8, 11, 0, 4, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;x&#39;, num_qubits=1, num_clbits=0, params=[]),
-                Instruction(name=&#39;y&#39;, num_qubits=1, num_clbits=0, params=[]),
-                Instruction(name=&#39;z&#39;, num_qubits=1, num_clbits=0, params=[]),
-                Instruction(name=&#39;rx&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta)])]}
-{&#39;backend version&#39;: 2,
- &#39;description&#39;: &#39;AWS Device: Oxford Lucy.&#39;,
- &#39;name&#39;: &#39;Lucy&#39;,
- &#39;number of qubits&#39;: 8,
- &#39;online date&#39;: datetime.datetime(2023, 6, 13, 21, 0, 8, tzinfo=datetime.timezone.utc),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[])]}
+ &#39;description&#39;: &#39;AWS Device: AQT IBEX Q1.&#39;,
+ &#39;name&#39;: &#39;IBEX Q1&#39;,
+ &#39;number of qubits&#39;: 12,
+ &#39;online date&#39;: datetime.datetime(2025, 11, 14, 10, 20, tzinfo=datetime.timezone.utc),
+ &#39;operations&#39;: [Instruction(name=&#39;r&#39;, num_qubits=1, num_clbits=0, params=[Parameter(theta), Parameter(phi)]),
+                Instruction(name=&#39;rxx&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
+                Instruction(name=&#39;rz&#39;, num_qubits=1, num_clbits=0, params=[Parameter(phi)]),
+                Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[])]}
 {&#39;backend version&#39;: 2,
  &#39;description&#39;: &#39;AWS Device: Amazon Braket SV1.&#39;,
  &#39;name&#39;: &#39;SV1&#39;,
  &#39;number of qubits&#39;: 34,
  &#39;online date&#39;: datetime.datetime(2022, 6, 22, 10, 18),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
+ &#39;operations&#39;: [Instruction(name=&#39;ccx&#39;, num_qubits=3, num_clbits=0, params=[]),
                 Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
                 Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[])]}
+                Instruction(name=&#39;cswap&#39;, num_qubits=3, num_clbits=0, params=[]),
+                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[])]}
 {&#39;backend version&#39;: 2,
  &#39;description&#39;: &#39;AWS Device: Amazon Braket TN1.&#39;,
  &#39;name&#39;: &#39;TN1&#39;,
  &#39;number of qubits&#39;: 50,
  &#39;online date&#39;: datetime.datetime(2022, 6, 22, 10, 18),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
-                Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
+ &#39;operations&#39;: [Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
                 Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
                 Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[])]}
+                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[]),
+                Instruction(name=&#39;ecr&#39;, num_qubits=2, num_clbits=0, params=[])]}
 {&#39;backend version&#39;: 2,
  &#39;description&#39;: &#39;AWS Device: Amazon Braket dm1.&#39;,
  &#39;name&#39;: &#39;dm1&#39;,
  &#39;number of qubits&#39;: 17,
  &#39;online date&#39;: datetime.datetime(2022, 6, 22, 10, 18),
- &#39;operations&#39;: [Instruction(name=&#39;measure&#39;, num_qubits=1, num_clbits=1, params=[]),
+ &#39;operations&#39;: [Instruction(name=&#39;ccx&#39;, num_qubits=3, num_clbits=0, params=[]),
                 Instruction(name=&#39;cx&#39;, num_qubits=2, num_clbits=0, params=[]),
                 Instruction(name=&#39;cp&#39;, num_qubits=2, num_clbits=0, params=[Parameter(theta)]),
-                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[]),
-                Instruction(name=&#39;cz&#39;, num_qubits=2, num_clbits=0, params=[])]}
+                Instruction(name=&#39;cswap&#39;, num_qubits=3, num_clbits=0, params=[]),
+                Instruction(name=&#39;cy&#39;, num_qubits=2, num_clbits=0, params=[])]}
 </pre></div></div>
 </div>
 </section>
@@ -463,8 +425,7 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># state vector simulator</span>
-<span class="n">state_vector_simulator_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
-<span class="n">state_vector_simulator_backend</span>
+<span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -482,8 +443,7 @@ BraketBackend[SV1]
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># IonQ device</span>
-<span class="n">ionq_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Harmony&quot;</span><span class="p">)</span>
-<span class="n">ionq_backend</span>
+<span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Forte 1&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -493,7 +453,7 @@ BraketBackend[SV1]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-BraketBackend[Harmony]
+BraketBackend[Forte 1]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -501,8 +461,7 @@ BraketBackend[Harmony]
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Rigetti device</span>
-<span class="n">rigetti_aspen_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Aspen-11&quot;</span><span class="p">)</span>
-<span class="n">rigetti_aspen_backend</span>
+<span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Ankaa-3&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -512,16 +471,15 @@ BraketBackend[Harmony]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-BraketBackend[Aspen-11]
+BraketBackend[Ankaa-3]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># OQC Lucy device</span>
-<span class="n">lucy_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Lucy&quot;</span><span class="p">)</span>
-<span class="n">lucy_backend</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># IQM device</span>
+<span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;Emerald&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -531,7 +489,25 @@ BraketBackend[Aspen-11]
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-BraketBackend[Lucy]
+BraketBackend[Emerald]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># AQT device</span>
+<span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;IBEX Q1&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+BraketBackend[IBEX Q1]
 </pre></div></div>
 </div>
 </section>
@@ -539,7 +515,7 @@ BraketBackend[Lucy]
 <h2>Query options<a class="headerlink" href="#Query-options" title="Link to this heading">¶</a></h2>
 <p>To get a full list of possible query options refer to <a class="reference external" href="https://amazon-braket-sdk-python.readthedocs.io/en/latest/_apidoc/braket.aws.aws_device.html?highlight=get_devices#braket.aws.aws_device.AwsDevice.get_devices">Braket SDK get_device documentation</a></p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">online_simulators_backends</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">backends</span><span class="p">(</span><span class="n">statuses</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ONLINE&quot;</span><span class="p">],</span> <span class="n">types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;SIMULATOR&quot;</span><span class="p">])</span>
@@ -548,7 +524,7 @@ BraketBackend[Lucy]
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
@@ -563,12 +539,12 @@ BraketBackend[Lucy]
       </div>
       <footer>
         <div class="related-pages">
-          <a class="next-page" href="1_how_to_run_circuits_on_Braket_devices.html">
+          <a class="next-page" href="1_how_to_run_circuits_on_braket_devices.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">How-to: run circuit on Braket devices</div>
+                <div class="title">How-to: Run circuits on Braket devices</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -613,7 +589,7 @@ BraketBackend[Lucy]
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">How-to: access AWS Braket devices</a><ul>
+<li><a class="reference internal" href="#">How-to: Access devices on Amazon Braket</a><ul>
 <li><a class="reference internal" href="#Exploring-all-backends-by-Braket-provider">Exploring all backends by Braket provider</a></li>
 <li><a class="reference internal" href="#Querying-for-specific-backend">Querying for specific backend</a></li>
 <li><a class="reference internal" href="#Query-options">Query options</a></li>

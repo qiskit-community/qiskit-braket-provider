@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="How-to: run circuit on Braket device using verbatim mode" href="4_how_to_verbatim_circuits.html" /><link rel="prev" title="How-to: retrieve results from backend" href="2_how_to_retrieve_results_from_backend.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="How-to: Run verbatim circuits" href="4_how_to_verbatim_circuits.html" /><link rel="prev" title="How-to: Retrieve results from backend" href="2_how_to_retrieve_results_from_backend.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
         <title>How-to: Qiskit Hybrid Job - Qiskit-Braket provider 0.9.0</title>
@@ -191,22 +191,24 @@
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="0_how_to_access_devices_on_amazon_braket.html">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_how_to_run_circuits_on_braket_devices.html">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
@@ -264,13 +266,13 @@
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 &#34;&#34;&#34;Example of usage of Qiskit-Braket provider.&#34;&#34;&#34;
+
 from qiskit import QuantumCircuit
-from qiskit_braket_provider import AWSBraketProvider
 
 from braket.jobs import save_job_result
+from qiskit_braket_provider import BraketProvider
 
-
-provider = AWSBraketProvider()
+provider = BraketProvider()
 backend = provider.get_backend(&#34;SV1&#34;)
 circuit = QuantumCircuit(2)
 circuit.h(0)
@@ -383,7 +385,7 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">How-to: run circuit on Braket device using verbatim mode</div>
+                <div class="title">How-to: Run verbatim circuits</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -394,7 +396,7 @@ RUN python3 -m pip install --no-cache --upgrade git+https://github.com/qiskit-co
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">How-to: retrieve results from backend</div>
+                <div class="title">How-to: Retrieve results from backend</div>
                 
               </div>
             </a>

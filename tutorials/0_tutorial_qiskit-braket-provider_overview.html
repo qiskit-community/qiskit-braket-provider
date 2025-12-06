@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Running VQE on an Amazon Braket backend" href="1_tutorial_vqe.html" /><link rel="prev" title="&lt;no title&gt;" href="index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Running VQE on a Braket backend" href="1_tutorial_vqe.html" /><link rel="prev" title="&lt;no title&gt;" href="index.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
         <title>Getting started with the Qiskit-Braket provider - Qiskit-Braket provider 0.9.0</title>
@@ -191,22 +191,24 @@
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_devices_on_amazon_braket.html">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_braket_devices.html">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
@@ -269,7 +271,7 @@
 </section>
 <section id="Access-Braket-devices-from-Qiskit">
 <h2>Access Braket devices from Qiskit<a class="headerlink" href="#Access-Braket-devices-from-Qiskit" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">BraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through Braket SDK.</p>
+<p><code class="docutils literal notranslate"><span class="pre">BraketProvider</span></code> class gives you a method <code class="docutils literal notranslate"><span class="pre">backends</span></code> to access backends that are available through the Amazon Braket SDK.</p>
 <p>Let’s get available devices to use by Qiskit</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -312,7 +314,7 @@
 </section>
 <section id="Running-circuits-on-Braket-devices">
 <h2>Running circuits on Braket devices<a class="headerlink" href="#Running-circuits-on-Braket-devices" title="Link to this heading">¶</a></h2>
-<p>Let’s first create Qiskit circuit. We will start with a Bell circuit.</p>
+<p>Let’s first create a Qiskit circuit. We will start with a Bell circuit.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -455,7 +457,7 @@
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Running VQE on an Amazon Braket backend</div>
+                <div class="title">Running VQE on a Braket backend</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

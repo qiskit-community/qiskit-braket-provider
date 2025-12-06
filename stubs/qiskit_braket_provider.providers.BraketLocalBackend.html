@@ -190,22 +190,24 @@
 <li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_devices_on_amazon_braket.html">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_braket_devices.html">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
@@ -248,8 +250,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_braket_provider.providers.BraketLocalBackend">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BraketLocalBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_backend.html#BraketLocalBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.BraketLocalBackend" title="Link to this definition">¶</a></dt>
-<dd><p>BraketLocalBackend.</p>
-<p>BraketLocalBackend for executing circuits locally.</p>
+<dd><p>Runs quantum circuits on the Braket local simulator.</p>
+<p>Initialize the backend.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">()</span>                    <span class="c1">#Local State Vector Simulator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>           <span class="c1">#Local State Vector Simulator</span>
@@ -269,7 +271,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_braket_provider.providers.BraketLocalBackend.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/braket_backend.html#BraketLocalBackend.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.BraketLocalBackend.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>BraketLocalBackend for executing circuits locally.</p>
+<dd><p>Initialize the backend.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">()</span>                    <span class="c1">#Local State Vector Simulator</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">device</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>           <span class="c1">#Local State Vector Simulator</span>
@@ -293,7 +295,7 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#qiskit_braket_provider.providers.BraketLocalBackend.__init__" title="qiskit_braket_provider.providers.BraketLocalBackend.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([name])</p></td>
-<td><p>BraketLocalBackend for executing circuits locally.</p></td>
+<td><p>Initialize the backend.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">acquire_channel</span></code>(qubit)</p></td>
 <td><p></p></td>

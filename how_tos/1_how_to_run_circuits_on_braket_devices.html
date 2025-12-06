@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="How-to: retrieve results from backend" href="2_how_to_retrieve_results_from_backend.html" /><link rel="prev" title="How-to: access AWS Braket devices" href="0_how_to_access_AWS_Braket_devices.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="How-to: Retrieve results from backend" href="2_how_to_retrieve_results_from_backend.html" /><link rel="prev" title="How-to: Access devices on Amazon Braket" href="0_how_to_access_devices_on_amazon_braket.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>How-to: run circuit on Braket devices - Qiskit-Braket provider 0.9.0</title>
+        <title>How-to: Run circuits on Braket devices - Qiskit-Braket provider 0.9.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -191,22 +191,24 @@
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="0_how_to_access_devices_on_amazon_braket.html">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/1_tutorial_vqe.html">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/4_tutorial_native_programming.html">Native Programming</a></li>
@@ -244,8 +246,8 @@
           </label>
         </div>
         <article role="main">
-          <section id="How-to:-run-circuit-on-Braket-devices">
-<h1>How-to: run circuit on Braket devices<a class="headerlink" href="#How-to:-run-circuit-on-Braket-devices" title="Link to this heading">¶</a></h1>
+          <section id="How-to:-Run-circuits-on-Braket-devices">
+<h1>How-to: Run circuits on Braket devices<a class="headerlink" href="#How-to:-Run-circuits-on-Braket-devices" title="Link to this heading">¶</a></h1>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
@@ -254,7 +256,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_circuit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_histogram</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">AWSBraketProvider</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketProvider</span>
 </pre></div>
 </div>
 </div>
@@ -273,24 +275,24 @@
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
-<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">                                 ┌───┐┌───────────────────┐
-q_0: ──────────────────────────■─┤ Y ├┤ U2(6.0991,5.6116) ├───────────
-       ┌───────────────────┐   │ ├───┤└┬──────────────────┤
-q_1: ──┤ R(4.3817,0.59173) ├───┼─┤ H ├─┤ R(4.7632,2.2276) ├───────────
-       └───────────────────┘   │ └─┬─┘ └──────────────────┘
-q_2: ──────────────────────────■───┼────────────■────────────■────────
-     ┌───────────────────────┐     │            │            │   ┌───┐
-q_3: ┤0                      ├─────■────────────┼────────────┼───┤ H ├
-     │  {XX+YY}(6.13,4.7824) │            ┌─────┴──────┐   ┌─┴──┐└───┘
-q_4: ┤1                      ├────────────┤ Ry(4.0455) ├───┤ Sx ├─────
-     └───────────────────────┘            └────────────┘   └────┘     </pre></div>
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">                                ┌───────┐
+q_0: ───────■───────■───────────┤1      ├
+          ┌─┴──┐    │           │       │
+q_1: ─────┤ Sx ├─■──┼───────────┤2 Rccx ├
+          └─┬──┘ │  │           │       │
+q_2: ───────■────■──┼───────────┤0      ├
+     ┌───┐  │    │  │U1(5.2002) └───────┘
+q_3: ┤ H ├──┼────┼──■───────────────■────
+     └───┘  │    │                ┌─┴─┐
+q_4: ───────■────■────────────────┤ H ├──
+                                  └───┘  </pre></div>
 </div>
 <p>Get statevector simulator</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">AWSBraketProvider</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
 <span class="n">state_vector_simulator_backend</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;SV1&quot;</span><span class="p">)</span>
 <span class="n">state_vector_simulator_backend</span>
 </pre></div>
@@ -320,27 +322,36 @@ BraketBackend[SV1]
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
-<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 2.0774
-                                        ┌───────────┐     ┌────┐    ┌────────────┐
-q_0 -> 0 ───────────────────────■───────┤ P(2.2423) ├─────┤ √X ├────┤ P(-1.7549) ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-         ┌──────────────┐       │       ├───────────┴┐┌───┴────┴───┐└────────────┘                ┌───┐┌─────────────┐ ┌────────────┐┌──────────────┐
-q_1 -> 1 ┤ Rz(-0.14167) ├───────┼───────┤ Ry(2.4735) ├┤ Rz(2.9079) ├──────────────────────────────┤ X ├┤ Rz(-2.4203) ├─┤ Ry(2.2266) ├┤ Rz(-0.95318) ├────────────────────────────────────────────────────────────────────────
-         └──────────────┘       │       └────────────┘└────────────┘                              └─┬─┘└─────────────┘ └────────────┘└──────────────┘      ┌────────┐
-q_2 -> 2 ───────────────────────■───────────────────────────────────────────────────────────────────┼─────────■────────────────────────────────────────■───┤ P(π/4) ├─────────────■───────────────■──────────────────────────
-                         ┌─────────────┐    ┌───┐     ┌────────────┐    ┌───┐     ┌──────────────┐  │         │         ┌──────────┐    ┌────────┐     │   └────────┘             │               │
-q_3 -> 3 ────────────────┤ P(0.069993) ├────┤ X ├─────┤ Ry(-3.065) ├────┤ X ├─────┤ P(-0.069993) ├──■─────────┼─────────┤ Ry(-π/2) ├────┤ Rz(-π) ├─────┼──────────────────────────┼───────────────┼──────────────────────────
-                         └─┬─────────┬─┘    └─┬─┘     ├────────────┤    └─┬─┘     ├─────────────┬┘          ┌─┴─┐     ┌─┴──────────┴┐   └────────┘   ┌─┴─┐┌──────────┐┌────────┐┌─┴─┐┌─────────┐┌─┴─┐┌───────────┐┌─────────┐
-q_4 -> 4 ──────────────────┤ Ry(π/2) ├────────■───────┤ Ry(-3.065) ├──────■───────┤ Ry(0.45197) ├───────────┤ X ├─────┤ Ry(-2.0228) ├────────────────┤ X ├┤ Ry(-π/2) ├┤ Rz(-π) ├┤ X ├┤ P(-π/4) ├┤ X ├┤ Rz(-3π/4) ├┤ Ry(π/2) ├
-                           └─────────┘                └────────────┘              └─────────────┘           └───┘     └─────────────┘                └───┘└──────────┘└────────┘└───┘└─────────┘└───┘└───────────┘└─────────┘</pre></div>
+<pre style="word-wrap: normal;white-space: pre;background: #fff0;line-height: 1.1;font-family: &quot;Courier New&quot;,Courier,monospace">global phase: 7π/4
+                                                                                                     ┌───┐┌────────────┐     ┌───┐┌───────────┐
+q_0: ────────■───────────■──────────────■────────────────────────────■────────────────────────────■──┤ X ├┤ P(-2.6001) ├─────┤ X ├┤ P(2.6001) ├──────────────────■─────────────────────────■──────────────
+     ┌───┐   │P(π/8)     │              │                            │                            │  └─┬─┘└────────────┘┌───┐└─┬─┘└───────────┘┌───┐   ┌───┐   ┌─┴─┐ ┌─────┐  ┌───┐ ┌───┐┌─┴─┐┌─────┐┌───┐
+q_1: ┤ H ├───■───────────┼───■──────────┼───■─────────────■──────────┼───■─────────────■──────────┼────┼─────■──────────┤ H ├──┼────────■──────┤ H ├───┤ T ├───┤ X ├─┤ Tdg ├──┤ X ├─┤ T ├┤ X ├┤ Tdg ├┤ H ├
+     └───┘             ┌─┴─┐ │P(-π/8) ┌─┴─┐ │P(π/8)       │          │   │             │          │    │     │          └───┘  │        │      └───┘   └───┘   └───┘ └─────┘  └─┬─┘ └───┘└───┘└─────┘└───┘
+q_2: ──────────────────┤ X ├─■────────┤ X ├─■─────────■───┼──────────┼───┼─────────■───┼──────────┼────┼─────┼─────────────────┼────────■───────────────────────────────────────■─────────────────────────
+     ┌───┐┌───────────┐└───┘          └───┘           │   │          │   │         │   │          │    │     │                 │        │
+q_3: ┤ H ├┤ P(2.6001) ├───────────────────────────────┼───┼──────────┼───┼─────────┼───┼──────────┼────■─────┼─────────────────■────────┼────────────────────────■────────────────────────────────────────
+     └───┘└───────────┘                             ┌─┴─┐ │P(-π/8) ┌─┴─┐ │P(π/8) ┌─┴─┐ │P(-π/8) ┌─┴─┐        │P(π/8)    ┌───┐         ┌─┴─┐    ┌────┐┌────────┐┌─┴─┐┌────────┐┌────┐
+q_4: ───────────────────────────────────────────────┤ X ├─■────────┤ X ├─■───────┤ X ├─■────────┤ X ├────────■──────────┤ H ├─────────┤ X ├────┤ √X ├┤ P(π/4) ├┤ X ├┤ P(π/4) ├┤ √X ├──────────────────────
+                                                    └───┘          └───┘         └───┘          └───┘                   └───┘         └───┘    └────┘└────────┘└───┘└────────┘└────┘                      </pre></div>
 </div>
 <p>Run circuit</p>
-<div class="nbinput nblast docutils container">
+<div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">state_vector_simulator_backend</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="p">,</span> <span class="n">shots</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/caw/Documents/GitHub/qiskit-braket-provider/qiskit_braket_provider/providers/adapter.py:910: UserWarning: Device does not support global phase; global phase of 5.497787143782138 will not be included in Braket circuit
+  warnings.warn(
+</pre></div></div>
 </div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -355,7 +366,7 @@ q_4 -> 4 ──────────────────┤ Ry(π/2) ├�
 </pre></div>
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/how_tos_1_how_to_run_circuits_on_Braket_devices_10_0.png" src="../_images/how_tos_1_how_to_run_circuits_on_Braket_devices_10_0.png" />
+<img alt="../_images/how_tos_1_how_to_run_circuits_on_braket_devices_10_0.png" src="../_images/how_tos_1_how_to_run_circuits_on_braket_devices_10_0.png" />
 </div>
 </div>
 </section>
@@ -369,18 +380,18 @@ q_4 -> 4 ──────────────────┤ Ry(π/2) ├�
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">How-to: retrieve results from backend</div>
+                <div class="title">How-to: Retrieve results from backend</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="0_how_to_access_AWS_Braket_devices.html">
+          <a class="prev-page" href="0_how_to_access_devices_on_amazon_braket.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">How-to: access AWS Braket devices</div>
+                <div class="title">How-to: Access devices on Amazon Braket</div>
                 
               </div>
             </a>

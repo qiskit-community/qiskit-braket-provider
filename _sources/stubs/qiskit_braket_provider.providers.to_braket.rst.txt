@@ -1,0 +1,6 @@
+﻿qiskit\_braket\_provider.providers.to\_braket
+=============================================
+
+.. currentmodule:: qiskit_braket_provider.providers
+
+.. autofunction:: to_braket

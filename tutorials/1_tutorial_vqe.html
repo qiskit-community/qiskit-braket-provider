@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Running variational quantum algorithms with Amazon Braket Hybrid Jobs" href="2_tutorial_hybrid_jobs.html" /><link rel="prev" title="Getting started with the Qiskit-Braket provider" href="0_tutorial_qiskit-braket-provider_overview.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>Running VQE on an Amazon Braket backend - Qiskit-Braket provider 0.9.0</title>
+        <title>Running VQE on a Braket backend - Qiskit-Braket provider 0.9.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -155,7 +155,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -191,22 +191,24 @@
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_devices_on_amazon_braket.html">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_braket_devices.html">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_tutorial_minimum_eigen_optimizer.html">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
@@ -238,14 +240,14 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="Running-VQE-on-an-Amazon-Braket-backend">
-<h1>Running VQE on an Amazon Braket backend<a class="headerlink" href="#Running-VQE-on-an-Amazon-Braket-backend" title="Link to this heading">¶</a></h1>
+          <section id="Running-VQE-on-a-Braket-backend">
+<h1>Running VQE on a Braket backend<a class="headerlink" href="#Running-VQE-on-a-Braket-backend" title="Link to this heading">¶</a></h1>
 <p>Let’s review an example of running algorithms using Qiskit on Braket devices.</p>
 <p>Qiskit provides a number of Algorithms and they are grouped by category according to the task they can perform. For instance Minimum Eigensolvers to find the smallest eigen value of an operator, for example ground state energy of a chemistry Hamiltonian or a solution to an optimization problem when expressed as an Ising Hamiltonian.</p>
 <p>Algorithms are configurable and often part of the configuration will be in the form of smaller building blocks, of which different instances of the building block type can be given. For instance with <code class="docutils literal notranslate"><span class="pre">VQE</span></code>, the Variational Quantum Eigensolver, it takes a trial wavefunction, in the form of a <code class="docutils literal notranslate"><span class="pre">QuantumCircuit</span></code> and a classical optimizer among other things.</p>
@@ -261,7 +263,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLSQP</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_algorithms.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">algorithm_globals</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketEstimator</span><span class="p">,</span> <span class="n">BraketLocalBackend</span><span class="p">,</span> <span class="n">BraketProvider</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qiskit_braket_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">BraketEstimator</span><span class="p">,</span> <span class="n">BraketLocalBackend</span>
 
 <span class="n">seed</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="n">seed</span>
@@ -273,8 +275,7 @@
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">provider</span> <span class="o">=</span> <span class="n">BraketProvider</span><span class="p">()</span>
-<span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">local_simulator</span> <span class="o">=</span> <span class="n">BraketLocalBackend</span><span class="p">()</span>
 <span class="n">local_simulator</span>
 </pre></div>
 </div>
@@ -288,8 +289,6 @@
 BraketBackend[default]
 </pre></div></div>
 </div>
-<section id="Running-VQE">
-<h2>Running VQE<a class="headerlink" href="#Running-VQE" title="Link to this heading">¶</a></h2>
 <p>More docs on VQE and algorithms <a class="reference external" href="https://qiskit-community.github.io/qiskit-algorithms/tutorials/01_algorithms_introduction.html#A-complete-working-example">https://qiskit-community.github.io/qiskit-algorithms/tutorials/01_algorithms_introduction.html#A-complete-working-example</a></p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -324,8 +323,8 @@ BraketBackend[default]
 <div class="highlight"><pre>
 {   &#39;aux_operators_evaluated&#39;: None,
     &#39;cost_function_evals&#39;: 9,
-    &#39;eigenvalue&#39;: -1.0774272657163853,
-    &#39;optimal_circuit&#39;: &lt;qiskit.circuit.quantumcircuit.QuantumCircuit object at 0x31776b1f0&gt;,
+    &#39;eigenvalue&#39;: -1.085615411630941,
+    &#39;optimal_circuit&#39;: &lt;qiskit.circuit.quantumcircuit.QuantumCircuit object at 0x30c0e2620&gt;,
     &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[0]): 3.611860069224077,
                               ParameterVectorElement(θ[1]): 4.19301252102391,
                               ParameterVectorElement(θ[2]): 0.6019852007557844,
@@ -336,13 +335,12 @@ BraketBackend[default]
                               ParameterVectorElement(θ[7]): 0.6984088030463615},
     &#39;optimal_point&#39;: array([ 3.61186007,  4.19301252,  0.6019852 ,  5.94953681, -3.30704704,
         1.84629318, -5.4660436 ,  0.6984088 ]),
-    &#39;optimal_value&#39;: -1.0774272657163853,
+    &#39;optimal_value&#39;: -1.085615411630941,
     &#39;optimizer_evals&#39;: None,
-    &#39;optimizer_result&#39;: &lt;qiskit_algorithms.optimizers.optimizer.OptimizerResult object at 0x31776b190&gt;,
-    &#39;optimizer_time&#39;: 2.5222582817077637}
+    &#39;optimizer_result&#39;: &lt;qiskit_algorithms.optimizers.optimizer.OptimizerResult object at 0x30c0e1390&gt;,
+    &#39;optimizer_time&#39;: 2.4680850505828857}
 </pre></div></div>
 </div>
-</section>
 </section>
 
         </article>
@@ -387,27 +385,8 @@ BraketBackend[default]
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            On this page
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">Running VQE on an Amazon Braket backend</a><ul>
-<li><a class="reference internal" href="#Running-VQE">Running VQE</a></li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>

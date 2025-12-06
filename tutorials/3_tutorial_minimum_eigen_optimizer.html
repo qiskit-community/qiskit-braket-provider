@@ -191,22 +191,24 @@
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketProvider.html">qiskit_braket_provider.providers.BraketProvider</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketQuantumTask.html">qiskit_braket_provider.providers.BraketQuantumTask</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.BraketSampler.html">qiskit_braket_provider.providers.BraketSampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_braket.html">qiskit_braket_provider.providers.to_braket</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stubs/qiskit_braket_provider.providers.to_qiskit.html">qiskit_braket_provider.providers.to_qiskit</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_AWS_Braket_devices.html">How-to: access AWS Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_Braket_devices.html">How-to: run circuit on Braket devices</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: retrieve results from backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/0_how_to_access_devices_on_amazon_braket.html">How-to: Access devices on Amazon Braket</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/1_how_to_run_circuits_on_braket_devices.html">How-to: Run circuits on Braket devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: run circuit on Braket device using verbatim mode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
-<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Running VQE on an Amazon Braket backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_tutorial_vqe.html">Running VQE on a Braket backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="2_tutorial_hybrid_jobs.html">Running variational quantum algorithms with Amazon Braket Hybrid Jobs</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Minimum Eigen Optimizer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_tutorial_native_programming.html">Native Programming</a></li>
@@ -246,8 +248,8 @@
         <article role="main">
           <section id="Minimum-Eigen-Optimizer">
 <h1>Minimum Eigen Optimizer<a class="headerlink" href="#Minimum-Eigen-Optimizer" title="Link to this heading">¶</a></h1>
-<section id="About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend">
-<h2>About this notebook and the adaptation to Amazon Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend" title="Link to this heading">¶</a></h2>
+<section id="About-this-notebook-and-the-adaptation-to-the-Braket-backend">
+<h2>About this notebook and the adaptation to the Braket backend<a class="headerlink" href="#About-this-notebook-and-the-adaptation-to-the-Braket-backend" title="Link to this heading">¶</a></h2>
 <p>The original version of this notebook is accessible at <a class="reference external" href="https://github.com/qiskit-community/qiskit-optimization/blob/stable/0.6/docs/tutorials/03_minimum_eigen_optimizer.ipynb">docs/tutorials/03_minimum_eigen_optimizer.ipynb</a>. The only changes made to the original notebook are contained in the first cell and in cell #6 where we pass the <code class="docutils literal notranslate"><span class="pre">BackendSampler</span></code> object to execute the tasks on Amazon Braket SV1 simulator.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -808,7 +810,7 @@ status: SUCCESS
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Minimum Eigen Optimizer</a><ul>
-<li><a class="reference internal" href="#About-this-notebook-and-the-adaptation-to-Amazon-Braket-backend">About this notebook and the adaptation to Amazon Braket backend</a></li>
+<li><a class="reference internal" href="#About-this-notebook-and-the-adaptation-to-the-Braket-backend">About this notebook and the adaptation to the Braket backend</a></li>
 <li><a class="reference internal" href="#Introduction">Introduction</a><ul>
 <li><a class="reference internal" href="#References">References</a></li>
 </ul>
