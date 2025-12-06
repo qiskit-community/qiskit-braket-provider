@@ -1,4 +1,4 @@
-# Qiskit-Braket provider
+# Qiskit-Braket Provider
 
 [![Latest Version](https://img.shields.io/pypi/v/qiskit-braket-provider.svg)](https://pypi.python.org/pypi/qiskit-braket-provider)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/qiskit-braket-provider.svg)](https://pypi.python.org/pypi/qiskit-braket-provider)
