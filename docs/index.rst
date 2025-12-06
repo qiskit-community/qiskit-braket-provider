@@ -7,7 +7,7 @@ Qiskit-Braket provider documentation
   
   Home <self>
 
-Qiskit-Braket provider to execute Qiskit programs on Amazon Braket devices.
+Qiskit-Braket provider to execute Qiskit programs on devices via Amazon Braket.
 
 API references
 

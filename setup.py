@@ -22,7 +22,7 @@ version = version_dict["__version__"]
 
 setuptools.setup(
     name="qiskit_braket_provider",
-    description="Qiskit-Braket provider to execute Qiskit programs on Amazon Braket devices",
+    description="Qiskit-Braket provider to execute Qiskit programs on devices via Amazon Braket.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     keywords="qiskit braket sdk quantum",
