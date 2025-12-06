@@ -5,7 +5,7 @@
 [![Qiskit compatibility](https://img.shields.io/badge/Qiskit%20compatibility-%3E%3D0.34.2-blueviolet?logo=Qiskit)](https://github.com/Qiskit/qiskit/releases)
 [![Build status](https://github.com/qiskit-community/qiskit-braket-provider/actions/workflows/test_latest_versions.yml/badge.svg?branch=main)](https://github.com/qiskit-community/qiskit-braket-provider/actions/workflows/test_latest_versions.yml)
 
-Qiskit-Braket provider to execute Qiskit programs on AWS quantum computing hardware devices through Amazon Braket.
+Qiskit-Braket provider to execute Qiskit programs on Amazon Braket devices.
 
 ### Table of Contents
 
@@ -44,7 +44,7 @@ For information on how to contribute to this project, please take a look at our 
 
 ## References and Acknowledgements
 [1] Qiskit https://www.ibm.com/quantum/qiskit \
-[2] Amazon Braket Python SDK https://github.com/aws/amazon-braket-sdk-python
+[2] Amazon Braket Python SDK https://github.com/amazon-braket/amazon-braket-sdk-python
 
 
 ----------------------------------------------------------------------------------------------------

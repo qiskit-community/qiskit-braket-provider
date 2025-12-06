@@ -65,7 +65,7 @@ def _result_from_circuit_task(
 
 
 class BraketQuantumTask(JobV1):
-    """BraketQuantumTask."""
+    """Job implementation for tracking a Braket task."""
 
     def __init__(
         self,

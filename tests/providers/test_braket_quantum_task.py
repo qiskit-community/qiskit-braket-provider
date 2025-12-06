@@ -1,4 +1,4 @@
-"""Tests for AWS Braket job."""
+"""Tests for Amazon Braket task."""
 
 from unittest import TestCase
 from unittest.mock import Mock, patch

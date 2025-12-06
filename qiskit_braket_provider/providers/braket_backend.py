@@ -41,7 +41,7 @@ T = TypeVar("T", bound=Device, covariant=True)
 
 
 class BraketBackend(BackendV2, ABC, Generic[T]):
-    """BraketBackend."""
+    """Base Qiskit backend for Amazon Braket devices."""
 
     def __init__(self, device: T, name: str, **fields):
         super().__init__(name=name, **fields)
@@ -95,10 +95,10 @@ class BraketBackend(BackendV2, ABC, Generic[T]):
 
 
 class BraketLocalBackend(BraketBackend[LocalSimulator]):
-    """BraketLocalBackend."""
+    """Runs quantum circuits on the Braket local simulator."""
 
     def __init__(self, name: str = "default", **fields):
-        """BraketLocalBackend for executing circuits locally.
+        """Initialize the backend.
 
         Example:
             >>> device = LocalSimulator()                    #Local State Vector Simulator
@@ -195,7 +195,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
 
 
 class BraketAwsBackend(BraketBackend[AwsDevice]):
-    """BraketAwsBackend."""
+    """Runs quantum circuits on the Amazon Braket service."""
 
     def __init__(
         self,
@@ -209,7 +209,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         device: AwsDevice | None = None,
         **fields,
     ):
-        """BraketAwsBackend for executing circuits on Amazon Braket devices.
+        """Initialize the backend.
 
         Example:
             >>> provider = BraketProvider()

@@ -3,9 +3,9 @@
 from qiskit import QuantumCircuit
 
 from braket.jobs import save_job_result
-from qiskit_braket_provider import AWSBraketProvider
+from qiskit_braket_provider import BraketProvider
 
-provider = AWSBraketProvider()
+provider = BraketProvider()
 backend = provider.get_backend("SV1")
 circuit = QuantumCircuit(2)
 circuit.h(0)

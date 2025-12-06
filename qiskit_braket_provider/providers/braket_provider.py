@@ -13,7 +13,7 @@ from .braket_backend import BraketAwsBackend, BraketLocalBackend
 
 
 class BraketProvider:
-    """BraketProvider class for accessing Amazon Braket backends.
+    """Provides access to Amazon Braket backends.
 
     Example:
         >>> provider = BraketProvider()

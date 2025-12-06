@@ -20,6 +20,8 @@ Provider classes and functions
     BraketProvider
     BraketQuantumTask
     BraketSampler
+    to_braket
+    to_qiskit
 """
 
 from .adapter import to_braket as to_braket
