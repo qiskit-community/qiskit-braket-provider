@@ -6,11 +6,12 @@ from unittest.mock import Mock, patch
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
+from qiskit.circuit.library import iqp
 from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.containers.observables_array import ObservablesArray
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp, random_hermitian
 
 from braket.program_sets import ProgramSet
 from qiskit_braket_provider.providers import BraketLocalBackend
@@ -286,7 +287,7 @@ class TestBraketEstimator(TestCase):
         circuit.h(0)
 
         num_params = 20
-        estimator_pub = (
+        pub = (
             circuit,
             [
                 [SparsePauliOp("ZZ")],
@@ -302,7 +303,7 @@ class TestBraketEstimator(TestCase):
             ).T,
         )
 
-        task = self.estimator.run([estimator_pub])
+        task = self.estimator.run([pub])
         program_set = task.program_set
         self.assertEqual(len(program_set), 2)
         self.assertEqual(len(program_set[0]), num_params * 2)
@@ -310,7 +311,7 @@ class TestBraketEstimator(TestCase):
         self.assertTrue(
             np.allclose(
                 task.result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,
             )
@@ -327,7 +328,7 @@ class TestBraketEstimator(TestCase):
         circuit.h(0)
 
         num_params = 20
-        estimator_pub = (
+        pub = (
             circuit,
             [
                 [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
@@ -341,7 +342,7 @@ class TestBraketEstimator(TestCase):
             ).T,
         )
 
-        task = self.estimator.run([estimator_pub])
+        task = self.estimator.run([pub])
         program_set = task.program_set
         self.assertEqual(len(program_set), 2)
         self.assertEqual(len(program_set[0]), num_params * 2)
@@ -349,7 +350,7 @@ class TestBraketEstimator(TestCase):
         self.assertTrue(
             np.allclose(
                 task.result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,
             )
@@ -364,7 +365,7 @@ class TestBraketEstimator(TestCase):
         circuit.h(2)
 
         num_steps = 6
-        estimator_pub = (
+        pub = (
             circuit,
             [
                 [[SparsePauliOp(["IZZ"])], [SparsePauliOp(["IZX"])], [SparsePauliOp(["III"])]],
@@ -379,7 +380,7 @@ class TestBraketEstimator(TestCase):
             ),
         )
 
-        task = self.estimator.run([estimator_pub])
+        task = self.estimator.run([pub])
         program_set = task.program_set
         self.assertEqual(len(program_set), 3)
         for entry in task.program_set:
@@ -387,7 +388,25 @@ class TestBraketEstimator(TestCase):
         self.assertTrue(
             np.allclose(
                 task.result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([pub]).result()[0].data.evs,
+                rtol=0.3,
+                atol=0.2,
+            )
+        )
+
+    def test_run_local_no_parameters(self):
+        """Tests that correct results are returned for circuits with no parameters"""
+        n_qubits = 5
+        circuit = iqp(np.real(random_hermitian(n_qubits, seed=1234)))
+        observable = SparsePauliOp("Z" * n_qubits)
+        pub = circuit, observable
+        task = self.estimator.run([pub])
+        program_set = task.program_set
+        self.assertEqual(program_set.total_executables, 1)
+        self.assertTrue(
+            np.allclose(
+                task.result()[0].data.evs,
+                BackendEstimatorV2(backend=self.backend).run([pub]).result()[0].data.evs,
                 rtol=0.3,
                 atol=0.2,
             )
