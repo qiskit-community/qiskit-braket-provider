@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/2_how_to_retrieve_results_from_backend.html">How-to: Retrieve results from backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/3_how_to_qiskit_hybrid_job.html">How-to: Qiskit Hybrid Job</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how_tos/4_how_to_verbatim_circuits.html">How-to: Run verbatim circuits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: run circuit on Braket local backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how_tos/5_how_to_run_circuits_on_Braket_local_backend.html">How-to: Run circuits on the Braket local backend</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="0_tutorial_qiskit-braket-provider_overview.html">Getting started with the Qiskit-Braket provider</a></li>
@@ -429,7 +429,7 @@ Number of executables second program: 40
 </div>
 <p>Note: Hamiltonian programs appear first in the list, but the order is corrected by the estimator’s postprocessing.</p>
 <p>So far, we’ve only looked at examples where the observables and parameters are both 1-dimensional, which allows them to be paired in a Cartesian product. However, Qiskit allows observables and parameters to be of arbitrary shape, so long as they are <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">broadcastable</a>.</p>
-<div><p><img alt="83106e95bd9f4f0a8921aaf89863c62a" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
+<div><p><img alt="72c9e124371a40d29a7badf05e6aff65" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
 <figcaption><p>Source: <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules</a></p>
 </figcaption></div><p>Since programs in program sets only encode Cartesian products, a single PUB may require multiple programs to capture the full broadcasted combination:</p>
 <div class="nbinput nblast docutils container">
