@@ -1,5 +1,5 @@
 ####################################
-Qiskit-Braket provider documentation
+Qiskit-Braket Provider documentation
 ####################################
 
 .. toctree:: 
