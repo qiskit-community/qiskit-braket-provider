@@ -290,7 +290,7 @@ class TestBraketEstimator(TestCase):
         circuit.cx(0, 1)
         circuit.ry(Parameter("θ"), 0)
         observables = [SparsePauliOp("ZX"), SparsePauliOp("XZ")]
-        parameters = [np.pi / 4, np.pi / 2]
+        parameters = [np.pi / 3, np.pi / 6]
         pubs = [
             (circuit, observables[0], parameters),
             (circuit, observables, parameters[0]),
