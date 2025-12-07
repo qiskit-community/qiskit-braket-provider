@@ -267,7 +267,7 @@ class TestAdapter(TestCase):
             parameters = standard_gate.params
             if parameters:
                 parameter_values = [(137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)]
-                parameter_bindings = dict(zip(parameters, parameter_values))
+                parameter_bindings = dict(zip(parameters, parameter_values, strict=True))
                 qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
             with self.subTest(f"Circuit with {standard_gate.name} gate."):
                 self.assertTrue(check_to_braket_unitary_correct(qiskit_circuit, 0))
@@ -284,7 +284,7 @@ class TestAdapter(TestCase):
 
             parameters = gate.params
             parameter_values = [(137 / 61) * np.pi / i for i in range(1, len(parameters) + 1)]
-            parameter_bindings = dict(zip(parameters, parameter_values))
+            parameter_bindings = dict(zip(parameters, parameter_values, strict=True))
             qiskit_circuit = qiskit_circuit.assign_parameters(parameter_bindings)
 
             with self.subTest(f"Circuit with {gate.name} gate."):
@@ -1203,6 +1203,7 @@ class TestFromBraket(TestCase):
                             # qiskit_circuit.parameters is sorted alphabetically
                             [list(expr.parameters)[0] for expr in qiskit_gate.params],
                             params_qiskit[: len(qiskit_gate.params)],
+                            strict=True,
                         )
                     )
                 )

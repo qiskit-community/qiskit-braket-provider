@@ -112,7 +112,9 @@ class TestBraketSampler(TestCase):
         self.assertTrue(isinstance(program_set[0], Circuit))
         self.assertTrue(isinstance(program_set[1], CircuitBinding))
         self.assertEqual(program_set.total_executables, 2)
-        for actual, expected in zip(task.result(), self.sampler_backend.run(pubs).result()):
+        for actual, expected in zip(
+            task.result(), self.sampler_backend.run(pubs).result(), strict=True
+        ):
             bit_array = actual.data.meas
             counts = bit_array.get_int_counts()
             shots = bit_array.num_shots

@@ -1028,7 +1028,10 @@ def translate_sparse_pauli_op(op: SparsePauliOp) -> BraketObservable:
     """
     return (
         braket_observables.Sum(
-            [_translate_pauli(pauli, np.real(coeff)) for pauli, coeff in zip(op.paulis, op.coeffs)]
+            [
+                _translate_pauli(pauli, np.real(coeff))
+                for pauli, coeff in zip(op.paulis, op.coeffs, strict=True)
+            ]
         )
         if len(op) > 1
         else _translate_pauli(op.paulis[0], np.real(op.coeffs[0]))
@@ -1171,7 +1174,7 @@ def _create_qiskit_gate(
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
     gate_cls = gate_instance.__class__
     new_gate_params = []
-    for param_expression, value in zip(gate_instance.params, gate_params):
+    for param_expression, value in zip(gate_instance.params, gate_params, strict=True):
         # extract the coefficient in the templated gate
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))

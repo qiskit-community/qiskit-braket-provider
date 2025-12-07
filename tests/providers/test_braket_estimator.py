@@ -29,7 +29,9 @@ class TestBraketEstimator(TestCase):
 
     def assert_correct_results(self, task, pubs):
         """Compares the results from BraketEstimator and BackendEstimatorV2"""
-        for actual, expected in zip(task.result(), self.estimator_backend.run(pubs).result()):
+        for actual, expected in zip(
+            task.result(), self.estimator_backend.run(pubs).result(), strict=True
+        ):
             self.assertTrue(np.allclose(actual.data.evs, expected.data.evs, rtol=0.3, atol=0.2))
 
     def test_program_sets_unsupported(self):

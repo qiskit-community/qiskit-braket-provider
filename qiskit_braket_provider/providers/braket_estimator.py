@@ -166,7 +166,7 @@ class BraketEstimator(BaseEstimatorV2):
         # Group parameter sets with the same observable
         obs_groups = defaultdict(list)
         for position, (param_indices, obs) in enumerate(
-            zip(param_indices_broadcast.flatten(), observables_broadcast.flatten())
+            zip(param_indices_broadcast.flatten(), observables_broadcast.flatten(), strict=True)
         ):
             obs_groups[BraketEstimator._make_obs_key(obs)].append((position, param_indices))
 
@@ -203,7 +203,7 @@ class BraketEstimator(BaseEstimatorV2):
             )
             binding_idx = len(bindings)
             monomials = []
-            for ok, observable in zip(matching_obs_keys, braket_observables):
+            for ok, observable in zip(matching_obs_keys, braket_observables, strict=True):
                 if isinstance(observable, Sum):
                     bindings.append(
                         CircuitBinding(circuit, input_sets=parameter_sets, observables=observable)
@@ -261,7 +261,7 @@ class BraketEstimator(BaseEstimatorV2):
         data = defaultdict(list)
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
-                for param, val in zip(k, v):
+                for param, val in zip(k, v, strict=True):
                     data[rename_parameter(param)].append(val)
         return ParameterSets(data)
 
@@ -287,7 +287,7 @@ class BraketEstimator(BaseEstimatorV2):
         pub_results = []
         binding_offset = 0
 
-        for pub, pub_meta in zip(metadata.pubs, metadata.pub_metadata):
+        for pub, pub_meta in zip(metadata.pubs, metadata.pub_metadata, strict=True):
             num_bindings = pub_meta.num_bindings
             broadcast_shape = pub.shape
             binding_map = pub_meta.binding_to_result_map

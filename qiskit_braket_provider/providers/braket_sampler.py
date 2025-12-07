@@ -149,7 +149,7 @@ class BraketSampler(BaseSamplerV2):
         data = defaultdict(list)
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
-                for param, val in zip(k, v):
+                for param, val in zip(k, v, strict=True):
                     data[rename_parameter(param)].append(val)
         return ParameterSets(data)
 
@@ -173,7 +173,7 @@ class BraketSampler(BaseSamplerV2):
         shots = metadata.shots
         pub_results = []
         for program_result, pub, indices in zip(
-            task_result.entries, metadata.pubs, metadata.parameter_indices
+            task_result.entries, metadata.pubs, metadata.parameter_indices, strict=True
         ):
             circuit = pub.circuit
             meas_info = [
