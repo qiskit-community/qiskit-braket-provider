@@ -19,9 +19,9 @@ class TestBraketSampler(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.backend = BraketLocalBackend()
-        self.sampler = BraketSampler(self.backend)
-        self.sampler_backend = BackendSamplerV2(backend=self.backend)
+        backend = BraketLocalBackend()
+        self.sampler = BraketSampler(backend)
+        self.sampler_backend = BackendSamplerV2(backend=backend)
 
     def test_program_sets_unsupported(self):
         """Tests that initialization raises a ValueError if program sets aren't supported"""
@@ -30,7 +30,7 @@ class TestBraketSampler(TestCase):
         with self.assertRaises(ValueError):
             BraketSampler(backend)
 
-    def test_different_precisions_raises_error(self):
+    def test_different_shots_raises_error(self):
         """Test that pubs with different shots raise an error."""
         theta = Parameter("θ")
         qc = QuantumCircuit(1)
