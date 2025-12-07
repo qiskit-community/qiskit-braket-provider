@@ -125,7 +125,8 @@ class BraketSampler(BaseSamplerV2):
             qubit_labels=backend.qubit_labels,
             optimization_level=self._optimization_level,
         )
-        if not (param_values := pub.parameter_values).data:
+        param_values = pub.parameter_values
+        if not param_values.data:
             return circuit, None
         param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
         return CircuitBinding(

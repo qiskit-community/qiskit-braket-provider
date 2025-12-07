@@ -107,7 +107,6 @@ class TestBraketSampler(TestCase):
         qc2.ry(Parameter("θ"), 0)
         qc2.measure_all()
         pubs = [(qc1,), (qc2, np.pi / 3)]
-
         task = self.sampler.run(pubs)
         program_set = task.program_set
         self.assertEqual(len(program_set), 2)

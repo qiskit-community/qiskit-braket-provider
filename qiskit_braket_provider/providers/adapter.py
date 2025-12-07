@@ -1172,7 +1172,6 @@ def _create_qiskit_gate(
     gate_instance = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name)
     if not gate_instance:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
-    gate_cls = gate_instance.__class__
     new_gate_params = []
     for param_expression, value in zip(gate_instance.params, gate_params, strict=True):
         # extract the coefficient in the templated gate
@@ -1183,7 +1182,7 @@ def _create_qiskit_gate(
             if isinstance(value, FreeParameterExpression)
             else coeff * value
         )
-    return gate_cls(*new_gate_params)
+    return gate_instance.__class__(*new_gate_params)
 
 
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
