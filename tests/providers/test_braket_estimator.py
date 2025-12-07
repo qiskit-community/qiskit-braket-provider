@@ -6,12 +6,11 @@ from unittest.mock import Mock, patch
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
-from qiskit.circuit.library import iqp
 from qiskit.primitives import BackendEstimatorV2, BasePrimitiveJob
 from qiskit.primitives.containers.bindings_array import BindingsArray
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.containers.observables_array import ObservablesArray
-from qiskit.quantum_info import SparsePauliOp, random_hermitian
+from qiskit.quantum_info import SparsePauliOp
 
 from braket.program_sets import ProgramSet
 from qiskit_braket_provider.providers import BraketLocalBackend
@@ -307,8 +306,10 @@ class TestBraketEstimator(TestCase):
 
     def test_run_local_no_parameters(self):
         """Tests that correct results are returned for circuits with no parameters"""
-        n_qubits = 2
-        circuit = iqp(np.real(random_hermitian(n_qubits, seed=12321)))
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.ry(np.pi / 3, 0)
         observables = [SparsePauliOp("ZX"), SparsePauliOp("XZ")]
         pubs = [(circuit, observables), (circuit, observables[0])]
         task = self.estimator.run(pubs)
