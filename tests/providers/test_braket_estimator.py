@@ -308,7 +308,7 @@ class TestBraketEstimator(TestCase):
     def test_run_local_no_parameters(self):
         """Tests that correct results are returned for circuits with no parameters"""
         n_qubits = 2
-        circuit = iqp(np.real(random_hermitian(n_qubits, seed=1234)))
+        circuit = iqp(np.real(random_hermitian(n_qubits, seed=12321)))
         observables = [SparsePauliOp("ZX"), SparsePauliOp("XZ")]
         pubs = [(circuit, observables), (circuit, observables[0])]
         task = self.estimator.run(pubs)
