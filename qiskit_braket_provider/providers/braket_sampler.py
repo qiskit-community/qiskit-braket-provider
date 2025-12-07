@@ -118,13 +118,6 @@ class BraketSampler(BaseSamplerV2):
 
     def _translate_pub(self, pub: SamplerPub) -> tuple[CircuitBinding | Circuit, np.ndarray | None]:
         backend = self._backend
-        param_values = pub.parameter_values
-        param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
-        parameter_sets = (
-            BraketSampler._translate_parameters([param_values[pi] for pi in param_indices])
-            if param_values.data
-            else None
-        )
         circuit = to_braket(
             pub.circuit,
             target=backend.target,
@@ -132,11 +125,13 @@ class BraketSampler(BaseSamplerV2):
             qubit_labels=backend.qubit_labels,
             optimization_level=self._optimization_level,
         )
-        return (
-            (CircuitBinding(circuit, input_sets=parameter_sets), param_indices)
-            if param_values.data
-            else (circuit, None)
+        if not (param_values := pub.parameter_values).data:
+            return circuit, None
+        param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
+        parameter_sets = BraketSampler._translate_parameters(
+            [param_values[pi] for pi in param_indices]
         )
+        return CircuitBinding(circuit, input_sets=parameter_sets), param_indices
 
     @staticmethod
     def _translate_parameters(param_list: list[BindingsArray]) -> ParameterSets:
