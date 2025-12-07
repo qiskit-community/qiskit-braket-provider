@@ -9,6 +9,7 @@ from qiskit.primitives import BackendSamplerV2
 from qiskit.primitives.containers.sampler_pub import SamplerPub
 
 from braket.circuits import Circuit
+from braket.program_sets import CircuitBinding
 from qiskit_braket_provider.providers import BraketLocalBackend
 from qiskit_braket_provider.providers.braket_sampler import BraketSampler
 
@@ -20,6 +21,7 @@ class TestBraketSampler(TestCase):
         """Set up test fixtures."""
         self.backend = BraketLocalBackend()
         self.sampler = BraketSampler(self.backend)
+        self.sampler_backend = BackendSamplerV2(backend=self.backend)
 
     def test_program_sets_unsupported(self):
         """Tests that initialization raises a ValueError if program sets aren't supported"""
@@ -71,7 +73,7 @@ class TestBraketSampler(TestCase):
         self.assertEqual(len(program_set), 1)
         self.assertEqual(len(program_set[0]), coerced.size)
         data = task.result()[0].data
-        data_backend = BackendSamplerV2(backend=self.backend).run([pub]).result()[0].data
+        data_backend = self.sampler_backend.run([pub]).result()[0].data
         for reg, reg_backend in [
             (data.creg_a, data_backend.creg_a),
             (data.creg_b, data_backend.creg_b),
@@ -91,25 +93,26 @@ class TestBraketSampler(TestCase):
                         np.isclose(v / shots, counts_backend[k] / shots_backend, rtol=0.3, atol=0.2)
                     )
 
-    def test_run_local_no_parameters(self):
-        """Tests that correct results are returned for circuits with no parameters"""
+    def test_run_local_shapeless_parameters(self):
+        """Tests that correct results are returned for circuits with no or shapeless parameters"""
         qc1 = QuantumCircuit(2)
         qc1.id(0)
         qc1.x(0)
         qc1.measure_all()
-        qc2 = QuantumCircuit(3)
+        qc2 = QuantumCircuit(2)
         qc2.h(0)
-        qc2.id(0)
-        qc2.x(0)
+        qc2.cx(0, 1)
+        qc2.ry(Parameter("θ"), 0)
         qc2.measure_all()
+        pubs = [(qc1,), (qc2, np.pi / 4)]
 
-        task = self.sampler.run([(qc1,), (qc2,)])
+        task = self.sampler.run(pubs)
         program_set = task.program_set
         self.assertEqual(len(program_set), 2)
-        self.assertTrue(isinstance(circ, Circuit) for circ in program_set)
-        for actual, expected in zip(
-            task.result(), BackendSamplerV2(backend=self.backend).run([(qc1,), (qc2,)]).result()
-        ):
+        self.assertTrue(isinstance(program_set[0], Circuit))
+        self.assertTrue(isinstance(program_set[1], CircuitBinding))
+        self.assertEqual(program_set.total_executables, 2)
+        for actual, expected in zip(task.result(), self.sampler_backend.run(pubs).result()):
             bit_array = actual.data.meas
             counts = bit_array.get_int_counts()
             shots = bit_array.num_shots

@@ -198,7 +198,7 @@ class BraketEstimator(BaseEstimatorV2):
             ]
             parameter_sets = (
                 BraketEstimator._translate_parameters([param_values[pi] for pi in param_indices])
-                if param_values.shape != ()
+                if param_values.data
                 else None
             )
             binding_idx = len(bindings)
