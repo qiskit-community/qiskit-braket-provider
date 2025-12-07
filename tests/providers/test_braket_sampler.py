@@ -23,6 +23,20 @@ class TestBraketSampler(TestCase):
         self.sampler = BraketSampler(backend)
         self.sampler_backend = BackendSamplerV2(backend=backend)
 
+    def assert_correct_results(self, actual, expected):
+        """Compares the results from BraketSampler and BackendSamplerV2"""
+        counts = actual.get_int_counts()
+        shots = actual.num_shots
+
+        counts_backend = expected.get_int_counts()
+        shots_backend = expected.num_shots
+
+        self.assertEqual(counts.keys(), counts_backend.keys())
+        for k, v in counts.items():
+            self.assertTrue(
+                np.isclose(v / shots, counts_backend[k] / shots_backend, rtol=0.3, atol=0.2)
+            )
+
     def test_program_sets_unsupported(self):
         """Tests that initialization raises a ValueError if program sets aren't supported"""
         backend = BraketLocalBackend()
@@ -79,19 +93,7 @@ class TestBraketSampler(TestCase):
             (data.creg_b, data_backend.creg_b),
         ]:
             for index in np.ndindex(coerced.shape):
-                bit_array = reg[index]
-                counts = bit_array.get_int_counts()
-                shots = bit_array.num_shots
-
-                bit_array_backend = reg_backend[index]
-                counts_backend = bit_array_backend.get_int_counts()
-                shots_backend = bit_array_backend.num_shots
-
-                self.assertEqual(counts.keys(), counts_backend.keys())
-                for k, v in counts.items():
-                    self.assertTrue(
-                        np.isclose(v / shots, counts_backend[k] / shots_backend, rtol=0.3, atol=0.2)
-                    )
+                self.assert_correct_results(reg[index], reg_backend[index])
 
     def test_run_local_shapeless_parameters(self):
         """Tests that correct results are returned for circuits with no or shapeless parameters"""
@@ -104,7 +106,7 @@ class TestBraketSampler(TestCase):
         qc2.cx(0, 1)
         qc2.ry(Parameter("θ"), 0)
         qc2.measure_all()
-        pubs = [(qc1,), (qc2, np.pi / 4)]
+        pubs = [(qc1,), (qc2, np.pi / 3)]
 
         task = self.sampler.run(pubs)
         program_set = task.program_set
@@ -115,16 +117,4 @@ class TestBraketSampler(TestCase):
         for actual, expected in zip(
             task.result(), self.sampler_backend.run(pubs).result(), strict=True
         ):
-            bit_array = actual.data.meas
-            counts = bit_array.get_int_counts()
-            shots = bit_array.num_shots
-
-            bit_array_backend = expected.data.meas
-            counts_backend = bit_array_backend.get_int_counts()
-            shots_backend = bit_array_backend.num_shots
-
-            self.assertEqual(counts.keys(), counts_backend.keys())
-            for k, v in counts.items():
-                self.assertTrue(
-                    np.isclose(v / shots, counts_backend[k] / shots_backend, rtol=0.3, atol=0.2)
-                )
+            self.assert_correct_results(actual.data.meas, expected.data.meas)
