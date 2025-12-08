@@ -798,7 +798,7 @@ def to_braket(
             or connectivity
             or (
                 basis_gates
-                and not {gate.operation.name for circ in circuits for gate in circ.data}.issubset(
+                and not {instr.operation.name for circ in circuits for instr in circ.data}.issubset(
                     basis_gates
                 )
             )
