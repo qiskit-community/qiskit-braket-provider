@@ -1025,8 +1025,8 @@
     <span class="n">single_instance</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">_Translatable</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">single_instance</span><span class="p">:</span>
         <span class="n">circuit</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuit</span><span class="p">]</span>
-    <span class="n">circuit</span> <span class="o">=</span> <span class="p">[</span><span class="n">to_qiskit</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Program</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span> <span class="k">else</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuit</span><span class="p">]</span>
-    <span class="n">other_types</span> <span class="o">=</span> <span class="p">{</span><span class="nb">type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuit</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)}</span>
+    <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span><span class="n">to_qiskit</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Program</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span> <span class="k">else</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuit</span><span class="p">]</span>
+    <span class="n">other_types</span> <span class="o">=</span> <span class="p">{</span><span class="nb">type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuits</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)}</span>
     <span class="k">if</span> <span class="n">other_types</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected only QuantumCircuits, got </span><span class="si">{</span><span class="n">other_types</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
     <span class="n">loose_constraints</span> <span class="o">=</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">connectivity</span>
@@ -1038,22 +1038,22 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot specify basis gates or connectivity alongside target.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">pass_manager</span><span class="p">:</span>
-        <span class="n">circuit</span> <span class="o">=</span> <span class="n">pass_manager</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">)</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="n">pass_manager</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">verbatim</span><span class="p">:</span>
         <span class="c1"># If basis_gates is not None, then target remains empty</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">target</span>
             <span class="ow">or</span> <span class="n">connectivity</span>
             <span class="ow">or</span> <span class="p">(</span>
                 <span class="n">basis_gates</span>
-                <span class="ow">and</span> <span class="ow">not</span> <span class="p">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuit</span> <span class="k">for</span> <span class="n">gate</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">circ</span><span class="o">.</span><span class="n">data</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="p">{</span><span class="n">instr</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span> <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">circ</span><span class="o">.</span><span class="n">data</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span>
                     <span class="n">basis_gates</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="p">):</span>
-            <span class="n">circuit</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span>
-                <span class="n">circuit</span><span class="p">,</span>
+            <span class="n">circuits</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span>
+                <span class="n">circuits</span><span class="p">,</span>
                 <span class="n">basis_gates</span><span class="o">=</span><span class="n">basis_gates</span><span class="p">,</span>
                 <span class="n">coupling_map</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
                 <span class="n">optimization_level</span><span class="o">=</span><span class="n">optimization_level</span><span class="p">,</span>
@@ -1062,12 +1062,12 @@
                 <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">_SubstitutedTarget</span><span class="p">):</span>
-        <span class="n">circuit</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">_substitute</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">_substitute</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
     <span class="n">translated</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">_translate_to_braket</span><span class="p">(</span>
             <span class="n">circ</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">qubit_labels</span><span class="p">,</span> <span class="n">verbatim</span><span class="p">,</span> <span class="n">basis_gates</span><span class="p">,</span> <span class="n">angle_restrictions</span><span class="p">,</span> <span class="n">pass_manager</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuit</span>
+        <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">translated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">single_instance</span> <span class="k">else</span> <span class="n">translated</span></div>
 
@@ -1278,7 +1278,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">braket_observables</span><span class="o">.</span><span class="n">Sum</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">_translate_pauli</span><span class="p">(</span><span class="n">pauli</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">coeff</span><span class="p">))</span> <span class="k">for</span> <span class="n">pauli</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">paulis</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">coeffs</span><span class="p">)]</span>
+            <span class="p">[</span>
+                <span class="n">_translate_pauli</span><span class="p">(</span><span class="n">pauli</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">coeff</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">pauli</span><span class="p">,</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">paulis</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">]</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
         <span class="k">else</span> <span class="n">_translate_pauli</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">paulis</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">coeffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
@@ -1422,9 +1425,8 @@
     <span class="n">gate_instance</span> <span class="o">=</span> <span class="n">_BRAKET_GATE_NAME_TO_QISKIT_GATE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_name</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">gate_instance</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Braket gate &quot;</span><span class="si">{</span><span class="n">gate_name</span><span class="si">}</span><span class="s1">&quot; not supported in Qiskit&#39;</span><span class="p">)</span>
-    <span class="n">gate_cls</span> <span class="o">=</span> <span class="n">gate_instance</span><span class="o">.</span><span class="vm">__class__</span>
     <span class="n">new_gate_params</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">param_expression</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gate_instance</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">gate_params</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">param_expression</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gate_instance</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">gate_params</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="c1"># extract the coefficient in the templated gate</span>
         <span class="n">param</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">param_expression</span><span class="o">.</span><span class="n">parameters</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sympify</span><span class="p">()</span>
         <span class="n">coeff</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">param_expression</span><span class="o">.</span><span class="n">sympify</span><span class="p">()</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
@@ -1433,7 +1435,7 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">FreeParameterExpression</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">coeff</span> <span class="o">*</span> <span class="n">value</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">gate_cls</span><span class="p">(</span><span class="o">*</span><span class="n">new_gate_params</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gate_instance</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">*</span><span class="n">new_gate_params</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_qiskit_to_braket_circuit</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QuantumCircuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
