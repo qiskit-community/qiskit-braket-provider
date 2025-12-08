@@ -10,7 +10,7 @@ from botocore import errorfactory
 from networkx import DiGraph, complete_graph
 from qiskit import QuantumCircuit, generate_preset_pass_manager, transpile
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit.library import TwoLocal
+from qiskit.circuit.library import n_local
 from qiskit.circuit.random import random_circuit
 from qiskit.primitives import BackendEstimatorV2
 from qiskit.quantum_info import SparsePauliOp, Statevector
@@ -203,7 +203,7 @@ class TestBraketLocalBackend(TestCase):
 
         estimator = BackendEstimatorV2(backend=local_simulator)
 
-        ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
+        ansatz = n_local(2, rotation_blocks="ry", entanglement_blocks="cz")
         slsqp = SLSQP(maxiter=1)
 
         vqe = VQE(estimator=estimator, ansatz=ansatz, optimizer=slsqp)

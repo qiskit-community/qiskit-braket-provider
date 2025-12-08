@@ -27,7 +27,7 @@ _DEFAULT_SHOTS = 1024  # Same value as BackendSamplerV2
 @dataclass
 class _JobMetadata:
     pubs: list[SamplerPub]
-    parameter_indices: list[tuple[int, ...]]
+    parameter_indices: list[np.ndarray | None]
     shots: int
 
 
@@ -118,22 +118,22 @@ class BraketSampler(BaseSamplerV2):
 
     def _translate_pub(self, pub: SamplerPub) -> tuple[CircuitBinding | Circuit, np.ndarray | None]:
         backend = self._backend
-        param_values = pub.parameter_values
-        param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
-        parameter_sets = (
-            BraketSampler._translate_parameters([param_values[pi] for pi in param_indices])
-            if param_values.data
-            else None
+        circuit = to_braket(
+            pub.circuit,
+            target=backend.target,
+            verbatim=self._verbatim,
+            qubit_labels=backend.qubit_labels,
+            optimization_level=self._optimization_level,
         )
+        param_values = pub.parameter_values
+        if not param_values.data:
+            return circuit, None
+        param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
         return CircuitBinding(
-            to_braket(
-                pub.circuit,
-                target=backend.target,
-                verbatim=self._verbatim,
-                qubit_labels=backend.qubit_labels,
-                optimization_level=self._optimization_level,
+            circuit,
+            input_sets=BraketSampler._translate_parameters(
+                [param_values[pi] for pi in param_indices]
             ),
-            input_sets=parameter_sets,
         ), param_indices
 
     @staticmethod
@@ -150,7 +150,7 @@ class BraketSampler(BaseSamplerV2):
         data = defaultdict(list)
         for bindings_array in param_list:
             for k, v in bindings_array.data.items():
-                for param, val in zip(k, v):
+                for param, val in zip(k, v, strict=True):
                     data[rename_parameter(param)].append(val)
         return ParameterSets(data)
 
@@ -174,7 +174,7 @@ class BraketSampler(BaseSamplerV2):
         shots = metadata.shots
         pub_results = []
         for program_result, pub, indices in zip(
-            task_result.entries, metadata.pubs, metadata.parameter_indices
+            task_result.entries, metadata.pubs, metadata.parameter_indices, strict=True
         ):
             circuit = pub.circuit
             meas_info = [
@@ -194,15 +194,19 @@ class BraketSampler(BaseSamplerV2):
                 item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
                 for item in meas_info
             }
-            for samples, index in zip(measurements, indices):
+            for i, samples in enumerate(measurements):
                 for item in meas_info:
                     start = item.start
-                    arrays[item.creg_name][index] = np.flip(
+                    array = np.flip(
                         np.packbits(
                             samples[:, start : start + item.num_bits], axis=1, bitorder="little"
                         ),
                         axis=-1,
                     )
+                    if indices is None:
+                        arrays[item.creg_name] = array
+                    else:
+                        arrays[item.creg_name][indices[i]] = array
 
             pub_results.append(
                 PubResult(

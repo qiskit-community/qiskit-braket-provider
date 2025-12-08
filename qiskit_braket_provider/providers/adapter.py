@@ -776,8 +776,8 @@ def to_braket(
     single_instance = isinstance(circuit, _Translatable) or not isinstance(circuit, Iterable)
     if single_instance:
         circuit = [circuit]
-    circuit = [to_qiskit(c) if isinstance(c, (Circuit, Program, str)) else c for c in circuit]
-    other_types = {type(c).__name__ for c in circuit if not isinstance(c, QuantumCircuit)}
+    circuits = [to_qiskit(c) if isinstance(c, (Circuit, Program, str)) else c for c in circuit]
+    other_types = {type(c).__name__ for c in circuits if not isinstance(c, QuantumCircuit)}
     if other_types:
         raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
     loose_constraints = basis_gates or connectivity
@@ -789,22 +789,22 @@ def to_braket(
         raise ValueError("Cannot specify basis gates or connectivity alongside target.")
 
     if pass_manager:
-        circuit = pass_manager.run(circuit, callback=callback, num_processes=num_processes)
+        circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)
     elif not verbatim:
         # If basis_gates is not None, then target remains empty
-        target = target if basis_gates or target else _default_target(circuit)
+        target = target if basis_gates or target else _default_target(circuits)
         if (
             target
             or connectivity
             or (
                 basis_gates
-                and not {gate.name for circ in circuit for gate, _, _ in circ.data}.issubset(
+                and not {instr.operation.name for circ in circuits for instr in circ.data}.issubset(
                     basis_gates
                 )
             )
         ):
-            circuit = transpile(
-                circuit,
+            circuits = transpile(
+                circuits,
                 basis_gates=basis_gates,
                 coupling_map=connectivity,
                 optimization_level=optimization_level,
@@ -813,12 +813,12 @@ def to_braket(
                 num_processes=num_processes,
             )
     if isinstance(target, _SubstitutedTarget):
-        circuit = target._substitute(circuit)
+        circuits = target._substitute(circuits)
     translated = [
         _translate_to_braket(
             circ, target, qubit_labels, verbatim, basis_gates, angle_restrictions, pass_manager
         )
-        for circ in circuit
+        for circ in circuits
     ]
     return translated[0] if single_instance else translated
 
@@ -1028,7 +1028,10 @@ def translate_sparse_pauli_op(op: SparsePauliOp) -> BraketObservable:
     """
     return (
         braket_observables.Sum(
-            [_translate_pauli(pauli, np.real(coeff)) for pauli, coeff in zip(op.paulis, op.coeffs)]
+            [
+                _translate_pauli(pauli, np.real(coeff))
+                for pauli, coeff in zip(op.paulis, op.coeffs, strict=True)
+            ]
         )
         if len(op) > 1
         else _translate_pauli(op.paulis[0], np.real(op.coeffs[0]))
@@ -1169,9 +1172,8 @@ def _create_qiskit_gate(
     gate_instance = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(gate_name)
     if not gate_instance:
         raise TypeError(f'Braket gate "{gate_name}" not supported in Qiskit')
-    gate_cls = gate_instance.__class__
     new_gate_params = []
-    for param_expression, value in zip(gate_instance.params, gate_params):
+    for param_expression, value in zip(gate_instance.params, gate_params, strict=True):
         # extract the coefficient in the templated gate
         param = list(param_expression.parameters)[0].sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
@@ -1180,7 +1182,7 @@ def _create_qiskit_gate(
             if isinstance(value, FreeParameterExpression)
             else coeff * value
         )
-    return gate_cls(*new_gate_params)
+    return gate_instance.__class__(*new_gate_params)
 
 
 def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:

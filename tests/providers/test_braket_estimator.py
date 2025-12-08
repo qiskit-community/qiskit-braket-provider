@@ -24,6 +24,14 @@ class TestBraketEstimator(TestCase):
         """Set up test fixtures."""
         self.backend = BraketLocalBackend()
         self.estimator = BraketEstimator(self.backend)
+        self.estimator_backend = BackendEstimatorV2(backend=self.backend)
+
+    def assert_correct_results(self, task, pubs):
+        """Compares the results from BraketEstimator and BackendEstimatorV2"""
+        for actual, expected in zip(
+            task.result(), self.estimator_backend.run(pubs).result(), strict=True
+        ):
+            self.assertTrue(np.allclose(actual.data.evs, expected.data.evs, rtol=0.3, atol=0.2))
 
     def test_program_sets_unsupported(self):
         """Tests that initialization raises a ValueError if program sets aren't supported"""
@@ -275,6 +283,42 @@ class TestBraketEstimator(TestCase):
 
             self.assertIn("not broadcastable", str(context.exception))
 
+    def test_run_local_single_observable_or_parameter(self):
+        """Tests that correct results are returned when there is only one observable or parameter"""
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.ry(Parameter("θ"), 0)
+        observables = [SparsePauliOp("ZX"), SparsePauliOp("XZ")]
+        parameters = [np.pi / 3, np.pi / 6]
+        pubs = [
+            (circuit, observables[0], parameters),
+            (circuit, observables, parameters[0]),
+            (circuit, observables[1], parameters[1]),
+        ]
+        task = self.estimator.run(pubs)
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 3)
+        self.assertEqual(len(program_set[0]), 2)
+        self.assertEqual(len(program_set[1]), 2)
+        self.assertEqual(len(program_set[2]), 1)
+        self.assert_correct_results(task, pubs)
+
+    def test_run_local_no_parameters(self):
+        """Tests that correct results are returned for circuits with no parameters"""
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        circuit.ry(np.pi / 3, 0)
+        observables = [SparsePauliOp("ZX"), SparsePauliOp("XZ")]
+        pubs = [(circuit, observables), (circuit, observables[0])]
+        task = self.estimator.run(pubs)
+        program_set = task.program_set
+        self.assertEqual(len(program_set), 2)
+        self.assertEqual(len(program_set[0]), 2)
+        self.assertEqual(len(program_set[1]), 1)
+        self.assert_correct_results(task, pubs)
+
     def test_run_local_pauli_sum(self):
         """Tests that correct results are returned when one observable is a Pauli sum"""
         circuit = QuantumCircuit(2)
@@ -286,7 +330,7 @@ class TestBraketEstimator(TestCase):
         circuit.h(0)
 
         num_params = 20
-        estimator_pub = (
+        pub = (
             circuit,
             [
                 [SparsePauliOp("ZZ")],
@@ -302,19 +346,12 @@ class TestBraketEstimator(TestCase):
             ).T,
         )
 
-        task = self.estimator.run([estimator_pub])
+        task = self.estimator.run([pub])
         program_set = task.program_set
         self.assertEqual(len(program_set), 2)
         self.assertEqual(len(program_set[0]), num_params * 2)
         self.assertEqual(len(program_set[1]), num_params * 3)
-        self.assertTrue(
-            np.allclose(
-                task.result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
-                rtol=0.3,
-                atol=0.2,
-            )
-        )
+        self.assert_correct_results(task, [pub])
 
     def test_run_local_all_pauli_sums(self):
         """Tests that correct results are returned when all observables are Pauli sums"""
@@ -327,7 +364,7 @@ class TestBraketEstimator(TestCase):
         circuit.h(0)
 
         num_params = 20
-        estimator_pub = (
+        pub = (
             circuit,
             [
                 [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
@@ -341,19 +378,12 @@ class TestBraketEstimator(TestCase):
             ).T,
         )
 
-        task = self.estimator.run([estimator_pub])
+        task = self.estimator.run([pub])
         program_set = task.program_set
         self.assertEqual(len(program_set), 2)
         self.assertEqual(len(program_set[0]), num_params * 2)
         self.assertEqual(len(program_set[1]), num_params * 3)
-        self.assertTrue(
-            np.allclose(
-                task.result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
-                rtol=0.3,
-                atol=0.2,
-            )
-        )
+        self.assert_correct_results(task, [pub])
 
     def test_run_local_broadcasting(self):
         """Tests that correct results are returned with broadcasted arrays"""
@@ -364,7 +394,7 @@ class TestBraketEstimator(TestCase):
         circuit.h(2)
 
         num_steps = 6
-        estimator_pub = (
+        pub = (
             circuit,
             [
                 [[SparsePauliOp(["IZZ"])], [SparsePauliOp(["IZX"])], [SparsePauliOp(["III"])]],
@@ -379,16 +409,9 @@ class TestBraketEstimator(TestCase):
             ),
         )
 
-        task = self.estimator.run([estimator_pub])
+        task = self.estimator.run([pub])
         program_set = task.program_set
         self.assertEqual(len(program_set), 3)
         for entry in task.program_set:
             self.assertEqual(len(entry), num_steps * 2)
-        self.assertTrue(
-            np.allclose(
-                task.result()[0].data.evs,
-                BackendEstimatorV2(backend=self.backend).run([estimator_pub]).result()[0].data.evs,
-                rtol=0.3,
-                atol=0.2,
-            )
-        )
+        self.assert_correct_results(task, [pub])

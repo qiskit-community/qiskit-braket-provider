@@ -179,6 +179,7 @@ class BraketQuantumTask(JobV1):
                 AwsQuantumTaskBatch._retrieve_results(
                     tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
                 ),
+                strict=True,
             )
         ]
         status = self.status(use_cached_value=True)
