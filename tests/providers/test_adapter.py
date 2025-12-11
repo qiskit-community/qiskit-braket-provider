@@ -440,9 +440,7 @@ class TestAdapter(TestCase):
             to_braket(circuit, pass_manager=pass_manager, connectivity=[[0, 1], [1, 2]])
 
     def test_braket_device(self):
-        """
-        Tests that to_braket transpiles to the target of the given device.
-        """
+        """Tests that to_braket transpiles to the target of the given device."""
         circuit = QuantumCircuit(1, 1)
         circuit.h(0)
 
@@ -467,11 +465,10 @@ class TestAdapter(TestCase):
                 }
             )
         )
+        self.assertEqual(braket_circuit.qubits, {1})
 
     def test_braket_device_with_qubit_labels(self):
-        """
-        Tests that to_braket raises a ValueError if braket_device is passed with qubit_labels.
-        """
+        """Tests that to_braket raises a ValueError if braket_device is passed with qubit_labels."""
         circuit = QuantumCircuit(1, 1)
         circuit.h(0)
         braket_device = LocalSimulator()
