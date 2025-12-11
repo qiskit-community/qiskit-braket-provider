@@ -732,6 +732,7 @@ def to_braket(
     num_processes: int | None = None,
     pass_manager: PassManager | None = None,
     braket_device: Device | None = None,
+    add_measurements: bool = True,
 ) -> Circuit | list[Circuit]:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -776,6 +777,8 @@ def to_braket(
             used in conjunction with a target, basis gates, or connectivity. Default: `None`.
         braket_device (Device): Braket device to transpile to. Can only be provided if `target`
             and `basis_gates` are `None`. Default: `None`.
+        add_measurements (bool): Whether to add measurements when translating Braket circuits.
+            Default: True.
 
     Raises:
         ValueError: If more than one of target, basis_gates or connectivity, pass_manager, and
@@ -787,7 +790,12 @@ def to_braket(
     single_instance = isinstance(circuit, _Translatable) or not isinstance(circuit, Iterable)
     if single_instance:
         circuit = [circuit]
-    circuits = [to_qiskit(c) if isinstance(c, (Circuit, Program, str)) else c for c in circuit]
+    circuits = [
+        to_qiskit(c, add_measurements=add_measurements)
+        if isinstance(c, (Circuit, Program, str))
+        else c
+        for c in circuit
+    ]
     other_types = {type(c).__name__ for c in circuits if not isinstance(c, QuantumCircuit)}
     if other_types:
         raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
