@@ -777,6 +777,10 @@ def to_braket(
         braket_device (Device): Braket device to transpile to. Can only be provided if `target`
             and `basis_gates` are `None`. Default: `None`.
 
+    Raises:
+        ValueError: If more than one of target, basis_gates or connectivity, pass_manager, and
+            braket_device are passed together, or if qubit labels is passed with braket_device.
+
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
     """
