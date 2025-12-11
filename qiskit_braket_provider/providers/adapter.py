@@ -731,6 +731,8 @@ def to_braket(
     callback: Callable | None = None,
     num_processes: int | None = None,
     pass_manager: PassManager | None = None,
+    braket_device: Device | None = None,
+    add_measurements: bool = True,
 ) -> Circuit | list[Circuit]:
     """Return a Braket quantum circuit from a Qiskit quantum circuit.
 
@@ -758,17 +760,29 @@ def to_braket(
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous.
-        optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:
-            0: no optimization (default) - basic translation, no optimization, trivial layout
-            1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
-            2: medium optimization - better routing (noise aware) and commutative cancellation
-            3: high optimization - gate resynthesis and unitary-breaking passes
+        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
+            From Qiskit:
+
+            * 0: no optimization - basic translation, no optimization, trivial layout
+            * 1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+            * 2: medium optimization - better routing (noise aware) and commutative cancellation
+            * 3: high optimization - gate resynthesis and unitary-breaking passes
+
+            Default: 0.
         callback (Callable | None): A callback function that will be called after each transpiler
             pass execution. Default: `None`.
         num_processes (int | None): The maximum number of parallel transpilation processes for
             multiple circuits. Default: `None`.
         pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
             used in conjunction with a target, basis gates, or connectivity. Default: `None`.
+        braket_device (Device): Braket device to transpile to. Can only be provided if `target`
+            and `basis_gates` are `None`. Default: `None`.
+        add_measurements (bool): Whether to add measurements when translating Braket circuits.
+            Default: True.
+
+    Raises:
+        ValueError: If more than one of target, basis_gates or connectivity, pass_manager, and
+            braket_device are passed together, or if qubit labels is passed with braket_device.
 
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
@@ -776,17 +790,43 @@ def to_braket(
     single_instance = isinstance(circuit, _Translatable) or not isinstance(circuit, Iterable)
     if single_instance:
         circuit = [circuit]
-    circuits = [to_qiskit(c) if isinstance(c, (Circuit, Program, str)) else c for c in circuit]
+    circuits = [
+        to_qiskit(c, add_measurements=add_measurements)
+        if isinstance(c, (Circuit, Program, str))
+        else c
+        for c in circuit
+    ]
     other_types = {type(c).__name__ for c in circuits if not isinstance(c, QuantumCircuit)}
     if other_types:
         raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
-    loose_constraints = basis_gates or connectivity
-    if pass_manager and (target or loose_constraints):
-        raise ValueError(
-            "Cannot specify target, basis gates, or connectivity alongside pass manager"
+    if (
+        sum(
+            [
+                (1 if target else 0),
+                (1 if (basis_gates or connectivity) else 0),
+                (1 if pass_manager else 0),
+                (1 if braket_device else 0),
+            ]
         )
-    if loose_constraints and target:
-        raise ValueError("Cannot specify basis gates or connectivity alongside target.")
+        > 1
+    ):
+        raise ValueError(
+            "Cannot only specify one of {target, (basis_gates or connectivity), pass_manager, braket_device}"
+        )
+
+    if braket_device:
+        if qubit_labels:
+            raise ValueError("Cannot specify qubit labels with Braket device")
+        target = (
+            aws_device_to_target(braket_device)
+            if isinstance(braket_device, AwsDevice)
+            else local_simulator_to_target(braket_device)
+        )
+        qubit_labels = (
+            tuple(sorted(braket_device.topology_graph.nodes))
+            if isinstance(braket_device, AwsDevice) and braket_device.topology_graph
+            else None
+        )
 
     if pass_manager:
         circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)

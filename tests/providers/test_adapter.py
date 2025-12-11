@@ -14,7 +14,9 @@ from qiskit.quantum_info import Kraus, Operator, SparsePauliOp
 from qiskit.transpiler import PassManager, Target
 from qiskit_ionq import ionq_gates
 
+from braket.aws import AwsDevice
 from braket.circuits import Circuit, Gate, GateCalibrations, Instruction
+from braket.circuits import compiler_directives as braket_compiler_directives
 from braket.circuits import gates as braket_gates
 from braket.circuits import noises as braket_noises
 from braket.circuits import observables as braket_observables
@@ -437,9 +439,45 @@ class TestAdapter(TestCase):
         with pytest.raises(ValueError):
             to_braket(circuit, pass_manager=pass_manager, connectivity=[[0, 1], [1, 2]])
 
+    def test_braket_device(self):
+        """Tests that to_braket transpiles to the target of the given device."""
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+
+        braket_device = Mock(spec=AwsDevice)
+        braket_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        braket_device.gate_calibrations = None
+        braket_device.type = "QPU"
+        braket_device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+
+        braket_circuit = to_braket(circuit, braket_device=braket_device)
+        braket_operators = set(
+            type(instruction.operator) for instruction in braket_circuit.instructions
+        )
+        self.assertFalse(len(braket_operators.intersection({braket_gates.H})))
+        self.assertTrue(
+            braket_operators.issubset(
+                {
+                    braket_gates.Rx,
+                    braket_gates.Rz,
+                    braket_compiler_directives.StartVerbatimBox,
+                    braket_compiler_directives.EndVerbatimBox,
+                }
+            )
+        )
+        self.assertEqual(braket_circuit.qubits, {1})
+
+    def test_braket_device_with_qubit_labels(self):
+        """Tests that to_braket raises a ValueError if braket_device is passed with qubit_labels."""
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        braket_device = LocalSimulator()
+        qubit_labels = [1, 2, 4]
+        with pytest.raises(ValueError):
+            to_braket(circuit, braket_device=braket_device, qubit_labels=qubit_labels)
+
     def test_convert_parametric_qiskit_to_braket_circuit(self):
         """Tests to_braket works with parametric circuits."""
-
         theta = Parameter("θ")
         phi = Parameter("φ")
         lam = Parameter("λ")
