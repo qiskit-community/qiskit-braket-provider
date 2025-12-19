@@ -877,8 +877,7 @@ def _validate_arguments(
     pass_manager: PassManager | None,
     braket_device: Device | None,
 ):
-    other_types = {type(c).__name__ for c in circuits if not isinstance(c, QuantumCircuit)}
-    if other_types:
+    if other_types := {type(c).__name__ for c in circuits if not isinstance(c, QuantumCircuit)}:
         raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
     if (
         sum(
