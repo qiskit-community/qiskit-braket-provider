@@ -397,10 +397,44 @@ class TestAdapter(TestCase):
             set(_BRAKET_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
-    def test_type_error_on_bad_input(self):
-        """Test raising TypeError if adapter does not receive a Qiskit QuantumCircuit."""
-        circuit = Mock()
+    def test_extra_posargs(self):
+        """Tests that to_braket raises a ValueError if it receives more than 5 positional args."""
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        with pytest.raises(ValueError, match="Unknown arguments passed:"):
+            to_braket(circuit, {"h, rx, cx,"}, True, [[0, 1]], {"rx": {0: {np.pi}}}, "foo")
 
+    def test_pos_kw_same_argument(self):
+        """
+        Tests that to_braket raises a TypeError if it receives both positional and keyword values
+        for the same argument.
+        """
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        with pytest.raises(TypeError, match="Multiple values for basis_gates"):
+            to_braket(circuit, {"h, cx"}, basis_gates={"h", "cx"})
+        with pytest.raises(TypeError, match="Multiple values for verbatim"):
+            with pytest.warns(
+                DeprecationWarning,
+                match="Passing basis_gates as a positional argument is deprecated.",
+            ):
+                to_braket(circuit, {"h, cx"}, True, verbatim=True)
+        with pytest.raises(TypeError, match="Multiple values for connectivity"):
+            with pytest.warns(
+                DeprecationWarning, match="Passing verbatim as a positional argument is deprecated."
+            ):
+                to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
+        with pytest.raises(TypeError, match="Multiple values for angle_restrictions"):
+            res = {"rx": {0: {np.pi}}}
+            with pytest.warns(
+                DeprecationWarning,
+                match="Passing connectivity as a positional argument is deprecated.",
+            ):
+                to_braket(circuit, {"h, cx"}, True, [[0, 1]], res, angle_restrictions=res)
+
+    def test_type_error_on_bad_input(self):
+        """Tests that to_braket raises a TypeError if its first argument isn't a QuantumCircuit."""
+        circuit = Mock()
         message = f"Expected only QuantumCircuits, got {{'{circuit.__class__.__name__}'}} instead."
         with pytest.raises(TypeError, match=message):
             to_braket(circuit)
@@ -683,9 +717,9 @@ class TestAdapter(TestCase):
         qiskit_circuit.cx(0, 1)
         qiskit_circuit.measure(1, 0)
 
-        assert to_braket(qiskit_circuit, {"x"}, True) == Circuit().add_verbatim_box(
-            Circuit().h(0).cnot(0, 1)
-        ).measure(1)
+        assert to_braket(
+            qiskit_circuit, basis_gates={"x"}, verbatim=True
+        ) == Circuit().add_verbatim_box(Circuit().h(0).cnot(0, 1)).measure(1)
 
     def test_parameter_vector(self):
         """Tests ParameterExpression translation."""
