@@ -858,16 +858,16 @@ def to_braket(
 
 
 def _check_positional(pos: _T, kw: _T, name: str) -> _T:
-    if pos is not None:
-        if kw is not None:
-            raise TypeError(f"Multiple values for {name}: {pos, kw}")
-        warnings.warn(
-            f"Passing {name} as a positional argument is deprecated.",
-            DeprecationWarning,
-            stacklevel=1,
-        )
-        return pos
-    return kw
+    if pos is None:
+        return kw
+    if kw is not None:
+        raise TypeError(f"Multiple values for {name}: {pos, kw}")
+    warnings.warn(
+        f"Passing {name} as a positional argument is deprecated.",
+        DeprecationWarning,
+        stacklevel=1,
+    )
+    return pos
 
 
 def _validate_arguments(
