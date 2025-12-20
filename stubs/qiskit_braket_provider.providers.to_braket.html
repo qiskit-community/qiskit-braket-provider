@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qiskit_braket_provider.providers.to_qiskit" href="qiskit_braket_provider.providers.to_qiskit.html" /><link rel="prev" title="qiskit_braket_provider.providers.BraketSampler" href="qiskit_braket_provider.providers.BraketSampler.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.to_braket - Qiskit-Braket provider 0.9.0</title>
+        <title>qiskit_braket_provider.providers.to_braket - Qiskit-Braket provider 0.10.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -143,7 +143,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">Qiskit-Braket provider 0.9.0</div></a>
+      <a href="../index.html"><div class="brand">Qiskit-Braket provider 0.10.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -170,7 +170,7 @@
     <img class="sidebar-logo" src="../_static/logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Qiskit-Braket provider 0.9.0</span>
+  <span class="sidebar-brand-text">Qiskit-Braket provider 0.10.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -249,7 +249,7 @@
 <h1>qiskit_braket_provider.providers.to_braket<a class="headerlink" href="#qiskit-braket-provider-providers-to-braket" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_braket_provider.providers.to_braket">
-<span class="sig-name descname"><span class="pre">to_braket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis_gates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbatim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connectivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle_restrictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pass_manager</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">braket_device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_measurements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/adapter.html#to_braket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.to_braket" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_braket</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbatim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis_gates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coupling_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connectivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle_restrictions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pass_manager</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">braket_device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_measurements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/adapter.html#to_braket"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.to_braket" title="Link to this definition">¶</a></dt>
 <dd><p>Return a Braket quantum circuit from a Qiskit quantum circuit.</p>
 <p>The recommended way to use this method is to minimally pass in a target (instead of basis gates
 and connectivity) and qubit labels. The former ensures that the translated circuit is actually
@@ -261,20 +261,22 @@ which are not necessarily contiguous.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>circuit</strong> (<em>QuantumCircuit</em><em> | </em><em>Circuit</em><em> | </em><em>Program</em><em> | </em><em>str</em><em> | </em><em>Iterable</em>) – Qiskit or Braket circuit(s)
 or OpenQASM 3 program(s) to transpile and translate to Braket.</p></li>
-<li><p><strong>basis_gates</strong> (<em>Iterable</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – The gateset to transpile to. Can only be provided
-if target is <cite>None</cite>. If <cite>None</cite> and target is <cite>None</cite>, the transpiler will use all gates
-defined in the Braket SDK. Default: <cite>None</cite>.</p></li>
-<li><p><strong>verbatim</strong> (<em>bool</em>) – Whether to translate the circuit without any modification, in other
-words without transpiling it. Default: False.</p></li>
-<li><p><strong>connectivity</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>] </em><em>| </em><em>None</em>) – If provided, will transpile to a circuit
-with this connectivity. Default: <cite>None</cite>.</p></li>
-<li><p><strong>angle_restrictions</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>int</em><em>, </em><em>set</em><em>[</em><em>float</em><em>] </em><em>| </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Mapping of gate names to parameter angle constraints used to
-validate numeric parameters. Default: <cite>None</cite>.</p></li>
-<li><p><strong>target</strong> (<em>Target</em><em> | </em><em>None</em>) – A backend transpiler target. Can only be provided
-if basis_gates is <cite>None</cite>. Default: <cite>None</cite>.</p></li>
 <li><p><strong>qubit_labels</strong> (<em>Sequence</em><em>[</em><em>int</em><em>] </em><em>| </em><em>None</em>) – A list of (not necessarily contiguous) indices of
 qubits in the underlying Amazon Braket device. If not supplied, then the indices are
-assumed to be contiguous.</p></li>
+assumed to be contiguous. Default: None.</p></li>
+<li><p><strong>target</strong> (<em>Target</em><em> | </em><em>None</em>) – A backend transpiler target. Can only be provided
+if basis_gates is <cite>None</cite>. Default: <cite>None</cite>.</p></li>
+<li><p><strong>verbatim</strong> (<em>bool</em>) – Whether to translate the circuit without any modification, in other
+words without transpiling it. Default: False.</p></li>
+<li><p><strong>basis_gates</strong> (<em>Sequence</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>) – The gateset to transpile to. Can only be provided
+if target is <cite>None</cite>. If <cite>None</cite> and target is <cite>None</cite>, the transpiler will use all gates
+defined in the Braket SDK. Default: <cite>None</cite>.</p></li>
+<li><p><strong>coupling_map</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>] </em><em>| </em><em>None</em>) – If provided, will transpile to a circuit
+with this coupling map. Default: <cite>None</cite>.</p></li>
+<li><p><strong>connectivity</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>] </em><em>| </em><em>None</em>) – If provided, will transpile to a circuit
+with this connectivity. Default: <cite>None</cite>. DEPRECATED: use <cite>coupling_map</cite> instead.</p></li>
+<li><p><strong>angle_restrictions</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>int</em><em>, </em><em>set</em><em>[</em><em>float</em><em>] </em><em>| </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Mapping of gate names to parameter angle constraints used to
+validate numeric parameters. Default: <cite>None</cite>.</p></li>
 <li><p><strong>optimization_level</strong> (<em>int</em><em> | </em><em>None</em>) – <p>The optimization level to pass to <cite>qiskit.transpile</cite>.
 From Qiskit:</p>
 <ul>
@@ -298,8 +300,9 @@ Default: True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If more than one of target, basis_gates or connectivity, pass_manager, and
-    braket_device are passed together, or if qubit labels is passed with braket_device.</p>
+<dd class="field-even"><p><strong>ValueError</strong> – If more than one of <cite>target</cite>, <cite>basis_gates</cite> or <cite>coupling map</cite>/<cite>connectivity</cite>,
+    <cite>pass_manager</cite>, and <cite>braket_device</cite> are passed together,
+    or if <cite>qubit_labels</cite> is passed with <cite>braket_device</cite>.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Braket circuit or circuits</p>
@@ -381,7 +384,7 @@ Default: True.</p></li>
   </div>
 </div><script src="../_static/jquery.js?v=5d32c60e"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-    <script src="../_static/documentation_options.js?v=39bb1c6d"></script>
+    <script src="../_static/documentation_options.js?v=82662543"></script>
     <script src="../_static/doctools.js?v=9a2dae69"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/qiskit-sphinx-theme.js?v=4d77b8ca"></script>

@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.adapter - Qiskit-Braket provider 0.9.0</title>
+        <title>qiskit_braket_provider.providers.adapter - Qiskit-Braket provider 0.10.0</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -143,7 +143,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">Qiskit-Braket provider 0.9.0</div></a>
+      <a href="../../../index.html"><div class="brand">Qiskit-Braket provider 0.10.0</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -170,7 +170,7 @@
     <img class="sidebar-logo" src="../../../_static/logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Qiskit-Braket provider 0.9.0</span>
+  <span class="sidebar-brand-text">Qiskit-Braket provider 0.10.0</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -252,6 +252,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">inf</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">prod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">qiskit.circuit.library</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qiskit_gates</span>
@@ -507,6 +508,8 @@
 <span class="p">}</span>
 
 <span class="n">_Translatable</span> <span class="o">=</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Program</span> <span class="o">|</span> <span class="nb">str</span>
+
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_SubstitutedTarget</span><span class="p">(</span><span class="n">Target</span><span class="p">):</span>
@@ -969,13 +972,14 @@
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.to_braket.html#qiskit_braket_provider.providers.to_braket">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_braket</span><span class="p">(</span>
     <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">],</span>
-    <span class="n">basis_gates</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">qubit_labels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">basis_gates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">coupling_map</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">connectivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">angle_restrictions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">qubit_labels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimization_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_processes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -994,21 +998,23 @@
 <span class="sd">    Args:</span>
 <span class="sd">        circuit (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket circuit(s)</span>
 <span class="sd">            or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
-<span class="sd">        basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided</span>
-<span class="sd">            if target is `None`. If `None` and target is `None`, the transpiler will use all gates</span>
-<span class="sd">            defined in the Braket SDK. Default: `None`.</span>
+<span class="sd">        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of</span>
+<span class="sd">            qubits in the underlying Amazon Braket device. If not supplied, then the indices are</span>
+<span class="sd">            assumed to be contiguous. Default: None.</span>
+<span class="sd">        target (Target | None): A backend transpiler target. Can only be provided</span>
+<span class="sd">            if basis_gates is `None`. Default: `None`.</span>
 <span class="sd">        verbatim (bool): Whether to translate the circuit without any modification, in other</span>
 <span class="sd">            words without transpiling it. Default: False.</span>
+<span class="sd">        basis_gates (Sequence[str] | None): The gateset to transpile to. Can only be provided</span>
+<span class="sd">            if target is `None`. If `None` and target is `None`, the transpiler will use all gates</span>
+<span class="sd">            defined in the Braket SDK. Default: `None`.</span>
+<span class="sd">        coupling_map (list[list[int]] | None): If provided, will transpile to a circuit</span>
+<span class="sd">            with this coupling map. Default: `None`.</span>
 <span class="sd">        connectivity (list[list[int]] | None): If provided, will transpile to a circuit</span>
-<span class="sd">            with this connectivity. Default: `None`.</span>
+<span class="sd">            with this connectivity. Default: `None`. DEPRECATED: use `coupling_map` instead.</span>
 <span class="sd">        angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):</span>
 <span class="sd">            Mapping of gate names to parameter angle constraints used to</span>
 <span class="sd">            validate numeric parameters. Default: `None`.</span>
-<span class="sd">        target (Target | None): A backend transpiler target. Can only be provided</span>
-<span class="sd">            if basis_gates is `None`. Default: `None`.</span>
-<span class="sd">        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of</span>
-<span class="sd">            qubits in the underlying Amazon Braket device. If not supplied, then the indices are</span>
-<span class="sd">            assumed to be contiguous.</span>
 <span class="sd">        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.</span>
 <span class="sd">            From Qiskit:</span>
 
@@ -1030,8 +1036,9 @@
 <span class="sd">            Default: True.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If more than one of target, basis_gates or connectivity, pass_manager, and</span>
-<span class="sd">            braket_device are passed together, or if qubit labels is passed with braket_device.</span>
+<span class="sd">        ValueError: If more than one of `target`, `basis_gates` or `coupling map`/`connectivity`,</span>
+<span class="sd">            `pass_manager`, and `braket_device` are passed together,</span>
+<span class="sd">            or if `qubit_labels` is passed with `braket_device`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Circuit | list[Circuit]: Braket circuit or circuits</span>
@@ -1045,23 +1052,17 @@
         <span class="k">else</span> <span class="n">c</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuit</span>
     <span class="p">]</span>
-    <span class="n">other_types</span> <span class="o">=</span> <span class="p">{</span><span class="nb">type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuits</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)}</span>
-    <span class="k">if</span> <span class="n">other_types</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected only QuantumCircuits, got </span><span class="si">{</span><span class="n">other_types</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="p">(</span>
-        <span class="nb">sum</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">target</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="p">(</span><span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">connectivity</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">pass_manager</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">braket_device</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-        <span class="o">&gt;</span> <span class="mi">1</span>
-    <span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Cannot only specify one of {target, (basis_gates or connectivity), pass_manager, braket_device}&quot;</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown arguments passed: </span><span class="si">{</span><span class="n">args</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">padded</span> <span class="o">=</span> <span class="n">args</span> <span class="o">+</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="n">basis_gates</span> <span class="o">=</span> <span class="n">_check_positional</span><span class="p">(</span><span class="n">padded</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">basis_gates</span><span class="p">,</span> <span class="s2">&quot;basis_gates&quot;</span><span class="p">)</span>
+    <span class="n">verbatim</span> <span class="o">=</span> <span class="n">_check_positional</span><span class="p">(</span><span class="n">padded</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">verbatim</span><span class="p">,</span> <span class="s2">&quot;verbatim&quot;</span><span class="p">)</span>
+    <span class="n">connectivity</span> <span class="o">=</span> <span class="n">_check_positional</span><span class="p">(</span><span class="n">padded</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">connectivity</span><span class="p">,</span> <span class="s2">&quot;connectivity&quot;</span><span class="p">)</span>
+    <span class="n">angle_restrictions</span> <span class="o">=</span> <span class="n">_check_positional</span><span class="p">(</span><span class="n">padded</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">angle_restrictions</span><span class="p">,</span> <span class="s2">&quot;angle_restrictions&quot;</span><span class="p">)</span>
+    <span class="n">_validate_arguments</span><span class="p">(</span>
+        <span class="n">circuits</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">basis_gates</span><span class="p">,</span> <span class="n">coupling_map</span><span class="p">,</span> <span class="n">connectivity</span><span class="p">,</span> <span class="n">pass_manager</span><span class="p">,</span> <span class="n">braket_device</span>
+    <span class="p">)</span>
+    <span class="n">coupling_map</span> <span class="o">=</span> <span class="n">coupling_map</span> <span class="ow">or</span> <span class="n">connectivity</span>
 
     <span class="k">if</span> <span class="n">braket_device</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">qubit_labels</span><span class="p">:</span>
@@ -1084,7 +1085,7 @@
         <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">target</span>
-            <span class="ow">or</span> <span class="n">connectivity</span>
+            <span class="ow">or</span> <span class="n">coupling_map</span>
             <span class="ow">or</span> <span class="p">(</span>
                 <span class="n">basis_gates</span>
                 <span class="ow">and</span> <span class="ow">not</span> <span class="p">{</span><span class="n">instr</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span> <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">circ</span><span class="o">.</span><span class="n">data</span><span class="p">}</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span>
@@ -1095,7 +1096,7 @@
             <span class="n">circuits</span> <span class="o">=</span> <span class="n">transpile</span><span class="p">(</span>
                 <span class="n">circuits</span><span class="p">,</span>
                 <span class="n">basis_gates</span><span class="o">=</span><span class="n">basis_gates</span><span class="p">,</span>
-                <span class="n">coupling_map</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
+                <span class="n">coupling_map</span><span class="o">=</span><span class="n">coupling_map</span><span class="p">,</span>
                 <span class="n">optimization_level</span><span class="o">=</span><span class="n">optimization_level</span><span class="p">,</span>
                 <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
                 <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
@@ -1111,6 +1112,55 @@
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">translated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">single_instance</span> <span class="k">else</span> <span class="n">translated</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_positional</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">kw</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kw</span>
+    <span class="k">if</span> <span class="n">kw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Multiple values for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="n">kw</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Passing </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> as a positional argument is deprecated.&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pos</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_arguments</span><span class="p">(</span>
+    <span class="n">circuits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">basis_gates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">coupling_map</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">connectivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pass_manager</span><span class="p">:</span> <span class="n">PassManager</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">braket_device</span><span class="p">:</span> <span class="n">Device</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">other_types</span> <span class="o">:=</span> <span class="p">{</span><span class="nb">type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuits</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">)}:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected only QuantumCircuits, got </span><span class="si">{</span><span class="n">other_types</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">connectivity</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">coupling_map</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot specify both coupling_map and connectivity&quot;</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;connectivity is deprecated; use coupling_map instead.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">target</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="p">(</span><span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">coupling_map</span> <span class="ow">or</span> <span class="n">connectivity</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">pass_manager</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">braket_device</span> <span class="k">else</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot only specify one of {target, (basis_gates or coupling map/connectivity), &quot;</span>
+            <span class="s2">&quot;pass_manager, braket_device}&quot;</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_translate_to_braket</span><span class="p">(</span>
@@ -1548,7 +1598,7 @@
   </div>
 </div><script src="../../../_static/jquery.js?v=5d32c60e"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-    <script src="../../../_static/documentation_options.js?v=39bb1c6d"></script>
+    <script src="../../../_static/documentation_options.js?v=82662543"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
