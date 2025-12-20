@@ -762,7 +762,7 @@ def to_braket(
         coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
             with this coupling map. Default: `None`.
         connectivity (list[list[int]] | None): If provided, will transpile to a circuit
-            with this connectivity. Default: `None`. DEPRECATED: use coupling_map instead.
+            with this connectivity. Default: `None`. DEPRECATED: use `coupling_map` instead.
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: `None`.
@@ -787,9 +787,9 @@ def to_braket(
             Default: True.
 
     Raises:
-        ValueError: If more than one of target, basis_gates or coupling map/connectivity,
-            pass_manager, and braket_device are passed together,
-            or if qubit_labels is passed with braket_device.
+        ValueError: If more than one of `target`, `basis_gates` or `coupling map`/`connectivity`,
+            `pass_manager`, and `braket_device` are passed together,
+            or if `qubit_labels` is passed with `braket_device`.
 
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
