@@ -971,8 +971,9 @@
 <div class="viewcode-block" id="to_braket">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.to_braket.html#qiskit_braket_provider.providers.to_braket">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_braket</span><span class="p">(</span>
-    <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">],</span>
+    <span class="n">circuits</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+    <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">qubit_labels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">target</span><span class="p">:</span> <span class="n">Target</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -987,17 +988,20 @@
     <span class="n">braket_device</span><span class="p">:</span> <span class="n">Device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">add_measurements</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Braket quantum circuit from a Qiskit quantum circuit.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.</span>
 
-<span class="sd">    The recommended way to use this method is to minimally pass in a target (instead of basis gates</span>
-<span class="sd">    and connectivity) and qubit labels. The former ensures that the translated circuit is actually</span>
+<span class="sd">    The recommended way to use this method is to minimally pass in qubit labels and a target</span>
+<span class="sd">    (instead of basis gates and coupling map). This ensures that the translated circuit is actually</span>
 <span class="sd">    supported by the device (and doesn&#39;t, for example, include unsupported parameters for gates).</span>
 <span class="sd">    The latter guarantees that the output Braket circuit uses the qubit labels of the Braket device,</span>
 <span class="sd">    which are not necessarily contiguous.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        circuit (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket circuit(s)</span>
-<span class="sd">            or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
+<span class="sd">        circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket</span>
+<span class="sd">            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
+<span class="sd">        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket</span>
+<span class="sd">            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
+<span class="sd">            Default: `None`. DEPRECATED: use `circuits` instead.</span>
 <span class="sd">        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of</span>
 <span class="sd">            qubits in the underlying Amazon Braket device. If not supplied, then the indices are</span>
 <span class="sd">            assumed to be contiguous. Default: None.</span>
@@ -1043,15 +1047,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        Circuit | list[Circuit]: Braket circuit or circuits</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">single_instance</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">_Translatable</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">single_instance</span><span class="p">:</span>
-        <span class="n">circuit</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuit</span><span class="p">]</span>
-    <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">to_qiskit</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">add_measurements</span><span class="o">=</span><span class="n">add_measurements</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Program</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
-        <span class="k">else</span> <span class="n">c</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuit</span>
-    <span class="p">]</span>
+    <span class="n">circuits</span><span class="p">,</span> <span class="n">single_instance</span> <span class="o">=</span> <span class="n">_get_circuits</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">circuit</span><span class="p">,</span> <span class="n">add_measurements</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown arguments passed: </span><span class="si">{</span><span class="n">args</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">padded</span> <span class="o">=</span> <span class="n">args</span> <span class="o">+</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
@@ -1112,6 +1108,31 @@
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">translated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">single_instance</span> <span class="k">else</span> <span class="n">translated</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_circuits</span><span class="p">(</span>
+    <span class="n">circuits</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">add_measurements</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">circuits</span> <span class="ow">or</span> <span class="n">circuit</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify circuits to transpile&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">circuit</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">circuits</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot specify both circuits and circuit&quot;</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;circuit is deprecated; use circuits instead.&quot;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="n">circuit</span>
+    <span class="n">single_instance</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">_Translatable</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">single_instance</span><span class="p">:</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuits</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">to_qiskit</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">add_measurements</span><span class="o">=</span><span class="n">add_measurements</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">(</span><span class="n">Circuit</span><span class="p">,</span> <span class="n">Program</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+        <span class="k">else</span> <span class="n">c</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">circuits</span>
+    <span class="p">],</span> <span class="n">single_instance</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_positional</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">kw</span><span class="p">:</span> <span class="n">_T</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
