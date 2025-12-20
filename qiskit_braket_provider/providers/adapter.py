@@ -722,8 +722,9 @@ def _add_instructions_no_parameter_restrictions(
 
 
 def to_braket(
-    circuit: _Translatable | Iterable[_Translatable],
+    circuits: _Translatable | Iterable[_Translatable] = None,
     *args,
+    circuit: _Translatable | Iterable[_Translatable] | None = None,
     qubit_labels: Sequence[int] | None = None,
     target: Target | None = None,
     verbatim: bool = None,
@@ -738,17 +739,20 @@ def to_braket(
     braket_device: Device | None = None,
     add_measurements: bool = True,
 ) -> Circuit | list[Circuit]:
-    """Return a Braket quantum circuit from a Qiskit quantum circuit.
+    """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
 
-    The recommended way to use this method is to minimally pass in a target (instead of basis gates
-    and connectivity) and qubit labels. The former ensures that the translated circuit is actually
+    The recommended way to use this method is to minimally pass in qubit labels and a target
+    (instead of basis gates and coupling map). This ensures that the translated circuit is actually
     supported by the device (and doesn't, for example, include unsupported parameters for gates).
     The latter guarantees that the output Braket circuit uses the qubit labels of the Braket device,
     which are not necessarily contiguous.
 
     Args:
-        circuit (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket circuit(s)
-            or OpenQASM 3 program(s) to transpile and translate to Braket.
+        circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket
+            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
+        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
+            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
+            Default: `None`. DEPRECATED: use `circuits` instead.
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous. Default: None.
@@ -794,15 +798,7 @@ def to_braket(
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
     """
-    single_instance = isinstance(circuit, _Translatable) or not isinstance(circuit, Iterable)
-    if single_instance:
-        circuit = [circuit]
-    circuits = [
-        to_qiskit(c, add_measurements=add_measurements)
-        if isinstance(c, (Circuit, Program, str))
-        else c
-        for c in circuit
-    ]
+    circuits, single_instance = _get_circuits(circuits, circuit, add_measurements)
     if len(args) > 4:
         raise ValueError(f"Unknown arguments passed: {args[4:]}")
     padded = args + (None,) * max(0, 4 - len(args))
@@ -862,6 +858,31 @@ def to_braket(
         for circ in circuits
     ]
     return translated[0] if single_instance else translated
+
+
+def _get_circuits(
+    circuits: _Translatable | Iterable[_Translatable] | None,
+    circuit: _Translatable | Iterable[_Translatable] | None,
+    add_measurements: bool,
+):
+    if not (circuits or circuit):
+        raise ValueError("Must specify circuits to transpile")
+    if circuit:
+        if circuits:
+            raise ValueError("Cannot specify both circuits and circuit")
+        warnings.warn(
+            "circuit is deprecated; use circuits instead.", DeprecationWarning, stacklevel=1
+        )
+        circuits = circuit
+    single_instance = isinstance(circuits, _Translatable) or not isinstance(circuits, Iterable)
+    if single_instance:
+        circuits = [circuits]
+    return [
+        to_qiskit(c, add_measurements=add_measurements)
+        if isinstance(c, (Circuit, Program, str))
+        else c
+        for c in circuits
+    ], single_instance
 
 
 def _check_positional(pos: _T, kw: _T, name: str) -> _T:
