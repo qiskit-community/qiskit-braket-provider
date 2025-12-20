@@ -397,6 +397,28 @@ class TestAdapter(TestCase):
             set(_BRAKET_GATE_NAME_TO_QISKIT_GATE.keys()),
         )
 
+    def test_no_circuits_specified(self):
+        """Tests that to_braket raises a ValueError if it receives neither circuits nor circuit."""
+        with pytest.raises(ValueError, match="Must specify circuits to transpile"):
+            to_braket()
+
+    def test_circuits_and_circuit(self):
+        """Tests that to_braket raises a ValueError if both circuits and circuit are specified."""
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        with pytest.raises(ValueError, match="Cannot specify both circuits and circuit"):
+            to_braket([circuit], circuit=[circuit])
+
+    def test_circuit_deprecated(self):
+        """Tests that to_braket raises a DeprecationWarning if circuit is specified."""
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        with pytest.warns(
+            DeprecationWarning,
+            match="circuit is deprecated; use circuits instead.",
+        ):
+            to_braket(circuit=circuit)
+
     def test_extra_posargs(self):
         """Tests that to_braket raises a ValueError if it receives more than 5 positional args."""
         circuit = QuantumCircuit(1, 1)
@@ -446,7 +468,7 @@ class TestAdapter(TestCase):
         """
         circuit = QuantumCircuit(1, 1)
         circuit.h(0)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot specify both coupling_map and connectivity"):
             to_braket(circuit, coupling_map=[[0, 1], [1, 2]], connectivity=[[0, 1], [1, 2]])
 
     def test_connectivity_deprecated(self):
