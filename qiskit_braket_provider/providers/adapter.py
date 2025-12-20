@@ -727,7 +727,8 @@ def to_braket(
     qubit_labels: Sequence[int] | None = None,
     target: Target | None = None,
     verbatim: bool = None,
-    basis_gates: Iterable[str] | None = None,
+    basis_gates: Sequence[str] | None = None,
+    coupling_map: list[list[int]] | None = None,
     connectivity: list[list[int]] | None = None,
     angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None = None,
     optimization_level: int = 0,
@@ -755,11 +756,13 @@ def to_braket(
             if basis_gates is `None`. Default: `None`.
         verbatim (bool): Whether to translate the circuit without any modification, in other
             words without transpiling it. Default: False.
-        basis_gates (Iterable[str] | None): The gateset to transpile to. Can only be provided
+        basis_gates (Sequence[str] | None): The gateset to transpile to. Can only be provided
             if target is `None`. If `None` and target is `None`, the transpiler will use all gates
             defined in the Braket SDK. Default: `None`.
+        coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
+            with this coupling map. Default: `None`.
         connectivity (list[list[int]] | None): If provided, will transpile to a circuit
-            with this connectivity. Default: `None`.
+            with this connectivity. Default: `None`. DEPRECATED: use coupling_map instead.
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: `None`.
@@ -784,8 +787,9 @@ def to_braket(
             Default: True.
 
     Raises:
-        ValueError: If more than one of target, basis_gates or connectivity, pass_manager, and
-            braket_device are passed together, or if qubit labels is passed with braket_device.
+        ValueError: If more than one of target, basis_gates or coupling map/connectivity,
+            pass_manager, and braket_device are passed together,
+            or if qubit_labels is passed with braket_device.
 
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
@@ -806,7 +810,10 @@ def to_braket(
     verbatim = _check_positional(padded[1], verbatim, "verbatim")
     connectivity = _check_positional(padded[2], connectivity, "connectivity")
     angle_restrictions = _check_positional(padded[3], angle_restrictions, "angle_restrictions")
-    _validate_arguments(circuits, target, basis_gates or connectivity, pass_manager, braket_device)
+    _validate_arguments(
+        circuits, target, basis_gates, coupling_map, connectivity, pass_manager, braket_device
+    )
+    coupling_map = coupling_map or connectivity
 
     if braket_device:
         if qubit_labels:
@@ -829,7 +836,7 @@ def to_braket(
         target = target if basis_gates or target else _default_target(circuits)
         if (
             target
-            or connectivity
+            or coupling_map
             or (
                 basis_gates
                 and not {instr.operation.name for circ in circuits for instr in circ.data}.issubset(
@@ -840,7 +847,7 @@ def to_braket(
             circuits = transpile(
                 circuits,
                 basis_gates=basis_gates,
-                coupling_map=connectivity,
+                coupling_map=coupling_map,
                 optimization_level=optimization_level,
                 target=target,
                 callback=callback,
@@ -873,17 +880,27 @@ def _check_positional(pos: _T, kw: _T, name: str) -> _T:
 def _validate_arguments(
     circuits: list[QuantumCircuit],
     target: Target | None,
-    loose_constraints: bool,
+    basis_gates: Sequence[str] | None,
+    coupling_map: list[list[int]] | None,
+    connectivity: list[list[int]] | None,
     pass_manager: PassManager | None,
     braket_device: Device | None,
 ):
     if other_types := {type(c).__name__ for c in circuits if not isinstance(c, QuantumCircuit)}:
         raise TypeError(f"Expected only QuantumCircuits, got {other_types} instead.")
+    if connectivity:
+        if coupling_map:
+            raise ValueError("Cannot specify both coupling_map and connectivity")
+        warnings.warn(
+            "connectivity is deprecated; use coupling_map instead.",
+            DeprecationWarning,
+            stacklevel=1,
+        )
     if (
         sum(
             [
                 (1 if target else 0),
-                (1 if loose_constraints else 0),
+                (1 if (basis_gates or coupling_map or connectivity) else 0),
                 (1 if pass_manager else 0),
                 (1 if braket_device else 0),
             ]
@@ -891,7 +908,8 @@ def _validate_arguments(
         > 1
     ):
         raise ValueError(
-            "Cannot only specify one of {target, (basis_gates or connectivity), pass_manager, braket_device}"
+            "Cannot only specify one of {target, (basis_gates or coupling map/connectivity), "
+            "pass_manager, braket_device}"
         )
 
 

@@ -439,6 +439,26 @@ class TestAdapter(TestCase):
         with pytest.raises(TypeError, match=message):
             to_braket(circuit)
 
+    def test_coupling_map_and_connectivity(self):
+        """
+        Tests that to_braket raises a ValueError
+        if both coupling_map and connectivity are specified.
+        """
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        with pytest.raises(ValueError):
+            to_braket(circuit, coupling_map=[[0, 1], [1, 2]], connectivity=[[0, 1], [1, 2]])
+
+    def test_connectivity_deprecated(self):
+        """Tests that to_braket raises a DeprecationWarning if connectivity is specified."""
+        circuit = QuantumCircuit(1, 1)
+        circuit.h(0)
+        with pytest.warns(
+            DeprecationWarning,
+            match="connectivity is deprecated; use coupling_map instead.",
+        ):
+            to_braket(circuit, connectivity=[[0, 1], [1, 2]])
+
     def test_target_with_loose_constraints(self):
         """
         Tests that to_braket raises a ValueError if both target and loose constraints are supplied.
@@ -452,7 +472,7 @@ class TestAdapter(TestCase):
         with pytest.raises(ValueError):
             to_braket(circuit, target=target, basis_gates={"h"})
         with pytest.raises(ValueError):
-            to_braket(circuit, target=target, connectivity=[[0, 1], [1, 2]])
+            to_braket(circuit, target=target, coupling_map=[[0, 1], [1, 2]])
 
     def test_pass_manager_with_other_arguments(self):
         """
@@ -471,7 +491,7 @@ class TestAdapter(TestCase):
         with pytest.raises(ValueError):
             to_braket(circuit, pass_manager=pass_manager, basis_gates={"h"})
         with pytest.raises(ValueError):
-            to_braket(circuit, pass_manager=pass_manager, connectivity=[[0, 1], [1, 2]])
+            to_braket(circuit, pass_manager=pass_manager, coupling_map=[[0, 1], [1, 2]])
 
     def test_braket_device(self):
         """Tests that to_braket transpiles to the target of the given device."""
@@ -799,11 +819,11 @@ class TestAdapter(TestCase):
         connectivity = [[0, 1], [1, 0], [1, 2], [2, 1]]
 
         braket_circuit = to_braket(
-            qiskit_circuit, basis_gates={"h", "cx", "rxx"}, connectivity=connectivity
+            qiskit_circuit, basis_gates={"h", "cx", "rxx"}, coupling_map=connectivity
         )
         braket_circuit_unconnected = to_braket(qiskit_circuit)
         braket_circuit_verbatim = to_braket(
-            qiskit_circuit, verbatim=True, connectivity=connectivity
+            qiskit_circuit, verbatim=True, coupling_map=connectivity
         )
 
         def gate_matches_connectivity(gate) -> bool:
