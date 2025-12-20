@@ -739,10 +739,10 @@ def to_braket(
     braket_device: Device | None = None,
     add_measurements: bool = True,
 ) -> Circuit | list[Circuit]:
-    """Return a Braket quantum circuit from a Qiskit quantum circuit.
+    """Converts a Qiskit `QuantumCircuit` or list of `QuantumCircuit`s to Braket `Circuit`s.
 
-    The recommended way to use this method is to minimally pass in a target (instead of basis gates
-    and connectivity) and qubit labels. The former ensures that the translated circuit is actually
+    The recommended way to use this method is to minimally pass in qubit labels and a target
+    (instead of basis gates and coupling map). This ensures that the translated circuit is actually
     supported by the device (and doesn't, for example, include unsupported parameters for gates).
     The latter guarantees that the output Braket circuit uses the qubit labels of the Braket device,
     which are not necessarily contiguous.
