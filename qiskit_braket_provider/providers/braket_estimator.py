@@ -145,9 +145,9 @@ class BraketEstimator(BaseEstimatorV2):
         backend = self._backend
         circuit = to_braket(
             pub.circuit,
+            qubit_labels=backend.qubit_labels,
             target=backend.target,
             verbatim=self._verbatim,
-            qubit_labels=backend.qubit_labels,
             optimization_level=self._optimization_level,
         )
 

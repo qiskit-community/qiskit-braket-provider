@@ -389,13 +389,13 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         # Always use target for simulator
         target, basis_gates = self._target_and_basis_gates(native, pass_manager)
         braket_circuits = (
-            to_braket(circuits, verbatim=True, qubit_labels=self._qubit_labels)
+            to_braket(circuits, qubit_labels=self._qubit_labels, verbatim=True)
             if verbatim
             else to_braket(
                 circuits,
+                qubit_labels=self._qubit_labels,
                 target=target,
                 basis_gates=basis_gates,
-                qubit_labels=self._qubit_labels,
                 angle_restrictions=(
                     native_angle_restrictions(self._device.properties) if native else None
                 ),
