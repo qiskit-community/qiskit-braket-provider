@@ -724,13 +724,11 @@ def _add_instructions_no_parameter_restrictions(
 def to_braket(
     circuits: _Translatable | Iterable[_Translatable] = None,
     *args,
-    circuit: _Translatable | Iterable[_Translatable] | None = None,
     qubit_labels: Sequence[int] | None = None,
     target: Target | None = None,
     verbatim: bool = None,
     basis_gates: Sequence[str] | None = None,
     coupling_map: list[list[int]] | None = None,
-    connectivity: list[list[int]] | None = None,
     angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None = None,
     optimization_level: int = 0,
     callback: Callable | None = None,
@@ -738,6 +736,8 @@ def to_braket(
     pass_manager: PassManager | None = None,
     braket_device: Device | None = None,
     add_measurements: bool = True,
+    circuit: _Translatable | Iterable[_Translatable] | None = None,
+    connectivity: list[list[int]] | None = None,
 ) -> Circuit | list[Circuit]:
     """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
 
@@ -750,9 +750,6 @@ def to_braket(
     Args:
         circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket
             circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
-        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
-            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
-            Default: `None`. DEPRECATED: use `circuits` instead.
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
             assumed to be contiguous. Default: None.
@@ -765,8 +762,6 @@ def to_braket(
             defined in the Braket SDK. Default: `None`.
         coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
             with this coupling map. Default: `None`.
-        connectivity (list[list[int]] | None): If provided, will transpile to a circuit
-            with this connectivity. Default: `None`. DEPRECATED: use `coupling_map` instead.
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: `None`.
@@ -789,6 +784,11 @@ def to_braket(
             and `basis_gates` are `None`. Default: `None`.
         add_measurements (bool): Whether to add measurements when translating Braket circuits.
             Default: True.
+        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
+            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
+            Default: `None`. DEPRECATED: use `circuits` instead.
+        connectivity (list[list[int]] | None): If provided, will transpile to a circuit
+            with this connectivity. Default: `None`. DEPRECATED: use `coupling_map` instead.
 
     Raises:
         ValueError: If more than one of `target`, `basis_gates` or `coupling map`/`connectivity`,
