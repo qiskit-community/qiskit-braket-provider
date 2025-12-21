@@ -739,7 +739,7 @@ def to_braket(
     circuit: _Translatable | Iterable[_Translatable] | None = None,
     connectivity: list[list[int]] | None = None,
 ) -> Circuit | list[Circuit]:
-    """Converts Qiskit ``QuantumCircuit``s to Braket ``Circuit``s.
+    """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
 
     The recommended way to use this method is to minimally pass in qubit labels and a target
     (instead of basis gates and coupling map). This ensures that the translated circuit is actually
