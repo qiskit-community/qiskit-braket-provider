@@ -348,8 +348,8 @@ def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] 
         properties (DeviceCapabilities): The device properties of the Braket device.
 
     Returns:
-        list[list[int]] | None: A list of connected qubit pairs or ``None`` if the device is fully
-            connected.
+        list[list[int]] | None: A list of connected qubit pairs or ``None``
+        if the device is fully connected.
     """
     device_connectivity = properties.paradigm.connectivity
     connectivity = (
@@ -371,7 +371,7 @@ def native_gate_set(properties: DeviceCapabilities) -> set[str]:
         properties (DeviceCapabilities): The device properties of the Braket device.
 
     Returns:
-        set[str]: The names of qiskit gates natively supported by the Braket device.
+        set[str]: The names of Qiskit gates natively supported by the Braket device.
     """
     native_list = properties.paradigm.nativeGateSet
     return {
@@ -739,7 +739,7 @@ def to_braket(
     circuit: _Translatable | Iterable[_Translatable] | None = None,
     connectivity: list[list[int]] | None = None,
 ) -> Circuit | list[Circuit]:
-    """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
+    """Converts Qiskit ``QuantumCircuit``s to Braket ``Circuit``s.
 
     The recommended way to use this method is to minimally pass in qubit labels and a target
     (instead of basis gates and coupling map). This ensures that the translated circuit is actually
@@ -765,7 +765,7 @@ def to_braket(
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: ``None``.
-        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
+        optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.
             From Qiskit:
 
             * 0: no optimization - basic translation, no optimization, trivial layout
