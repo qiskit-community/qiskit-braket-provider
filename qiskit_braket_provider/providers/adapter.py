@@ -665,7 +665,8 @@ def _add_instructions_parameter_restrictions(
                     )
                 case _:
                     warnings.warn(
-                        f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
+                        f"Instruction {gate_name} has {num_qubits} qubits "
+                        "and cannot be added to target"
                     )
 
 
@@ -717,7 +718,8 @@ def _add_instructions_no_parameter_restrictions(
                     )
                 case _:
                     warnings.warn(
-                        f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
+                        f"Instruction {gate_name} has {num_qubits} qubits "
+                        "and cannot be added to target"
                     )
 
 
@@ -769,7 +771,8 @@ def to_braket(
             From Qiskit:
 
             * 0: no optimization - basic translation, no optimization, trivial layout
-            * 1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+            * 1: light optimization - routing + potential SaberSwap, some gate cancellation
+              and 1Q gate folding
             * 2: medium optimization - better routing (noise aware) and commutative cancellation
             * 3: high optimization - gate resynthesis and unitary-breaking passes
 
@@ -955,7 +958,8 @@ def _translate_to_braket(
 
         if getattr(operation, "condition", None):
             raise NotImplementedError(
-                f"Conditional operations are not supported. Found conditional gate '{operation.name}'. "
+                "Conditional operations are not supported. "
+                f"Found conditional gate '{operation.name}'. "
                 f"Only MeasureFF and CCPRx gates are supported in Braket."
             )
 

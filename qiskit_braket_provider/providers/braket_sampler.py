@@ -64,7 +64,8 @@ class BraketSampler(BaseSamplerV2):
                 From Qiskit:
 
                 * 0: no optimization - basic translation, no optimization, trivial layout
-                * 1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+                * 1: light optimization - routing + potential SaberSwap, some gate cancellation
+                  and 1Q gate folding
                 * 2: medium optimization - better routing (noise aware) and commutative cancellation
                 * 3: high optimization - gate resynthesis and unitary-breaking passes
 
