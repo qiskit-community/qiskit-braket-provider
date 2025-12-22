@@ -258,12 +258,18 @@ and computes their expectation values.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>backend</strong> (<em>BraketBackend</em>) – The Braket backend to run circuits on.</p></li>
 <li><p><strong>verbatim</strong> (<em>bool</em>) – Whether to translate the circuit without any modification, in other
-words without transpiling it. Default: False.</p></li>
-<li><p><strong>optimization_level</strong> (<em>int</em>) – The optimization level to pass to <cite>qiskit.transpile</cite>. From Qiskit:
-0: no optimization (default) - basic translation, no optimization, trivial layout
-1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
-2: medium optimization - better routing (noise aware) and commutative cancellation
-3: high optimization - gate resynthesis and unitary-breaking passes</p></li>
+words without transpiling it. Default: <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>optimization_level</strong> (<em>int</em><em> | </em><em>None</em>) – <p>The optimization level to pass to <code class="docutils literal notranslate"><span class="pre">qiskit.transpile</span></code>.
+From Qiskit:</p>
+<ul>
+<li><p>0: no optimization - basic translation, no optimization, trivial layout</p></li>
+<li><p>1: light optimization - routing + potential SaberSwap, some gate cancellation
+and 1Q gate folding</p></li>
+<li><p>2: medium optimization - better routing (noise aware) and commutative cancellation</p></li>
+<li><p>3: high optimization - gate resynthesis and unitary-breaking passes</p></li>
+</ul>
+<p>Default: 0.</p>
+</p></li>
 </ul>
 </dd>
 </dl>
@@ -276,12 +282,18 @@ words without transpiling it. Default: False.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>backend</strong> (<em>BraketBackend</em>) – The Braket backend to run circuits on.</p></li>
 <li><p><strong>verbatim</strong> (<em>bool</em>) – Whether to translate the circuit without any modification, in other
-words without transpiling it. Default: False.</p></li>
-<li><p><strong>optimization_level</strong> (<em>int</em>) – The optimization level to pass to <cite>qiskit.transpile</cite>. From Qiskit:
-0: no optimization (default) - basic translation, no optimization, trivial layout
-1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
-2: medium optimization - better routing (noise aware) and commutative cancellation
-3: high optimization - gate resynthesis and unitary-breaking passes</p></li>
+words without transpiling it. Default: <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>optimization_level</strong> (<em>int</em><em> | </em><em>None</em>) – <p>The optimization level to pass to <code class="docutils literal notranslate"><span class="pre">qiskit.transpile</span></code>.
+From Qiskit:</p>
+<ul>
+<li><p>0: no optimization - basic translation, no optimization, trivial layout</p></li>
+<li><p>1: light optimization - routing + potential SaberSwap, some gate cancellation
+and 1Q gate folding</p></li>
+<li><p>2: medium optimization - better routing (noise aware) and commutative cancellation</p></li>
+<li><p>3: high optimization - gate resynthesis and unitary-breaking passes</p></li>
+</ul>
+<p>Default: 0.</p>
+</p></li>
 </ul>
 </dd>
 </dl>

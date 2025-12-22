@@ -328,10 +328,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;BraketQuantumTask for execution of circuits on Amazon Braket or locally.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            task_id: Semicolon-separated IDs of the underlying tasks</span>
-<span class="sd">            backend: BraketBackend that ran the circuit</span>
-<span class="sd">            tasks: Executed tasks</span>
-<span class="sd">            **metadata: Additional metadata</span>
+<span class="sd">            task_id (str): Semicolon-separated IDs of the underlying tasks</span>
+<span class="sd">            backend (BackendV2): ``BraketBackend`` that ran the circuit</span>
+<span class="sd">            tasks (list[LocalQuantumTask] | list[AwsQuantumTask] | AwsQuantumTask): Executed tasks.</span>
+<span class="sd">            **metadata: Additional metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_task_id</span> <span class="o">=</span> <span class="n">task_id</span>
@@ -343,11 +343,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">shots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of shots.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            shots: int with the number of shots.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;int: The number of shots for the task.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;shots&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;shots&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -453,7 +449,7 @@
             <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">:</span>
                 <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cached_value</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cached_value</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobStatus</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="p">,</span> <span class="n">QuantumTask</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_TASK_STATUS_MAP</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_tasks</span><span class="o">.</span><span class="n">state</span><span class="p">()]</span>
         <span class="n">braket_tasks_states</span> <span class="o">=</span> <span class="p">[</span>

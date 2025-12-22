@@ -318,11 +318,11 @@
                 <span class="sa">f</span><span class="s2">&quot;results, received meas_level=</span><span class="si">{</span><span class="n">meas_level</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_gateset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_gateset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">native</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the gate set of the device.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            native (bool): Whether to return the device&#39;s native gates. Default: False.</span>
+<span class="sd">            native (bool): Whether to return the device&#39;s native gates. Default: ``False``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            set[str] | None: The requested gate set.</span>
@@ -359,8 +359,8 @@
 <span class="sd">            &gt;&gt;&gt; device = LocalSimulator(name=&quot;braket_dm&quot;)    #Local Density Matrix Simulator</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            name: name of backend</span>
-<span class="sd">            **fields: extra fields</span>
+<span class="sd">            name (str): Name of backend. Default: ``default``.</span>
+<span class="sd">            **fields: Extra arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">simulator</span> <span class="o">=</span> <span class="n">LocalSimulator</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">simulator</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
@@ -458,10 +458,10 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">arn</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">backend_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">online_date</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">backend_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">AwsDevice</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">fields</span><span class="p">,</span>
@@ -476,14 +476,14 @@
 <span class="sd">            {&quot;100&quot;: 10, &quot;001&quot;: 10}</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            arn: ARN of the Braket device</span>
-<span class="sd">            provider: Qiskit provider for this backend</span>
-<span class="sd">            name: name of backend</span>
-<span class="sd">            description: description of backend</span>
-<span class="sd">            online_date: online date</span>
-<span class="sd">            backend_version: backend version</span>
-<span class="sd">            device: Braket device instance</span>
-<span class="sd">            **fields: other arguments</span>
+<span class="sd">            arn (str | None): ARN of the Braket device. Default: ``None``.</span>
+<span class="sd">            provider: Qiskit provider for this backend. Default: ``None``.</span>
+<span class="sd">            name (str | None): Name of backend. Default: ``None``.</span>
+<span class="sd">            description (str | None): Description of backend. Default: ``None``.</span>
+<span class="sd">            online_date (datetime | None): Online date. Default: ``None``.</span>
+<span class="sd">            backend_version (str | None): Backend version. Default: ``None``.</span>
+<span class="sd">            device (AwsDevice | None): Braket device instance. Default: ``None``.</span>
+<span class="sd">            **fields: Extra arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">arn</span> <span class="ow">or</span> <span class="n">device</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify either arn or device&quot;</span><span class="p">)</span>
@@ -515,7 +515,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a single job submitted to AWS backend.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            task_id: ID of the task to retrieve.</span>
+<span class="sd">            task_id (str): ID of the task to retrieve.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The job with the given ID.</span>
@@ -616,21 +616,24 @@
         <span class="n">pass_manager</span><span class="p">:</span> <span class="n">PassManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">options</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute QuantumCircuits on a BraketAwsBackend</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute ``QuantumCircuit``s on a ``BraketAwsBackend``</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            run_input : QuantumCircuit or list of QuantumCircuits</span>
-
-<span class="sd">        Kwargs:</span>
-<span class="sd">            shots : number of measurement repetitions for the BraketAwsBackend</span>
-<span class="sd">            verbatim : submit as a verbatim circuit (i.e. no transpilation)</span>
-<span class="sd">            native : use the Qiskit transpiler to compile to a verbatim native circuit</span>
-<span class="sd">                with noise aware transpilation when available and optimization_level &gt; 2</span>
-<span class="sd">            optimization_level : Qiskit transpiler optimization level (see adapter.py)</span>
-<span class="sd">            callback : function for the Qiskit transpiler</span>
-<span class="sd">            num_processes : allow for parallel transpilation</span>
-<span class="sd">            pass_manager : user-specified PassManager for the Qiskit transpiler</span>
-<span class="sd">                (creates verbatim)</span>
+<span class="sd">            run_input (QuantumCircuit | list[QuantumCircuit]): ``QuantumCircuit`` or list</span>
+<span class="sd">                of ``QuantumCircuit``s.</span>
+<span class="sd">            shots (int | None): Number of measurement repetitions for the BraketAwsBackend.</span>
+<span class="sd">                Default: ``None``.</span>
+<span class="sd">            verbatim (bool): Submit as a verbatim circuit (i.e. no transpilation).</span>
+<span class="sd">                Default: ``False``.</span>
+<span class="sd">            native (bool): use the Qiskit transpiler to compile to a verbatim native circuit</span>
+<span class="sd">                with noise aware transpilation when available and optimization_level &gt; 2.</span>
+<span class="sd">                Default: ``False``.</span>
+<span class="sd">            optimization_level (int): Qiskit transpiler optimization level (see adapter.py).</span>
+<span class="sd">                Default: 0.</span>
+<span class="sd">            callback (Callable | None): Function for the Qiskit transpiler. Default: ``None``.</span>
+<span class="sd">            num_processes (int | None): Allow for parallel transpilation. Default: ``None``.</span>
+<span class="sd">            pass_manager (PassManager | None): User-specified ``PassManager`` for the</span>
+<span class="sd">                Qiskit transpiler (creates verbatim circuits). Default: ``None``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_input</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">):</span>
@@ -688,7 +691,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create deepcopy of the BraketBackend.</span>
 
-<span class="sd">        Note: the underlying self._device, and thus self._device.aws_session is shared between copies.</span>
+<span class="sd">        Note: the underlying self._device, and thus self._device.aws_session</span>
+<span class="sd">        is shared between copies.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">memo</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span> <span class="o">=</span> <span class="n">result</span>

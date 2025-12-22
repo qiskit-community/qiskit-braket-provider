@@ -595,8 +595,8 @@
 <span class="sd">        properties (DeviceCapabilities): The device properties of the Braket device.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        list[list[int]] | None: A list of connected qubit pairs or `None` if the device is fully</span>
-<span class="sd">            connected.</span>
+<span class="sd">        list[list[int]] | None: A list of connected qubit pairs or ``None``</span>
+<span class="sd">        if the device is fully connected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">device_connectivity</span> <span class="o">=</span> <span class="n">properties</span><span class="o">.</span><span class="n">paradigm</span><span class="o">.</span><span class="n">connectivity</span>
     <span class="n">connectivity</span> <span class="o">=</span> <span class="p">(</span>
@@ -618,7 +618,7 @@
 <span class="sd">        properties (DeviceCapabilities): The device properties of the Braket device.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        set[str]: The names of qiskit gates natively supported by the Braket device.</span>
+<span class="sd">        set[str]: The names of Qiskit gates natively supported by the Braket device.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">native_list</span> <span class="o">=</span> <span class="n">properties</span><span class="o">.</span><span class="n">paradigm</span><span class="o">.</span><span class="n">nativeGateSet</span>
     <span class="k">return</span> <span class="p">{</span>
@@ -685,8 +685,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        base_gateset (set[str]): The base (without control modifiers) gates supported</span>
 <span class="sd">        max_qubits (int | None): The maximum number of control qubits that can be used to express</span>
-<span class="sd">            the Qiskit gate as a controlled Braket gate. If `None`, then there is no limit to the</span>
-<span class="sd">            number of control qubits. Default: `None`.</span>
+<span class="sd">            the Qiskit gate as a controlled Braket gate. If ``None``, then there is no limit to the</span>
+<span class="sd">            number of control qubits. Default: ``None``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        set[str]: The names of the controlled gates.</span>
@@ -705,7 +705,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts properties of a Braket LocalSimulator into a Qiskit Target object.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        simulator (LocalSimulator): Amazon Braket LocalSimulator</span>
+<span class="sd">        simulator (LocalSimulator): Amazon Braket ``LocalSimulator``</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Target: Target for Qiskit backend</span>
@@ -719,7 +719,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts properties of Braket AwsDevice into a Qiskit Target object.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        device (AwsDevice): Amazon Braket AwsDevice</span>
+<span class="sd">        device (AwsDevice): Amazon Braket ``AwsDevice``</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Target: Target for Qiskit backend</span>
@@ -912,7 +912,8 @@
                     <span class="p">)</span>
                 <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Instruction </span><span class="si">{</span><span class="n">gate_name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">num_qubits</span><span class="si">}</span><span class="s2"> qubits and cannot be added to target&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Instruction </span><span class="si">{</span><span class="n">gate_name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">num_qubits</span><span class="si">}</span><span class="s2"> qubits &quot;</span>
+                        <span class="s2">&quot;and cannot be added to target&quot;</span>
                     <span class="p">)</span>
 
 
@@ -964,7 +965,8 @@
                     <span class="p">)</span>
                 <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Instruction </span><span class="si">{</span><span class="n">gate_name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">num_qubits</span><span class="si">}</span><span class="s2"> qubits and cannot be added to target&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Instruction </span><span class="si">{</span><span class="n">gate_name</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">num_qubits</span><span class="si">}</span><span class="s2"> qubits &quot;</span>
+                        <span class="s2">&quot;and cannot be added to target&quot;</span>
                     <span class="p">)</span>
 
 
@@ -973,13 +975,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">to_braket</span><span class="p">(</span>
     <span class="n">circuits</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-    <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">qubit_labels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">target</span><span class="p">:</span> <span class="n">Target</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbatim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">basis_gates</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">coupling_map</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">connectivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">angle_restrictions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimization_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -987,6 +987,8 @@
     <span class="n">pass_manager</span><span class="p">:</span> <span class="n">PassManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">braket_device</span><span class="p">:</span> <span class="n">Device</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">add_measurements</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">connectivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.</span>
 
@@ -999,50 +1001,51 @@
 <span class="sd">    Args:</span>
 <span class="sd">        circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket</span>
 <span class="sd">            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
-<span class="sd">        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket</span>
-<span class="sd">            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
-<span class="sd">            Default: `None`. DEPRECATED: use `circuits` instead.</span>
 <span class="sd">        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of</span>
 <span class="sd">            qubits in the underlying Amazon Braket device. If not supplied, then the indices are</span>
-<span class="sd">            assumed to be contiguous. Default: None.</span>
+<span class="sd">            assumed to be contiguous. Default: ``None``.</span>
 <span class="sd">        target (Target | None): A backend transpiler target. Can only be provided</span>
-<span class="sd">            if basis_gates is `None`. Default: `None`.</span>
+<span class="sd">            if basis_gates is ``None``. Default: ``None``.</span>
 <span class="sd">        verbatim (bool): Whether to translate the circuit without any modification, in other</span>
-<span class="sd">            words without transpiling it. Default: False.</span>
+<span class="sd">            words without transpiling it. Default: ``False``.</span>
 <span class="sd">        basis_gates (Sequence[str] | None): The gateset to transpile to. Can only be provided</span>
-<span class="sd">            if target is `None`. If `None` and target is `None`, the transpiler will use all gates</span>
-<span class="sd">            defined in the Braket SDK. Default: `None`.</span>
+<span class="sd">            if target is ``None``. If ``None`` and target is ``None``, the transpiler will use</span>
+<span class="sd">            all gates defined in the Braket SDK. Default: ``None``.</span>
 <span class="sd">        coupling_map (list[list[int]] | None): If provided, will transpile to a circuit</span>
-<span class="sd">            with this coupling map. Default: `None`.</span>
-<span class="sd">        connectivity (list[list[int]] | None): If provided, will transpile to a circuit</span>
-<span class="sd">            with this connectivity. Default: `None`. DEPRECATED: use `coupling_map` instead.</span>
+<span class="sd">            with this coupling map. Default: ``None``.</span>
 <span class="sd">        angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):</span>
 <span class="sd">            Mapping of gate names to parameter angle constraints used to</span>
-<span class="sd">            validate numeric parameters. Default: `None`.</span>
-<span class="sd">        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.</span>
+<span class="sd">            validate numeric parameters. Default: ``None``.</span>
+<span class="sd">        optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.</span>
 <span class="sd">            From Qiskit:</span>
 
 <span class="sd">            * 0: no optimization - basic translation, no optimization, trivial layout</span>
-<span class="sd">            * 1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding</span>
+<span class="sd">            * 1: light optimization - routing + potential SaberSwap, some gate cancellation</span>
+<span class="sd">              and 1Q gate folding</span>
 <span class="sd">            * 2: medium optimization - better routing (noise aware) and commutative cancellation</span>
 <span class="sd">            * 3: high optimization - gate resynthesis and unitary-breaking passes</span>
 
 <span class="sd">            Default: 0.</span>
 <span class="sd">        callback (Callable | None): A callback function that will be called after each transpiler</span>
-<span class="sd">            pass execution. Default: `None`.</span>
+<span class="sd">            pass execution. Default: ``None``.</span>
 <span class="sd">        num_processes (int | None): The maximum number of parallel transpilation processes for</span>
-<span class="sd">            multiple circuits. Default: `None`.</span>
+<span class="sd">            multiple circuits. Default: ``None``.</span>
 <span class="sd">        pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if</span>
-<span class="sd">            used in conjunction with a target, basis gates, or connectivity. Default: `None`.</span>
+<span class="sd">            used in conjunction with a target, basis gates, or connectivity. Default: ``None``.</span>
 <span class="sd">        braket_device (Device): Braket device to transpile to. Can only be provided if `target`</span>
-<span class="sd">            and `basis_gates` are `None`. Default: `None`.</span>
+<span class="sd">            and ``basis_gates`` are ``None``. Default: ``None``.</span>
 <span class="sd">        add_measurements (bool): Whether to add measurements when translating Braket circuits.</span>
 <span class="sd">            Default: True.</span>
+<span class="sd">        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket</span>
+<span class="sd">            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.</span>
+<span class="sd">            Default: ``None``. DEPRECATED: use first positional argument or ``circuits`` instead.</span>
+<span class="sd">        connectivity (list[list[int]] | None): If provided, will transpile to a circuit</span>
+<span class="sd">            with this connectivity. Default: ``None``. DEPRECATED: use ``coupling_map`` instead.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If more than one of `target`, `basis_gates` or `coupling map`/`connectivity`,</span>
-<span class="sd">            `pass_manager`, and `braket_device` are passed together,</span>
-<span class="sd">            or if `qubit_labels` is passed with `braket_device`.</span>
+<span class="sd">        ValueError: If more than one of `target`, ``basis_gates``</span>
+<span class="sd">            or ``coupling_map``/``connectivity``, ``pass_manager``, and ``braket_device``</span>
+<span class="sd">            are passed together, or if `qubit_labels` is passed with ``braket_device``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Circuit | list[Circuit]: Braket circuit or circuits</span>
@@ -1205,7 +1208,8 @@
 
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;condition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Conditional operations are not supported. Found conditional gate &#39;</span><span class="si">{</span><span class="n">operation</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="s2">&quot;Conditional operations are not supported. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Found conditional gate &#39;</span><span class="si">{</span><span class="n">operation</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;Only MeasureFF and CCPRx gates are supported in Braket.&quot;</span>
             <span class="p">)</span>
 

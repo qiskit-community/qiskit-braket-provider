@@ -310,12 +310,17 @@
 <span class="sd">        Args:</span>
 <span class="sd">            backend (BraketBackend): The Braket backend to run circuits on.</span>
 <span class="sd">            verbatim (bool): Whether to translate the circuit without any modification, in other</span>
-<span class="sd">                words without transpiling it. Default: False.</span>
-<span class="sd">            optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:</span>
-<span class="sd">                0: no optimization (default) - basic translation, no optimization, trivial layout</span>
-<span class="sd">                1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding</span>
-<span class="sd">                2: medium optimization - better routing (noise aware) and commutative cancellation</span>
-<span class="sd">                3: high optimization - gate resynthesis and unitary-breaking passes</span>
+<span class="sd">                words without transpiling it. Default: ``False``.</span>
+<span class="sd">            optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.</span>
+<span class="sd">                From Qiskit:</span>
+
+<span class="sd">                * 0: no optimization - basic translation, no optimization, trivial layout</span>
+<span class="sd">                * 1: light optimization - routing + potential SaberSwap, some gate cancellation</span>
+<span class="sd">                  and 1Q gate folding</span>
+<span class="sd">                * 2: medium optimization - better routing (noise aware) and commutative cancellation</span>
+<span class="sd">                * 3: high optimization - gate resynthesis and unitary-breaking passes</span>
+
+<span class="sd">                Default: 0.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">backend</span><span class="o">.</span><span class="n">_supports_program_sets</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Braket device must support program sets&quot;</span><span class="p">)</span>
@@ -333,7 +338,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            pubs (Iterable[SamplerPubLike]): An iterable of SamplerPubLike objects to sample.</span>
-<span class="sd">            shots (int): Number of shots to run for each circuit. Default: 1024</span>
+<span class="sd">            shots (int): Number of shots to run for each circuit. Default: 1024.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            BraketPrimitiveTask: A job object containing the sample results.</span>
