@@ -57,12 +57,17 @@ class BraketEstimator(BaseEstimatorV2):
         Args:
             backend (BraketBackend): The Braket backend to run circuits on.
             verbatim (bool): Whether to translate the circuit without any modification, in other
-                words without transpiling it. Default: False.
-            optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:
-                0: no optimization (default) - basic translation, no optimization, trivial layout
-                1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
-                2: medium optimization - better routing (noise aware) and commutative cancellation
-                3: high optimization - gate resynthesis and unitary-breaking passes
+                words without transpiling it. Default: ``False``.
+            optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.
+                From Qiskit:
+
+                * 0: no optimization - basic translation, no optimization, trivial layout
+                * 1: light optimization - routing + potential SaberSwap, some gate cancellation
+                  and 1Q gate folding
+                * 2: medium optimization - better routing (noise aware) and commutative cancellation
+                * 3: high optimization - gate resynthesis and unitary-breaking passes
+
+                Default: 0.
         """
         if not backend._supports_program_sets:
             raise ValueError("Braket device must support program sets")
@@ -78,9 +83,10 @@ class BraketEstimator(BaseEstimatorV2):
         Run estimator on the given pubs.
 
         Args:
-            pubs (Iterable[EstimatorPubLike]): An iterable of EstimatorPubLike objects to estimate.
+            pubs (Iterable[EstimatorPubLike]): An iterable of ``EstimatorPubLike`` objects
+                to estimate.
             precision (float): Target precision for expectation value estimates.
-                Default: to 0.015625
+                Default: 0.015625.
 
         Returns:
             BraketPrimitiveTask: A job object containing the estimator results.

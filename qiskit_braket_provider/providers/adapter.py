@@ -348,8 +348,8 @@ def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] 
         properties (DeviceCapabilities): The device properties of the Braket device.
 
     Returns:
-        list[list[int]] | None: A list of connected qubit pairs or `None` if the device is fully
-            connected.
+        list[list[int]] | None: A list of connected qubit pairs or ``None``
+        if the device is fully connected.
     """
     device_connectivity = properties.paradigm.connectivity
     connectivity = (
@@ -371,7 +371,7 @@ def native_gate_set(properties: DeviceCapabilities) -> set[str]:
         properties (DeviceCapabilities): The device properties of the Braket device.
 
     Returns:
-        set[str]: The names of qiskit gates natively supported by the Braket device.
+        set[str]: The names of Qiskit gates natively supported by the Braket device.
     """
     native_list = properties.paradigm.nativeGateSet
     return {
@@ -438,8 +438,8 @@ def _get_controlled_gateset(base_gateset: set[str], max_qubits: int | None = Non
     Args:
         base_gateset (set[str]): The base (without control modifiers) gates supported
         max_qubits (int | None): The maximum number of control qubits that can be used to express
-            the Qiskit gate as a controlled Braket gate. If `None`, then there is no limit to the
-            number of control qubits. Default: `None`.
+            the Qiskit gate as a controlled Braket gate. If ``None``, then there is no limit to the
+            number of control qubits. Default: ``None``.
 
     Returns:
         set[str]: The names of the controlled gates.
@@ -458,7 +458,7 @@ def local_simulator_to_target(simulator: LocalSimulator) -> Target:
     """Converts properties of a Braket LocalSimulator into a Qiskit Target object.
 
     Args:
-        simulator (LocalSimulator): Amazon Braket LocalSimulator
+        simulator (LocalSimulator): Amazon Braket ``LocalSimulator``
 
     Returns:
         Target: Target for Qiskit backend
@@ -472,7 +472,7 @@ def aws_device_to_target(device: AwsDevice) -> Target:
     """Converts properties of Braket AwsDevice into a Qiskit Target object.
 
     Args:
-        device (AwsDevice): Amazon Braket AwsDevice
+        device (AwsDevice): Amazon Braket ``AwsDevice``
 
     Returns:
         Target: Target for Qiskit backend
@@ -665,7 +665,8 @@ def _add_instructions_parameter_restrictions(
                     )
                 case _:
                     warnings.warn(
-                        f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
+                        f"Instruction {gate_name} has {num_qubits} qubits "
+                        "and cannot be added to target"
                     )
 
 
@@ -717,20 +718,19 @@ def _add_instructions_no_parameter_restrictions(
                     )
                 case _:
                     warnings.warn(
-                        f"Instruction {gate_name} has {num_qubits} qubits and cannot be added to target"
+                        f"Instruction {gate_name} has {num_qubits} qubits "
+                        "and cannot be added to target"
                     )
 
 
 def to_braket(
     circuits: _Translatable | Iterable[_Translatable] = None,
     *args,
-    circuit: _Translatable | Iterable[_Translatable] | None = None,
     qubit_labels: Sequence[int] | None = None,
     target: Target | None = None,
     verbatim: bool = None,
     basis_gates: Sequence[str] | None = None,
     coupling_map: list[list[int]] | None = None,
-    connectivity: list[list[int]] | None = None,
     angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None = None,
     optimization_level: int = 0,
     callback: Callable | None = None,
@@ -738,6 +738,8 @@ def to_braket(
     pass_manager: PassManager | None = None,
     braket_device: Device | None = None,
     add_measurements: bool = True,
+    circuit: _Translatable | Iterable[_Translatable] | None = None,
+    connectivity: list[list[int]] | None = None,
 ) -> Circuit | list[Circuit]:
     """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
 
@@ -750,50 +752,51 @@ def to_braket(
     Args:
         circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket
             circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
-        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
-            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
-            Default: `None`. DEPRECATED: use `circuits` instead.
         qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
             qubits in the underlying Amazon Braket device. If not supplied, then the indices are
-            assumed to be contiguous. Default: None.
+            assumed to be contiguous. Default: ``None``.
         target (Target | None): A backend transpiler target. Can only be provided
-            if basis_gates is `None`. Default: `None`.
+            if basis_gates is ``None``. Default: ``None``.
         verbatim (bool): Whether to translate the circuit without any modification, in other
-            words without transpiling it. Default: False.
+            words without transpiling it. Default: ``False``.
         basis_gates (Sequence[str] | None): The gateset to transpile to. Can only be provided
-            if target is `None`. If `None` and target is `None`, the transpiler will use all gates
-            defined in the Braket SDK. Default: `None`.
+            if target is ``None``. If ``None`` and target is ``None``, the transpiler will use
+            all gates defined in the Braket SDK. Default: ``None``.
         coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
-            with this coupling map. Default: `None`.
-        connectivity (list[list[int]] | None): If provided, will transpile to a circuit
-            with this connectivity. Default: `None`. DEPRECATED: use `coupling_map` instead.
+            with this coupling map. Default: ``None``.
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
-            validate numeric parameters. Default: `None`.
-        optimization_level (int | None): The optimization level to pass to `qiskit.transpile`.
+            validate numeric parameters. Default: ``None``.
+        optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.
             From Qiskit:
 
             * 0: no optimization - basic translation, no optimization, trivial layout
-            * 1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
+            * 1: light optimization - routing + potential SaberSwap, some gate cancellation
+              and 1Q gate folding
             * 2: medium optimization - better routing (noise aware) and commutative cancellation
             * 3: high optimization - gate resynthesis and unitary-breaking passes
 
             Default: 0.
         callback (Callable | None): A callback function that will be called after each transpiler
-            pass execution. Default: `None`.
+            pass execution. Default: ``None``.
         num_processes (int | None): The maximum number of parallel transpilation processes for
-            multiple circuits. Default: `None`.
+            multiple circuits. Default: ``None``.
         pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
-            used in conjunction with a target, basis gates, or connectivity. Default: `None`.
+            used in conjunction with a target, basis gates, or connectivity. Default: ``None``.
         braket_device (Device): Braket device to transpile to. Can only be provided if `target`
-            and `basis_gates` are `None`. Default: `None`.
+            and ``basis_gates`` are ``None``. Default: ``None``.
         add_measurements (bool): Whether to add measurements when translating Braket circuits.
             Default: True.
+        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
+            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
+            Default: ``None``. DEPRECATED: use first positional argument or ``circuits`` instead.
+        connectivity (list[list[int]] | None): If provided, will transpile to a circuit
+            with this connectivity. Default: ``None``. DEPRECATED: use ``coupling_map`` instead.
 
     Raises:
-        ValueError: If more than one of `target`, `basis_gates` or `coupling map`/`connectivity`,
-            `pass_manager`, and `braket_device` are passed together,
-            or if `qubit_labels` is passed with `braket_device`.
+        ValueError: If more than one of `target`, ``basis_gates``
+            or ``coupling_map``/``connectivity``, ``pass_manager``, and ``braket_device``
+            are passed together, or if `qubit_labels` is passed with ``braket_device``.
 
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
@@ -955,7 +958,8 @@ def _translate_to_braket(
 
         if getattr(operation, "condition", None):
             raise NotImplementedError(
-                f"Conditional operations are not supported. Found conditional gate '{operation.name}'. "
+                "Conditional operations are not supported. "
+                f"Found conditional gate '{operation.name}'. "
                 f"Only MeasureFF and CCPRx gates are supported in Braket."
             )
 

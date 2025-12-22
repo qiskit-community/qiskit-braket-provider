@@ -59,12 +59,17 @@ class BraketSampler(BaseSamplerV2):
         Args:
             backend (BraketBackend): The Braket backend to run circuits on.
             verbatim (bool): Whether to translate the circuit without any modification, in other
-                words without transpiling it. Default: False.
-            optimization_level (int): The optimization level to pass to `qiskit.transpile`. From Qiskit:
-                0: no optimization (default) - basic translation, no optimization, trivial layout
-                1: light optimization - routing + potential SaberSwap, some gate cancellation and 1Q gate folding
-                2: medium optimization - better routing (noise aware) and commutative cancellation
-                3: high optimization - gate resynthesis and unitary-breaking passes
+                words without transpiling it. Default: ``False``.
+            optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.
+                From Qiskit:
+
+                * 0: no optimization - basic translation, no optimization, trivial layout
+                * 1: light optimization - routing + potential SaberSwap, some gate cancellation
+                  and 1Q gate folding
+                * 2: medium optimization - better routing (noise aware) and commutative cancellation
+                * 3: high optimization - gate resynthesis and unitary-breaking passes
+
+                Default: 0.
         """
         if not backend._supports_program_sets:
             raise ValueError("Braket device must support program sets")
@@ -81,7 +86,7 @@ class BraketSampler(BaseSamplerV2):
 
         Args:
             pubs (Iterable[SamplerPubLike]): An iterable of SamplerPubLike objects to sample.
-            shots (int): Number of shots to run for each circuit. Default: 1024
+            shots (int): Number of shots to run for each circuit. Default: 1024.
 
         Returns:
             BraketPrimitiveTask: A job object containing the sample results.

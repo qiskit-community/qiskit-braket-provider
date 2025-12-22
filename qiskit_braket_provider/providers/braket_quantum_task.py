@@ -77,10 +77,10 @@ class BraketQuantumTask(JobV1):
         """BraketQuantumTask for execution of circuits on Amazon Braket or locally.
 
         Args:
-            task_id: Semicolon-separated IDs of the underlying tasks
-            backend: BraketBackend that ran the circuit
-            tasks: Executed tasks
-            **metadata: Additional metadata
+            task_id (str): Semicolon-separated IDs of the underlying tasks
+            backend (BackendV2): ``BraketBackend`` that ran the circuit
+            tasks (list[LocalQuantumTask] | list[AwsQuantumTask] | AwsQuantumTask): Executed tasks.
+            **metadata: Additional metadata.
         """
         super().__init__(backend=backend, job_id=task_id, metadata=metadata)
         self._task_id = task_id
@@ -91,11 +91,7 @@ class BraketQuantumTask(JobV1):
 
     @property
     def shots(self) -> int:
-        """Return the number of shots.
-
-        Returns:
-            shots: int with the number of shots.
-        """
+        """int: The number of shots for the task."""
         return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
 
     def submit(self):
@@ -201,7 +197,7 @@ class BraketQuantumTask(JobV1):
             for task in self._tasks:
                 task.cancel()
 
-    def status(self, use_cached_value: bool = False):
+    def status(self, use_cached_value: bool = False) -> JobStatus:
         if isinstance(self._tasks, QuantumTask):
             return _TASK_STATUS_MAP[self._tasks.state()]
         braket_tasks_states = [

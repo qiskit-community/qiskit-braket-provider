@@ -71,11 +71,11 @@ class BraketBackend(BackendV2, ABC, Generic[T]):
                 f"results, received meas_level={meas_level}."
             )
 
-    def get_gateset(self, native=False) -> set[str] | None:
+    def get_gateset(self, native: bool = False) -> set[str] | None:
         """Get the gate set of the device.
 
         Args:
-            native (bool): Whether to return the device's native gates. Default: False.
+            native (bool): Whether to return the device's native gates. Default: ``False``.
 
         Returns:
             set[str] | None: The requested gate set.
@@ -108,8 +108,8 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
             >>> device = LocalSimulator(name="braket_dm")    #Local Density Matrix Simulator
 
         Args:
-            name: name of backend
-            **fields: extra fields
+            name (str): Name of backend. Default: ``default``.
+            **fields: Extra arguments.
         """
         simulator = LocalSimulator(backend=name)
         super().__init__(simulator, name or simulator.name, **fields)
@@ -201,10 +201,10 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         self,
         arn: str | None = None,
         provider=None,
-        name: str = None,
-        description: str = None,
-        online_date: datetime.datetime = None,
-        backend_version: str = None,
+        name: str | None = None,
+        description: str | None = None,
+        online_date: datetime.datetime | None = None,
+        backend_version: str | None = None,
         *,
         device: AwsDevice | None = None,
         **fields,
@@ -219,14 +219,14 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             {"100": 10, "001": 10}
 
         Args:
-            arn: ARN of the Braket device
-            provider: Qiskit provider for this backend
-            name: name of backend
-            description: description of backend
-            online_date: online date
-            backend_version: backend version
-            device: Braket device instance
-            **fields: other arguments
+            arn (str | None): ARN of the Braket device. Default: ``None``.
+            provider: Qiskit provider for this backend. Default: ``None``.
+            name (str | None): Name of backend. Default: ``None``.
+            description (str | None): Description of backend. Default: ``None``.
+            online_date (datetime | None): Online date. Default: ``None``.
+            backend_version (str | None): Backend version. Default: ``None``.
+            device (AwsDevice | None): Braket device instance. Default: ``None``.
+            **fields: Extra arguments.
         """
         if not (arn or device):
             raise ValueError("Must specify either arn or device")
@@ -257,7 +257,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         """Return a single job submitted to AWS backend.
 
         Args:
-            task_id: ID of the task to retrieve.
+            task_id (str): ID of the task to retrieve.
 
         Returns:
             The job with the given ID.
@@ -358,21 +358,24 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         pass_manager: PassManager | None = None,
         **options,
     ):
-        """Execute QuantumCircuits on a BraketAwsBackend
+        """Execute ``QuantumCircuit``s on a ``BraketAwsBackend``
 
         Args:
-            run_input : QuantumCircuit or list of QuantumCircuits
-
-        Kwargs:
-            shots : number of measurement repetitions for the BraketAwsBackend
-            verbatim : submit as a verbatim circuit (i.e. no transpilation)
-            native : use the Qiskit transpiler to compile to a verbatim native circuit
-                with noise aware transpilation when available and optimization_level > 2
-            optimization_level : Qiskit transpiler optimization level (see adapter.py)
-            callback : function for the Qiskit transpiler
-            num_processes : allow for parallel transpilation
-            pass_manager : user-specified PassManager for the Qiskit transpiler
-                (creates verbatim)
+            run_input (QuantumCircuit | list[QuantumCircuit]): ``QuantumCircuit`` or list
+                of ``QuantumCircuit``s.
+            shots (int | None): Number of measurement repetitions for the BraketAwsBackend.
+                Default: ``None``.
+            verbatim (bool): Submit as a verbatim circuit (i.e. no transpilation).
+                Default: ``False``.
+            native (bool): use the Qiskit transpiler to compile to a verbatim native circuit
+                with noise aware transpilation when available and optimization_level > 2.
+                Default: ``False``.
+            optimization_level (int): Qiskit transpiler optimization level (see adapter.py).
+                Default: 0.
+            callback (Callable | None): Function for the Qiskit transpiler. Default: ``None``.
+            num_processes (int | None): Allow for parallel transpilation. Default: ``None``.
+            pass_manager (PassManager | None): User-specified ``PassManager`` for the
+                Qiskit transpiler (creates verbatim circuits). Default: ``None``.
         """
 
         if isinstance(run_input, QuantumCircuit):
@@ -430,7 +433,8 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
     def __deepcopy__(self, memo):
         """Create deepcopy of the BraketBackend.
 
-        Note: the underlying self._device, and thus self._device.aws_session is shared between copies.
+        Note: the underlying self._device, and thus self._device.aws_session
+        is shared between copies.
         """
         result = copy.copy(self)
         memo[id(self)] = result
