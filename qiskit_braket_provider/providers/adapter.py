@@ -528,6 +528,13 @@ def _qpu_target(device: AwsDevice, description: str):
     if isinstance(standardized, (StandardizedPropertiesV1, StandardizedPropertiesV2)):
         props_1q = standardized.oneQubitProperties
         for q in sorted(int(q) for q in props_1q):
+            if q not in indices:
+                warnings.warn(
+                    f"Qubit {q} found in device properties but not in topology. "
+                    f"Skipping qubit {q} and its associated properties.",
+                    UserWarning
+                )
+                continue
             props = props_1q[str(q)]
             key = (indices[q],)
             for fidelity in props.oneQubitFidelity:
@@ -597,9 +604,20 @@ def _build_instruction_props_2q(
 ) -> dict[str, dict[tuple[int, int], InstructionProperties]]:
     instruction_props_2q = defaultdict(dict)
     for k, props in standardized.twoQubitProperties.items():
+        qubits = [int(q) for q in k.split("-")]
+        # Check if all qubits in the edge exist in topology
+        if not all(q in indices for q in qubits):
+            missing_qubits = [q for q in qubits if q not in indices]
+            warnings.warn(
+                f"Edge {k} contains qubits {missing_qubits} not found in topology. "
+                f"Skipping edge {k} and its associated properties.",
+                UserWarning
+            )
+            continue
+            
         for fidelity in props.twoQubitGateFidelity:
             if gate_name := _BRAKET_TO_QISKIT_NAMES.get(fidelity.gateName.lower()):
-                edge = tuple(indices[int(q)] for q in k.split("-"))
+                edge = tuple(indices[q] for q in qubits)
                 instruction_props_2q[gate_name][edge] = InstructionProperties(
                     error=max(
                         1 - fidelity.fidelity,
@@ -624,6 +642,15 @@ def _get_parameter_restrictions(
     parameter_restrictions = defaultdict(lambda: defaultdict(set))
     for gate, target in cal.pulse_sequences if cal else {}:
         gate_name = gate.name.lower()
+        # Check if all qubits in target exist in topology
+        if not all(q in qubit_indices for q in target):
+            missing_qubits = [q for q in target if q not in qubit_indices]
+            warnings.warn(
+                f"Gate calibration target {target} contains qubits {missing_qubits} "
+                f"not found in topology. Skipping gate {gate_name} calibration.",
+                UserWarning
+            )
+            continue
         qubits = tuple(qubit_indices[q] for q in target)
         if isinstance(gate, Parameterizable):
             param_key = tuple(
