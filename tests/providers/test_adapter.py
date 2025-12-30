@@ -1551,3 +1551,63 @@ class TestThereAndBackAgain(TestCase):
             to_braket(to_qiskit(circ, add_measurements=False)), add_measurements=False
         )  # fails
         assert np.allclose(Operator(stayed_home).data, Operator(lonely_mountain_and_back).data)
+
+    def test_missing_qubit_in_properties_handled_gracefully(self):
+        """Tests that missing qubits in topology are handled gracefully with warnings."""
+        import copy
+        from unittest.mock import Mock
+
+        # Create a mock device with properties containing qubits not in topology
+        mock_device = Mock()
+        mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
+        mock_device.gate_calibrations = None
+        mock_device.type = "QPU"
+
+        # Create standardized properties with a qubit (1001) not in topology
+        mock_standardized = copy.deepcopy(MOCK_RIGETTI_STANARDIZED_PROPERTIES)
+        mock_standardized.oneQubitProperties["1001"] = {
+            "T1": {"value": 25.0, "unit": "us"},
+            "T2": {"value": 40.0, "unit": "us"},
+            "oneQubitFidelity": [
+                {
+                    "fidelityType": {"name": "RANDOMIZED_BENCHMARKING"},
+                    "fidelity": 0.995,
+                }
+            ],
+        }
+        mock_standardized.twoQubitProperties["1001-1"] = {
+            "twoQubitGateFidelity": [
+                {
+                    "direction": {"control": 1001, "target": 1},
+                    "gateName": "CNOT",
+                    "fidelity": 0.85,
+                    "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                }
+            ]
+        }
+        mock_device.properties.standardized = mock_standardized
+
+        # Use original topology (which doesn't include qubit 1001)
+        mock_device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+
+        # Test that warnings are issued and target is created successfully
+        with self.assertWarns(UserWarning) as warning_context:
+            target = aws_device_to_target(mock_device)
+        self.assertIsNotNone(target)
+        self.assertIn("Target for Amazon Braket QPU", target.description)
+
+        # Should have warnings about missing qubit 1001
+        warning_messages = [str(w.message) for w in warning_context.warnings]
+        qubit_warnings = [
+            msg for msg in warning_messages if "Qubit 1001" in msg and "not in topology" in msg
+        ]
+        edge_warnings = [
+            msg for msg in warning_messages if "1001-1" in msg and "not found in topology" in msg
+        ]
+        self.assertTrue(len(qubit_warnings) > 0, "Should warn about missing qubit 1001")
+        self.assertTrue(
+            len(edge_warnings) > 0, "Should warn about missing edge involving qubit 1001"
+        )
+
+        # Verify the target still works with remaining qubits
+        self.assertEqual(target.num_qubits, len(MOCK_RIGETTI_TOPOLOGY_GRAPH.nodes))
