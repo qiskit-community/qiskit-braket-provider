@@ -532,7 +532,7 @@ def _qpu_target(device: AwsDevice, description: str):
                 warnings.warn(
                     f"Qubit {q} found in device properties but not in topology. "
                     f"Skipping qubit {q} and its associated properties.",
-                    UserWarning
+                    UserWarning,
                 )
                 continue
             props = props_1q[str(q)]
@@ -611,10 +611,10 @@ def _build_instruction_props_2q(
             warnings.warn(
                 f"Edge {k} contains qubits {missing_qubits} not found in topology. "
                 f"Skipping edge {k} and its associated properties.",
-                UserWarning
+                UserWarning,
             )
             continue
-            
+
         for fidelity in props.twoQubitGateFidelity:
             if gate_name := _BRAKET_TO_QISKIT_NAMES.get(fidelity.gateName.lower()):
                 edge = tuple(indices[q] for q in qubits)
@@ -648,7 +648,7 @@ def _get_parameter_restrictions(
             warnings.warn(
                 f"Gate calibration target {target} contains qubits {missing_qubits} "
                 f"not found in topology. Skipping gate {gate_name} calibration.",
-                UserWarning
+                UserWarning,
             )
             continue
         qubits = tuple(qubit_indices[q] for q in target)
