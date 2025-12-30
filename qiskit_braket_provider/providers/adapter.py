@@ -642,15 +642,6 @@ def _get_parameter_restrictions(
     parameter_restrictions = defaultdict(lambda: defaultdict(set))
     for gate, target in cal.pulse_sequences if cal else {}:
         gate_name = gate.name.lower()
-        # Check if all qubits in target exist in topology
-        if not all(q in qubit_indices for q in target):
-            missing_qubits = [q for q in target if q not in qubit_indices]
-            warnings.warn(
-                f"Gate calibration target {target} contains qubits {missing_qubits} "
-                f"not found in topology. Skipping gate {gate_name} calibration.",
-                UserWarning,
-            )
-            continue
         qubits = tuple(qubit_indices[q] for q in target)
         if isinstance(gate, Parameterizable):
             param_key = tuple(
