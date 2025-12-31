@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
-        <title>qiskit_braket_provider.providers.adapter - Qiskit-Braket provider 0.10.0</title>
+        <title>qiskit_braket_provider.providers.adapter - Qiskit-Braket provider 0.10.1</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=3ee1c6c6" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
@@ -143,7 +143,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">Qiskit-Braket provider 0.10.0</div></a>
+      <a href="../../../index.html"><div class="brand">Qiskit-Braket provider 0.10.1</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -170,7 +170,7 @@
     <img class="sidebar-logo" src="../../../_static/logo.png" alt="Logo"/>
   </div>
   
-  <span class="sidebar-brand-text">Qiskit-Braket provider 0.10.0</span>
+  <span class="sidebar-brand-text">Qiskit-Braket provider 0.10.1</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -775,6 +775,13 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">standardized</span><span class="p">,</span> <span class="p">(</span><span class="n">StandardizedPropertiesV1</span><span class="p">,</span> <span class="n">StandardizedPropertiesV2</span><span class="p">)):</span>
         <span class="n">props_1q</span> <span class="o">=</span> <span class="n">standardized</span><span class="o">.</span><span class="n">oneQubitProperties</span>
         <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">props_1q</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Qubit </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2"> found in device properties but not in topology. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Skipping qubit </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2"> and its associated properties.&quot;</span><span class="p">,</span>
+                    <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
             <span class="n">props</span> <span class="o">=</span> <span class="n">props_1q</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">q</span><span class="p">)]</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="n">q</span><span class="p">],)</span>
             <span class="k">for</span> <span class="n">fidelity</span> <span class="ow">in</span> <span class="n">props</span><span class="o">.</span><span class="n">oneQubitFidelity</span><span class="p">:</span>
@@ -844,9 +851,20 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">InstructionProperties</span><span class="p">]]:</span>
     <span class="n">instruction_props_2q</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">props</span> <span class="ow">in</span> <span class="n">standardized</span><span class="o">.</span><span class="n">twoQubitProperties</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">qubits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)]</span>
+        <span class="c1"># Check if all qubits in the edge exist in topology</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">q</span> <span class="ow">in</span> <span class="n">indices</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">):</span>
+            <span class="n">missing_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Edge </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> contains qubits </span><span class="si">{</span><span class="n">missing_qubits</span><span class="si">}</span><span class="s2"> not found in topology. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Skipping edge </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> and its associated properties.&quot;</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
         <span class="k">for</span> <span class="n">fidelity</span> <span class="ow">in</span> <span class="n">props</span><span class="o">.</span><span class="n">twoQubitGateFidelity</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">gate_name</span> <span class="o">:=</span> <span class="n">_BRAKET_TO_QISKIT_NAMES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fidelity</span><span class="o">.</span><span class="n">gateName</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
-                <span class="n">edge</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">)]</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">))</span>
+                <span class="n">edge</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="n">q</span><span class="p">]</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">)</span>
                 <span class="n">instruction_props_2q</span><span class="p">[</span><span class="n">gate_name</span><span class="p">][</span><span class="n">edge</span><span class="p">]</span> <span class="o">=</span> <span class="n">InstructionProperties</span><span class="p">(</span>
                     <span class="n">error</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span>
                         <span class="mi">1</span> <span class="o">-</span> <span class="n">fidelity</span><span class="o">.</span><span class="n">fidelity</span><span class="p">,</span>
@@ -1623,7 +1641,7 @@
   </div>
 </div><script src="../../../_static/jquery.js?v=5d32c60e"></script>
     <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-    <script src="../../../_static/documentation_options.js?v=82662543"></script>
+    <script src="../../../_static/documentation_options.js?v=261ea15a"></script>
     <script src="../../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
