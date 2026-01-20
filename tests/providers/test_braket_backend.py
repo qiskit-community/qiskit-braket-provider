@@ -396,7 +396,7 @@ class TestBraketAwsBackend(TestCase):
         circuit = QuantumCircuit(1)
         circuit.h(0)
 
-        backend.run(circuit, shots=0, pass_manager=generate_preset_pass_manager(2, backend))
+        backend.run(circuit, shots=0, pass_manager=generate_preset_pass_manager(1, backend))
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(1, np.pi / 2).rx(1, np.pi / 2).rz(1, np.pi / 2)
         )
