@@ -1654,3 +1654,10 @@ class TestThereAndBackAgain(TestCase):
 
         # Verify the target still works with remaining qubits
         self.assertEqual(target.num_qubits, len(MOCK_RIGETTI_TOPOLOGY_GRAPH.nodes))
+
+    def test_empty_circuit_with_barrier(self):
+        """Test edge case: empty Qiskit circuit with global barrier."""
+        circuit = QuantumCircuit(0)
+        circuit.barrier()
+        braket_circuit = to_braket(circuit)
+        self.assertEqual(len(braket_circuit.instructions), 0)
