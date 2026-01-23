@@ -580,9 +580,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.x(1)
 
         braket_circuit = to_braket(qiskit_circuit)
-
         expected_braket_circuit = Circuit().x(0).barrier([0, 1]).x(1)
-
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_barrier_with_qubits(self):
@@ -593,9 +591,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.x(2)
 
         braket_circuit = to_braket(qiskit_circuit)
-
         expected_braket_circuit = Circuit().x(0).barrier([0, 1]).x(2)
-
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_multiple_barriers(self):
@@ -606,16 +602,13 @@ class TestAdapter(TestCase):
         qiskit_circuit.x(1)
         qiskit_circuit.barrier([0])
         qiskit_circuit.y(0)
-
         braket_circuit = to_braket(qiskit_circuit)
 
-        # Verify that both barriers are present
         barriers = [
             instr for instr in braket_circuit.instructions if instr.operator.name == "Barrier"
         ]
         self.assertEqual(len(barriers), 2)
 
-        # Verify barrier targets
         barrier_targets = [set(instr.target) for instr in barriers]
         self.assertIn({0, 1}, barrier_targets)  # Global barrier
         self.assertIn({0}, barrier_targets)  # Single qubit barrier

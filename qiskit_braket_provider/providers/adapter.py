@@ -990,7 +990,6 @@ def _translate_to_braket(
                 clbit = circuit.find_bit(circuit_instruction.clbits[0]).index
                 measured_qubits[clbit] = qubit_index
             case "barrier":
-                # Translate Qiskit barrier to Braket barrier
                 qubit_indices = [qubit_labels[circuit.find_bit(qubit).index] for qubit in qubits]
                 braket_circuit.barrier(target=qubit_indices if qubit_indices else None)
             case "reset":
