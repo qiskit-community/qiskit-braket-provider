@@ -579,10 +579,50 @@ class TestAdapter(TestCase):
         qiskit_circuit.barrier()
         qiskit_circuit.x(1)
 
-        with pytest.warns(UserWarning, match="contains barrier instructions"):
-            braket_circuit = to_braket(qiskit_circuit)
+        braket_circuit = to_braket(qiskit_circuit)
+        expected_braket_circuit = Circuit().x(0).barrier([0, 1]).x(1)
+        self.assertEqual(braket_circuit, expected_braket_circuit)
 
-        expected_braket_circuit = Circuit().x(0).x(1)
+    def test_barrier_with_qubits(self):
+        """Tests conversion with barrier on specific qubits."""
+        qiskit_circuit = QuantumCircuit(3)
+        qiskit_circuit.x(0)
+        qiskit_circuit.barrier([0, 1])
+        qiskit_circuit.x(2)
+
+        braket_circuit = to_braket(qiskit_circuit)
+        expected_braket_circuit = Circuit().x(0).barrier([0, 1]).x(2)
+        self.assertEqual(braket_circuit, expected_braket_circuit)
+
+    def test_multiple_barriers(self):
+        """Tests conversion with multiple barriers."""
+        qiskit_circuit = QuantumCircuit(2)
+        qiskit_circuit.h(0)
+        qiskit_circuit.barrier()
+        qiskit_circuit.x(1)
+        qiskit_circuit.barrier([0])
+        qiskit_circuit.y(0)
+        braket_circuit = to_braket(qiskit_circuit)
+
+        barriers = [
+            instr for instr in braket_circuit.instructions if instr.operator.name == "Barrier"
+        ]
+        self.assertEqual(len(barriers), 2)
+
+        barrier_targets = [set(instr.target) for instr in barriers]
+        self.assertIn({0, 1}, barrier_targets)  # Global barrier
+        self.assertIn({0}, barrier_targets)  # Single qubit barrier
+
+    def test_barrier_single_qubit(self):
+        """Tests conversion with barrier on single qubit."""
+        qiskit_circuit = QuantumCircuit(3)
+        qiskit_circuit.h(0)
+        qiskit_circuit.barrier([1])
+        qiskit_circuit.x(2)
+
+        braket_circuit = to_braket(qiskit_circuit)
+
+        expected_braket_circuit = Circuit().h(0).barrier([1]).x(2)
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -717,6 +757,7 @@ class TestAdapter(TestCase):
             .cnot(0, 1)
             .cnot(1, 2)
             .cnot(2, 3)
+            .barrier([0, 1, 2, 3])
             .measure(0)
             .measure(1)
             .measure(2)
@@ -1067,7 +1108,9 @@ class TestAdapter(TestCase):
         res_orig = LocalSimulator("braket_dm").run(qc, shots=0).result().values[0]
         res_conv = LocalSimulator("braket_dm").run(bqc, shots=0).result().values[0]
 
-        assert len(bqc.instructions) == len(qc.instructions)
+        # The converted circuit will have one more instruction (barrier) due to measure_all()
+        # adding a barrier before measurements in Qiskit
+        assert len(bqc.instructions) == len(qc.instructions) + 1
         assert np.all(np.isclose(res_orig, res_conv))
 
     def test_kraus_braket_bit_ordering(self):
@@ -1611,3 +1654,10 @@ class TestThereAndBackAgain(TestCase):
 
         # Verify the target still works with remaining qubits
         self.assertEqual(target.num_qubits, len(MOCK_RIGETTI_TOPOLOGY_GRAPH.nodes))
+
+    def test_empty_circuit_with_barrier(self):
+        """Test edge case: empty Qiskit circuit with global barrier."""
+        circuit = QuantumCircuit(0)
+        circuit.barrier()
+        braket_circuit = to_braket(circuit)
+        self.assertEqual(len(braket_circuit.instructions), 0)
