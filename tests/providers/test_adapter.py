@@ -1522,6 +1522,60 @@ class TestFromBraket(TestCase):
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
+    def test_braket_barrier_to_qiskit(self):
+        """Tests conversion of Braket barrier to Qiskit barrier."""
+        braket_circuit = Circuit().x(0).barrier([0, 1]).x(1)
+        qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+        expected_qiskit_circuit = QuantumCircuit(2)
+        expected_qiskit_circuit.x(0)
+        expected_qiskit_circuit.barrier()
+        expected_qiskit_circuit.x(1)
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_braket_barrier_with_qubits_to_qiskit(self):
+        """Tests conversion of Braket barrier on specific qubits to Qiskit."""
+        braket_circuit = Circuit().x(0).barrier([0, 1]).x(2)
+        qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+        expected_qiskit_circuit = QuantumCircuit(3)
+        expected_qiskit_circuit.x(0)
+        expected_qiskit_circuit.barrier([0, 1])
+        expected_qiskit_circuit.x(2)
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
+    def test_braket_multiple_barriers_to_qiskit(self):
+        """Tests conversion of multiple Braket barriers to Qiskit."""
+        braket_circuit = Circuit().h(0).barrier([0, 1]).x(1).barrier([0]).y(0)
+        qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+        barriers = [
+            instr for instr in qiskit_circuit.data if instr.operation.name == "barrier"
+        ]
+        self.assertEqual(len(barriers), 2)
+
+        barrier_qubits = [set(instr.qubits) for instr in barriers]
+        # Convert to indices for comparison
+        barrier_indices = [
+            {qiskit_circuit.find_bit(q).index for q in qubits} for qubits in barrier_qubits
+        ]
+        self.assertIn({0, 1}, barrier_indices)
+        self.assertIn({0}, barrier_indices)
+
+    def test_braket_barrier_single_qubit_to_qiskit(self):
+        """Tests conversion of Braket barrier on single qubit to Qiskit."""
+        braket_circuit = Circuit().h(0).barrier([1]).x(2)
+        qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+        expected_qiskit_circuit = QuantumCircuit(3)
+        expected_qiskit_circuit.h(0)
+        expected_qiskit_circuit.barrier([1])
+        expected_qiskit_circuit.x(2)
+
+        self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
+
 
 class TestThereAndBackAgain(TestCase):
     """testing whether or not to_braket and to_qiskit work together"""
@@ -1661,3 +1715,4 @@ class TestThereAndBackAgain(TestCase):
         circuit.barrier()
         braket_circuit = to_braket(circuit)
         self.assertEqual(len(braket_circuit.instructions), 0)
+

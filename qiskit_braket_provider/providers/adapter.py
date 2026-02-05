@@ -991,7 +991,9 @@ def _translate_to_braket(
                 measured_qubits[clbit] = qubit_index
             case "barrier":
                 qubit_indices = [qubit_labels[circuit.find_bit(qubit).index] for qubit in qubits]
-                braket_circuit.barrier(target=qubit_indices if qubit_indices else None)
+                # Only add barrier if there are qubits in the circuit
+                if braket_circuit.qubits or qubit_indices:
+                    braket_circuit.barrier(target=qubit_indices if qubit_indices else None)
             case "reset":
                 raise NotImplementedError(
                     "reset operation not supported by qiskit to braket adapter"
@@ -1224,6 +1226,13 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
     for instruction in circuit.instructions:
         operator = instruction.operator
         gate_name = operator.name.lower()
+        
+        # Handle barrier separately
+        if gate_name == "barrier":
+            barrier_qubits = [qiskit_circuit.qubits[qubit_map[i]] for i in instruction.target]
+            qiskit_circuit.barrier(barrier_qubits)
+            continue
+        
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(operator.to_matrix())
         elif gate_name == "unitary":
