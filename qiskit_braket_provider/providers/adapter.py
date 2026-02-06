@@ -991,9 +991,7 @@ def _translate_to_braket(
                 measured_qubits[clbit] = qubit_index
             case "barrier":
                 qubit_indices = [qubit_labels[circuit.find_bit(qubit).index] for qubit in qubits]
-                # Only add barrier if there are qubits in the circuit
-                if braket_circuit.qubits or qubit_indices:
-                    braket_circuit.barrier(target=qubit_indices if qubit_indices else None)
+                braket_circuit.barrier(target=qubit_indices if qubit_indices else None)
             case "reset":
                 raise NotImplementedError(
                     "reset operation not supported by qiskit to braket adapter"
