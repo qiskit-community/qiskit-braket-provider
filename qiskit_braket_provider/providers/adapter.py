@@ -1226,13 +1226,13 @@ def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -
     for instruction in circuit.instructions:
         operator = instruction.operator
         gate_name = operator.name.lower()
-        
+
         # Handle barrier separately
         if gate_name == "barrier":
             barrier_qubits = [qiskit_circuit.qubits[qubit_map[i]] for i in instruction.target]
             qiskit_circuit.barrier(barrier_qubits)
             continue
-        
+
         if gate_name in _BRAKET_SUPPORTED_NOISES:
             gate = _create_qiskit_kraus(operator.to_matrix())
         elif gate_name == "unitary":

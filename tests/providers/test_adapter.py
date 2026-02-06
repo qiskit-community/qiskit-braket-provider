@@ -1551,9 +1551,7 @@ class TestFromBraket(TestCase):
         braket_circuit = Circuit().h(0).barrier([0, 1]).x(1).barrier([0]).y(0)
         qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
 
-        barriers = [
-            instr for instr in qiskit_circuit.data if instr.operation.name == "barrier"
-        ]
+        barriers = [instr for instr in qiskit_circuit.data if instr.operation.name == "barrier"]
         self.assertEqual(len(barriers), 2)
 
         barrier_qubits = [set(instr.qubits) for instr in barriers]
@@ -1715,4 +1713,3 @@ class TestThereAndBackAgain(TestCase):
         circuit.barrier()
         braket_circuit = to_braket(circuit)
         self.assertEqual(len(braket_circuit.instructions), 0)
-
