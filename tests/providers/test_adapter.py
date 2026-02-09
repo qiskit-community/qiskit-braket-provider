@@ -1522,6 +1522,21 @@ class TestFromBraket(TestCase):
 
         self.assertEqual(qiskit_circuit, expected_qiskit_circuit)
 
+    def test_braket_barrier_to_qiskit(self):
+        """Tests conversion of multiple Braket barriers to Qiskit."""
+        braket_circuit = Circuit().h(0).barrier([0, 1]).x(1).barrier([0]).y(0)
+        qiskit_circuit = to_qiskit(braket_circuit, add_measurements=False)
+
+        barriers = [instr for instr in qiskit_circuit.data if instr.operation.name == "barrier"]
+        self.assertEqual(len(barriers), 2)
+
+        barrier_qubits = [set(instr.qubits) for instr in barriers]
+        barrier_indices = [
+            {qiskit_circuit.find_bit(q).index for q in qubits} for qubits in barrier_qubits
+        ]
+        self.assertEqual({0, 1}, barrier_indices[0])
+        self.assertEqual({0}, barrier_indices[1])
+
 
 class TestThereAndBackAgain(TestCase):
     """testing whether or not to_braket and to_qiskit work together"""
@@ -1654,3 +1669,11 @@ class TestThereAndBackAgain(TestCase):
 
         # Verify the target still works with remaining qubits
         self.assertEqual(target.num_qubits, len(MOCK_RIGETTI_TOPOLOGY_GRAPH.nodes))
+
+    def test_empty_circuit_with_barrier(self):
+        """Test edge case: empty Qiskit circuit with global barrier raises ValueError."""
+        circuit = QuantumCircuit(0)
+        circuit.barrier()
+        with self.assertRaises(ValueError) as context:
+            to_braket(circuit)
+        self.assertIn("Cannot add global barrier to empty circuit", str(context.exception))
