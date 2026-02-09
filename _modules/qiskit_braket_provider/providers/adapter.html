@@ -1476,6 +1476,13 @@
     <span class="k">for</span> <span class="n">instruction</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">instructions</span><span class="p">:</span>
         <span class="n">operator</span> <span class="o">=</span> <span class="n">instruction</span><span class="o">.</span><span class="n">operator</span>
         <span class="n">gate_name</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="c1"># Handle barrier separately</span>
+        <span class="k">if</span> <span class="n">gate_name</span> <span class="o">==</span> <span class="s2">&quot;barrier&quot;</span><span class="p">:</span>
+            <span class="n">barrier_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">qiskit_circuit</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="n">qubit_map</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">instruction</span><span class="o">.</span><span class="n">target</span><span class="p">]</span>
+            <span class="n">qiskit_circuit</span><span class="o">.</span><span class="n">barrier</span><span class="p">(</span><span class="n">barrier_qubits</span><span class="p">)</span>
+            <span class="k">continue</span>
+
         <span class="k">if</span> <span class="n">gate_name</span> <span class="ow">in</span> <span class="n">_BRAKET_SUPPORTED_NOISES</span><span class="p">:</span>
             <span class="n">gate</span> <span class="o">=</span> <span class="n">_create_qiskit_kraus</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">())</span>
         <span class="k">elif</span> <span class="n">gate_name</span> <span class="o">==</span> <span class="s2">&quot;unitary&quot;</span><span class="p">:</span>
