@@ -41,7 +41,7 @@ from braket.circuits import Observable as BraketObservable
 from braket.circuits import gates as braket_gates
 from braket.circuits import noises as braket_noises
 from braket.circuits import observables as braket_observables
-from braket.default_simulator.openqasm.interpreter import Interpreter
+from braket.default_simulator.openqasm.interpreter import Interpreter, VerbatimBoxDelimiter
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
     DeviceActionType,
@@ -260,6 +260,8 @@ _PAULI_MAP = {
     "Z": braket_observables.Z,
 }
 
+_BRAKET_VERBATIM_BOX_NAME = "verbatim"
+
 _Translatable = QuantumCircuit | Circuit | Program | str
 
 _T = TypeVar("_T")
@@ -295,10 +297,14 @@ class _SubstituteGates(TransformationPass):
 
 
 class _QiskitProgramContext(AbstractProgramContext):
-    def __init__(self):
+    def __init__(self, verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME):
         super().__init__()
         self._circuit = QuantumCircuit()
         self._param_map = {}
+        # Verbatim pragma handling infrastructure
+        self._in_verbatim_box = False
+        self._verbatim_circuit: QuantumCircuit | None = None
+        self._verbatim_box_name = verbatim_box_name
 
     @property
     def circuit(self):
@@ -330,7 +336,12 @@ class _QiskitProgramContext(AbstractProgramContext):
             gate = gate.control(
                 len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
             )
-        self._circuit.append(CircuitInstruction(gate, target))
+
+        # Redirect to verbatim circuit if inside a verbatim box
+        if self._in_verbatim_box:
+            self._verbatim_circuit.append(CircuitInstruction(gate, target))
+        else:
+            self._circuit.append(CircuitInstruction(gate, target))
 
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
         return _sympy_to_qiskit(value, self._param_map) if isinstance(value, Expr) else value
@@ -339,6 +350,50 @@ class _QiskitProgramContext(AbstractProgramContext):
         for iter, qubit in enumerate(target):
             index = classical_targets[iter] if classical_targets else iter
             self._circuit.measure(qubit, index)
+
+    def add_verbatim_marker(self, marker: VerbatimBoxDelimiter) -> None:
+        """Handle verbatim box start/end markers.
+
+        When START_VERBATIM is received:
+        - Create a new QuantumCircuit to collect verbatim gates
+        - Set _in_verbatim_box flag to True
+
+        When END_VERBATIM is received:
+        - Wrap the collected gates in a BoxOp
+        - Append the BoxOp to the main circuit
+        - Reset verbatim state
+
+        Args:
+            marker: VerbatimBoxDelimiter indicating START_VERBATIM or END_VERBATIM
+
+        Raises:
+            ValueError: If nested verbatim boxes are encountered or if END_VERBATIM is called without START_VERBATIM
+        """
+        from qiskit.circuit import BoxOp
+
+        if marker == VerbatimBoxDelimiter.START_VERBATIM:
+            # Check for nested verbatim boxes
+            if self._in_verbatim_box:
+                raise ValueError("Nested verbatim boxes are not supported")
+
+            # Create a new circuit to collect verbatim gates
+            self._verbatim_circuit = QuantumCircuit(self.num_qubits)
+            self._in_verbatim_box = True
+
+        elif marker == VerbatimBoxDelimiter.END_VERBATIM:
+            # Check if we're actually in a verbatim box
+            if not self._in_verbatim_box:
+                raise ValueError("Verbatim box end marker without matching start")
+
+            # Create BoxOp with the verbatim circuit
+            box_op = BoxOp(self._verbatim_circuit, label=self._verbatim_box_name)
+
+            # Append BoxOp to main circuit with all qubits
+            self._circuit.append(box_op, list(range(self.num_qubits)))
+
+            # Reset verbatim state
+            self._in_verbatim_box = False
+            self._verbatim_circuit = None
 
 
 def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
@@ -1195,22 +1250,30 @@ def _translate_pauli(pauli: Pauli, coeff: float = 1.0) -> BraketObservable:
     return (braket_observables.TensorProduct(factors) if len(factors) > 1 else factors[0]) * coeff
 
 
-def to_qiskit(circuit: Circuit | Program | str, add_measurements: bool = True) -> QuantumCircuit:
+def to_qiskit(
+    circuit: Circuit | Program | str,
+    add_measurements: bool = True,
+    verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME,
+) -> QuantumCircuit:
     """Return a Qiskit quantum circuit from a Braket quantum circuit.
 
     Args:
         circuit (Circuit | Program | str): Braket quantum circuit or OpenQASM 3 program.
         add_measurements (bool): Whether to append measurements in the conversion
+        verbatim_box_name (str): Name to use for BoxOp labels when converting verbatim boxes.
+            Default: "verbatim"
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
     """
     if isinstance(circuit, Program):
         return (
-            Interpreter(_QiskitProgramContext()).run(circuit.source, inputs=circuit.inputs).circuit
+            Interpreter(_QiskitProgramContext(verbatim_box_name))
+            .run(circuit.source, inputs=circuit.inputs)
+            .circuit
         )
     if isinstance(circuit, str):
-        return Interpreter(_QiskitProgramContext()).run(circuit).circuit
+        return Interpreter(_QiskitProgramContext(verbatim_box_name)).run(circuit).circuit
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
