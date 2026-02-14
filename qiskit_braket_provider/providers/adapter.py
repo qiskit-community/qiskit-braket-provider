@@ -1,4 +1,10 @@
-"""Util function for provider."""
+"""Util function for provider.
+
+This module provides utilities for converting between Braket and Qiskit quantum circuits,
+including support for Braket verbatim pragmas. Verbatim boxes in OpenQASM 3 programs are
+converted to Qiskit BoxOp operations, which treat blocks of gates atomically to preserve
+sequences that should not be optimized.
+"""
 
 import warnings
 from collections import defaultdict
@@ -297,7 +303,27 @@ class _SubstituteGates(TransformationPass):
 
 
 class _QiskitProgramContext(AbstractProgramContext):
+    """Program context for converting OpenQASM 3 programs to Qiskit circuits.
+    
+    This context extends AbstractProgramContext to build Qiskit QuantumCircuits from
+    OpenQASM 3 programs. It supports Braket verbatim pragmas, which are converted to
+    Qiskit BoxOp operations to preserve gate sequences that should not be optimized.
+    
+    Verbatim boxes are represented using Qiskit's native BoxOp construct, which treats
+    a block of operations atomically. All verbatim boxes in a circuit use the same
+    configurable label name.
+    
+    Args:
+        verbatim_box_name: Name to use for BoxOp labels when converting verbatim boxes.
+            Default: "verbatim"
+    """
     def __init__(self, verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME):
+        """Initialize the Qiskit program context.
+        
+        Args:
+            verbatim_box_name: Name to use for BoxOp labels when converting verbatim boxes.
+                Default: "verbatim"
+        """
         super().__init__()
         self._circuit = QuantumCircuit()
         self._param_map = {}
@@ -308,6 +334,11 @@ class _QiskitProgramContext(AbstractProgramContext):
 
     @property
     def circuit(self):
+        if self._in_verbatim_box:
+            raise ValueError(
+                "Unclosed verbatim box at end of program. "
+                "Every verbatim box start marker must have a matching end marker."
+            )
         return self._circuit
 
     def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
@@ -1265,6 +1296,30 @@ def to_qiskit(
 
     Returns:
         QuantumCircuit: Qiskit quantum circuit
+    
+    Examples:
+        Convert an OpenQASM 3 program with a verbatim box:
+        
+        >>> openqasm_program = '''
+        ... OPENQASM 3.0;
+        ... qubit[2] q;
+        ... #pragma braket verbatim
+        ... box {
+        ...     h q[0];
+        ...     cnot q[0], q[1];
+        ... }
+        ... '''
+        >>> qiskit_circuit = to_qiskit(openqasm_program)
+        >>> # The verbatim box is represented as a BoxOp in the circuit
+        >>> # You can inspect it by iterating through the circuit operations
+        >>> for instruction in qiskit_circuit.data:
+        ...     if hasattr(instruction.operation, 'label') and instruction.operation.label == 'verbatim':
+        ...         print(f"Found verbatim box: {instruction.operation}")
+        
+        Use a custom name for verbatim boxes:
+        
+        >>> qiskit_circuit = to_qiskit(openqasm_program, verbatim_box_name="my_verbatim")
+        >>> # All verbatim boxes will have the label "my_verbatim"
     """
     if isinstance(circuit, Program):
         return (
