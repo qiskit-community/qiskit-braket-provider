@@ -19,11 +19,10 @@ class TestVerbatimPragmaSupport(TestCase):
         """Tests conversion of a single verbatim box containing gates."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
 """
         qiskit_circuit = to_qiskit(openqasm_str)
@@ -49,15 +48,14 @@ box {
         """Tests conversion of multiple verbatim boxes."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
+    h $0;
 }
-x q[1];
+x $1;
 #pragma braket verbatim
 box {
-    cnot q[0], q[1];
+    cnot $0, $1;
 }
 """
         qiskit_circuit = to_qiskit(openqasm_str)
@@ -88,10 +86,9 @@ box {
         """Tests conversion with custom verbatim box name."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
+    h $0;
 }
 """
         qiskit_circuit = to_qiskit(openqasm_str, verbatim_box_name="custom_verbatim")
@@ -107,13 +104,12 @@ box {
         """Tests that gates outside verbatim boxes go to main circuit."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
-h q[0];
+h $0;
 #pragma braket verbatim
 box {
-    cnot q[0], q[1];
+    cnot $0, $1;
 }
-x q[1];
+x $1;
 """
         qiskit_circuit = to_qiskit(openqasm_str)
         
@@ -134,7 +130,6 @@ x q[1];
         """Tests conversion of an empty verbatim box."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
 }
@@ -171,10 +166,9 @@ box {
         # The interpreter might catch this before our code does
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
+    h $0;
 """
         # The interpreter should catch syntax errors
         with pytest.raises(Exception):  # Could be various exception types
@@ -197,15 +191,14 @@ box {
         """Tests verbatim box with measurements inside."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
 bit[2] c;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
-c[0] = measure q[0];
-c[1] = measure q[1];
+c[0] = measure $0;
+c[1] = measure $1;
 """
         qiskit_circuit = to_qiskit(openqasm_str)
         
@@ -222,11 +215,10 @@ c[1] = measure q[1];
         """Tests that qubit indices are correctly mapped in verbatim boxes."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[3] q;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[1], q[2];
+    h $0;
+    cnot $1, $2;
 }
 """
         qiskit_circuit = to_qiskit(openqasm_str)
@@ -240,18 +232,21 @@ box {
         h_gate = verbatim_circuit.data[0]
         cnot_gate = verbatim_circuit.data[1]
         
-        # Use _index attribute for Qiskit qubits
-        self.assertEqual(h_gate.qubits[0]._index, 0)
-        self.assertEqual(cnot_gate.qubits[0]._index, 1)
-        self.assertEqual(cnot_gate.qubits[1]._index, 2)
+        # Check qubit indices by finding their position in the circuit's qubit list
+        h_qubit_idx = verbatim_circuit.find_bit(h_gate.qubits[0]).index
+        cnot_qubit0_idx = verbatim_circuit.find_bit(cnot_gate.qubits[0]).index
+        cnot_qubit1_idx = verbatim_circuit.find_bit(cnot_gate.qubits[1]).index
+        
+        self.assertEqual(h_qubit_idx, 0)
+        self.assertEqual(cnot_qubit0_idx, 1)
+        self.assertEqual(cnot_qubit1_idx, 2)
 
     def test_circuit_without_verbatim_pragma(self):
         """Tests that circuits without verbatim pragmas work as before."""
         openqasm_str = """
 OPENQASM 3.0;
-qubit[2] q;
-h q[0];
-cnot q[0], q[1];
+h $0;
+cnot $0, $1;
 """
         qiskit_circuit = to_qiskit(openqasm_str)
         
@@ -283,9 +278,8 @@ cnot q[0], q[1];
         program = Program(
             source="""
 OPENQASM 3.0;
-qubit[2] q;
-h q[0];
-cnot q[0], q[1];
+h $0;
+cnot $0, $1;
 """
         )
         qiskit_circuit = to_qiskit(program)
@@ -293,3 +287,39 @@ cnot q[0], q[1];
         # Should have no BoxOps
         box_ops = [instr for instr in qiskit_circuit.data if isinstance(instr.operation, BoxOp)]
         self.assertEqual(len(box_ops), 0)
+
+    def test_non_contiguous_physical_qubits(self):
+        """Tests that non-contiguous physical qubits are correctly mapped."""
+        openqasm_str = """
+OPENQASM 3.0;
+#pragma braket verbatim
+box {
+    h $2;
+    cnot $2, $5;
+}
+"""
+        qiskit_circuit = to_qiskit(openqasm_str)
+        
+        # Circuit should have 6 qubits (0-5) to accommodate qubit 5
+        self.assertEqual(qiskit_circuit.num_qubits, 6)
+        
+        # Find BoxOp
+        box_ops = [instr for instr in qiskit_circuit.data if isinstance(instr.operation, BoxOp)]
+        self.assertEqual(len(box_ops), 1)
+        
+        # Check gates in verbatim box use correct qubit indices
+        verbatim_circuit = box_ops[0].operation.body
+        self.assertEqual(len(verbatim_circuit.data), 2)
+        
+        h_gate = verbatim_circuit.data[0]
+        cnot_gate = verbatim_circuit.data[1]
+        
+        # Verify H gate is on qubit 2
+        h_qubit_idx = verbatim_circuit.find_bit(h_gate.qubits[0]).index
+        self.assertEqual(h_qubit_idx, 2)
+        
+        # Verify CNOT gate is on qubits 2 and 5
+        cnot_qubit0_idx = verbatim_circuit.find_bit(cnot_gate.qubits[0]).index
+        cnot_qubit1_idx = verbatim_circuit.find_bit(cnot_gate.qubits[1]).index
+        self.assertEqual(cnot_qubit0_idx, 2)
+        self.assertEqual(cnot_qubit1_idx, 5)
