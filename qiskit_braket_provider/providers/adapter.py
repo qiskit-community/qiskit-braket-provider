@@ -19,12 +19,14 @@ import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import (
     CircuitInstruction,
+    Clbit,
     ControlledGate,
     Gate,
     Measure,
     Parameter,
     ParameterExpression,
     ParameterVectorElement,
+    Qubit,
 )
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
@@ -48,6 +50,7 @@ from braket.circuits import gates as braket_gates
 from braket.circuits import noises as braket_noises
 from braket.circuits import observables as braket_observables
 from braket.default_simulator.openqasm.interpreter import Interpreter, VerbatimBoxDelimiter
+from braket.default_simulator.openqasm.parser.openqasm_ast import BitType, ClassicalType
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
     DeviceActionType,
@@ -345,6 +348,32 @@ class _QiskitProgramContext(AbstractProgramContext):
         super().add_qubits(name, num_qubits)
         self._circuit.add_register(num_qubits, num_qubits)
 
+    def declare_variable(
+        self,
+        name: str,
+        symbol_type: ClassicalType | type,
+        value=None,
+        const: bool = False,
+    ) -> None:
+        """Override to add classical bits to the Qiskit circuit when declared.
+        
+        When a classical bit array is declared (e.g., bit[2] c;), we need to add
+        the corresponding classical bits to the Qiskit circuit.
+        """
+        super().declare_variable(name, symbol_type, value, const)
+        
+        # If this is a bit type declaration, add classical bits to the circuit
+        if isinstance(symbol_type, BitType):
+            # Get the size of the bit array
+            if symbol_type.size is not None:
+                # Extract the integer value from IntegerLiteral
+                size = symbol_type.size.value if hasattr(symbol_type.size, 'value') else symbol_type.size
+            else:
+                size = 1
+            # Add classical bits to the circuit
+            for _ in range(size):
+                self._circuit.add_bits([Clbit()])
+
     def is_builtin_gate(self, name: str) -> bool:
         return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE
 
@@ -368,8 +397,17 @@ class _QiskitProgramContext(AbstractProgramContext):
                 len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
             )
 
+        # Ensure circuit has enough qubits for the target indices
+        # This is needed when using physical qubits ($0, $1, etc.) where no qubit register is declared
+        max_qubit_index = max(target) if target else -1
+        while self._circuit.num_qubits <= max_qubit_index:
+            self._circuit.add_bits([Qubit()])
+
         # Redirect to verbatim circuit if inside a verbatim box
         if self._in_verbatim_box:
+            # Ensure verbatim circuit also has enough qubits
+            while self._verbatim_circuit.num_qubits <= max_qubit_index:
+                self._verbatim_circuit.add_bits([Qubit()])
             self._verbatim_circuit.append(CircuitInstruction(gate, target))
         else:
             self._circuit.append(CircuitInstruction(gate, target))
@@ -419,8 +457,15 @@ class _QiskitProgramContext(AbstractProgramContext):
             # Create BoxOp with the verbatim circuit
             box_op = BoxOp(self._verbatim_circuit, label=self._verbatim_box_name)
 
-            # Append BoxOp to main circuit with all qubits
-            self._circuit.append(box_op, list(range(self.num_qubits)))
+            # Ensure main circuit has enough qubits to match the verbatim circuit
+            # This is needed when using physical qubits where no qubit register is declared
+            while self._circuit.num_qubits < self._verbatim_circuit.num_qubits:
+                self._circuit.add_bits([Qubit()])
+
+            # Append BoxOp to main circuit with all qubits (convert indices to Qubit objects)
+            # We need to pass the actual Qubit objects from the main circuit, not just indices
+            qubit_objects = [self._circuit.qubits[i] for i in range(self._verbatim_circuit.num_qubits)]
+            self._circuit.append(box_op, qubit_objects)
 
             # Reset verbatim state
             self._in_verbatim_box = False
@@ -827,6 +872,128 @@ def _add_instructions_no_parameter_restrictions(
                     )
 
 
+def _extract_verbatim_boxes(
+    circuit: QuantumCircuit, verbatim_box_name: str
+) -> tuple[QuantumCircuit, list[tuple[QuantumCircuit, list[int]]]]:
+    """Extract BoxOp operations with verbatim box name and replace with barriers.
+
+    Args:
+        circuit: The Qiskit circuit to process
+        verbatim_box_name: The label name used to identify verbatim BoxOp operations
+
+    Returns:
+        A tuple of (modified_circuit, verbatim_boxes) where:
+        - modified_circuit: Circuit with BoxOps replaced by named barriers
+        - verbatim_boxes: List of (box_circuit, qubit_indices) tuples
+    """
+    from qiskit.circuit import Barrier, BoxOp
+
+    # Create new circuit with same registers
+    modified_circuit = QuantumCircuit(*circuit.qregs, *circuit.cregs)
+    modified_circuit.global_phase = circuit.global_phase
+
+    verbatim_boxes = []
+
+    # Iterate through all instructions
+    for instruction in circuit.data:
+        operation = instruction.operation
+
+        # Check if this is a BoxOp with the verbatim box name label
+        if isinstance(operation, BoxOp) and getattr(operation, "label", None) == verbatim_box_name:
+            # Extract the circuit from the BoxOp (first block)
+            box_circuit = operation.blocks[0]
+
+            # Convert Qubit objects to integer indices
+            # instruction.qubits contains Qubit objects (circuit-specific)
+            # find_bit(q).index returns the global integer index (0, 1, 2, ...)
+            # We need integers to map qubits between different circuits later
+            qubit_indices = [circuit.find_bit(q).index for q in instruction.qubits]
+
+            # Store the verbatim box
+            verbatim_boxes.append((box_circuit, qubit_indices))
+
+            # Create a barrier with the same label and qubits
+            barrier = Barrier(len(instruction.qubits), label=verbatim_box_name)
+            modified_circuit.append(barrier, instruction.qubits, instruction.clbits)
+        else:
+            # Copy instruction as-is
+            modified_circuit.append(operation, instruction.qubits, instruction.clbits)
+
+    return modified_circuit, verbatim_boxes
+
+
+def _restore_verbatim_boxes(
+    transpiled_circuit: QuantumCircuit,
+    verbatim_boxes: list[tuple[QuantumCircuit, list[int]]],
+    verbatim_box_name: str,
+) -> QuantumCircuit:
+    """Restore verbatim boxes by replacing named barriers with box contents.
+
+    Args:
+        transpiled_circuit: The transpiled circuit with named barriers
+        verbatim_boxes: List of (box_circuit, original_qubit_indices) tuples
+        verbatim_box_name: The label name used to identify verbatim barriers
+
+    Returns:
+        Circuit with verbatim box contents restored
+
+    Raises:
+        ValueError: If barrier count doesn't match verbatim box count
+        ValueError: If qubit mapping fails
+    """
+    from qiskit.circuit import Barrier
+
+    # Create new circuit with same registers
+    reconstructed_circuit = QuantumCircuit(*transpiled_circuit.qregs, *transpiled_circuit.cregs)
+    reconstructed_circuit.global_phase = transpiled_circuit.global_phase
+
+    # Create iterator over verbatim boxes
+    verbatim_box_iter = iter(verbatim_boxes)
+    barrier_count = 0
+
+    # Iterate through all instructions in transpiled circuit
+    for instruction in transpiled_circuit.data:
+        operation = instruction.operation
+
+        # Check if this is a barrier with the verbatim box name label
+        if isinstance(operation, Barrier) and getattr(operation, "label", None) == verbatim_box_name:
+            barrier_count += 1
+
+            # Get the next verbatim box
+            try:
+                box_circuit, original_qubit_indices = next(verbatim_box_iter)
+            except StopIteration:
+                raise ValueError(
+                    f"Found more barriers with label '{verbatim_box_name}' than verbatim boxes. "
+                    f"Expected {len(verbatim_boxes)} barriers but found more during restoration."
+                )
+
+            # Since verbatim boxes can only exist in circuits using physical qubits,
+            # and we use trivial layout (identity mapping) with no routing during transpilation,
+            # the qubit indices remain unchanged. We can directly use the qubits from the barrier.
+            barrier_qubits = instruction.qubits
+
+            # Insert gates from the verbatim box directly (not as BoxOp)
+            for box_instruction in box_circuit.data:
+                # Append the gate instruction with the same qubits as in the original box
+                reconstructed_circuit.append(
+                    box_instruction.operation, barrier_qubits, box_instruction.clbits
+                )
+        else:
+            # Copy instruction as-is
+            reconstructed_circuit.append(operation, instruction.qubits, instruction.clbits)
+
+    # Check if any verbatim boxes remain
+    remaining_boxes = list(verbatim_box_iter)
+    if remaining_boxes:
+        raise ValueError(
+            f"Found fewer barriers with label '{verbatim_box_name}' than verbatim boxes. "
+            f"Expected {len(verbatim_boxes)} barriers but only found {barrier_count}."
+        )
+
+    return reconstructed_circuit
+
+
 def to_braket(
     circuits: _Translatable | Iterable[_Translatable] = None,
     *args,
@@ -844,6 +1011,9 @@ def to_braket(
     add_measurements: bool = True,
     circuit: _Translatable | Iterable[_Translatable] | None = None,
     connectivity: list[list[int]] | None = None,
+    verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME,
+    layout_method: str | None = None,
+    routing_method: str | None = None,
 ) -> Circuit | list[Circuit]:
     """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
 
@@ -896,6 +1066,16 @@ def to_braket(
             Default: ``None``. DEPRECATED: use first positional argument or ``circuits`` instead.
         connectivity (list[list[int]] | None): If provided, will transpile to a circuit
             with this connectivity. Default: ``None``. DEPRECATED: use ``coupling_map`` instead.
+        verbatim_box_name (str): The label name used to identify verbatim BoxOp operations
+            in Qiskit circuits. When circuits contain BoxOp operations with this label, they
+            will be preserved during transpilation by temporarily replacing them with barriers.
+            Default: ``"verbatim"``.
+        layout_method (str | None): The layout method to use during transpilation. If ``None``
+            and the circuit contains verbatim boxes, defaults to ``'trivial'`` to preserve
+            physical qubit mappings. Otherwise uses Qiskit's default. Default: ``None``.
+        routing_method (str | None): The routing method to use during transpilation. If ``None``
+            and the circuit contains verbatim boxes, defaults to ``'none'`` to disable routing
+            and preserve physical qubit structure. Otherwise uses Qiskit's default. Default: ``None``.
 
     Raises:
         ValueError: If more than one of `target`, ``basis_gates``
@@ -918,6 +1098,28 @@ def to_braket(
     )
     coupling_map = coupling_map or connectivity
 
+    # Check if any circuits have verbatim boxes and extract them before transpilation
+    from qiskit.circuit import BoxOp
+
+    has_verbatim_boxes = any(
+        any(
+            isinstance(instr.operation, BoxOp)
+            and getattr(instr.operation, "label", None) == verbatim_box_name
+            for instr in circ.data
+        )
+        for circ in circuits
+    )
+
+    all_verbatim_boxes = []
+    if has_verbatim_boxes:
+        # Extract verbatim boxes from all circuits
+        extracted_circuits = []
+        for circ in circuits:
+            modified_circ, verbatim_boxes = _extract_verbatim_boxes(circ, verbatim_box_name)
+            extracted_circuits.append(modified_circ)
+            all_verbatim_boxes.append(verbatim_boxes)
+        circuits = extracted_circuits
+
     if braket_device:
         if qubit_labels:
             raise ValueError("Cannot specify qubit labels with Braket device")
@@ -937,6 +1139,17 @@ def to_braket(
     elif not verbatim:
         # If basis_gates is not None, then target remains empty
         target = target if basis_gates or target else _default_target(circuits)
+        
+        # Determine transpilation parameters based on verbatim boxes
+        if has_verbatim_boxes:
+            # Use trivial layout and no routing unless user overrides
+            effective_layout_method = layout_method if layout_method is not None else 'trivial'
+            effective_routing_method = routing_method if routing_method is not None else 'none'
+        else:
+            # Use user-provided values or Qiskit defaults
+            effective_layout_method = layout_method
+            effective_routing_method = routing_method
+        
         if (
             target
             or coupling_map
@@ -955,9 +1168,19 @@ def to_braket(
                 target=target,
                 callback=callback,
                 num_processes=num_processes,
+                layout_method=effective_layout_method,
+                routing_method=effective_routing_method,
             )
     if isinstance(target, _SubstitutedTarget):
         circuits = target._substitute(circuits)
+
+    # Restore verbatim boxes after transpilation
+    if has_verbatim_boxes:
+        circuits = [
+            _restore_verbatim_boxes(circ, verbatim_boxes, verbatim_box_name)
+            for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes)
+        ]
+
     translated = [
         _translate_to_braket(
             circ, target, qubit_labels, verbatim, basis_gates, angle_restrictions, pass_manager
