@@ -207,39 +207,6 @@ class TestRestoreVerbatimBoxes:
         gate_names = [instr.operation.name for instr in restored_circuit.data]
         assert gate_names == ["h", "x", "cx"]
 
-    def test_qubit_mapping_with_non_contiguous_qubits(self):
-        """Test qubit mapping with non-contiguous qubits."""
-        # Create verbatim box circuit using qubits 0, 1, 2
-        box_circuit = QuantumCircuit(3)
-        box_circuit.h(0)
-        box_circuit.cx(1, 2)
-        
-        # Create transpiled circuit with barrier on qubits 0, 2, 3
-        transpiled_circuit = QuantumCircuit(4)
-        barrier = Barrier(3, label="verbatim")
-        transpiled_circuit.append(barrier, [0, 2, 3])
-        
-        # Restore verbatim boxes
-        verbatim_boxes = [(box_circuit, [0, 2, 3])]
-        restored_circuit = _restore_verbatim_boxes(
-            transpiled_circuit, verbatim_boxes, "verbatim"
-        )
-        
-        # Verify qubit mapping works correctly
-        # Box qubit 0 -> transpiled qubit 0
-        # Box qubit 1 -> transpiled qubit 2
-        # Box qubit 2 -> transpiled qubit 3
-        assert len(restored_circuit.data) == 2
-        h_gate = restored_circuit.data[0]
-        cx_gate = restored_circuit.data[1]
-        
-        assert h_gate.operation.name == "h"
-        assert restored_circuit.find_bit(h_gate.qubits[0]).index == 0
-        
-        assert cx_gate.operation.name == "cx"
-        assert restored_circuit.find_bit(cx_gate.qubits[0]).index == 2
-        assert restored_circuit.find_bit(cx_gate.qubits[1]).index == 3
-
     def test_error_too_many_barriers(self):
         """Test error when more barriers found than verbatim boxes."""
         # Create verbatim box circuit
@@ -278,26 +245,6 @@ class TestRestoreVerbatimBoxes:
         
         with pytest.raises(ValueError, match="Found fewer barriers.*than verbatim boxes"):
             _restore_verbatim_boxes(transpiled_circuit, verbatim_boxes, "verbatim")
-
-    def test_error_invalid_qubit_mapping(self):
-        """Test error when qubit mapping fails."""
-        # Create verbatim box circuit with 3 qubits
-        box_circuit = QuantumCircuit(3)
-        box_circuit.h(0)
-        box_circuit.cx(1, 2)
-        
-        # Create transpiled circuit with barrier on only 2 qubits
-        # This will cause mapping to fail since box uses 3 qubits
-        transpiled_circuit = QuantumCircuit(3)
-        barrier = Barrier(2, label="verbatim")
-        transpiled_circuit.append(barrier, [0, 1])
-        
-        # Try to restore - should fail because box needs 3 qubits but barrier only has 2
-        verbatim_boxes = [(box_circuit, [0, 1, 2])]
-        
-        with pytest.raises(ValueError, match="Failed to map qubits"):
-            _restore_verbatim_boxes(transpiled_circuit, verbatim_boxes, "verbatim")
-
 
 
 class TestToBraketIntegration:

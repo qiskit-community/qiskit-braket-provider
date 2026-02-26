@@ -359,6 +359,10 @@ class _QiskitProgramContext(AbstractProgramContext):
         
         When a classical bit array is declared (e.g., bit[2] c;), we need to add
         the corresponding classical bits to the Qiskit circuit.
+        
+        Note: This only adds classical bits when the size is known at declaration time.
+        For function parameters with variable sizes (e.g., bit[n] where n is a parameter),
+        the classical bits are not added since the size is not yet determined.
         """
         super().declare_variable(name, symbol_type, value, const)
         
@@ -367,9 +371,18 @@ class _QiskitProgramContext(AbstractProgramContext):
             # Get the size of the bit array
             if symbol_type.size is not None:
                 # Extract the integer value from IntegerLiteral
-                size = symbol_type.size.value if hasattr(symbol_type.size, 'value') else symbol_type.size
+                # If size is an Identifier (e.g., function parameter), skip adding bits
+                if hasattr(symbol_type.size, 'value'):
+                    size = symbol_type.size.value
+                elif isinstance(symbol_type.size, int):
+                    size = symbol_type.size
+                else:
+                    # Size is an Identifier or expression, can't determine size yet
+                    # This happens for function parameters like bit[n] where n is a variable
+                    return
             else:
                 size = 1
+            
             # Add classical bits to the circuit
             for _ in range(size):
                 self._circuit.add_bits([Clbit()])
@@ -970,14 +983,14 @@ def _restore_verbatim_boxes(
 
             # Since verbatim boxes can only exist in circuits using physical qubits,
             # and we use trivial layout (identity mapping) with no routing during transpilation,
-            # the qubit indices remain unchanged. We can directly use the qubits from the barrier.
-            barrier_qubits = instruction.qubits
+            # the qubit indices remain unchanged. The box instructions already use the correct
+            # physical qubits, so we can append them directly.
 
             # Insert gates from the verbatim box directly (not as BoxOp)
             for box_instruction in box_circuit.data:
-                # Append the gate instruction with the same qubits as in the original box
+                # Append the gate instruction with the same qubits as in the box
                 reconstructed_circuit.append(
-                    box_instruction.operation, barrier_qubits, box_instruction.clbits
+                    box_instruction.operation, box_instruction.qubits, box_instruction.clbits
                 )
         else:
             # Copy instruction as-is
