@@ -323,3 +323,74 @@ box {
         cnot_qubit1_idx = verbatim_circuit.find_bit(cnot_gate.qubits[1]).index
         self.assertEqual(cnot_qubit0_idx, 2)
         self.assertEqual(cnot_qubit1_idx, 5)
+
+    def test_unclosed_verbatim_box_circuit_property_error(self):
+        """Tests that accessing circuit property with unclosed verbatim box raises ValueError."""
+        from braket.default_simulator.openqasm.interpreter import VerbatimBoxDelimiter
+        from qiskit_braket_provider.providers.adapter import _QiskitProgramContext
+        
+        context = _QiskitProgramContext()
+        context.add_qubits("q", 2)
+        
+        # Start verbatim box
+        context.add_verbatim_marker(VerbatimBoxDelimiter.START_VERBATIM)
+        
+        # Try to access circuit property while in verbatim box - should raise error
+        with pytest.raises(ValueError, match="Unclosed verbatim box at end of program"):
+            _ = context.circuit
+
+    def test_bit_declaration_with_identifier_size(self):
+        """Tests that bit declarations with identifier sizes are handled correctly.
+        
+        This tests that a classical bit declaration isn't declared as a classical register
+        when the size is an Identifier or expression that can't be determined yet.
+        """
+        # Create OpenQASM 3.0 program with bit declaration using identifier size
+        # This happens in function parameters like bit[n] where n is a variable
+        openqasm_str = """
+OPENQASM 3.0;
+input bit[n] alpha;
+h $0;
+"""
+        
+        # This should not raise an error and should handle the identifier size gracefully
+        qiskit_circuit = to_qiskit(openqasm_str)
+        
+        # Verify circuit is created successfully
+        self.assertIsNotNone(qiskit_circuit)
+        self.assertEqual(qiskit_circuit.num_qubits, 1)
+
+    def test_verbatim_box_adds_qubits_to_main_circuit(self):
+        """Tests that verbatim boxes add qubits to main circuit when needed.
+        
+        This tests that qubits are added to the main circuit
+        when the verbatim circuit has more qubits than the main circuit.
+        """
+        # Create OpenQASM 3.0 program where verbatim box is the first thing
+        # This means the main circuit starts with 0 qubits, and the verbatim box
+        # will need to add qubits to accommodate its gates
+        openqasm_str = """
+OPENQASM 3.0;
+#pragma braket verbatim
+box {
+    h $0;
+    cnot $0, $1;
+    cnot $1, $2;
+}
+x $0;
+"""
+        
+        # Convert to Qiskit
+        qiskit_circuit = to_qiskit(openqasm_str)
+        
+        # Verify circuit has enough qubits for the verbatim box
+        self.assertIsNotNone(qiskit_circuit)
+        # The verbatim box uses 3 qubits ($0, $1, $2), so main circuit should have at least 3
+        self.assertGreaterEqual(qiskit_circuit.num_qubits, 3)
+        
+        # Verify BoxOp is created
+        box_ops = [instr for instr in qiskit_circuit.data if isinstance(instr.operation, BoxOp)]
+        self.assertEqual(len(box_ops), 1, "Expected one verbatim BoxOp")
+        
+        # Verify the BoxOp has 3 qubits
+        self.assertEqual(box_ops[0].operation.body.num_qubits, 3)
