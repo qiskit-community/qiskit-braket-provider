@@ -374,8 +374,6 @@ class _QiskitProgramContext(AbstractProgramContext):
                 # If size is an Identifier (e.g., function parameter), skip adding bits
                 if hasattr(symbol_type.size, 'value'):
                     size = symbol_type.size.value
-                elif isinstance(symbol_type.size, int):
-                    size = symbol_type.size
                 else:
                     # Size is an Identifier or expression, can't determine size yet
                     # This happens for function parameters like bit[n] where n is a variable
@@ -469,11 +467,6 @@ class _QiskitProgramContext(AbstractProgramContext):
 
             # Create BoxOp with the verbatim circuit
             box_op = BoxOp(self._verbatim_circuit, label=self._verbatim_box_name)
-
-            # Ensure main circuit has enough qubits to match the verbatim circuit
-            # This is needed when using physical qubits where no qubit register is declared
-            while self._circuit.num_qubits < self._verbatim_circuit.num_qubits:
-                self._circuit.add_bits([Qubit()])
 
             # Append BoxOp to main circuit with all qubits (convert indices to Qubit objects)
             # We need to pass the actual Qubit objects from the main circuit, not just indices

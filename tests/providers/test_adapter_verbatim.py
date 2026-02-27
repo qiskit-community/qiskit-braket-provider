@@ -369,13 +369,13 @@ h $0;
         # will need to add qubits to accommodate its gates
         openqasm_str = """
 OPENQASM 3.0;
+x $0;
 #pragma braket verbatim
 box {
-    h $0;
-    cnot $0, $1;
+    h $1;
     cnot $1, $2;
+    cnot $2, $3;
 }
-x $0;
 """
         
         # Convert to Qiskit
@@ -383,12 +383,12 @@ x $0;
         
         # Verify circuit has enough qubits for the verbatim box
         self.assertIsNotNone(qiskit_circuit)
-        # The verbatim box uses 3 qubits ($0, $1, $2), so main circuit should have at least 3
-        self.assertGreaterEqual(qiskit_circuit.num_qubits, 3)
+        # The verbatim box uses 3 qubits ($1, $2, $3), and main circuit uses $0, so main circuit should have 4
+        self.assertGreaterEqual(qiskit_circuit.num_qubits, 4)
         
         # Verify BoxOp is created
         box_ops = [instr for instr in qiskit_circuit.data if isinstance(instr.operation, BoxOp)]
         self.assertEqual(len(box_ops), 1, "Expected one verbatim BoxOp")
         
-        # Verify the BoxOp has 3 qubits
-        self.assertEqual(box_ops[0].operation.body.num_qubits, 3)
+        # Verify the BoxOp has 4 qubits
+        self.assertEqual(box_ops[0].operation.body.num_qubits, 4)
