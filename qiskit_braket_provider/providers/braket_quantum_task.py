@@ -92,7 +92,7 @@ class BraketQuantumTask(JobV1):
     @property
     def shots(self) -> int:
         """int: The number of shots for the task."""
-        return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
+        return self.metadata["metadata"].get("shots", 0)
 
     def submit(self):
         return

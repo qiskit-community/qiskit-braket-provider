@@ -2,9 +2,7 @@
 
 from unittest import TestCase
 
-import numpy as np
 import pytest
-from qiskit import QuantumCircuit
 from qiskit.circuit import BoxOp
 
 from braket.circuits import Circuit

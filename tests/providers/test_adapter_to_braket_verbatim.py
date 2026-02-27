@@ -5,7 +5,6 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import Barrier, BoxOp
 
 from qiskit_braket_provider.providers.adapter import (
-    _BRAKET_VERBATIM_BOX_NAME,
     _extract_verbatim_boxes,
     _restore_verbatim_boxes,
     to_braket,
@@ -93,7 +92,7 @@ class TestExtractVerbatimBoxes:
         main_circuit.append(box_op, [0, 1])
         
         # Extract verbatim boxes
-        modified_circuit, verbatim_boxes = _extract_verbatim_boxes(main_circuit, "verbatim")
+        _modified_circuit, verbatim_boxes = _extract_verbatim_boxes(main_circuit, "verbatim")
         
         # Verify extraction handles empty box correctly
         assert len(verbatim_boxes) == 1
@@ -502,7 +501,6 @@ class TestRoundTripConversion:
 
     def test_round_trip_single_verbatim_box_braket_program(self):
         """Test round-trip with single verbatim box starting from Braket Program."""
-        from braket.circuits import Circuit as BraketCircuit
         from braket.ir.openqasm import Program
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
