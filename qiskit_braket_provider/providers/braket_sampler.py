@@ -119,7 +119,7 @@ class BraketSampler(BaseSamplerV2):
         shots_values = {pub.shots for pub in pubs}
         if len(shots_values) > 1:
             raise ValueError(f"All pubs must have the same shots, got: {shots_values}")
-        return next(iter(shots_values))
+        return list(shots_values)[0]
 
     def _translate_pub(self, pub: SamplerPub) -> tuple[CircuitBinding | Circuit, np.ndarray | None]:
         backend = self._backend

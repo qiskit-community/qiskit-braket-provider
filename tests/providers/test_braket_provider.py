@@ -87,6 +87,7 @@ class TestBraketProvider(TestCase):
             class SubclassAWSBraketProvider(AWSBraketProvider):  # pylint: disable=unused-variable
                 """This is a subclass of AWSBraketProvider for testing purposes."""
 
+                pass
 
     def test_provider_backends_kwargs_local(self):
         """Tests getting local backends using kwargs"""

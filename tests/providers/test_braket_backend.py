@@ -52,12 +52,12 @@ def combine_dicts(dict1: dict[str, float], dict2: dict[str, float]) -> dict[str,
         merged dicts with list of keys
     """
     combined_dict: dict[str, list[float]] = {}
-    for key in dict1:
+    for key in dict1.keys():
         if key in combined_dict:
             combined_dict[key].append(dict1[key])
         else:
             combined_dict[key] = [dict1[key]]
-    for key in dict2:
+    for key in dict2.keys():
         if key in combined_dict:
             combined_dict[key].append(dict2[key])
         else:
@@ -311,6 +311,7 @@ class TestBraketAwsBackend(TestCase):
             class SubclassAWSBraketBackend(AWSBraketBackend):  # pylint: disable=unused-variable
                 """A subclass of AWSBraketBackend for testing purposes"""
 
+                pass
 
     def test_run_multiple_circuits(self):
         """Tests run with multiple circuits"""

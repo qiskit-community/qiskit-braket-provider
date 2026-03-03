@@ -165,7 +165,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
         ]
 
         if shots == 0:
-            circuits = [x.state_vector() for x in circuits]
+            circuits = list(map(lambda x: x.state_vector(), circuits))
         if "meas_level" in options:
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
@@ -182,7 +182,7 @@ class BraketLocalBackend(BraketBackend[LocalSimulator]):
                 logger.error("Attempt to cancel %s...", task.id)
                 task.cancel()
                 logger.error("State of %s: %s.", task.id, task.state())
-            raise
+            raise ex
 
         task_id = _TASK_ID_DIVIDER.join(task.id for task in tasks)
 
@@ -456,10 +456,10 @@ class AWSBraketBackend(BraketAwsBackend):
         self,
         device: AwsDevice,
         provider=None,
-        name: str | None = None,
-        description: str | None = None,
-        online_date: datetime.datetime | None = None,
-        backend_version: str | None = None,
+        name: str = None,
+        description: str = None,
+        online_date: datetime.datetime = None,
+        backend_version: str = None,
         **fields,
     ):
         """This throws a deprecation warning on initialization."""

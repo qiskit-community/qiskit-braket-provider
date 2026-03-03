@@ -126,7 +126,7 @@ class BraketEstimator(BaseEstimatorV2):
         precision_values = {pub.precision for pub in pubs}
         if len(precision_values) > 1:
             raise ValueError(f"All pubs must have the same precision, got: {precision_values}")
-        return next(iter(precision_values))
+        return list(precision_values)[0]
 
     def _translate_pub(
         self, pub: EstimatorPub
