@@ -504,16 +504,15 @@ class TestRoundTripConversion:
         from braket.ir.openqasm import Program
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with verbatim pragma
+        # Create OpenQASM 3.0 program with verbatim pragma using physical qubits
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
-x q[1];
+x $1;
 """
         
         # Create Braket Program
@@ -546,18 +545,17 @@ x q[1];
         from braket.ir.openqasm import Program
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with multiple verbatim pragmas
+        # Create OpenQASM 3.0 program with multiple verbatim pragmas using physical qubits
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
+    h $0;
 }
-x q[1];
+x $1;
 #pragma braket verbatim
 box {
-    cnot q[0], q[1];
+    cnot $0, $1;
 }
 """
         
@@ -595,15 +593,14 @@ box {
         from braket.ir.openqasm import Program
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with standard verbatim pragma
+        # Create OpenQASM 3.0 program with standard verbatim pragma using physical qubits
         # (The pragma name is fixed, but we'll use a custom BoxOp label)
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
 """
         
@@ -636,17 +633,16 @@ box {
         from braket.ir.openqasm import Program
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with verbatim pragmas and regular gates
+        # Create OpenQASM 3.0 program with verbatim pragmas and regular gates using physical qubits
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
-x q[0];
+x $0;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
-y q[1];
+y $1;
 """
         
         # Create Braket Program
@@ -672,14 +668,13 @@ y q[1];
         """Test round-trip with single verbatim box starting from OpenQASM 3.0."""
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with verbatim pragma
+        # Create OpenQASM 3.0 program with verbatim pragma using physical qubits
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
 """
         
@@ -708,19 +703,18 @@ box {
         """Test round-trip with multiple verbatim boxes starting from OpenQASM 3.0."""
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with multiple verbatim pragmas
+        # Create OpenQASM 3.0 program with multiple verbatim pragmas using physical qubits
         openqasm_program = """
 OPENQASM 3.0;
-qubit[3] q;
 #pragma braket verbatim
 box {
-    h q[0];
+    h $0;
 }
-x q[1];
+x $1;
 #pragma braket verbatim
 box {
-    cnot q[0], q[1];
-    cnot q[1], q[2];
+    cnot $0, $1;
+    cnot $1, $2;
 }
 """
         
@@ -754,15 +748,14 @@ box {
         """
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with standard verbatim pragma
+        # Create OpenQASM 3.0 program with standard verbatim pragma using physical qubits
         # (The pragma name is fixed, but we'll use a custom BoxOp label)
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
 """
         
@@ -791,18 +784,17 @@ box {
         """Test round-trip with mixed verbatim and non-verbatim gates starting from OpenQASM 3.0."""
         from qiskit_braket_provider.providers.adapter import to_qiskit
         
-        # Create OpenQASM 3.0 program with verbatim pragmas and regular gates
+        # Create OpenQASM 3.0 program with verbatim pragmas and regular gates using physical qubits
         openqasm_program = """
 OPENQASM 3.0;
-qubit[2] q;
-x q[0];
+x $0;
 #pragma braket verbatim
 box {
-    h q[0];
-    cnot q[0], q[1];
+    h $0;
+    cnot $0, $1;
 }
-y q[1];
-z q[0];
+y $1;
+z $0;
 """
         
         # Convert to Qiskit
