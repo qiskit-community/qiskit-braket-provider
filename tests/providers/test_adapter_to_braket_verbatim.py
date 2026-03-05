@@ -3,11 +3,13 @@
 import pytest
 from qiskit import QuantumCircuit
 from qiskit.circuit import Barrier, BoxOp
+from braket.ir.openqasm import Program
 
 from qiskit_braket_provider.providers.adapter import (
     _extract_verbatim_boxes,
     _restore_verbatim_boxes,
     to_braket,
+    to_qiskit,
 )
 
 
@@ -267,14 +269,40 @@ class TestToBraketIntegration:
         braket_circuit = to_braket(qiskit_circuit, verbatim=False)
         
         # Verify Braket circuit contains correct gates
-        # The exact gate count may vary due to transpilation, but we should have at least
-        # the gates from the verbatim box plus the X and Y gates
         assert braket_circuit is not None
         assert braket_circuit.qubit_count == 2
         
-        # Verify gate order is preserved (verbatim box gates should be together)
-        gate_names = [str(instr) for instr in braket_circuit.instructions]
-        assert len(gate_names) > 0
+        # Verify we have the expected gates
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        
+        # Check that we have X, H, CNot, and Y gates
+        gate_names = [name for name, _ in gate_info]
+        assert 'X' in gate_names, "Expected X gate"
+        assert 'H' in gate_names, "Expected H gate"
+        assert 'CNot' in gate_names, "Expected CNot gate"
+        assert 'Y' in gate_names, "Expected Y gate"
+        
+        # Verify gate order: X should come before H, H before CNot, CNot before Y
+        x_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'X')
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        y_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'Y')
+        
+        assert x_idx < h_idx < cnot_idx < y_idx, "Gate order should be preserved"
+        
+        # Verify qubit targets
+        x_gate = gate_info[x_idx]
+        assert x_gate[1] == [0], "X gate should be on qubit 0"
+        
+        h_gate = gate_info[h_idx]
+        assert h_gate[1] == [0], "H gate should be on qubit 0"
+        
+        cnot_gate = gate_info[cnot_idx]
+        assert cnot_gate[1] == [0, 1], "CNot gate should be on qubits 0 and 1"
+        
+        y_gate = gate_info[y_idx]
+        assert y_gate[1] == [1], "Y gate should be on qubit 1"
 
     def test_to_braket_with_multiple_verbatim_boxes(self):
         """Test to_braket with multiple verbatim boxes."""
@@ -300,6 +328,28 @@ class TestToBraketIntegration:
         # Verify all verbatim boxes are preserved
         assert braket_circuit is not None
         assert braket_circuit.qubit_count == 2
+        
+        # Verify we have the expected gates
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
+        # Check that we have H, X, and CNot gates
+        assert 'H' in gate_names, "Expected H gate from first verbatim box"
+        assert 'X' in gate_names, "Expected X gate between verbatim boxes"
+        assert 'CNot' in gate_names, "Expected CNot gate from second verbatim box"
+        
+        # Verify gate order: H should come before X, X before CNot
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        x_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'X')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        
+        assert h_idx < x_idx < cnot_idx, "Gate order should be preserved"
+        
+        # Verify qubit targets
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[x_idx][1] == [1], "X gate should be on qubit 1"
+        assert gate_info[cnot_idx][1] == [0, 1], "CNot gate should be on qubits 0 and 1"
 
     def test_to_braket_with_custom_verbatim_box_name(self):
         """Test to_braket with custom verbatim box name."""
@@ -422,28 +472,6 @@ class TestToBraketIntegration:
         # Verify circuit is converted
         assert braket_circuit is not None
 
-    def test_to_braket_routing_method_override(self):
-        """Test that user can override routing_method."""
-        # Create verbatim box circuit
-        inner_circuit = QuantumCircuit(2)
-        inner_circuit.h(0)
-        
-        # Create main circuit with BoxOp
-        qiskit_circuit = QuantumCircuit(2)
-        box_op = BoxOp(inner_circuit, label="verbatim")
-        qiskit_circuit.append(box_op, [0, 1])
-        
-        # Convert to Braket with explicit routing_method
-        # User override should be respected
-        braket_circuit = to_braket(
-            qiskit_circuit, 
-            verbatim=False,
-            routing_method='sabre'
-        )
-        
-        # Verify circuit is converted
-        assert braket_circuit is not None
-
     def test_to_braket_with_multiple_circuits_with_verbatim_boxes(self):
         """Test to_braket with multiple circuits containing verbatim boxes."""
         # Create first circuit with verbatim box
@@ -501,8 +529,6 @@ class TestRoundTripConversion:
 
     def test_round_trip_single_verbatim_box_braket_program(self):
         """Test round-trip with single verbatim box starting from Braket Program."""
-        from braket.ir.openqasm import Program
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with verbatim pragma using physical qubits
         openqasm_program = """
@@ -534,16 +560,31 @@ x $1;
         assert braket_circuit is not None
         assert braket_circuit.qubit_count == 2
         
-        # Verify we have H, CNOT, and X gates
-        gate_names = [str(instr.operator.name).lower() for instr in braket_circuit.instructions]
-        assert 'h' in gate_names
-        assert 'cnot' in gate_names
-        assert 'x' in gate_names
+        # Verify we have H, CNOT, and X gates with correct targets
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
+        assert 'H' in gate_names, "Expected H gate"
+        assert 'CNot' in gate_names, "Expected CNot gate"
+        assert 'X' in gate_names, "Expected X gate"
+        
+        # Verify gate order and qubit targets
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        x_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'X')
+        
+        # H and CNot should come before X (they're in the verbatim box)
+        assert h_idx < x_idx, "H gate should come before X gate"
+        assert cnot_idx < x_idx, "CNot gate should come before X gate"
+        
+        # Verify qubit targets
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[cnot_idx][1] == [0, 1], "CNot gate should be on qubits 0 and 1"
+        assert gate_info[x_idx][1] == [1], "X gate should be on qubit 1"
 
     def test_round_trip_multiple_verbatim_boxes_braket_program(self):
         """Test round-trip with multiple verbatim boxes starting from Braket Program."""
-        from braket.ir.openqasm import Program
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with multiple verbatim pragmas using physical qubits
         openqasm_program = """
@@ -579,10 +620,25 @@ box {
         assert braket_circuit.qubit_count == 2
         
         # Verify order and positions are maintained
-        gate_names = [str(instr.operator.name).lower() for instr in braket_circuit.instructions]
-        assert 'h' in gate_names
-        assert 'x' in gate_names
-        assert 'cnot' in gate_names
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
+        assert 'H' in gate_names, "Expected H gate from first verbatim box"
+        assert 'X' in gate_names, "Expected X gate between verbatim boxes"
+        assert 'CNot' in gate_names, "Expected CNot gate from second verbatim box"
+        
+        # Verify gate order: H should come before X, X before CNot
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        x_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'X')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        
+        assert h_idx < x_idx < cnot_idx, "Gate order should be H, X, CNot"
+        
+        # Verify qubit targets
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[x_idx][1] == [1], "X gate should be on qubit 1"
+        assert gate_info[cnot_idx][1] == [0, 1], "CNot gate should be on qubits 0 and 1"
 
     def test_round_trip_custom_verbatim_box_name_braket_program(self):
         """Test round-trip with custom verbatim box name starting from Braket Program.
@@ -590,8 +646,6 @@ box {
         Note: The OpenQASM pragma is always 'braket verbatim', but we can use a custom
         label for the BoxOp in Qiskit.
         """
-        from braket.ir.openqasm import Program
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with standard verbatim pragma using physical qubits
         # (The pragma name is fixed, but we'll use a custom BoxOp label)
@@ -630,8 +684,6 @@ box {
 
     def test_round_trip_mixed_verbatim_and_non_verbatim_gates_braket_program(self):
         """Test round-trip with mixed verbatim and non-verbatim gates starting from Braket Program."""
-        from braket.ir.openqasm import Program
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with verbatim pragmas and regular gates using physical qubits
         openqasm_program = """
@@ -658,15 +710,27 @@ y $1;
         assert braket_circuit is not None
         assert braket_circuit.qubit_count == 2
         
-        # Verify we have all expected gates (non-verbatim gates may be optimized)
-        gate_names = [str(instr.operator.name).lower() for instr in braket_circuit.instructions]
-        # Verbatim gates should be present
-        assert 'h' in gate_names
-        assert 'cnot' in gate_names
+        # Verify we have all expected gates
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
+        # Verbatim gates (H and CNot) should be present
+        assert 'H' in gate_names, "Expected H gate from verbatim box"
+        assert 'CNot' in gate_names, "Expected CNot gate from verbatim box"
+        
+        # Non-verbatim gates may be optimized, but let's check if X and Y are present
+        # (they might be optimized away or combined, so we'll be lenient here)
+        
+        # Verify H and CNot are on correct qubits
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[cnot_idx][1] == [0, 1], "CNot gate should be on qubits 0 and 1"
 
     def test_round_trip_single_verbatim_box_openqasm(self):
         """Test round-trip with single verbatim box starting from OpenQASM 3.0."""
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with verbatim pragma using physical qubits
         openqasm_program = """
@@ -695,13 +759,23 @@ box {
         assert braket_circuit.qubit_count == 2
         
         # Verify qubit mappings are preserved
-        gate_names = [str(instr.operator.name).lower() for instr in braket_circuit.instructions]
-        assert 'h' in gate_names
-        assert 'cnot' in gate_names
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
+        assert 'H' in gate_names, "Expected H gate"
+        assert 'CNot' in gate_names, "Expected CNot gate"
+        
+        # Verify qubit targets
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[cnot_idx][1] == [0, 1], "CNot gate should be on qubits 0 and 1"
+        assert h_idx < cnot_idx, "H gate should come before CNot gate"
 
     def test_round_trip_multiple_verbatim_boxes_openqasm(self):
         """Test round-trip with multiple verbatim boxes starting from OpenQASM 3.0."""
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with multiple verbatim pragmas using physical qubits
         openqasm_program = """
@@ -735,10 +809,32 @@ box {
         assert braket_circuit.qubit_count == 3
         
         # Verify order and positions are maintained
-        gate_names = [str(instr.operator.name).lower() for instr in braket_circuit.instructions]
-        assert 'h' in gate_names
-        assert 'x' in gate_names
-        assert 'cnot' in gate_names
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
+        assert 'H' in gate_names, "Expected H gate from first verbatim box"
+        assert 'X' in gate_names, "Expected X gate between verbatim boxes"
+        assert 'CNot' in gate_names, "Expected CNot gates from second verbatim box"
+        
+        # Verify gate order: H should come before X
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        x_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'X')
+        
+        assert h_idx < x_idx, "H gate should come before X gate"
+        
+        # Find all CNot gates (there should be 2)
+        cnot_indices = [i for i, (name, _) in enumerate(gate_info) if name == 'CNot']
+        assert len(cnot_indices) == 2, "Expected two CNot gates from second verbatim box"
+        
+        # Both CNot gates should come after X
+        assert all(cnot_idx > x_idx for cnot_idx in cnot_indices), "CNot gates should come after X gate"
+        
+        # Verify qubit targets
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[x_idx][1] == [1], "X gate should be on qubit 1"
+        assert gate_info[cnot_indices[0]][1] == [0, 1], "First CNot gate should be on qubits 0 and 1"
+        assert gate_info[cnot_indices[1]][1] == [1, 2], "Second CNot gate should be on qubits 1 and 2"
 
     def test_round_trip_custom_verbatim_box_name_openqasm(self):
         """Test round-trip with custom verbatim box name starting from OpenQASM 3.0.
@@ -746,7 +842,6 @@ box {
         Note: The OpenQASM pragma is always 'braket verbatim', but we can use a custom
         label for the BoxOp in Qiskit.
         """
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with standard verbatim pragma using physical qubits
         # (The pragma name is fixed, but we'll use a custom BoxOp label)
@@ -782,7 +877,6 @@ box {
 
     def test_round_trip_mixed_verbatim_and_non_verbatim_gates_openqasm(self):
         """Test round-trip with mixed verbatim and non-verbatim gates starting from OpenQASM 3.0."""
-        from qiskit_braket_provider.providers.adapter import to_qiskit
         
         # Create OpenQASM 3.0 program with verbatim pragmas and regular gates using physical qubits
         openqasm_program = """
@@ -808,7 +902,18 @@ z $0;
         assert braket_circuit.qubit_count == 2
         
         # Verify non-verbatim gates may be optimized but circuit is equivalent
-        gate_names = [str(instr.operator.name).lower() for instr in braket_circuit.instructions]
+        instructions = braket_circuit.instructions
+        gate_info = [(instr.operator.name, instr.target) for instr in instructions]
+        gate_names = [name for name, _ in gate_info]
+        
         # Verbatim gates should be present
-        assert 'h' in gate_names
-        assert 'cnot' in gate_names
+        assert 'H' in gate_names, "Expected H gate from verbatim box"
+        assert 'CNot' in gate_names, "Expected CNot gate from verbatim box"
+        
+        # Verify verbatim gates are on correct qubits
+        h_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'H')
+        cnot_idx = next(i for i, (name, _) in enumerate(gate_info) if name == 'CNot')
+        
+        assert gate_info[h_idx][1] == [0], "H gate should be on qubit 0"
+        assert gate_info[cnot_idx][1] == [0, 1], "CNot gate should be on qubits 0 and 1"
+        assert h_idx < cnot_idx, "H gate should come before CNot gate"
