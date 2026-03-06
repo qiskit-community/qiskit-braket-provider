@@ -255,8 +255,12 @@ def test_no_verbatim_pragma(source, to_qiskit_kwargs):
             [VerbatimBoxDelimiter.END_VERBATIM],
             "Verbatim box end marker without matching start",
         ),
+        (
+            ["invalid_marker"],
+            "Verbatim box created using invalid marker",
+        ),
     ],
-    ids=["nested_start", "end_without_start"],
+    ids=["nested_start", "end_without_start", "invalid_marker"],
 )
 def test_context_marker_errors(markers, error_match):
     context = _QiskitProgramContext()
