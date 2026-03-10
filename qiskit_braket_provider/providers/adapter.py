@@ -335,7 +335,7 @@ class _QiskitProgramContext(AbstractProgramContext):
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
         return _sympy_to_qiskit(value, self._param_map) if isinstance(value, Expr) else value
 
-    def add_measure(self, target: tuple[int], classical_targets: Iterable[int] = None):
+    def add_measure(self, target: tuple[int], classical_targets: Iterable[int] | None = None):
         for iter, qubit in enumerate(target):
             index = classical_targets[iter] if classical_targets else iter
             self._circuit.measure(qubit, index)
@@ -352,7 +352,7 @@ def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] 
         if the device is fully connected.
     """
     device_connectivity = properties.paradigm.connectivity
-    connectivity = (
+    return (
         [
             [int(x), int(y)]
             for x, neighborhood in device_connectivity.connectivityGraph.items()
@@ -361,7 +361,6 @@ def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] 
         if not device_connectivity.fullyConnected
         else None
     )
-    return connectivity
 
 
 def native_gate_set(properties: DeviceCapabilities) -> set[str]:
@@ -746,7 +745,7 @@ def to_braket(
     *args,
     qubit_labels: Sequence[int] | None = None,
     target: Target | None = None,
-    verbatim: bool = None,
+    verbatim: bool | None = None,
     basis_gates: Sequence[str] | None = None,
     coupling_map: list[list[int]] | None = None,
     angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None = None,
@@ -1071,7 +1070,7 @@ def _default_target(circuits: Iterable[QuantumCircuit]) -> Target:
 
 def _default_qubit_labels(circuit: QuantumCircuit) -> tuple[int, ...]:
     bits = sorted(circuit.find_bit(q).index for q in circuit.qubits)
-    return tuple(range(max(bits) + 1)) if bits else tuple()
+    return tuple(range(max(bits) + 1)) if bits else ()
 
 
 def _create_free_parameters(operation):
@@ -1298,7 +1297,7 @@ def _reverse_endianness(matrix: np.ndarray):
     return (
         np.transpose(
             matrix.reshape([2] * n_q * 2),
-            list(range(0, n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
+            list(range(n_q))[::-1] + list(range(n_q, 2 * n_q))[::-1],
         ).reshape((2**n_q, 2**n_q))
         if n_q > 1
         else matrix
@@ -1316,7 +1315,7 @@ def _create_qiskit_gate(
     new_gate_params = []
     for param_expression, value in zip(gate_instance.params, gate_params, strict=True):
         # extract the coefficient in the templated gate
-        param = list(param_expression.parameters)[0].sympify()
+        param = next(iter(param_expression.parameters)).sympify()
         coeff = float(param_expression.sympify().subs(param, 1))
         new_gate_params.append(
             _sympy_to_qiskit(coeff * value.expression, param_map)

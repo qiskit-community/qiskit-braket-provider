@@ -249,7 +249,7 @@ MOCK_GATE_MODEL_SIMULATOR_TN = {
 }
 
 MOCK_GATE_MODEL_QUANTUM_TASK_RESULT = GateModelQuantumTaskResult(
-    task_metadata=TaskMetadata(**{"id": str(uuid.uuid4()), "deviceId": "default", "shots": 3}),
+    task_metadata=TaskMetadata(id=str(uuid.uuid4()), deviceId="default", shots=3),
     additional_metadata=None,
     measurements=np.array([[0, 1], [0, 1], [1, 0]]),
     measured_qubits=[0, 1],
@@ -302,7 +302,7 @@ MOCK_PROGRAM_RESULT = {
             "name": "braket.ir.openqasm.program",
             "version": "1",
         },
-        "source": "OPENQASM 3.0;",  # noqa
+        "source": "OPENQASM 3.0;",
         "inputs": {"theta": [0.12, 2.1]},
     },
     "additionalMetadata": {
@@ -318,18 +318,15 @@ MOCK_PROGRAM_RESULT = {
 # pylint: disable-next=no-value-for-parameter
 MOCK_PROGRAM_SET_RESULT = ProgramSetQuantumTaskResult.from_object(
     ProgramSetTaskResult(
-        **{
-            "braketSchemaHeader": {
+        braketSchemaHeader={
                 "name": "braket.task_result.program_set_task_result",
                 "version": "1",
-            },
-            "programResults": [MOCK_PROGRAM_RESULT] * 2,
-            "taskMetadata": {
+            }, programResults=[MOCK_PROGRAM_RESULT] * 2, taskMetadata={
                 "braketSchemaHeader": {
                     "name": "braket.task_result.program_set_task_metadata",
                     "version": "1",
                 },
-                "id": "TaskID",  # noqa
+                "id": "TaskID",
                 "deviceId": "arn:aws:braket:::device/quantum-simulator/amazon/sv1",
                 "requestedShots": 120,
                 "successfulShots": 100,
@@ -352,8 +349,7 @@ MOCK_PROGRAM_SET_RESULT = ProgramSetQuantumTaskResult.from_object(
                 "endedAt": "2024-10-15T19:07:00.382Z",
                 "status": "COMPLETED",
                 "totalFailedExecutables": 1,
-            },
-        }
+            }
     )
 )
 MOCK_PROGRAM_SET_QUANTUM_TASK = LocalQuantumTask(MOCK_PROGRAM_SET_RESULT)
@@ -380,7 +376,6 @@ class MockBraketBackend(BraketBackend):
         """
         Mock method for run.
         """
-        pass
 
 
 class MockMeasLevelEnum(enum.Enum):
