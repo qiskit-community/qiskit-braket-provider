@@ -271,7 +271,7 @@ OPENQASM 3.0;
 box {
     h $0;
 """
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         to_qiskit(qasm)
 
 

@@ -18,6 +18,8 @@ import qiskit.circuit.library as qiskit_gates
 import qiskit.quantum_info as qiskit_qi
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import (
+    Barrier,
+    BoxOp,
     CircuitInstruction,
     Clbit,
     ControlledGate,
@@ -29,7 +31,6 @@ from qiskit.circuit import (
     Qubit,
 )
 from qiskit.circuit import Instruction as QiskitInstruction
-from qiskit.circuit import Barrier, BoxOp
 from qiskit.circuit.library import get_standard_gate_name_mapping
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.quantum_info import Pauli, SparsePauliOp
@@ -51,7 +52,11 @@ from braket.circuits import gates as braket_gates
 from braket.circuits import noises as braket_noises
 from braket.circuits import observables as braket_observables
 from braket.default_simulator.openqasm.interpreter import Interpreter, VerbatimBoxDelimiter
-from braket.default_simulator.openqasm.parser.openqasm_ast import BitType, ClassicalType, IntegerLiteral
+from braket.default_simulator.openqasm.parser.openqasm_ast import (
+    BitType,
+    ClassicalType,
+    IntegerLiteral,
+)
 from braket.default_simulator.openqasm.program_context import AbstractProgramContext
 from braket.device_schema import (
     DeviceActionType,

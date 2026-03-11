@@ -5,8 +5,8 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import Barrier, BoxOp
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.passes import Optimize1qGates
-from braket.ir.openqasm import Program
 
+from braket.ir.openqasm import Program
 from qiskit_braket_provider.providers.adapter import (
     _extract_verbatim_boxes,
     _restore_verbatim_boxes,
@@ -191,7 +191,6 @@ class TestToBraketIntegration:
 
         bc = to_braket(qc, verbatim=False)
         info = _gate_info(bc)
-        names = [n for n, _ in info]
 
         assert bc.qubit_count == 2
         indices = {n: next(i for i, (nm, _) in enumerate(info) if nm == n)
@@ -378,7 +377,6 @@ y $1;
 
         bc = to_braket(qc, verbatim=False)
         info = _gate_info(bc)
-        names = [n for n, _ in info]
 
         assert bc.qubit_count == 2
         indices = {n: next(i for i, (nm, _) in enumerate(info) if nm == n)
@@ -457,7 +455,6 @@ box {
 
         bc = to_braket(qc, verbatim=False)
         info = _gate_info(bc)
-        names = [n for n, _ in info]
 
         assert bc.qubit_count == 3
         h_idx = next(i for i, (n, _) in enumerate(info) if n == "H")
