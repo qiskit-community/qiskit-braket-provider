@@ -52,16 +52,16 @@ def combine_dicts(dict1: dict[str, float], dict2: dict[str, float]) -> dict[str,
         merged dicts with list of keys
     """
     combined_dict: dict[str, list[float]] = {}
-    for key in dict1.keys():
+    for key, value in dict1.items():
         if key in combined_dict:
-            combined_dict[key].append(dict1[key])
+            combined_dict[key].append(value)
         else:
-            combined_dict[key] = [dict1[key]]
-    for key in dict2.keys():
+            combined_dict[key] = [value]
+    for key, value in dict2.items():
         if key in combined_dict:
-            combined_dict[key].append(dict2[key])
+            combined_dict[key].append(value)
         else:
-            combined_dict[key] = [dict2[key]]
+            combined_dict[key] = [value]
     return combined_dict
 
 
@@ -158,7 +158,7 @@ class TestBraketLocalBackend(TestCase):
         circuit = QuantumCircuit(1)
         circuit.h(0)
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception):  # noqa: B017
             backend.run([circuit, circuit], shots=0)  # First run should pass
         braket_devices_run.assert_called()
 
@@ -311,7 +311,6 @@ class TestBraketAwsBackend(TestCase):
             class SubclassAWSBraketBackend(AWSBraketBackend):  # pylint: disable=unused-variable
                 """A subclass of AWSBraketBackend for testing purposes"""
 
-                pass
 
     def test_run_multiple_circuits(self):
         """Tests run with multiple circuits"""
