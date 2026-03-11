@@ -1,6 +1,6 @@
 """Amazon Braket task."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.quantum_info import Statevector
@@ -87,12 +87,12 @@ class BraketQuantumTask(JobV1):
         self._backend = backend
         self._metadata = metadata
         self._tasks = tasks
-        self._date_of_creation = datetime.now()
+        self._date_of_creation = datetime.now(tz=UTC)
 
     @property
     def shots(self) -> int:
         """int: The number of shots for the task."""
-        return self.metadata["metadata"]["shots"] if "shots" in self.metadata["metadata"] else 0
+        return self.metadata["metadata"].get("shots", 0)
 
     def submit(self):
         return

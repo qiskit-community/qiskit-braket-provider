@@ -440,8 +440,7 @@ class TestAdapter(TestCase):
             match="Passing basis_gates as a positional argument is deprecated.",
         ):
             to_braket(circuit, {"h, cx"}, True, verbatim=True)
-        with pytest.raises(TypeError, match="Multiple values for connectivity"):
-            with pytest.warns(
+        with pytest.raises(TypeError, match="Multiple values for connectivity"), pytest.warns(
                 DeprecationWarning, match="Passing verbatim as a positional argument is deprecated."
             ):
                 to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
