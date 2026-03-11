@@ -429,7 +429,7 @@ Number of executables second program: 40
 </div>
 <p>Note: Hamiltonian programs appear first in the list, but the order is corrected by the estimator’s postprocessing.</p>
 <p>So far, we’ve only looked at examples where the observables and parameters are both 1-dimensional, which allows them to be paired in a Cartesian product. However, Qiskit allows observables and parameters to be of arbitrary shape, so long as they are <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">broadcastable</a>.</p>
-<div><p><img alt="160c8fc8699d4328b39292a09d28f2a8" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
+<div><p><img alt="87faa1ef96f44bfd9feee1d1fa77c7f3" class="no-scaled-link" src="../_images/broadcasting.svg" style="width: 900px;" /></p>
 <figcaption><p>Source: <a class="reference external" href="https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules">https://quantum.cloud.ibm.com/docs/en/guides/primitive-input-output#broadcasting-rules</a></p>
 </figcaption></div><p>Since programs in program sets only encode Cartesian products, a single PUB may require multiple programs to capture the full broadcasted combination:</p>
 <div class="nbinput nblast docutils container">
@@ -599,7 +599,7 @@ for index in np.ndindex(data.shape):
     x = []
     y = []
     counts = dict(data.creg_a[index].get_int_counts())
-    for i in {0, 1, 1022, 1023}:
+    for i in (0, 1, 1022, 1023):
         counts.setdefault(i, 0)
     for k, v in sorted(counts.items()):
         x.append(str(k))
