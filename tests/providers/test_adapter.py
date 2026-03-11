@@ -260,7 +260,7 @@ class TestAdapter(TestCase):
     def test_standard_gate_decomp(self):
         """Tests adapter decomposition of all standard gates to forms that can be translated"""
         gates = qiskit_gates.get_standard_gate_name_mapping()
-        for name in {"delay", "global_phase", "measure", "reset"}:
+        for name in ("delay", "global_phase", "measure", "reset"):
             gates.pop(name)
         for standard_gate in gates.values():
             qiskit_circuit = QuantumCircuit(standard_gate.num_qubits)
@@ -384,7 +384,7 @@ class TestAdapter(TestCase):
 
         braket_to_qiskit_gate_names = {
             **qiskit_to_braket_gate_names,
-            **{"measure": "measure"},
+            "measure": "measure",
         }
 
         self.assertEqual(
@@ -435,14 +435,12 @@ class TestAdapter(TestCase):
         circuit.h(0)
         with pytest.raises(TypeError, match="Multiple values for basis_gates"):
             to_braket(circuit, {"h, cx"}, basis_gates={"h", "cx"})
-        with pytest.raises(TypeError, match="Multiple values for verbatim"):
-            with pytest.warns(
-                DeprecationWarning,
-                match="Passing basis_gates as a positional argument is deprecated.",
-            ):
-                to_braket(circuit, {"h, cx"}, True, verbatim=True)
-        with pytest.raises(TypeError, match="Multiple values for connectivity"):
-            with pytest.warns(
+        with pytest.raises(TypeError, match="Multiple values for verbatim"), pytest.warns(
+            DeprecationWarning,
+            match="Passing basis_gates as a positional argument is deprecated.",
+        ):
+            to_braket(circuit, {"h, cx"}, True, verbatim=True)
+        with pytest.raises(TypeError, match="Multiple values for connectivity"), pytest.warns(
                 DeprecationWarning, match="Passing verbatim as a positional argument is deprecated."
             ):
                 to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
@@ -527,9 +525,9 @@ class TestAdapter(TestCase):
         braket_device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
 
         braket_circuit = to_braket(circuit, braket_device=braket_device)
-        braket_operators = set(
+        braket_operators = {
             type(instruction.operator) for instruction in braket_circuit.instructions
-        )
+        }
         self.assertFalse(len(braket_operators.intersection({braket_gates.H})))
         self.assertTrue(
             braket_operators.issubset(
@@ -891,15 +889,15 @@ class TestAdapter(TestCase):
 
         def gate_matches_connectivity(gate) -> bool:
             return any(
-                (gate.target.union(gate.control).issubset(adjacency) for adjacency in connectivity)
+                gate.target.union(gate.control).issubset(adjacency) for adjacency in connectivity
             )
 
-        assert all((gate_matches_connectivity(gate) for gate in braket_circuit.instructions))
+        assert all(gate_matches_connectivity(gate) for gate in braket_circuit.instructions)
         assert not all(
-            (gate_matches_connectivity(gate) for gate in braket_circuit_unconnected.instructions)
+            gate_matches_connectivity(gate) for gate in braket_circuit_unconnected.instructions
         )
         assert not all(
-            (gate_matches_connectivity(gate) for gate in braket_circuit_verbatim.instructions)
+            gate_matches_connectivity(gate) for gate in braket_circuit_verbatim.instructions
         )
 
     def test_angle_restrictions_rigetti(self):
@@ -1358,7 +1356,7 @@ class TestFromBraket(TestCase):
                         zip(
                             # Need to use qiskit_gate.parameters because
                             # qiskit_circuit.parameters is sorted alphabetically
-                            [list(expr.parameters)[0] for expr in qiskit_gate.params],
+                            [next(iter(expr.parameters)) for expr in qiskit_gate.params],
                             params_qiskit[: len(qiskit_gate.params)],
                             strict=True,
                         )
@@ -1464,17 +1462,16 @@ class TestFromBraket(TestCase):
 
     def test_unsupported_braket_gate(self):
         """Tests if TypeError is raised for unsupported Braket gate."""
-        gate = getattr(Gate, "CNot")
+        gate = Gate.CNot
         op = gate()
         instr = Instruction(op, range(2))
         circuit = Circuit().add_instruction(instr)
 
-        with self.assertRaises(TypeError):
-            with patch.dict(
-                "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
-                {"cnot": None},
-            ):
-                to_qiskit(circuit)
+        with self.assertRaises(TypeError), patch.dict(
+            "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
+            {"cnot": None},
+        ):
+            to_qiskit(circuit)
 
     def test_measure_subset(self):
         """Tests the measure instruction conversion from braket to qiskit"""
