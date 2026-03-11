@@ -465,7 +465,6 @@ class _QiskitProgramContext(AbstractProgramContext):
             qubit_objects = [self._circuit.qubits[i] for i in range(self._verbatim_circuit.num_qubits)]
             self._circuit.append(box_op, qubit_objects)
 
-            # Reset verbatim state
             self._in_verbatim_box = False
             self._verbatim_circuit = None
         
@@ -887,7 +886,11 @@ def _extract_verbatim_boxes(
         - verbatim_boxes: List of (box_circuit, qubit_indices) tuples
     """
 
-    # Create new circuit with same registers
+    if not (any(isinstance(instr.operation, BoxOp)
+                and getattr(instr.operation, "label", None) == verbatim_box_name
+                for instr in circuit.data)):
+        return circuit, []
+
     modified_circuit = QuantumCircuit(circuit.num_qubits, circuit.num_clbits)
     modified_circuit.global_phase = circuit.global_phase
 
@@ -939,11 +942,9 @@ def _restore_verbatim_boxes(
         ValueError: If barrier count doesn't match verbatim box count
         ValueError: If qubit mapping fails
     """
-    # Create new circuit with same registers
     reconstructed_circuit = QuantumCircuit(transpiled_circuit.num_qubits, transpiled_circuit.num_clbits)
     reconstructed_circuit.global_phase = transpiled_circuit.global_phase
 
-    # Create iterator over verbatim boxes
     verbatim_box_iter = iter(verbatim_boxes)
     barrier_count = 0
 
@@ -979,7 +980,7 @@ def _restore_verbatim_boxes(
             # Get indices of qubits and clbits and add instruction as-is
             qubit_indices = [transpiled_circuit.find_bit(q).index for q in instruction.qubits]
             clbit_indices = [transpiled_circuit.find_bit(q).index for q in instruction.clbits]
-            reconstructed_circuit.append(operation, instruction.qubits, instruction.clbits)
+            reconstructed_circuit.append(operation, qubit_indices, clbit_indices)
 
     # Check if any verbatim boxes remain
     remaining_boxes = list(verbatim_box_iter)
@@ -1096,9 +1097,20 @@ def to_braket(
     )
     coupling_map = coupling_map or connectivity
 
-    # Check if any circuits have verbatim boxes and extract them before transpilation
-    from qiskit.circuit import BoxOp
+    # Check if any circuits have barriers labeled the same as a verbatim box, and if so raise an error
+    has_barriers_named_verbatim = any(
+        any(
+            isinstance(instr.operation, Barrier)
+            and getattr(instr.operation, "label", None) == verbatim_box_name
+            for instr in circ.data
+        )
+        for circ in circuits
+    )
 
+    if has_barriers_named_verbatim:
+        raise ValueError("Cannot have a Barrier labeled with the same label used for verbatim boxes")
+
+    # Check if any circuits have verbatim boxes and extract them before transpilation
     has_verbatim_boxes = any(
         any(
             isinstance(instr.operation, BoxOp)
@@ -1107,7 +1119,13 @@ def to_braket(
         )
         for circ in circuits
     )
-
+    
+    if pass_manager and has_verbatim_boxes:
+        raise ValueError(
+            "Custom pass_manager is not supported with verbatim boxes."
+            "Verbatim boxes require controlled transpilation to preserve gate ordering."
+        )
+    
     all_verbatim_boxes = []
     if has_verbatim_boxes:
         # Extract verbatim boxes from all circuits
@@ -1140,6 +1158,7 @@ def to_braket(
         
         # Determine transpilation parameters based on verbatim boxes
         if has_verbatim_boxes:
+            warnings.warn("Overrriding layout method to 'trivial' and routing method to 'none' as the circuit as verbatim blocks", stacklevel=1)
             # Use trivial layout and no routing
             effective_layout_method = 'trivial'
             effective_routing_method = 'none'
@@ -1175,7 +1194,7 @@ def to_braket(
     # Restore verbatim boxes after transpilation
     if has_verbatim_boxes:
         circuits = [
-            _restore_verbatim_boxes(circ, verbatim_boxes, verbatim_box_name)
+            _restore_verbatim_boxes(circ, verbatim_boxes, verbatim_box_name) if len(verbatim_boxes) > 0 else circ
             for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes)
         ]
 

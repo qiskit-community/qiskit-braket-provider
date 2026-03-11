@@ -3,6 +3,8 @@
 import pytest
 from qiskit import QuantumCircuit
 from qiskit.circuit import Barrier, BoxOp
+from qiskit.transpiler import PassManager
+from qiskit.transpiler.passes import Optimize1qGates
 from braket.ir.openqasm import Program
 
 from qiskit_braket_provider.providers.adapter import (
@@ -12,8 +14,6 @@ from qiskit_braket_provider.providers.adapter import (
     to_qiskit,
 )
 
-
-# --- Helpers ---
 
 def _make_box_circuit(num_qubits, gates):
     """Create a QuantumCircuit with the given gates applied.
@@ -103,8 +103,6 @@ class TestExtractVerbatimBoxes:
         assert modified.data[0].operation.label == "other_label"
 
 
-# --- TestRestoreVerbatimBoxes ---
-
 class TestRestoreVerbatimBoxes:
     """Tests for _restore_verbatim_boxes helper function."""
 
@@ -156,8 +154,6 @@ class TestRestoreVerbatimBoxes:
         with pytest.raises(ValueError, match=error_match):
             _restore_verbatim_boxes(transpiled, boxes, "verbatim")
 
-
-# --- TestToBraketIntegration ---
 
 class TestToBraketIntegration:
     """Integration tests for to_braket with verbatim box support."""
@@ -238,17 +234,6 @@ class TestToBraketIntegration:
         assert info[cnot_idx][1] == [0, 1]
         assert h_idx < cnot_idx
 
-    def test_to_braket_with_non_verbatim_boxops(self):
-        inner = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-        qc = QuantumCircuit(2)
-        qc.append(BoxOp(inner, label="other_label"), [0, 1])
-
-        try:
-            bc = to_braket(qc, verbatim=False)
-            assert bc is not None
-        except Exception:
-            pass  # transpiler may fail on non-verbatim BoxOp — expected
-
     @pytest.mark.parametrize(
         "verbatim, layout_method",
         [
@@ -279,6 +264,23 @@ class TestToBraketIntegration:
         assert info[cnot_idx][1] == [0, 1]
         assert h_idx < cnot_idx
 
+    def test_to_braket_raises_on_pass_manager_with_verbatim_boxes(self):
+        inner = _make_box_circuit(2, [("h", [0])])
+        qc = QuantumCircuit(2)
+        qc.append(BoxOp(inner, label="verbatim"), [0, 1])
+
+        with pytest.raises(ValueError, match="Custom pass_manager is not supported with verbatim boxes"):
+            to_braket(qc, verbatim=False, pass_manager=PassManager([Optimize1qGates()]))
+
+    def test_to_braket_raises_on_barrier_labeled_as_verbatim_box(self):
+        qc = QuantumCircuit(2)
+        qc.x(0)
+        qc.append(Barrier(2, label="verbatim"), [0, 1])
+        qc.y(1)
+
+        with pytest.raises(ValueError, match="Cannot have a Barrier labeled with the same label used for verbatim boxes"):
+            to_braket(qc, verbatim=False)
+
     def test_to_braket_with_multiple_circuits_with_verbatim_boxes(self):
         inner1 = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
         qc1 = QuantumCircuit(2)
@@ -300,8 +302,6 @@ class TestToBraketIntegration:
         assert results[1].qubit_count == 3
         assert results[2].qubit_count == 2
 
-
-# --- TestRoundTripConversion ---
 
 class TestRoundTripConversion:
     """Round-trip conversion tests for Braket → Qiskit → Braket and OpenQASM → Qiskit → Braket."""
