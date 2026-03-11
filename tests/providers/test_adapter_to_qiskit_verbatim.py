@@ -10,8 +10,6 @@ from qiskit_braket_provider import to_qiskit
 from qiskit_braket_provider.providers.adapter import _QiskitProgramContext
 
 
-# --- Helpers ---
-
 def _get_box_ops(qiskit_circuit):
     return [instr for instr in qiskit_circuit.data if isinstance(instr.operation, BoxOp)]
 
@@ -19,8 +17,6 @@ def _get_box_ops(qiskit_circuit):
 def _get_non_box_gates(qiskit_circuit):
     return [instr for instr in qiskit_circuit.data if not isinstance(instr.operation, BoxOp)]
 
-
-# --- Single verbatim box tests (parameterized) ---
 
 @pytest.mark.parametrize(
     "qasm, num_qubits, label, expected_body_gates",
@@ -72,8 +68,6 @@ def test_single_verbatim_box(qasm, num_qubits, label, expected_body_gates):
     assert body_gates == expected_body_gates
 
 
-# --- Multiple verbatim boxes ---
-
 def test_multiple_verbatim_boxes():
     qasm = """
 OPENQASM 3.0;
@@ -100,8 +94,6 @@ box {
     assert non_box[0].operation.name == "x"
 
 
-# --- Gates outside verbatim box ---
-
 def test_gates_outside_verbatim_box():
     qasm = """
 OPENQASM 3.0;
@@ -122,8 +114,6 @@ x $1;
     assert box_ops[0].operation.body.data[0].operation.name == "cx"
 
 
-# --- Verbatim box with measurements ---
-
 def test_verbatim_box_with_measurements():
     qasm = """
 OPENQASM 3.0;
@@ -142,8 +132,6 @@ c[1] = measure $1;
     measurements = [i for i in qc.data if i.operation.name == "measure"]
     assert len(measurements) == 2
 
-
-# --- Qubit mapping ---
 
 def test_verbatim_box_qubit_mapping():
     qasm = """
@@ -206,8 +194,6 @@ box {
     assert box_ops[0].operation.body.num_qubits == 4
 
 
-# --- No verbatim pragma (parameterized) ---
-
 @pytest.mark.parametrize(
     "source, to_qiskit_kwargs",
     [
@@ -241,8 +227,6 @@ def test_no_verbatim_pragma(source, to_qiskit_kwargs):
     assert "h" in gate_names
     assert "cx" in gate_names
 
-
-# --- Context marker errors (parameterized) ---
 
 @pytest.mark.parametrize(
     "markers, error_match",
@@ -280,8 +264,6 @@ def test_unclosed_verbatim_box_circuit_property_error():
         _ = context.circuit
 
 
-# --- Unclosed box syntax error ---
-
 def test_unclosed_verbatim_box_syntax_error():
     qasm = """
 OPENQASM 3.0;
@@ -292,8 +274,6 @@ box {
     with pytest.raises(Exception):
         to_qiskit(qasm)
 
-
-# --- Bit declaration with identifier size ---
 
 def test_bit_declaration_with_identifier_size():
     qasm = """
