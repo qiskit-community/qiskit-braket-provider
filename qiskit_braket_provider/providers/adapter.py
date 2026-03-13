@@ -369,24 +369,23 @@ class _QiskitProgramContext(AbstractProgramContext):
         the classical bits are not added since the size is not yet determined.
         """
         super().declare_variable(name, symbol_type, value, const)
-
-        if self._circuit.num_clbits == 0:
-            # If this is a bit type declaration, add classical bits to the circuit
-            if isinstance(symbol_type, BitType):
-                # Get the size of the bit array
-                if symbol_type.size is not None:
-                    # Extract the integer value from IntegerLiteral
-                    # If size is an Identifier (e.g., function parameter), skip adding bits
-                    if isinstance(symbol_type.size, IntegerLiteral):
-                        size = symbol_type.size.value
-                    else:
-                        # Size is an Identifier or expression, can't determine size yet
-                        # This happens for function parameters like bit[n] where n is a variable
-                        return
+        
+        # If this is a bit type declaration, add classical bits to the circuit only if they don't exist already
+        if self._circuit.num_clbits == 0 and isinstance(symbol_type, BitType):
+            # Get the size of the bit array
+            if symbol_type.size is not None:
+                # Extract the integer value from IntegerLiteral
+                # If size is an Identifier (e.g., function parameter), skip adding bits
+                if isinstance(symbol_type.size, IntegerLiteral):
+                    size = symbol_type.size.value
                 else:
-                    size = 1
-                
-                self._circuit.add_bits([Clbit() for _ in range(size)])
+                    # Size is an Identifier or expression, can't determine size yet
+                    # This happens for function parameters like bit[n] where n is a variable
+                    return
+            else:
+                size = 1
+            
+            self._circuit.add_bits([Clbit() for _ in range(size)])
 
     def is_builtin_gate(self, name: str) -> bool:
         return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE

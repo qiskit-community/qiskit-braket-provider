@@ -302,3 +302,29 @@ h $0;
     qc = to_qiskit(qasm)
     assert qc is not None
     assert qc.num_qubits == 1
+
+
+def test_bit_declaration_without_size():
+    qasm = """
+OPENQASM 3.0;
+bit c;
+h $0;
+"""
+    qc = to_qiskit(qasm)
+    assert qc.num_clbits == 1
+    assert qc.num_qubits == 1
+
+
+def test_bit_declaration_without_size_in_verbatim():
+    qasm = """
+OPENQASM 3.0;
+bit c;
+#pragma braket verbatim
+box {
+    h $0;
+}
+"""
+    qc = to_qiskit(qasm)
+    assert qc.num_clbits == 1
+    box_ops = _get_box_ops(qc)
+    assert len(box_ops) == 1
