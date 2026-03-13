@@ -347,7 +347,10 @@ class _QiskitProgramContext(AbstractProgramContext):
 
     def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
         super().add_qubits(name, num_qubits)
-        self._circuit.add_register(num_qubits, num_qubits)
+        if self._circuit.num_clbits == 0:
+            self._circuit.add_register(num_qubits, num_qubits)
+        else:
+            self._circuit.add_register(num_qubits)
 
     def declare_variable(
         self,
@@ -366,23 +369,24 @@ class _QiskitProgramContext(AbstractProgramContext):
         the classical bits are not added since the size is not yet determined.
         """
         super().declare_variable(name, symbol_type, value, const)
-        
-        # If this is a bit type declaration, add classical bits to the circuit
-        if isinstance(symbol_type, BitType):
-            # Get the size of the bit array
-            if symbol_type.size is not None:
-                # Extract the integer value from IntegerLiteral
-                # If size is an Identifier (e.g., function parameter), skip adding bits
-                if isinstance(symbol_type.size, IntegerLiteral):
-                    size = symbol_type.size.value
+
+        if self._circuit.num_clbits == 0:
+            # If this is a bit type declaration, add classical bits to the circuit
+            if isinstance(symbol_type, BitType):
+                # Get the size of the bit array
+                if symbol_type.size is not None:
+                    # Extract the integer value from IntegerLiteral
+                    # If size is an Identifier (e.g., function parameter), skip adding bits
+                    if isinstance(symbol_type.size, IntegerLiteral):
+                        size = symbol_type.size.value
+                    else:
+                        # Size is an Identifier or expression, can't determine size yet
+                        # This happens for function parameters like bit[n] where n is a variable
+                        return
                 else:
-                    # Size is an Identifier or expression, can't determine size yet
-                    # This happens for function parameters like bit[n] where n is a variable
-                    return
-            else:
-                size = 1
-            
-            self._circuit.add_bits([Clbit() for _ in range(size)])
+                    size = 1
+                
+                self._circuit.add_bits([Clbit() for _ in range(size)])
 
     def is_builtin_gate(self, name: str) -> bool:
         return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE
@@ -890,12 +894,6 @@ def _extract_verbatim_boxes(
         - modified_circuit: Circuit with BoxOps replaced by named barriers
         - verbatim_boxes: List of (box_circuit, qubit_indices) tuples
     """
-
-    if not (any(isinstance(instr.operation, BoxOp)
-                and getattr(instr.operation, "label", None) == verbatim_box_name
-                for instr in circuit.data)):
-        return circuit, []
-
     modified_circuit = QuantumCircuit(circuit.num_qubits, circuit.num_clbits)
     modified_circuit.global_phase = circuit.global_phase
 
@@ -1127,8 +1125,7 @@ def to_braket(
     
     if pass_manager and has_verbatim_boxes:
         raise ValueError(
-            "Custom pass_manager is not supported with verbatim boxes."
-            "Verbatim boxes require controlled transpilation to preserve gate ordering."
+            "Custom pass_manager is not supported with verbatim boxes. Verbatim boxes require controlled transpilation to preserve gate ordering."
         )
     
     all_verbatim_boxes = []
@@ -1163,7 +1160,7 @@ def to_braket(
         
         # Determine transpilation parameters based on verbatim boxes
         if has_verbatim_boxes:
-            warnings.warn("Overrriding layout method to 'trivial' and routing method to 'none' as the circuit as verbatim blocks", stacklevel=1)
+            warnings.warn("Overriding layout method to 'trivial' and routing method to 'none' as the circuit has verbatim blocks", stacklevel=1)
             # Use trivial layout and no routing
             effective_layout_method = 'trivial'
             effective_routing_method = 'none'

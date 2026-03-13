@@ -114,6 +114,24 @@ x $1;
     assert box_ops[0].operation.body.data[0].operation.name == "cx"
 
 
+def test_explicit_qubit_register_no_duplicate_classical_bits():
+    qasm = """
+OPENQASM 3.0;
+bit[2] c;
+qubit[2] q;
+h q[0];
+cnot q[0], q[1];
+c[0] = measure q[0];
+c[1] = measure q[1];
+"""
+    qc = to_qiskit(qasm)
+
+    assert qc.num_qubits == 2
+    assert qc.num_clbits == 2
+    measurements = [i for i in qc.data if i.operation.name == "measure"]
+    assert len(measurements) == 2
+
+
 def test_verbatim_box_with_measurements():
     qasm = """
 OPENQASM 3.0;
