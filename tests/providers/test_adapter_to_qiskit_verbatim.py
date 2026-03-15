@@ -302,6 +302,7 @@ h $0;
     qc = to_qiskit(qasm)
     assert qc is not None
     assert qc.num_qubits == 1
+    assert qc.num_clbits == 0
 
 
 def test_bit_declaration_without_size():
@@ -328,3 +329,11 @@ box {
     assert qc.num_clbits == 1
     box_ops = _get_box_ops(qc)
     assert len(box_ops) == 1
+
+
+def test_bit_declaration_with_identifier_size_in_verbatim():
+    from braket.default_simulator.openqasm.parser.openqasm_ast import BitType, Identifier
+
+    ctx = _QiskitProgramContext()
+    ctx.declare_variable("c", BitType(size=Identifier(name="n")))
+    assert ctx._circuit.num_clbits == 0
