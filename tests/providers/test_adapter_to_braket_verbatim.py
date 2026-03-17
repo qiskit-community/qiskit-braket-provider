@@ -181,8 +181,8 @@ def test_multiple_verbatim_boxes_restoration():
 @pytest.mark.parametrize(
     "num_barriers, num_boxes, error_match",
     [
-        (2, 1, "Found more barriers.*than verbatim boxes"),
-        (1, 2, "Found fewer barriers.*than verbatim boxes"),
+        (2, 1, "Compiler error while processing verbatim boxes.*Illegal barriers"),
+        (1, 2, "Compiler error while processing verbatim boxes.*Expected"),
     ],
     ids=["too_many_barriers", "too_few_barriers"],
 )

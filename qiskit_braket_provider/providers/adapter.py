@@ -347,10 +347,7 @@ class _QiskitProgramContext(AbstractProgramContext):
 
     def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
         super().add_qubits(name, num_qubits)
-        if self._circuit.num_clbits == 0:
-            self._circuit.add_register(num_qubits, num_qubits)
-        else:
-            self._circuit.add_register(num_qubits)
+        self._circuit.add_register(num_qubits)
 
     def declare_variable(
         self,
@@ -370,8 +367,8 @@ class _QiskitProgramContext(AbstractProgramContext):
         """
         super().declare_variable(name, symbol_type, value, const)
         
-        # If this is a bit type declaration, add classical bits to the circuit only if they don't exist already
-        if self._circuit.num_clbits == 0 and isinstance(symbol_type, BitType):
+        # If this is a bit type declaration, add classical bits to the circuit
+        if isinstance(symbol_type, BitType):
             # Get the size of the bit array
             if symbol_type.size is not None:
                 # Extract the integer value from IntegerLiteral
@@ -428,6 +425,9 @@ class _QiskitProgramContext(AbstractProgramContext):
         return _sympy_to_qiskit(value, self._param_map) if isinstance(value, Expr) else value
 
     def add_measure(self, target: tuple[int], classical_targets: Iterable[int] | None = None):
+        # this is to cover the edge case where a user measures a qubit without assigning it to a classical register
+        if self._circuit.num_clbits < len(target):
+            self._circuit.add_bits([Clbit() for _ in range(len(target) - self._circuit.num_clbits)])
         for iter, qubit in enumerate(target):
             index = classical_targets[iter] if classical_targets else iter
             self._circuit.measure(qubit, index)
@@ -963,8 +963,7 @@ def _restore_verbatim_boxes(
                 box_circuit, _ = next(verbatim_box_iter)
             except StopIteration:
                 raise ValueError(
-                    f"Found more barriers with label '{verbatim_box_name}' than verbatim boxes. "
-                    f"Expected {len(verbatim_boxes)} barriers but found more during restoration."
+                    f"Compiler error while processing verbatim boxes. Illegal barriers with label '{verbatim_box_name}'"
                 )
 
             # Insert gates from the verbatim box directly (not as BoxOp)
@@ -988,8 +987,7 @@ def _restore_verbatim_boxes(
     remaining_boxes = list(verbatim_box_iter)
     if remaining_boxes:
         raise ValueError(
-            f"Found fewer barriers with label '{verbatim_box_name}' than verbatim boxes. "
-            f"Expected {len(verbatim_boxes)} barriers but only found {barrier_count}."
+            f"Compiler error while processing verbatim boxes. Expected {barrier_count} verbatim boxes, but found {len(verbatim_boxes)}."
         )
 
     return reconstructed_circuit
@@ -1099,28 +1097,22 @@ def to_braket(
     )
     coupling_map = coupling_map or connectivity
 
-    # Check if any circuits have barriers labeled the same as a verbatim box, and if so raise an error
-    has_barriers_named_verbatim = any(
-        any(
-            isinstance(instr.operation, Barrier)
-            and getattr(instr.operation, "label", None) == verbatim_box_name
-            for instr in circ.data
-        )
-        for circ in circuits
-    )
+    has_barriers_named_verbatim = False
+    has_verbatim_boxes = False
 
+    for circ in circuits:
+        for instr in circ.data:
+            label = getattr(instr.operation, "label", None)
+            if label == verbatim_box_name:
+                # Check if any circuits have barriers labeled the same as a verbatim box, and if so raise an error
+                if isinstance(instr.operation, Barrier):
+                    has_barriers_named_verbatim = True
+                # Check if any circuits have verbatim boxes and extract them before transpilation
+                elif isinstance(instr.operation, BoxOp):
+                    has_verbatim_boxes = True
+    
     if has_barriers_named_verbatim:
         raise ValueError("Cannot have a Barrier labeled with the same label used for verbatim boxes")
-
-    # Check if any circuits have verbatim boxes and extract them before transpilation
-    has_verbatim_boxes = any(
-        any(
-            isinstance(instr.operation, BoxOp)
-            and getattr(instr.operation, "label", None) == verbatim_box_name
-            for instr in circ.data
-        )
-        for circ in circuits
-    )
     
     if pass_manager and has_verbatim_boxes:
         raise ValueError(
