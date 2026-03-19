@@ -1286,8 +1286,11 @@
                             <span class="n">target</span><span class="o">=</span><span class="n">qubit_indices</span><span class="p">,</span>
                         <span class="p">)</span>
     <span class="n">global_phase</span> <span class="o">=</span> <span class="n">circuit</span><span class="o">.</span><span class="n">global_phase</span>
-    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">global_phase</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_EPS</span><span class="p">:</span>
+    <span class="n">has_nonzero_phase</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_phase</span><span class="p">,</span> <span class="n">ParameterExpression</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">abs</span><span class="p">(</span><span class="n">global_phase</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_EPS</span>
+    <span class="k">if</span> <span class="n">has_nonzero_phase</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">target</span> <span class="ow">and</span> <span class="s2">&quot;global_phase&quot;</span> <span class="ow">in</span> <span class="n">target</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">basis_gates</span> <span class="ow">and</span> <span class="s2">&quot;global_phase&quot;</span> <span class="ow">in</span> <span class="n">basis_gates</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_phase</span><span class="p">,</span> <span class="n">ParameterExpression</span><span class="p">):</span>
+                <span class="n">global_phase</span> <span class="o">=</span> <span class="n">FreeParameterExpression</span><span class="p">(</span><span class="n">rename_parameter</span><span class="p">(</span><span class="n">global_phase</span><span class="p">))</span>
             <span class="n">braket_circuit</span><span class="o">.</span><span class="n">gphase</span><span class="p">(</span><span class="n">global_phase</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
