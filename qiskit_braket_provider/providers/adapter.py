@@ -1036,8 +1036,11 @@ def _translate_to_braket(
                             target=qubit_indices,
                         )
     global_phase = circuit.global_phase
-    if abs(global_phase) > _EPS:
+    has_nonzero_phase = isinstance(global_phase, ParameterExpression) or abs(global_phase) > _EPS
+    if has_nonzero_phase:
         if (target and "global_phase" in target) or (basis_gates and "global_phase" in basis_gates):
+            if isinstance(global_phase, ParameterExpression):
+                global_phase = FreeParameterExpression(rename_parameter(global_phase))
             braket_circuit.gphase(global_phase)
         else:
             warnings.warn(
