@@ -14,6 +14,10 @@ from qiskit_braket_provider.providers.adapter import (
     to_qiskit,
 )
 
+VERBATIM_LABEL = "verbatim"
+NUM_QUBITS = 2
+QUBIT_PAIR = [0, 1]
+
 
 def _make_box_circuit(num_qubits, gates):
     """Create a QuantumCircuit with the given gates applied.
@@ -38,8 +42,10 @@ def _to_qiskit_input(source, use_program):
     return Program(source=source) if use_program else source
 
 
-# Shared OpenQASM programs for round-trip tests
-_SINGLE_BOX_QASM = """
+@pytest.fixture
+def single_box_qasm():
+    """OpenQASM with one verbatim box followed by a gate."""
+    return """
 OPENQASM 3.0;
 #pragma braket verbatim
 box {
@@ -48,7 +54,12 @@ box {
 }
 x $1;
 """
-_MULTI_BOX_QASM = """
+
+
+@pytest.fixture
+def multi_box_qasm():
+    """OpenQASM with two verbatim boxes separated by a gate."""
+    return """
 OPENQASM 3.0;
 #pragma braket verbatim
 box {
@@ -60,7 +71,12 @@ box {
     cnot $0, $1;
 }
 """
-_MIXED_QASM = """
+
+
+@pytest.fixture
+def mixed_qasm():
+    """OpenQASM with non-verbatim gate, verbatim box, then non-verbatim gate."""
+    return """
 OPENQASM 3.0;
 x $0;
 #pragma braket verbatim
@@ -72,27 +88,42 @@ y $1;
 """
 
 
-# --- Extract verbatim boxes tests ---
+@pytest.fixture
+def h_cx_circuit():
+    """2-qubit circuit with H on q0 and CX on q0,q1."""
+    return _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+
+
+@pytest.fixture
+def h_circuit():
+    """1-qubit circuit with H on q0."""
+    return _make_box_circuit(NUM_QUBITS, [("h", [0])])
+
+
+@pytest.fixture
+def cx_circuit():
+    """2-qubit circuit with CX on q0,q1."""
+    return _make_box_circuit(NUM_QUBITS, [("cx", [0, 1])])
 
 
 @pytest.mark.parametrize(
     "inner_gates, expected_gate_names, expected_qubits",
     [
-        ([("h", [0]), ("cx", [0, 1])], ["h", "cx"], [0, 1]),
-        ([], [], [0, 1]),  # empty verbatim box
+        ([("h", [0]), ("cx", [0, 1])], ["h", "cx"], QUBIT_PAIR),
+        ([], [], QUBIT_PAIR),  # empty verbatim box
     ],
     ids=["single_box_with_gates", "empty_box"],
 )
 def test_verbatim_box_extraction(inner_gates, expected_gate_names, expected_qubits):
-    inner = _make_box_circuit(2, inner_gates)
-    main = QuantumCircuit(2)
-    main.append(BoxOp(inner, label="verbatim"), [0, 1])
+    inner = _make_box_circuit(NUM_QUBITS, inner_gates)
+    main = QuantumCircuit(NUM_QUBITS)
+    main.append(BoxOp(inner, label=VERBATIM_LABEL), QUBIT_PAIR)
 
-    modified, boxes = _extract_verbatim_boxes(main, "verbatim")
+    modified, boxes = _extract_verbatim_boxes(main, VERBATIM_LABEL)
 
     assert len(modified.data) == 1
     assert isinstance(modified.data[0].operation, Barrier)
-    assert modified.data[0].operation.label == "verbatim"
+    assert modified.data[0].operation.label == VERBATIM_LABEL
 
     assert len(boxes) == 1
     box_circuit, qubit_indices = boxes[0]
@@ -100,20 +131,17 @@ def test_verbatim_box_extraction(inner_gates, expected_gate_names, expected_qubi
     assert qubit_indices == expected_qubits
 
 
-def test_multiple_verbatim_boxes_extraction():
-    inner1 = _make_box_circuit(2, [("h", [0])])
-    inner2 = _make_box_circuit(2, [("cx", [0, 1])])
-
-    main = QuantumCircuit(2)
-    main.append(BoxOp(inner1, label="verbatim"), [0, 1])
+def test_multiple_verbatim_boxes_extraction(h_circuit, cx_circuit):
+    main = QuantumCircuit(NUM_QUBITS)
+    main.append(BoxOp(h_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
     main.x(1)
-    main.append(BoxOp(inner2, label="verbatim"), [0, 1])
+    main.append(BoxOp(cx_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
 
-    modified, boxes = _extract_verbatim_boxes(main, "verbatim")
+    modified, boxes = _extract_verbatim_boxes(main, VERBATIM_LABEL)
 
     barriers = [i for i in modified.data if isinstance(i.operation, Barrier)]
     assert len(barriers) == 2
-    assert all(b.operation.label == "verbatim" for b in barriers)
+    assert all(b.operation.label == VERBATIM_LABEL for b in barriers)
     assert len([i for i in modified.data if i.operation.name == "x"]) == 1
 
     assert len(boxes) == 2
@@ -122,20 +150,19 @@ def test_multiple_verbatim_boxes_extraction():
 
 
 def test_circuit_without_verbatim_boxes():
-    main = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-    modified, boxes = _extract_verbatim_boxes(main, "verbatim")
+    main = _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+    modified, boxes = _extract_verbatim_boxes(main, VERBATIM_LABEL)
 
     assert len(modified.data) == 2
     assert [d.operation.name for d in modified.data] == ["h", "cx"]
     assert len(boxes) == 0
 
 
-def test_non_verbatim_boxop_not_extracted():
-    inner = _make_box_circuit(2, [("h", [0])])
-    main = QuantumCircuit(2)
-    main.append(BoxOp(inner, label="other_label"), [0, 1])
+def test_non_verbatim_boxop_not_extracted(h_circuit):
+    main = QuantumCircuit(NUM_QUBITS)
+    main.append(BoxOp(h_circuit, label="other_label"), QUBIT_PAIR)
 
-    modified, boxes = _extract_verbatim_boxes(main, "verbatim")
+    modified, boxes = _extract_verbatim_boxes(main, VERBATIM_LABEL)
 
     assert len(boxes) == 0
     assert len(modified.data) == 1
@@ -143,15 +170,11 @@ def test_non_verbatim_boxop_not_extracted():
     assert modified.data[0].operation.label == "other_label"
 
 
-# --- Restore verbatim boxes tests ---
+def test_single_verbatim_box_restoration(h_cx_circuit):
+    transpiled = QuantumCircuit(NUM_QUBITS)
+    transpiled.append(Barrier(NUM_QUBITS, label=VERBATIM_LABEL), QUBIT_PAIR)
 
-
-def test_single_verbatim_box_restoration():
-    box_circuit = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-    transpiled = QuantumCircuit(2)
-    transpiled.append(Barrier(2, label="verbatim"), [0, 1])
-
-    restored = _restore_verbatim_boxes(transpiled, [(box_circuit, [0, 1])], "verbatim")
+    restored = _restore_verbatim_boxes(transpiled, [(h_cx_circuit, QUBIT_PAIR)], VERBATIM_LABEL)
 
     assert len(restored.data) == 2
     assert restored.data[0].operation.name == "h"
@@ -161,17 +184,14 @@ def test_single_verbatim_box_restoration():
     assert restored.find_bit(restored.data[1].qubits[1]).index == 1
 
 
-def test_multiple_verbatim_boxes_restoration():
-    box1 = _make_box_circuit(2, [("h", [0])])
-    box2 = _make_box_circuit(2, [("cx", [0, 1])])
-
-    transpiled = QuantumCircuit(2)
-    transpiled.append(Barrier(2, label="verbatim"), [0, 1])
+def test_multiple_verbatim_boxes_restoration(h_circuit, cx_circuit):
+    transpiled = QuantumCircuit(NUM_QUBITS)
+    transpiled.append(Barrier(NUM_QUBITS, label=VERBATIM_LABEL), QUBIT_PAIR)
     transpiled.x(1)
-    transpiled.append(Barrier(2, label="verbatim"), [0, 1])
+    transpiled.append(Barrier(NUM_QUBITS, label=VERBATIM_LABEL), QUBIT_PAIR)
 
     restored = _restore_verbatim_boxes(
-        transpiled, [(box1, [0, 1]), (box2, [0, 1])], "verbatim"
+        transpiled, [(h_circuit, QUBIT_PAIR), (cx_circuit, QUBIT_PAIR)], VERBATIM_LABEL
     )
 
     gate_names = [i.operation.name for i in restored.data]
@@ -187,31 +207,27 @@ def test_multiple_verbatim_boxes_restoration():
     ids=["too_many_barriers", "too_few_barriers"],
 )
 def test_barrier_box_count_mismatch(num_barriers, num_boxes, error_match):
-    transpiled = QuantumCircuit(2)
+    transpiled = QuantumCircuit(NUM_QUBITS)
     for _ in range(num_barriers):
-        transpiled.append(Barrier(2, label="verbatim"), [0, 1])
+        transpiled.append(Barrier(NUM_QUBITS, label=VERBATIM_LABEL), QUBIT_PAIR)
 
-    boxes = [(_make_box_circuit(2, [("h", [0])]), [0, 1]) for _ in range(num_boxes)]
+    boxes = [(_make_box_circuit(NUM_QUBITS, [("h", [0])]), QUBIT_PAIR) for _ in range(num_boxes)]
 
     with pytest.raises(ValueError, match=error_match):
-        _restore_verbatim_boxes(transpiled, boxes, "verbatim")
+        _restore_verbatim_boxes(transpiled, boxes, VERBATIM_LABEL)
 
 
-# --- to_braket integration tests ---
-
-
-def test_to_braket_with_single_verbatim_box():
-    inner = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-    qc = QuantumCircuit(2)
+def test_to_braket_with_single_verbatim_box(h_cx_circuit):
+    qc = QuantumCircuit(NUM_QUBITS)
     qc.x(0)
-    qc.append(BoxOp(inner, label="verbatim"), [0, 1])
+    qc.append(BoxOp(h_cx_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
     qc.y(1)
 
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
     names = [n for n, _ in info]
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     for expected in ("X", "H", "CNot", "Y"):
         assert expected in names
 
@@ -220,62 +236,59 @@ def test_to_braket_with_single_verbatim_box():
     assert indices["X"] < indices["H"] < indices["CNot"] < indices["Y"]
     assert info[indices["X"]][1] == [0]
     assert info[indices["H"]][1] == [0]
-    assert info[indices["CNot"]][1] == [0, 1]
+    assert info[indices["CNot"]][1] == QUBIT_PAIR
     assert info[indices["Y"]][1] == [1]
 
 
-def test_to_braket_with_multiple_verbatim_boxes():
-    inner1 = _make_box_circuit(2, [("h", [0])])
-    inner2 = _make_box_circuit(2, [("cx", [0, 1])])
-    qc = QuantumCircuit(2)
-    qc.append(BoxOp(inner1, label="verbatim"), [0, 1])
+def test_to_braket_with_multiple_verbatim_boxes(h_circuit, cx_circuit):
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.append(BoxOp(h_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
     qc.x(1)
-    qc.append(BoxOp(inner2, label="verbatim"), [0, 1])
+    qc.append(BoxOp(cx_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
 
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     indices = {n: next(i for i, (nm, _) in enumerate(info) if nm == n)
                for n in ("H", "X", "CNot")}
     assert indices["H"] < indices["X"] < indices["CNot"]
     assert info[indices["H"]][1] == [0]
     assert info[indices["X"]][1] == [1]
-    assert info[indices["CNot"]][1] == [0, 1]
+    assert info[indices["CNot"]][1] == QUBIT_PAIR
 
 
-def test_to_braket_with_custom_verbatim_box_name():
-    inner = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-    qc = QuantumCircuit(2)
-    qc.append(BoxOp(inner, label="custom_verbatim"), [0, 1])
+def test_to_braket_with_custom_verbatim_box_name(h_cx_circuit):
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.append(BoxOp(h_cx_circuit, label="custom_verbatim"), QUBIT_PAIR)
 
     bc = to_braket(qc, verbatim=False, verbatim_box_name="custom_verbatim")
     info = _gate_info(bc)
     names = [n for n, _ in info]
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     assert "H" in names
     assert "CNot" in names
     h_idx = next(i for i, (n, _) in enumerate(info) if n == "H")
     cnot_idx = next(i for i, (n, _) in enumerate(info) if n == "CNot")
     assert info[h_idx][1] == [0]
-    assert info[cnot_idx][1] == [0, 1]
+    assert info[cnot_idx][1] == QUBIT_PAIR
     assert h_idx < cnot_idx
 
 
 def test_to_braket_backward_compatibility():
-    qc = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
+    qc = _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
     names = [n for n, _ in info]
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     assert "H" in names
     assert "CNot" in names
     h_idx = next(i for i, (n, _) in enumerate(info) if n == "H")
     cnot_idx = next(i for i, (n, _) in enumerate(info) if n == "CNot")
     assert info[h_idx][1] == [0]
-    assert info[cnot_idx][1] == [0, 1]
+    assert info[cnot_idx][1] == QUBIT_PAIR
     assert h_idx < cnot_idx
 
 
@@ -288,10 +301,9 @@ def test_to_braket_backward_compatibility():
     ],
     ids=["verbatim_true", "trivial_layout", "layout_override"],
 )
-def test_to_braket_verbatim_and_layout_options(verbatim, layout_method):
-    inner = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-    qc = QuantumCircuit(2)
-    qc.append(BoxOp(inner, label="verbatim"), [0, 1])
+def test_to_braket_verbatim_and_layout_options(verbatim, layout_method, h_cx_circuit):
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.append(BoxOp(h_cx_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
 
     kwargs = {"verbatim": verbatim}
     if layout_method:
@@ -300,73 +312,68 @@ def test_to_braket_verbatim_and_layout_options(verbatim, layout_method):
     info = _gate_info(bc)
     names = [n for n, _ in info]
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     assert "H" in names
     assert "CNot" in names
     h_idx = next(i for i, (n, _) in enumerate(info) if n == "H")
     cnot_idx = next(i for i, (n, _) in enumerate(info) if n == "CNot")
     assert info[h_idx][1] == [0]
-    assert info[cnot_idx][1] == [0, 1]
+    assert info[cnot_idx][1] == QUBIT_PAIR
     assert h_idx < cnot_idx
 
 
-def test_to_braket_raises_on_pass_manager_with_verbatim_boxes():
-    inner = _make_box_circuit(2, [("h", [0])])
-    qc = QuantumCircuit(2)
-    qc.append(BoxOp(inner, label="verbatim"), [0, 1])
+def test_to_braket_raises_on_pass_manager_with_verbatim_boxes(h_circuit):
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.append(BoxOp(h_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
 
     with pytest.raises(ValueError, match="Custom pass_manager is not supported with verbatim boxes"):
         to_braket(qc, verbatim=False, pass_manager=PassManager([Optimize1qGates()]))
 
 
 def test_to_braket_raises_on_barrier_labeled_as_verbatim_box():
-    qc = QuantumCircuit(2)
+    qc = QuantumCircuit(NUM_QUBITS)
     qc.x(0)
-    qc.append(Barrier(2, label="verbatim"), [0, 1])
+    qc.append(Barrier(NUM_QUBITS, label=VERBATIM_LABEL), QUBIT_PAIR)
     qc.y(1)
 
     with pytest.raises(ValueError, match="Cannot have a Barrier labeled with the same label used for verbatim boxes"):
         to_braket(qc, verbatim=False)
 
 
-def test_to_braket_with_multiple_circuits_with_verbatim_boxes():
-    inner1 = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
-    qc1 = QuantumCircuit(2)
+def test_to_braket_with_multiple_circuits_with_verbatim_boxes(h_cx_circuit):
+    qc1 = QuantumCircuit(NUM_QUBITS)
     qc1.x(0)
-    qc1.append(BoxOp(inner1, label="verbatim"), [0, 1])
+    qc1.append(BoxOp(h_cx_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
 
     inner2 = _make_box_circuit(3, [("h", [0]), ("h", [1]), ("ccx", [0, 1, 2])])
     qc2 = QuantumCircuit(3)
-    qc2.append(BoxOp(inner2, label="verbatim"), [0, 1, 2])
+    qc2.append(BoxOp(inner2, label=VERBATIM_LABEL), [0, 1, 2])
     qc2.z(2)
 
-    qc3 = _make_box_circuit(2, [("h", [0]), ("cx", [0, 1])])
+    qc3 = _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
 
     results = to_braket([qc1, qc2, qc3], verbatim=False)
 
     assert isinstance(results, list)
     assert len(results) == 3
-    assert results[0].qubit_count == 2
+    assert results[0].qubit_count == NUM_QUBITS
     assert results[1].qubit_count == 3
-    assert results[2].qubit_count == 2
-
-
-# --- Round-trip conversion tests ---
+    assert results[2].qubit_count == NUM_QUBITS
 
 
 @pytest.mark.parametrize("use_program", [True, False], ids=["braket_program", "openqasm"])
-def test_round_trip_single_verbatim_box(use_program):
-    qc = to_qiskit(_to_qiskit_input(_SINGLE_BOX_QASM, use_program))
+def test_round_trip_single_verbatim_box(use_program, single_box_qasm):
+    qc = to_qiskit(_to_qiskit_input(single_box_qasm, use_program))
 
     box_ops = [i for i in qc.data
-               if hasattr(i.operation, "label") and i.operation.label == "verbatim"]
+               if hasattr(i.operation, "label") and i.operation.label == VERBATIM_LABEL]
     assert len(box_ops) == 1
 
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
     names = [n for n, _ in info]
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     for expected in ("H", "CNot", "X"):
         assert expected in names
 
@@ -375,28 +382,28 @@ def test_round_trip_single_verbatim_box(use_program):
     assert indices["H"] < indices["X"]
     assert indices["CNot"] < indices["X"]
     assert info[indices["H"]][1] == [0]
-    assert info[indices["CNot"]][1] == [0, 1]
+    assert info[indices["CNot"]][1] == QUBIT_PAIR
     assert info[indices["X"]][1] == [1]
 
 
 @pytest.mark.parametrize("use_program", [True, False], ids=["braket_program", "openqasm"])
-def test_round_trip_multiple_verbatim_boxes(use_program):
-    qc = to_qiskit(_to_qiskit_input(_MULTI_BOX_QASM, use_program))
+def test_round_trip_multiple_verbatim_boxes(use_program, multi_box_qasm):
+    qc = to_qiskit(_to_qiskit_input(multi_box_qasm, use_program))
 
     box_ops = [i for i in qc.data
-               if hasattr(i.operation, "label") and i.operation.label == "verbatim"]
+               if hasattr(i.operation, "label") and i.operation.label == VERBATIM_LABEL]
     assert len(box_ops) == 2
 
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     indices = {n: next(i for i, (nm, _) in enumerate(info) if nm == n)
                for n in ("H", "X", "CNot")}
     assert indices["H"] < indices["X"] < indices["CNot"]
     assert info[indices["H"]][1] == [0]
     assert info[indices["X"]][1] == [1]
-    assert info[indices["CNot"]][1] == [0, 1]
+    assert info[indices["CNot"]][1] == QUBIT_PAIR
 
 
 @pytest.mark.parametrize("use_program", [True, False], ids=["braket_program", "openqasm"])
@@ -431,20 +438,20 @@ box {
 
 
 @pytest.mark.parametrize("use_program", [True, False], ids=["braket_program", "openqasm"])
-def test_round_trip_mixed_verbatim_and_non_verbatim(use_program):
-    qc = to_qiskit(_to_qiskit_input(_MIXED_QASM, use_program))
+def test_round_trip_mixed_verbatim_and_non_verbatim(use_program, mixed_qasm):
+    qc = to_qiskit(_to_qiskit_input(mixed_qasm, use_program))
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
     names = [n for n, _ in info]
 
-    assert bc.qubit_count == 2
+    assert bc.qubit_count == NUM_QUBITS
     assert "H" in names
     assert "CNot" in names
 
     h_idx = next(i for i, (n, _) in enumerate(info) if n == "H")
     cnot_idx = next(i for i, (n, _) in enumerate(info) if n == "CNot")
     assert info[h_idx][1] == [0]
-    assert info[cnot_idx][1] == [0, 1]
+    assert info[cnot_idx][1] == QUBIT_PAIR
     assert h_idx < cnot_idx
 
 
@@ -465,7 +472,7 @@ box {
 """
     qc = to_qiskit(qasm)
     box_ops = [i for i in qc.data
-               if hasattr(i.operation, "label") and i.operation.label == "verbatim"]
+               if hasattr(i.operation, "label") and i.operation.label == VERBATIM_LABEL]
     assert len(box_ops) == 2
 
     bc = to_braket(qc, verbatim=False)
@@ -481,6 +488,5 @@ box {
     assert all(ci > x_idx for ci in cnot_indices)
     assert info[h_idx][1] == [0]
     assert info[x_idx][1] == [1]
-    assert info[cnot_indices[0]][1] == [0, 1]
+    assert info[cnot_indices[0]][1] == QUBIT_PAIR
     assert info[cnot_indices[1]][1] == [1, 2]
-
