@@ -313,6 +313,34 @@ class TestAdapter(TestCase):
         self.assertEqual(braket_circuit_no_gphase.global_phase, 0)
         self.assertEqual(braket_circuit_no_gphase, Circuit().h(0))
 
+    def test_parameterized_global_phase(self):
+        """Tests that to_braket handles parameterized global phase from transpilation."""
+        braket_input = Circuit().phaseshift(0, FreeParameter("theta"))
+
+        mock_ankaa = Mock(spec=AwsDevice)
+        mock_ankaa.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        mock_ankaa.gate_calibrations = None
+        mock_ankaa.type = "QPU"
+        mock_ankaa.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+
+        with self.assertWarns(UserWarning) as cm:
+            result = to_braket(braket_input, optimization_level=1, braket_device=mock_ankaa)
+        self.assertEqual(
+            str(cm.warning),
+            "Device does not support global phase; "
+            "global phase of 0.5*theta will not be included in Braket circuit",
+        )
+        self.assertIsInstance(result, Circuit)
+        self.assertTrue(len(result.instructions) > 0)
+
+    def test_parameterized_global_phase_supported(self):
+        """Tests that parameterized global phase is converted to gphase when supported."""
+        braket_input = Circuit().phaseshift(0, FreeParameter("theta"))
+        result = to_braket(
+            braket_input, basis_gates=["rx", "rz", "cz", "global_phase"]
+        )
+        self.assertIn("0.5*theta", str(result.global_phase))
+
     def test_exponential_gate_decomp(self):
         """Tests adapter translation of exponential gates"""
         qiskit_circuit = QuantumCircuit(2)
