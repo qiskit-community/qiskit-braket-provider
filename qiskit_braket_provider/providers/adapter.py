@@ -404,15 +404,17 @@ class _QiskitProgramContext(AbstractProgramContext):
                 len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
             )
 
-        # Ensure circuit has enough qubits for the target indices
+        # Ensure circuit has enough qubits for the target indices by adding missing qubits
         # This is needed when using physical qubits ($0, $1, etc.) where no qubit register is declared
         max_qubits = (max(target) + 1) if target else -1
-        self._circuit.add_bits([Qubit() for _ in range(max_qubits - self._circuit.num_qubits)])
+        num_missing_qubits = max_qubits - self._circuit.num_qubits
+        self._circuit.add_bits([Qubit() for _ in range(num_missing_qubits)])
         self.num_qubits = self._circuit.num_qubits        
 
         if self._in_verbatim_box:
-            # Ensure verbatim circuit also has enough qubits
-            self._verbatim_circuit.add_bits([Qubit() for _ in range(max_qubits - self._verbatim_circuit.num_qubits)])
+            # Ensure verbatim circuit also has enough qubits by adding missing qubits
+            num_missing_qubits = max_qubits - self._verbatim_circuit.num_qubits
+            self._verbatim_circuit.add_bits([Qubit() for _ in range(num_missing_qubits)])
             self._verbatim_circuit.append(CircuitInstruction(gate, target))
         else:
             self._circuit.append(CircuitInstruction(gate, target))
@@ -423,7 +425,8 @@ class _QiskitProgramContext(AbstractProgramContext):
     def add_measure(self, target: tuple[int], classical_targets: Iterable[int] | None = None):
         # this is to cover the edge case where a user measures a qubit without assigning it to a classical register
         if self._circuit.num_clbits < len(target):
-            self._circuit.add_bits([Clbit() for _ in range(len(target) - self._circuit.num_clbits)])
+            num_missing_clbits = len(target) - self._circuit.num_clbits
+            self._circuit.add_bits([Clbit() for _ in range(num_missing_clbits)])
         for iter, qubit in enumerate(target):
             index = classical_targets[iter] if classical_targets else iter
             self._circuit.measure(qubit, index)
@@ -972,7 +975,8 @@ def _restore_verbatim_boxes(
     remaining_boxes = list(verbatim_box_iter)
     if remaining_boxes:
         raise ValueError(
-            f"Compiler error while processing verbatim boxes. Expected {barrier_count} verbatim boxes, but found {len(verbatim_boxes)}."
+            f"Compiler error while processing verbatim boxes. Expected {barrier_count} "
+            "verbatim boxes, but found {len(verbatim_boxes)}."
         )
 
     return reconstructed_circuit
@@ -1101,7 +1105,8 @@ def to_braket(
     
     if pass_manager and has_verbatim_boxes:
         raise ValueError(
-            "Custom pass_manager is not supported with verbatim boxes. Verbatim boxes require controlled transpilation to preserve gate ordering."
+            "Custom pass_manager is not supported with verbatim boxes. "
+            "Verbatim boxes require controlled transpilation to preserve gate ordering."
         )
     
     all_verbatim_boxes = []
@@ -1133,7 +1138,8 @@ def to_braket(
         target = target if basis_gates or target else _default_target(circuits)
         
         if has_verbatim_boxes:
-            warnings.warn("Overriding layout method to 'trivial' and routing method to 'none' as the circuit has verbatim blocks", stacklevel=1)
+            warnings.warn("Overriding layout method to 'trivial' "
+            "and routing method to 'none' as the circuit has verbatim blocks", stacklevel=1)
             effective_layout_method = 'trivial'
             effective_routing_method = 'none'
         else:
@@ -1514,11 +1520,10 @@ def to_qiskit(
         
         >>> openqasm_program = '''
         ... OPENQASM 3.0;
-        ... qubit[2] q;
         ... #pragma braket verbatim
         ... box {
-        ...     h q[0];
-        ...     cnot q[0], q[1];
+        ...     h $0;
+        ...     cnot $0, $1;
         ... }
         ... '''
         >>> qiskit_circuit = to_qiskit(openqasm_program)
