@@ -249,13 +249,15 @@
 <h1>qiskit_braket_provider.providers.to_qiskit<a class="headerlink" href="#qiskit-braket-provider-providers-to-qiskit" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_braket_provider.providers.to_qiskit">
-<span class="sig-name descname"><span class="pre">to_qiskit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_measurements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/adapter.html#to_qiskit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.to_qiskit" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_qiskit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_measurements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbatim_box_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'verbatim'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_braket_provider/providers/adapter.html#to_qiskit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_braket_provider.providers.to_qiskit" title="Link to this definition">¶</a></dt>
 <dd><p>Return a Qiskit quantum circuit from a Braket quantum circuit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>circuit</strong> (<em>Circuit</em><em> | </em><em>Program</em><em> | </em><em>str</em>) – Braket quantum circuit or OpenQASM 3 program.</p></li>
 <li><p><strong>add_measurements</strong> (<em>bool</em>) – Whether to append measurements in the conversion</p></li>
+<li><p><strong>verbatim_box_name</strong> (<em>str</em>) – Name to use for BoxOp labels when converting verbatim boxes.
+Default: “verbatim”</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -265,6 +267,29 @@
 <dd class="field-odd"><p>QuantumCircuit</p>
 </dd>
 </dl>
+<p class="rubric">Examples</p>
+<p>Convert an OpenQASM 3 program with a verbatim box:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">openqasm_program</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="gp">... </span><span class="s1">OPENQASM 3.0;</span>
+<span class="gp">... </span><span class="s1">#pragma braket verbatim</span>
+<span class="gp">... </span><span class="s1">box {</span>
+<span class="gp">... </span><span class="s1">    h $0;</span>
+<span class="gp">... </span><span class="s1">    cnot $0, $1;</span>
+<span class="gp">... </span><span class="s1">}</span>
+<span class="gp">... </span><span class="s1">&#39;&#39;&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qiskit_circuit</span> <span class="o">=</span> <span class="n">to_qiskit</span><span class="p">(</span><span class="n">openqasm_program</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># The verbatim box is represented as a BoxOp in the circuit</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># You can inspect it by iterating through the circuit operations</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">instruction</span> <span class="ow">in</span> <span class="n">qiskit_circuit</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">instruction</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">instruction</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">label</span> <span class="o">==</span> <span class="s1">&#39;verbatim&#39;</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found verbatim box: </span><span class="si">{</span><span class="n">instruction</span><span class="o">.</span><span class="n">operation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Use a custom name for verbatim boxes:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qiskit_circuit</span> <span class="o">=</span> <span class="n">to_qiskit</span><span class="p">(</span><span class="n">openqasm_program</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="o">=</span><span class="s2">&quot;my_verbatim&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># All verbatim boxes will have the label &quot;my_verbatim&quot;</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>

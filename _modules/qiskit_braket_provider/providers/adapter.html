@@ -245,7 +245,13 @@
         </div>
         <article role="main">
           <h1>Source code for qiskit_braket_provider.providers.adapter</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Util function for provider.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Util function for provider.</span>
+
+<span class="sd">This module provides utilities for converting between Braket and Qiskit quantum circuits,</span>
+<span class="sd">including support for Braket verbatim pragmas. Verbatim boxes in OpenQASM 3 programs are</span>
+<span class="sd">converted to Qiskit BoxOp operations, which treat blocks of gates atomically to preserve</span>
+<span class="sd">sequences that should not be optimized.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
@@ -259,13 +265,17 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">qiskit.quantum_info</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qiskit_qi</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">transpile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Barrier</span><span class="p">,</span>
+    <span class="n">BoxOp</span><span class="p">,</span>
     <span class="n">CircuitInstruction</span><span class="p">,</span>
+    <span class="n">Clbit</span><span class="p">,</span>
     <span class="n">ControlledGate</span><span class="p">,</span>
     <span class="n">Gate</span><span class="p">,</span>
     <span class="n">Measure</span><span class="p">,</span>
     <span class="n">Parameter</span><span class="p">,</span>
     <span class="n">ParameterExpression</span><span class="p">,</span>
     <span class="n">ParameterVectorElement</span><span class="p">,</span>
+    <span class="n">Qubit</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instruction</span> <span class="k">as</span> <span class="n">QiskitInstruction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_standard_gate_name_mapping</span>
@@ -288,7 +298,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">gates</span> <span class="k">as</span> <span class="n">braket_gates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">noises</span> <span class="k">as</span> <span class="n">braket_noises</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">observables</span> <span class="k">as</span> <span class="n">braket_observables</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.interpreter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpreter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.interpreter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpreter</span><span class="p">,</span> <span class="n">VerbatimBoxDelimiter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.parser.openqasm_ast</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BitType</span><span class="p">,</span>
+    <span class="n">ClassicalType</span><span class="p">,</span>
+    <span class="n">IntegerLiteral</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.program_context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractProgramContext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.device_schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DeviceActionType</span><span class="p">,</span>
@@ -507,6 +522,8 @@
     <span class="s2">&quot;Z&quot;</span><span class="p">:</span> <span class="n">braket_observables</span><span class="o">.</span><span class="n">Z</span><span class="p">,</span>
 <span class="p">}</span>
 
+<span class="n">_BRAKET_VERBATIM_BOX_NAME</span> <span class="o">=</span> <span class="s2">&quot;verbatim&quot;</span>
+
 <span class="n">_Translatable</span> <span class="o">=</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Program</span> <span class="o">|</span> <span class="nb">str</span>
 
 <span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
@@ -542,18 +559,74 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_QiskitProgramContext</span><span class="p">(</span><span class="n">AbstractProgramContext</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Program context for converting OpenQASM 3 programs to Qiskit circuits.</span>
+<span class="sd">    </span>
+<span class="sd">    This context extends AbstractProgramContext to build Qiskit QuantumCircuits from</span>
+<span class="sd">    OpenQASM 3 programs. It supports Braket verbatim pragmas, which are converted to</span>
+<span class="sd">    Qiskit BoxOp operations to preserve gate sequences that should not be optimized.</span>
+<span class="sd">    </span>
+<span class="sd">    Verbatim boxes are represented using Qiskit&#39;s native BoxOp construct, which treats</span>
+<span class="sd">    a block of operations atomically. All verbatim boxes in a circuit use the same</span>
+<span class="sd">    configurable label name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_BRAKET_VERBATIM_BOX_NAME</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Qiskit program context.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            verbatim_box_name: Name to use for BoxOp labels when converting verbatim boxes.</span>
+<span class="sd">                Default: &quot;verbatim&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_param_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_box_name</span> <span class="o">=</span> <span class="n">verbatim_box_name</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Unclosed verbatim box at end of program. &quot;</span>
+                <span class="s2">&quot;Every verbatim box start marker must have a matching end marker.&quot;</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_qubits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_qubits</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_register</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_register</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">declare_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">symbol_type</span><span class="p">:</span> <span class="n">ClassicalType</span> <span class="o">|</span> <span class="nb">type</span><span class="p">,</span>
+        <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">const</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Override to add classical bits to the Qiskit circuit when declared.</span>
+<span class="sd">        </span>
+<span class="sd">        When a classical bit array is declared (e.g., bit[2] c;), we need to add</span>
+<span class="sd">        the corresponding classical bits to the Qiskit circuit.</span>
+<span class="sd">        </span>
+<span class="sd">        Note: This only adds classical bits when the size is known at declaration time.</span>
+<span class="sd">        For function parameters with variable sizes (e.g., bit[n] where n is a parameter),</span>
+<span class="sd">        the classical bits are not added since the size is not yet determined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">symbol_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+        
+        <span class="c1"># If this is a bit type declaration, add classical bits to the circuit</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol_type</span><span class="p">,</span> <span class="n">BitType</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">symbol_type</span><span class="o">.</span><span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol_type</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">IntegerLiteral</span><span class="p">):</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="n">symbol_type</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">value</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Size is an Identifier or expression, can&#39;t determine size yet</span>
+                    <span class="c1"># This happens for function parameters like bit[n] where n is a variable</span>
+                    <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_builtin_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_BRAKET_GATE_NAME_TO_QISKIT_GATE</span>
@@ -577,15 +650,76 @@
             <span class="n">gate</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">control</span><span class="p">(</span>
                 <span class="nb">len</span><span class="p">(</span><span class="n">ctrl_modifiers</span><span class="p">),</span> <span class="n">ctrl_state</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ctrl_modifiers</span><span class="p">]))</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CircuitInstruction</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
+
+        <span class="c1"># Ensure circuit has enough qubits for the target indices by adding missing qubits</span>
+        <span class="c1"># This is needed when using physical qubits ($0, $1, etc.) where no qubit register is declared</span>
+        <span class="n">max_qubits</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">target</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">num_missing_qubits</span> <span class="o">=</span> <span class="n">max_qubits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_qubits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_qubits</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_qubits</span>        
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span><span class="p">:</span>
+            <span class="c1"># Ensure verbatim circuit also has enough qubits by adding missing qubits</span>
+            <span class="n">num_missing_qubits</span> <span class="o">=</span> <span class="n">max_qubits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">num_qubits</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_qubits</span><span class="p">)])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CircuitInstruction</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CircuitInstruction</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_parameter_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_sympy_to_qiskit</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_map</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Expr</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">classical_targets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># this is to cover the edge case where a user measures a qubit without assigning it to a classical register</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_clbits</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="n">num_missing_clbits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_clbits</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_clbits</span><span class="p">)])</span>
         <span class="k">for</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="n">classical_targets</span><span class="p">[</span><span class="nb">iter</span><span class="p">]</span> <span class="k">if</span> <span class="n">classical_targets</span> <span class="k">else</span> <span class="nb">iter</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_verbatim_marker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">marker</span><span class="p">:</span> <span class="n">VerbatimBoxDelimiter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle verbatim box start/end markers.</span>
+
+<span class="sd">        When START_VERBATIM is received:</span>
+<span class="sd">        - Create a new QuantumCircuit to collect verbatim gates</span>
+<span class="sd">        - Set _in_verbatim_box flag to True</span>
+
+<span class="sd">        When END_VERBATIM is received:</span>
+<span class="sd">        - Wrap the collected gates in a BoxOp</span>
+<span class="sd">        - Append the BoxOp to the main circuit</span>
+<span class="sd">        - Reset verbatim state</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            marker: VerbatimBoxDelimiter indicating START_VERBATIM or END_VERBATIM</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If nested verbatim boxes are encountered or if END_VERBATIM is called without START_VERBATIM</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">marker</span> <span class="o">==</span> <span class="n">VerbatimBoxDelimiter</span><span class="o">.</span><span class="n">START_VERBATIM</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Nested verbatim boxes are not supported&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">elif</span> <span class="n">marker</span> <span class="o">==</span> <span class="n">VerbatimBoxDelimiter</span><span class="o">.</span><span class="n">END_VERBATIM</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Verbatim box end marker without matching start&quot;</span><span class="p">)</span>
+
+            <span class="n">box_op</span> <span class="o">=</span> <span class="n">BoxOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_box_name</span><span class="p">)</span>
+
+            <span class="c1"># Append BoxOp to main circuit with all qubits (convert indices to Qubit objects)</span>
+            <span class="c1"># We need to pass the actual Qubit objects from the main circuit, not just indices</span>
+            <span class="n">qubit_objects</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">box_op</span><span class="p">,</span> <span class="n">qubit_objects</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Verbatim box created using invalid marker&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">native_gate_connectivity</span><span class="p">(</span><span class="n">properties</span><span class="p">:</span> <span class="n">DeviceCapabilities</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -987,6 +1121,114 @@
                     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_verbatim_boxes</span><span class="p">(</span>
+    <span class="n">circuit</span><span class="p">:</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract BoxOp operations with verbatim box name and replace with barriers.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        circuit: The Qiskit circuit to process</span>
+<span class="sd">        verbatim_box_name: The label name used to identify verbatim BoxOp operations</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple of (modified_circuit, verbatim_boxes) where:</span>
+<span class="sd">        - modified_circuit: Circuit with BoxOps replaced by named barriers</span>
+<span class="sd">        - verbatim_boxes: List of (box_circuit, qubit_indices) tuples</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">modified_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">circuit</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+    <span class="n">modified_circuit</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">=</span> <span class="n">circuit</span><span class="o">.</span><span class="n">global_phase</span>
+
+    <span class="n">verbatim_boxes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">instruction</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">operation</span> <span class="o">=</span> <span class="n">instruction</span><span class="o">.</span><span class="n">operation</span>
+
+        <span class="c1"># Convert Qubit objects to integer indices</span>
+        <span class="c1"># instruction.qubits contains Qubit objects (circuit-specific)</span>
+        <span class="c1"># find_bit(q).index returns the global integer index (0, 1, 2, ...)</span>
+        <span class="c1"># We consistently use indices for circuits with physical qubits as they do not go through mapping and routing</span>
+        <span class="n">qubit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuit</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">instruction</span><span class="o">.</span><span class="n">qubits</span><span class="p">]</span>
+        <span class="n">clbit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuit</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">instruction</span><span class="o">.</span><span class="n">clbits</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">BoxOp</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">verbatim_box_name</span><span class="p">:</span>
+            <span class="c1"># Extract the circuit from the BoxOp (first block)</span>
+            <span class="n">box_circuit</span> <span class="o">=</span> <span class="n">operation</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">verbatim_boxes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">box_circuit</span><span class="p">,</span> <span class="n">qubit_indices</span><span class="p">))</span>
+
+            <span class="n">barrier</span> <span class="o">=</span> <span class="n">Barrier</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">instruction</span><span class="o">.</span><span class="n">qubits</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">verbatim_box_name</span><span class="p">)</span>
+            <span class="n">modified_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">barrier</span><span class="p">,</span> <span class="n">qubit_indices</span><span class="p">,</span> <span class="n">clbit_indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">modified_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">qubit_indices</span><span class="p">,</span> <span class="n">clbit_indices</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">modified_circuit</span><span class="p">,</span> <span class="n">verbatim_boxes</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_restore_verbatim_boxes</span><span class="p">(</span>
+    <span class="n">transpiled_circuit</span><span class="p">:</span> <span class="n">QuantumCircuit</span><span class="p">,</span>
+    <span class="n">verbatim_boxes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]],</span>
+    <span class="n">verbatim_box_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumCircuit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Restore verbatim boxes by replacing named barriers with box contents.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transpiled_circuit: The transpiled circuit with named barriers</span>
+<span class="sd">        verbatim_boxes: List of (box_circuit, original_qubit_indices) tuples</span>
+<span class="sd">        verbatim_box_name: The label name used to identify verbatim barriers</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Circuit with verbatim box contents restored</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If barrier count doesn&#39;t match verbatim box count</span>
+<span class="sd">        ValueError: If qubit mapping fails</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reconstructed_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+    <span class="n">reconstructed_circuit</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">=</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">global_phase</span>
+
+    <span class="n">verbatim_box_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">verbatim_boxes</span><span class="p">)</span>
+    <span class="n">barrier_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">instruction</span> <span class="ow">in</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="n">operation</span> <span class="o">=</span> <span class="n">instruction</span><span class="o">.</span><span class="n">operation</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">Barrier</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">verbatim_box_name</span><span class="p">:</span>
+            <span class="n">barrier_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">box_circuit</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">verbatim_box_iter</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Compiler error while processing verbatim boxes. Illegal barriers with label &#39;</span><span class="si">{</span><span class="n">verbatim_box_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Insert gates from the verbatim box directly (not as BoxOp)</span>
+            <span class="c1"># Since verbatim boxes can only exist in circuits using physical qubits,</span>
+            <span class="c1"># and we use trivial layout (identity mapping) with no routing during transpilation,</span>
+            <span class="c1"># the qubit indices remain unchanged between the box circuit and the reconstructed circuit.</span>
+            <span class="k">for</span> <span class="n">box_instruction</span> <span class="ow">in</span> <span class="n">box_circuit</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="n">qubit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">box_circuit</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">box_instruction</span><span class="o">.</span><span class="n">qubits</span><span class="p">]</span>
+                <span class="n">clbit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">box_circuit</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">box_instruction</span><span class="o">.</span><span class="n">clbits</span><span class="p">]</span>
+                <span class="c1"># Append the gate instruction with the same qubits as in the box</span>
+                <span class="n">reconstructed_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">box_instruction</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span> <span class="n">qubit_indices</span><span class="p">,</span> <span class="n">clbit_indices</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Get indices of qubits and clbits and add instruction as-is</span>
+            <span class="n">qubit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">instruction</span><span class="o">.</span><span class="n">qubits</span><span class="p">]</span>
+            <span class="n">clbit_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">instruction</span><span class="o">.</span><span class="n">clbits</span><span class="p">]</span>
+            <span class="n">reconstructed_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">qubit_indices</span><span class="p">,</span> <span class="n">clbit_indices</span><span class="p">)</span>
+
+    <span class="n">remaining_boxes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">verbatim_box_iter</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">remaining_boxes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Compiler error while processing verbatim boxes. Expected </span><span class="si">{</span><span class="n">barrier_count</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="s2">&quot;verbatim boxes, but found {len(verbatim_boxes)}.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">reconstructed_circuit</span>
+
+
 <div class="viewcode-block" id="to_braket">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.to_braket.html#qiskit_braket_provider.providers.to_braket">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_braket</span><span class="p">(</span>
@@ -1006,6 +1248,9 @@
     <span class="n">add_measurements</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">circuit</span><span class="p">:</span> <span class="n">_Translatable</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_Translatable</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">connectivity</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbatim_box_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_BRAKET_VERBATIM_BOX_NAME</span><span class="p">,</span>
+    <span class="n">layout_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">routing_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Circuit</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.</span>
 
@@ -1058,6 +1303,16 @@
 <span class="sd">            Default: ``None``. DEPRECATED: use first positional argument or ``circuits`` instead.</span>
 <span class="sd">        connectivity (list[list[int]] | None): If provided, will transpile to a circuit</span>
 <span class="sd">            with this connectivity. Default: ``None``. DEPRECATED: use ``coupling_map`` instead.</span>
+<span class="sd">        verbatim_box_name (str): The label name used to identify verbatim BoxOp operations</span>
+<span class="sd">            in Qiskit circuits. When circuits contain BoxOp operations with this label, they</span>
+<span class="sd">            will be preserved during transpilation by temporarily replacing them with barriers.</span>
+<span class="sd">            Default: ``&quot;verbatim&quot;``.</span>
+<span class="sd">        layout_method (str | None): The layout method to use during transpilation. If ``None``</span>
+<span class="sd">            and the circuit contains verbatim boxes, defaults to ``&#39;trivial&#39;`` to preserve</span>
+<span class="sd">            physical qubit mappings. Otherwise uses Qiskit&#39;s default. Default: ``None``.</span>
+<span class="sd">        routing_method (str | None): The routing method to use during transpilation. If ``None``</span>
+<span class="sd">            and the circuit contains verbatim boxes, defaults to ``&#39;none&#39;`` to disable routing</span>
+<span class="sd">            and preserve physical qubit structure. Otherwise uses Qiskit&#39;s default. Default: ``None``.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If more than one of `target`, ``basis_gates``</span>
@@ -1080,6 +1335,38 @@
     <span class="p">)</span>
     <span class="n">coupling_map</span> <span class="o">=</span> <span class="n">coupling_map</span> <span class="ow">or</span> <span class="n">connectivity</span>
 
+    <span class="n">has_barriers_named_verbatim</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">has_verbatim_boxes</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">instr</span> <span class="ow">in</span> <span class="n">circ</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="n">verbatim_box_name</span><span class="p">:</span>
+                <span class="c1"># Check if any circuits have barriers labeled the same as a verbatim box, and if so raise an error</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span> <span class="n">Barrier</span><span class="p">):</span>
+                    <span class="n">has_barriers_named_verbatim</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="c1"># Check if any circuits have verbatim boxes and extract them before transpilation</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span> <span class="n">BoxOp</span><span class="p">):</span>
+                    <span class="n">has_verbatim_boxes</span> <span class="o">=</span> <span class="kc">True</span>
+    
+    <span class="k">if</span> <span class="n">has_barriers_named_verbatim</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot have a Barrier labeled with the same label used for verbatim boxes&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">pass_manager</span> <span class="ow">and</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Custom pass_manager is not supported with verbatim boxes. &quot;</span>
+            <span class="s2">&quot;Verbatim boxes require controlled transpilation to preserve gate ordering.&quot;</span>
+        <span class="p">)</span>
+    
+    <span class="n">all_verbatim_boxes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
+        <span class="n">extracted_circuits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+            <span class="n">modified_circ</span><span class="p">,</span> <span class="n">verbatim_boxes</span> <span class="o">=</span> <span class="n">_extract_verbatim_boxes</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">)</span>
+            <span class="n">extracted_circuits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">modified_circ</span><span class="p">)</span>
+            <span class="n">all_verbatim_boxes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">verbatim_boxes</span><span class="p">)</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="n">extracted_circuits</span>
+
     <span class="k">if</span> <span class="n">braket_device</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">qubit_labels</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot specify qubit labels with Braket device&quot;</span><span class="p">)</span>
@@ -1097,8 +1384,17 @@
     <span class="k">if</span> <span class="n">pass_manager</span><span class="p">:</span>
         <span class="n">circuits</span> <span class="o">=</span> <span class="n">pass_manager</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">verbatim</span><span class="p">:</span>
-        <span class="c1"># If basis_gates is not None, then target remains empty</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Overriding layout method to &#39;trivial&#39; &quot;</span>
+            <span class="s2">&quot;and routing method to &#39;none&#39; as the circuit has verbatim blocks&quot;</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">effective_layout_method</span> <span class="o">=</span> <span class="s1">&#39;trivial&#39;</span>
+            <span class="n">effective_routing_method</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">effective_layout_method</span> <span class="o">=</span> <span class="n">layout_method</span>
+            <span class="n">effective_routing_method</span> <span class="o">=</span> <span class="n">routing_method</span>
+        
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">target</span>
             <span class="ow">or</span> <span class="n">coupling_map</span>
@@ -1117,9 +1413,18 @@
                 <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
                 <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
                 <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">,</span>
+                <span class="n">layout_method</span><span class="o">=</span><span class="n">effective_layout_method</span><span class="p">,</span>
+                <span class="n">routing_method</span><span class="o">=</span><span class="n">effective_routing_method</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">_SubstitutedTarget</span><span class="p">):</span>
         <span class="n">circuits</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">_substitute</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">_restore_verbatim_boxes</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">verbatim_boxes</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">verbatim_boxes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">circ</span>
+            <span class="k">for</span> <span class="n">circ</span><span class="p">,</span> <span class="n">verbatim_boxes</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">all_verbatim_boxes</span><span class="p">)</span>
+        <span class="p">]</span>
+
     <span class="n">translated</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">_translate_to_braket</span><span class="p">(</span>
             <span class="n">circ</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">qubit_labels</span><span class="p">,</span> <span class="n">verbatim</span><span class="p">,</span> <span class="n">basis_gates</span><span class="p">,</span> <span class="n">angle_restrictions</span><span class="p">,</span> <span class="n">pass_manager</span>
@@ -1449,22 +1754,53 @@
 
 <div class="viewcode-block" id="to_qiskit">
 <a class="viewcode-back" href="../../../stubs/qiskit_braket_provider.providers.to_qiskit.html#qiskit_braket_provider.providers.to_qiskit">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">to_qiskit</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Program</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">add_measurements</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumCircuit</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_qiskit</span><span class="p">(</span>
+    <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span> <span class="o">|</span> <span class="n">Program</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">add_measurements</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">verbatim_box_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_BRAKET_VERBATIM_BOX_NAME</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumCircuit</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Qiskit quantum circuit from a Braket quantum circuit.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        circuit (Circuit | Program | str): Braket quantum circuit or OpenQASM 3 program.</span>
 <span class="sd">        add_measurements (bool): Whether to append measurements in the conversion</span>
+<span class="sd">        verbatim_box_name (str): Name to use for BoxOp labels when converting verbatim boxes.</span>
+<span class="sd">            Default: &quot;verbatim&quot;</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        QuantumCircuit: Qiskit quantum circuit</span>
+<span class="sd">    </span>
+<span class="sd">    Examples:</span>
+<span class="sd">        Convert an OpenQASM 3 program with a verbatim box:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; openqasm_program = &#39;&#39;&#39;</span>
+<span class="sd">        ... OPENQASM 3.0;</span>
+<span class="sd">        ... #pragma braket verbatim</span>
+<span class="sd">        ... box {</span>
+<span class="sd">        ...     h $0;</span>
+<span class="sd">        ...     cnot $0, $1;</span>
+<span class="sd">        ... }</span>
+<span class="sd">        ... &#39;&#39;&#39;</span>
+<span class="sd">        &gt;&gt;&gt; qiskit_circuit = to_qiskit(openqasm_program)</span>
+<span class="sd">        &gt;&gt;&gt; # The verbatim box is represented as a BoxOp in the circuit</span>
+<span class="sd">        &gt;&gt;&gt; # You can inspect it by iterating through the circuit operations</span>
+<span class="sd">        &gt;&gt;&gt; for instruction in qiskit_circuit.data:</span>
+<span class="sd">        ...     if hasattr(instruction.operation, &#39;label&#39;) and instruction.operation.label == &#39;verbatim&#39;:</span>
+<span class="sd">        ...         print(f&quot;Found verbatim box: {instruction.operation}&quot;)</span>
+<span class="sd">        </span>
+<span class="sd">        Use a custom name for verbatim boxes:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; qiskit_circuit = to_qiskit(openqasm_program, verbatim_box_name=&quot;my_verbatim&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; # All verbatim boxes will have the label &quot;my_verbatim&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">Program</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">Interpreter</span><span class="p">(</span><span class="n">_QiskitProgramContext</span><span class="p">())</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span><span class="o">.</span><span class="n">circuit</span>
+            <span class="n">Interpreter</span><span class="p">(</span><span class="n">_QiskitProgramContext</span><span class="p">(</span><span class="n">verbatim_box_name</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">circuit</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Interpreter</span><span class="p">(</span><span class="n">_QiskitProgramContext</span><span class="p">())</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span><span class="o">.</span><span class="n">circuit</span>
+        <span class="k">return</span> <span class="n">Interpreter</span><span class="p">(</span><span class="n">_QiskitProgramContext</span><span class="p">(</span><span class="n">verbatim_box_name</span><span class="p">))</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span><span class="o">.</span><span class="n">circuit</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">Circuit</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected a Circuit, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead.&quot;</span><span class="p">)</span>
 
