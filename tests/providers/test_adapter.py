@@ -30,7 +30,7 @@ from braket.ir.openqasm import Program
 from braket.parametric import FreeParameter
 from braket.pulse import PulseSequence
 from braket.registers import QubitSet
-from qiskit_braket_provider import exception, to_braket, to_qiskit
+from qiskit_braket_provider import exception, qiskit_compile, to_braket, to_qiskit
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_GATE_NAME_TO_QISKIT_GATE,
     _BRAKET_SUPPORTED_NOISES,
@@ -1326,8 +1326,6 @@ class TestQiskitCompile(TestCase):
 
     def test_single_circuit(self):
         """Tests qiskit_compile returns a single QuantumCircuit for single input."""
-        from qiskit_braket_provider import qiskit_compile
-
         circuit = QuantumCircuit(2)
         circuit.h(0)
         circuit.cx(0, 1)
@@ -1336,8 +1334,6 @@ class TestQiskitCompile(TestCase):
 
     def test_multiple_circuits(self):
         """Tests qiskit_compile returns a list for multiple inputs."""
-        from qiskit_braket_provider import qiskit_compile
-
         c1 = QuantumCircuit(1)
         c1.h(0)
         c2 = QuantumCircuit(1)
@@ -1348,8 +1344,6 @@ class TestQiskitCompile(TestCase):
 
     def test_with_basis_gates(self):
         """Tests qiskit_compile transpiles to the given basis gates."""
-        from qiskit_braket_provider import qiskit_compile
-
         circuit = QuantumCircuit(1)
         circuit.h(0)
         result = qiskit_compile(circuit, basis_gates=["rx", "rz"])
@@ -1358,8 +1352,6 @@ class TestQiskitCompile(TestCase):
 
     def test_with_braket_device(self):
         """Tests qiskit_compile transpiles to the target of the given device."""
-        from qiskit_braket_provider import qiskit_compile
-
         circuit = QuantumCircuit(1, 1)
         circuit.h(0)
 
@@ -1375,8 +1367,6 @@ class TestQiskitCompile(TestCase):
 
     def test_verbatim_skips_transpilation(self):
         """Tests qiskit_compile with verbatim=True returns circuit unchanged."""
-        from qiskit_braket_provider import qiskit_compile
-
         circuit = QuantumCircuit(1)
         circuit.h(0)
         result = qiskit_compile(circuit, verbatim=True)
@@ -1385,8 +1375,6 @@ class TestQiskitCompile(TestCase):
 
     def test_consistent_with_to_braket(self):
         """Tests qiskit_compile output translates to same Braket circuit as to_braket."""
-        from qiskit_braket_provider import qiskit_compile
-
         circuit = QuantumCircuit(2)
         circuit.h(0)
         circuit.cx(0, 1)
@@ -1396,6 +1384,18 @@ class TestQiskitCompile(TestCase):
         braket_via_compile = to_braket(compiled)
 
         self.assertEqual(braket_direct, braket_via_compile)
+
+    def test_openqasm3_program(self):
+        """Tests qiskit_compile works with an OpenQASM 3 program."""
+        qasm_string = """
+        qubit[2] q;
+        h q[0];
+        cnot q[0], q[1];
+        """
+        result = qiskit_compile(Program(source=qasm_string))
+        self.assertIsInstance(result, QuantumCircuit)
+        gate_names = {instr.operation.name for instr in result.data}
+        self.assertTrue(gate_names.issubset({"h", "cx", "measure"}))
 
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""
