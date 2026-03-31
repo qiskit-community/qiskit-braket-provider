@@ -24,6 +24,7 @@ Provider classes and functions
     to_qiskit
 """
 
+from .adapter import qiskit_compile as qiskit_compile
 from .adapter import to_braket as to_braket
 from .adapter import to_qiskit as to_qiskit
 from .braket_backend import AWSBraketBackend as AWSBraketBackend

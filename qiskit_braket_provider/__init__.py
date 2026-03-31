@@ -31,6 +31,9 @@ from .providers import (
     BraketSampler as BraketSampler,
 )
 from .providers import (
+    qiskit_compile as qiskit_compile,
+)
+from .providers import (
     to_braket as to_braket,
 )
 from .providers import (
