@@ -168,6 +168,17 @@ def test_restore_raises_on_count_mismatch(h_circuit):
         restore(qc)
 
 
+def test_restore_no_op_when_no_boxes():
+    """RestoreVerbatimBoxes is a no-op when property_set has no verbatim boxes."""
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.h(0)
+
+    restore = RestoreVerbatimBoxes()
+    result = restore(qc)
+
+    assert _gate_info(result) == [("h", [0])]
+
+
 def test_round_trip_preserves_exact_sequence(h_cx_circuit):
     """Extract->restore round-trip produces the exact original gate sequence and qubits."""
     qc = QuantumCircuit(3)
