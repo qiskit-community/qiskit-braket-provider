@@ -21,7 +21,7 @@ NUM_QUBITS = 2
 QUBIT_PAIR = [0, 1]
 
 
-def _make_box_circuit(num_qubits, gates):
+def _make_circuit(num_qubits, gates):
     """Create a QuantumCircuit with the given gates applied.
 
     Args:
@@ -93,19 +93,19 @@ y $1;
 @pytest.fixture
 def h_cx_circuit():
     """2-qubit circuit with H on q0 and CX on q0,q1."""
-    return _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+    return _make_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
 
 
 @pytest.fixture
 def h_circuit():
     """1-qubit circuit with H on q0."""
-    return _make_box_circuit(NUM_QUBITS, [("h", [0])])
+    return _make_circuit(NUM_QUBITS, [("h", [0])])
 
 
 @pytest.fixture
 def cx_circuit():
     """2-qubit circuit with CX on q0,q1."""
-    return _make_box_circuit(NUM_QUBITS, [("cx", [0, 1])])
+    return _make_circuit(NUM_QUBITS, [("cx", [0, 1])])
 
 
 def _extract(circuit, label=VERBATIM_LABEL):
@@ -131,7 +131,7 @@ def _restore(transpiled, boxes, label=VERBATIM_LABEL):
     ids=["single_box_with_gates", "empty_box"],
 )
 def test_verbatim_box_extraction(inner_gates, expected_gate_names, expected_qubits):
-    inner = _make_box_circuit(NUM_QUBITS, inner_gates)
+    inner = _make_circuit(NUM_QUBITS, inner_gates)
     main = QuantumCircuit(NUM_QUBITS)
     main.append(BoxOp(inner, label=VERBATIM_LABEL), QUBIT_PAIR)
 
@@ -166,7 +166,7 @@ def test_multiple_verbatim_boxes_extraction(h_circuit, cx_circuit):
 
 
 def test_circuit_without_verbatim_boxes():
-    main = _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+    main = _make_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
     modified, boxes = _extract(main)
 
     assert len(modified.data) == 2
@@ -218,8 +218,8 @@ def test_multiple_verbatim_boxes_restoration(h_circuit, cx_circuit):
 @pytest.mark.parametrize(
     "num_barriers, num_boxes, error_match",
     [
-        (2, 1, "Compiler error while processing verbatim boxes.*Illegal barrier"),
-        (1, 2, "Compiler error while processing verbatim boxes.*Missing barriers"),
+        (2, 1, "Internal error.*no matching box"),
+        (1, 2, "Internal error.*lost during transpilation"),
     ],
     ids=["too_many_barriers", "too_few_barriers"],
 )
@@ -228,9 +228,9 @@ def test_barrier_box_count_mismatch(num_barriers, num_boxes, error_match):
     for i in range(num_barriers):
         transpiled.append(Barrier(NUM_QUBITS, label=f"{VERBATIM_LABEL}__{i}"), QUBIT_PAIR)
 
-    boxes = {f"{VERBATIM_LABEL}__{i}": _make_box_circuit(NUM_QUBITS, [("h", [0])]) for i in range(num_boxes)}
+    boxes = {f"{VERBATIM_LABEL}__{i}": _make_circuit(NUM_QUBITS, [("h", [0])]) for i in range(num_boxes)}
 
-    with pytest.raises(ValueError, match=error_match):
+    with pytest.raises(RuntimeError, match=error_match):
         _restore(transpiled, boxes)
 
 
@@ -294,7 +294,7 @@ def test_to_braket_with_custom_verbatim_box_name(h_cx_circuit):
 
 
 def test_to_braket_backward_compatibility():
-    qc = _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+    qc = _make_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
     bc = to_braket(qc, verbatim=False)
     info = _gate_info(bc)
     names = [n for n, _ in info]
@@ -367,12 +367,12 @@ def test_to_braket_with_multiple_circuits_with_verbatim_boxes(h_cx_circuit):
     qc1.x(0)
     qc1.append(BoxOp(h_cx_circuit, label=VERBATIM_LABEL), QUBIT_PAIR)
 
-    inner2 = _make_box_circuit(3, [("h", [0]), ("h", [1]), ("ccx", [0, 1, 2])])
+    inner2 = _make_circuit(3, [("h", [0]), ("h", [1]), ("ccx", [0, 1, 2])])
     qc2 = QuantumCircuit(3)
     qc2.append(BoxOp(inner2, label=VERBATIM_LABEL), [0, 1, 2])
     qc2.z(2)
 
-    qc3 = _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+    qc3 = _make_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
 
     results = to_braket([qc1, qc2, qc3], verbatim=False)
 
@@ -531,11 +531,14 @@ c[1] = measure $1;
     assert qc.num_clbits == 2
 
     bc = to_braket(qc, verbatim=False, add_measurements=False)
-    names = [instr.operator.name for instr in bc.instructions]
+    info = _gate_info(bc)
 
-    assert "H" in names
-    assert "CNot" in names
-    assert names.count("Measure") == 2
+    assert info == [
+        ("H", [0]),
+        ("CNot", [0, 1]),
+        ("Measure", [0]),
+        ("Measure", [1]),
+    ]
 
 
 def test_to_braket_verbatim_box_with_ccnot_and_classical_bits():
@@ -555,9 +558,16 @@ c[2] = measure $2;
 """
     qc = to_qiskit(qasm)
     bc = to_braket(qc, verbatim=False, add_measurements=False)
-    names = [instr.operator.name for instr in bc.instructions]
+    info = _gate_info(bc)
 
-    assert names == ["H", "H", "CCNot", "Measure", "Measure", "Measure"]
+    assert info == [
+        ("H", [0]),
+        ("H", [1]),
+        ("CCNot", [0, 1, 2]),
+        ("Measure", [0]),
+        ("Measure", [1]),
+        ("Measure", [2]),
+    ]
 
 
 def test_to_braket_verbatim_box_standalone_bit_collision():
@@ -578,7 +588,10 @@ c1 = measure $1;
     assert qc.num_clbits == 2
 
     bc = to_braket(qc, verbatim=False, add_measurements=False)
-    names = [instr.operator.name for instr in bc.instructions]
+    info = _gate_info(bc)
 
-    # Second measure overwrites first due to both targeting clbit 0
-    assert names.count("Measure") == 1
+    assert info == [
+        ("H", [0]),
+        ("CNot", [0, 1]),
+        ("Measure", [1]),
+    ]

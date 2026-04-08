@@ -17,7 +17,7 @@ NUM_QUBITS = 2
 QUBIT_PAIR = [0, 1]
 
 
-def _make_box_circuit(num_qubits: int, gates: list[tuple[str, list[int]]]) -> QuantumCircuit:
+def _make_circuit(num_qubits: int, gates: list[tuple[str, list[int]]]) -> QuantumCircuit:
     """Create a QuantumCircuit with the given gates applied.
 
     Args:
@@ -41,19 +41,19 @@ def _gate_info(circuit: QuantumCircuit) -> list[tuple[str, list[int]]]:
 @pytest.fixture
 def h_cx_circuit():
     """2-qubit circuit with H on q0 and CX on q0,q1."""
-    return _make_box_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
+    return _make_circuit(NUM_QUBITS, [("h", [0]), ("cx", [0, 1])])
 
 
 @pytest.fixture
 def h_circuit():
     """2-qubit circuit with H on q0."""
-    return _make_box_circuit(NUM_QUBITS, [("h", [0])])
+    return _make_circuit(NUM_QUBITS, [("h", [0])])
 
 
 @pytest.fixture
 def cx_circuit():
     """2-qubit circuit with CX on q0,q1."""
-    return _make_box_circuit(NUM_QUBITS, [("cx", [0, 1])])
+    return _make_circuit(NUM_QUBITS, [("cx", [0, 1])])
 
 
 def test_extract_single_box(h_cx_circuit):
@@ -172,7 +172,7 @@ def test_restore_raises_on_count_mismatch(h_circuit):
         f"{VERBATIM_LABEL}__1": h_circuit,
     }
 
-    with pytest.raises(ValueError, match="Compiler error while processing verbatim boxes"):
+    with pytest.raises(RuntimeError, match="Internal error"):
         restore(qc)
 
 
@@ -226,7 +226,7 @@ def test_staged_pass_manager_protects_verbatim_decomposes_rest(h_cx_circuit):
 def test_is_verbatim_label_none():
     """_is_verbatim_label returns False for None labels."""
     qc = QuantumCircuit(NUM_QUBITS)
-    qc.barrier(QUBIT_PAIR)  # barrier with no label
+    qc.barrier(QUBIT_PAIR)
 
     extract = ExtractVerbatimBoxes()
     result = extract(qc)
@@ -242,5 +242,5 @@ def test_restore_raises_on_unexpected_verbatim_barrier():
     restore = RestoreVerbatimBoxes()
     restore.property_set["verbatim_boxes"] = {f"{VERBATIM_LABEL}__0": QuantumCircuit(NUM_QUBITS)}
 
-    with pytest.raises(ValueError, match="Illegal barrier"):
+    with pytest.raises(RuntimeError, match="Internal error"):
         restore(qc)
