@@ -80,6 +80,7 @@ from braket.parametric import FreeParameter, FreeParameterExpression, Parameteri
 from qiskit_braket_provider.exception import QiskitBraketException
 from qiskit_braket_provider.providers import braket_instructions
 from qiskit_braket_provider.providers.verbatim_passes import (
+    _BRAKET_VERBATIM_BOX_NAME,
     ExtractVerbatimBoxes,
     RestoreVerbatimBoxes,
 )
@@ -279,8 +280,6 @@ _PAULI_MAP = {
     "Y": braket_observables.Y,
     "Z": braket_observables.Z,
 }
-
-_BRAKET_VERBATIM_BOX_NAME = "verbatim"
 
 _Translatable = QuantumCircuit | Circuit | Program | str
 
