@@ -142,7 +142,7 @@ def test_verbatim_box_extraction(inner_gates, expected_gate_names, expected_qubi
     assert modified.data[0].operation.label.startswith(VERBATIM_LABEL)
 
     assert len(boxes) == 1
-    assert [d.operation.name for d in list(boxes.values())[0].data] == expected_gate_names
+    assert [d.operation.name for d in next(iter(boxes.values())).data] == expected_gate_names
 
 
 def test_multiple_verbatim_boxes_extraction(h_circuit, cx_circuit):
