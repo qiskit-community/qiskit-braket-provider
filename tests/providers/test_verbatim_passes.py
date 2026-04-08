@@ -9,6 +9,7 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_braket_provider.providers.verbatim_passes import (
     ExtractVerbatimBoxes,
     RestoreVerbatimBoxes,
+    _is_verbatim_label,
 )
 
 VERBATIM_LABEL = "verbatim"
@@ -220,3 +221,26 @@ def test_staged_pass_manager_protects_verbatim_decomposes_rest(h_cx_circuit):
     assert sum(1 for name, _ in info if name == "h") == 1
     basis = {"rz", "sx", "cz", "h", "cx"}
     assert all(name in basis for name, _ in info)
+
+
+def test_is_verbatim_label_none():
+    """_is_verbatim_label returns False for None labels."""
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.barrier(QUBIT_PAIR)  # barrier with no label
+
+    extract = ExtractVerbatimBoxes()
+    result = extract(qc)
+
+    assert _gate_info(result) == [("barrier", QUBIT_PAIR)]
+
+
+def test_restore_raises_on_unexpected_verbatim_barrier():
+    """Barrier with verbatim label not in stashed dict raises."""
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.barrier(QUBIT_PAIR, label=f"{VERBATIM_LABEL}__5")
+
+    restore = RestoreVerbatimBoxes()
+    restore.property_set["verbatim_boxes"] = {f"{VERBATIM_LABEL}__0": QuantumCircuit(NUM_QUBITS)}
+
+    with pytest.raises(ValueError, match="Illegal barrier"):
+        restore(qc)
