@@ -9,7 +9,6 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_braket_provider.providers.verbatim_passes import (
     ExtractVerbatimBoxes,
     RestoreVerbatimBoxes,
-    _is_verbatim_label,
 )
 
 VERBATIM_LABEL = "verbatim"
@@ -70,7 +69,7 @@ def test_extract_single_box(h_cx_circuit):
 
     boxes = extract.property_set["verbatim_boxes"]
     assert len(boxes) == 1
-    assert _gate_info(list(boxes.values())[0]) == [("h", [0]), ("cx", [0, 1])]
+    assert _gate_info(next(iter(boxes.values()))) == [("h", [0]), ("cx", [0, 1])]
 
 
 def test_extract_multiple_boxes_preserves_interleaved_gates(h_circuit, cx_circuit):
@@ -129,7 +128,7 @@ def test_extract_empty_box():
     extract = ExtractVerbatimBoxes()
     extract(qc)
 
-    assert list(extract.property_set["verbatim_boxes"].values())[0].data == []
+    assert next(iter(extract.property_set["verbatim_boxes"].values())).data == []
 
 
 def test_restore_single_box(h_cx_circuit):
