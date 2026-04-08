@@ -1319,9 +1319,6 @@ class TestAdapter(TestCase):
         )
 
 
-
-
-
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""
 
