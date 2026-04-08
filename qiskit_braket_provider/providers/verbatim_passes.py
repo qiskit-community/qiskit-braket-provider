@@ -107,26 +107,24 @@ class RestoreVerbatimBoxes(TransformationPass):
         if not verbatim_boxes:
             return dag
 
-        remaining = dict(verbatim_boxes)
-
         for node in dag.op_nodes(Barrier):
             label = getattr(node.op, "label", None)
             if not _is_verbatim_label(label, self._verbatim_box_name):
                 continue
-            if label not in remaining:
-                raise ValueError(
-                    f"Compiler error while processing verbatim boxes. "
-                    f"Illegal barrier with label '{label}'"
+            if label not in verbatim_boxes:
+                raise RuntimeError(
+                    f"Internal error: verbatim barrier '{label}' has no matching box. "
+                    f"This is a bug in the verbatim pass pipeline."
                 )
-            box_circuit = remaining.pop(label)
+            box_circuit = verbatim_boxes.pop(label)
             box_dag = circuit_to_dag(box_circuit)
-            wires = dict(zip(box_dag.qubits, node.qargs))
-            dag.substitute_node_with_dag(node, box_dag, wires=wires)
+            dag.substitute_node_with_dag(node, box_dag)
 
-        if remaining:
-            raise ValueError(
-                f"Compiler error while processing verbatim boxes. "
-                f"Missing barriers for: {list(remaining.keys())}"
+        if verbatim_boxes:
+            raise RuntimeError(
+                f"Internal error: verbatim boxes lost during transpilation: "
+                f"{list(verbatim_boxes.keys())}. "
+                f"This is a bug in the verbatim pass pipeline."
             )
 
         return dag
