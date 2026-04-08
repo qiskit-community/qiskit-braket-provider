@@ -65,11 +65,11 @@ def test_extract_single_box(h_cx_circuit):
 
     assert _gate_info(result) == [("barrier", QUBIT_PAIR)]
     assert isinstance(result.data[0].operation, Barrier)
-    assert result.data[0].operation.label == VERBATIM_LABEL
+    assert result.data[0].operation.label.startswith(VERBATIM_LABEL)
 
     boxes = extract.property_set["verbatim_boxes"]
     assert len(boxes) == 1
-    assert _gate_info(boxes[0]) == [("h", [0]), ("cx", [0, 1])]
+    assert _gate_info(list(boxes.values())[0]) == [("h", [0]), ("cx", [0, 1])]
 
 
 def test_extract_multiple_boxes_preserves_interleaved_gates(h_circuit, cx_circuit):
@@ -85,13 +85,14 @@ def test_extract_multiple_boxes_preserves_interleaved_gates(h_circuit, cx_circui
     assert _gate_info(result) == [("barrier", QUBIT_PAIR), ("x", [1]), ("barrier", QUBIT_PAIR)]
     assert all(
         isinstance(result.data[i].operation, Barrier)
-        and result.data[i].operation.label == VERBATIM_LABEL
+        and result.data[i].operation.label.startswith(VERBATIM_LABEL)
         for i in [0, 2]
     )
+    assert result.data[0].operation.label != result.data[2].operation.label
 
-    boxes = extract.property_set["verbatim_boxes"]
-    assert _gate_info(boxes[0]) == [("h", [0])]
-    assert _gate_info(boxes[1]) == [("cx", [0, 1])]
+    box_list = list(extract.property_set["verbatim_boxes"].values())
+    assert _gate_info(box_list[0]) == [("h", [0])]
+    assert _gate_info(box_list[1]) == [("cx", [0, 1])]
 
 
 def test_extract_only_matches_configured_label(h_circuit):
@@ -106,7 +107,7 @@ def test_extract_only_matches_configured_label(h_circuit):
     assert isinstance(result.data[0].operation, BoxOp)
     assert result.data[0].operation.label == "other"
     assert isinstance(result.data[1].operation, Barrier)
-    assert result.data[1].operation.label == "custom"
+    assert result.data[1].operation.label.startswith("custom")
     assert len(extract.property_set["verbatim_boxes"]) == 1
 
 
@@ -127,16 +128,16 @@ def test_extract_empty_box():
     extract = ExtractVerbatimBoxes()
     extract(qc)
 
-    assert extract.property_set["verbatim_boxes"][0].data == []
+    assert list(extract.property_set["verbatim_boxes"].values())[0].data == []
 
 
 def test_restore_single_box(h_cx_circuit):
     """A labeled barrier is replaced with the exact stashed gate sequence and qubits."""
     qc = QuantumCircuit(NUM_QUBITS)
-    qc.barrier(QUBIT_PAIR, label=VERBATIM_LABEL)
+    qc.barrier(QUBIT_PAIR, label=f"{VERBATIM_LABEL}__0")
 
     restore = RestoreVerbatimBoxes()
-    restore.property_set["verbatim_boxes"] = [h_cx_circuit]
+    restore.property_set["verbatim_boxes"] = {f"{VERBATIM_LABEL}__0": h_cx_circuit}
     result = restore(qc)
 
     assert _gate_info(result) == [("h", [0]), ("cx", [0, 1])]
@@ -145,24 +146,30 @@ def test_restore_single_box(h_cx_circuit):
 def test_restore_multiple_boxes_in_order(h_circuit, cx_circuit):
     """Multiple barriers are restored in order with interleaved gates preserved."""
     qc = QuantumCircuit(NUM_QUBITS)
-    qc.barrier(QUBIT_PAIR, label=VERBATIM_LABEL)
+    qc.barrier(QUBIT_PAIR, label=f"{VERBATIM_LABEL}__0")
     qc.x(1)
-    qc.barrier(QUBIT_PAIR, label=VERBATIM_LABEL)
+    qc.barrier(QUBIT_PAIR, label=f"{VERBATIM_LABEL}__1")
 
     restore = RestoreVerbatimBoxes()
-    restore.property_set["verbatim_boxes"] = [h_circuit, cx_circuit]
+    restore.property_set["verbatim_boxes"] = {
+        f"{VERBATIM_LABEL}__0": h_circuit,
+        f"{VERBATIM_LABEL}__1": cx_circuit,
+    }
     result = restore(qc)
 
     assert _gate_info(result) == [("h", [0]), ("x", [1]), ("cx", [0, 1])]
 
 
 def test_restore_raises_on_count_mismatch(h_circuit):
-    """RestoreVerbatimBoxes raises when barrier count doesn't match box count."""
+    """RestoreVerbatimBoxes raises when stashed boxes outnumber barriers."""
     qc = QuantumCircuit(NUM_QUBITS)
-    qc.barrier(QUBIT_PAIR, label=VERBATIM_LABEL)
+    qc.barrier(QUBIT_PAIR, label=f"{VERBATIM_LABEL}__0")
 
     restore = RestoreVerbatimBoxes()
-    restore.property_set["verbatim_boxes"] = [h_circuit, h_circuit]
+    restore.property_set["verbatim_boxes"] = {
+        f"{VERBATIM_LABEL}__0": h_circuit,
+        f"{VERBATIM_LABEL}__1": h_circuit,
+    }
 
     with pytest.raises(ValueError, match="Compiler error while processing verbatim boxes"):
         restore(qc)

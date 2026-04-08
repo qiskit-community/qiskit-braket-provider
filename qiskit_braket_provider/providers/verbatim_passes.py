@@ -28,6 +28,17 @@ from qiskit.transpiler.basepasses import TransformationPass
 _BRAKET_VERBATIM_BOX_NAME = "verbatim"
 
 
+def _indexed_label(base: str, index: int) -> str:
+    return f"{base}__{index}"
+
+
+def _is_verbatim_label(label: str | None, base: str) -> bool:
+    """Check if a label is a verbatim barrier label (base or indexed)."""
+    if label is None:
+        return False
+    return label == base or (label.startswith(f"{base}__") and label[len(base) + 2 :].isdigit())
+
+
 class ExtractVerbatimBoxes(TransformationPass):
     """Swap verbatim ``BoxOp`` nodes for labeled barriers before transpilation.
 
@@ -51,18 +62,21 @@ class ExtractVerbatimBoxes(TransformationPass):
                 matches ``verbatim_box_name``.
         """
         for node in dag.op_nodes(Barrier):
-            if getattr(node.op, "label", None) == self._verbatim_box_name:
+            if _is_verbatim_label(getattr(node.op, "label", None), self._verbatim_box_name):
                 raise ValueError(
-                    f"Circuit contains a Barrier with label '{self._verbatim_box_name}' "
+                    f"Circuit contains a Barrier with label '{node.op.label}' "
                     "which conflicts with the verbatim box label"
                 )
 
-        verbatim_boxes = []
+        verbatim_boxes = {}
+        index = 0
         for node in dag.op_nodes(BoxOp):
             if getattr(node.op, "label", None) != self._verbatim_box_name:
                 continue
-            verbatim_boxes.append(node.op.blocks[0])
-            dag.substitute_node(node, Barrier(len(node.qargs), label=self._verbatim_box_name))
+            label = _indexed_label(self._verbatim_box_name, index)
+            verbatim_boxes[label] = node.op.blocks[0]
+            dag.substitute_node(node, Barrier(len(node.qargs), label=label))
+            index += 1
 
         self.property_set["verbatim_boxes"] = verbatim_boxes
         return dag
@@ -89,31 +103,30 @@ class RestoreVerbatimBoxes(TransformationPass):
             ValueError: If the number of labeled barriers does not match
                 the number of stashed verbatim boxes.
         """
-        verbatim_boxes = self.property_set.get("verbatim_boxes", [])
+        verbatim_boxes = self.property_set.get("verbatim_boxes", {})
         if not verbatim_boxes:
             return dag
 
-        barrier_nodes = [
-            node
-            for node in dag.op_nodes(Barrier)
-            if getattr(node.op, "label", None) == self._verbatim_box_name
-        ]
+        remaining = dict(verbatim_boxes)
 
-        if len(barrier_nodes) > len(verbatim_boxes):
-            raise ValueError(
-                f"Compiler error while processing verbatim boxes. "
-                f"Illegal barriers with label '{self._verbatim_box_name}'"
-            )
-        if len(barrier_nodes) < len(verbatim_boxes):
-            raise ValueError(
-                f"Compiler error while processing verbatim boxes. "
-                f"Expected {len(barrier_nodes)} verbatim boxes, "
-                f"but found {len(verbatim_boxes)}."
-            )
-
-        for node, box_circuit in zip(barrier_nodes, verbatim_boxes):
+        for node in dag.op_nodes(Barrier):
+            label = getattr(node.op, "label", None)
+            if not _is_verbatim_label(label, self._verbatim_box_name):
+                continue
+            if label not in remaining:
+                raise ValueError(
+                    f"Compiler error while processing verbatim boxes. "
+                    f"Illegal barrier with label '{label}'"
+                )
+            box_circuit = remaining.pop(label)
             box_dag = circuit_to_dag(box_circuit)
             wires = dict(zip(box_dag.qubits, node.qargs))
             dag.substitute_node_with_dag(node, box_dag, wires=wires)
+
+        if remaining:
+            raise ValueError(
+                f"Compiler error while processing verbatim boxes. "
+                f"Missing barriers for: {list(remaining.keys())}"
+            )
 
         return dag
