@@ -233,6 +233,20 @@ def test_is_verbatim_label_none():
     assert _gate_info(result) == [("barrier", QUBIT_PAIR)]
 
 
+def test_restore_skips_non_verbatim_barriers(h_cx_circuit):
+    """Non-verbatim barriers are left untouched during restore."""
+    qc = QuantumCircuit(NUM_QUBITS)
+    qc.barrier(QUBIT_PAIR)
+    qc.barrier(QUBIT_PAIR, label=f"{VERBATIM_LABEL}__0")
+
+    restore = RestoreVerbatimBoxes()
+    restore.property_set["verbatim_boxes"] = {f"{VERBATIM_LABEL}__0": h_cx_circuit}
+    result = restore(qc)
+
+    info = _gate_info(result)
+    assert info == [("barrier", QUBIT_PAIR), ("h", [0]), ("cx", [0, 1])]
+
+
 def test_restore_raises_on_unexpected_verbatim_barrier():
     """Barrier with verbatim label not in stashed dict raises."""
     qc = QuantumCircuit(NUM_QUBITS)
