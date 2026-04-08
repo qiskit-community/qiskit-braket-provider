@@ -30,7 +30,7 @@ from braket.ir.openqasm import Program
 from braket.parametric import FreeParameter
 from braket.pulse import PulseSequence
 from braket.registers import QubitSet
-from qiskit_braket_provider import exception, qiskit_compile, to_braket, to_qiskit
+from qiskit_braket_provider import exception, to_braket, to_qiskit
 from qiskit_braket_provider.providers.adapter import (
     _BRAKET_GATE_NAME_TO_QISKIT_GATE,
     _BRAKET_SUPPORTED_NOISES,
@@ -1321,81 +1321,6 @@ class TestAdapter(TestCase):
 
 
 
-class TestQiskitCompile(TestCase):
-    """Tests for the qiskit_compile function."""
-
-    def test_single_circuit(self):
-        """Tests qiskit_compile returns a single QuantumCircuit for single input."""
-        circuit = QuantumCircuit(2)
-        circuit.h(0)
-        circuit.cx(0, 1)
-        result = qiskit_compile(circuit)
-        self.assertIsInstance(result, QuantumCircuit)
-
-    def test_multiple_circuits(self):
-        """Tests qiskit_compile returns a list for multiple inputs."""
-        c1 = QuantumCircuit(1)
-        c1.h(0)
-        c2 = QuantumCircuit(1)
-        c2.x(0)
-        result = qiskit_compile([c1, c2])
-        self.assertIsInstance(result, list)
-        self.assertEqual(len(result), 2)
-
-    def test_with_basis_gates(self):
-        """Tests qiskit_compile transpiles to the given basis gates."""
-        circuit = QuantumCircuit(1)
-        circuit.h(0)
-        result = qiskit_compile(circuit, basis_gates=["rx", "rz"])
-        gate_names = {instr.operation.name for instr in result.data}
-        self.assertNotIn("h", gate_names)
-
-    def test_with_braket_device(self):
-        """Tests qiskit_compile transpiles to the target of the given device."""
-        circuit = QuantumCircuit(1, 1)
-        circuit.h(0)
-
-        braket_device = Mock(spec=AwsDevice)
-        braket_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
-        braket_device.gate_calibrations = None
-        braket_device.type = "QPU"
-        braket_device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
-
-        result = qiskit_compile(circuit, braket_device=braket_device)
-        gate_names = {instr.operation.name for instr in result.data}
-        self.assertNotIn("h", gate_names)
-
-    def test_verbatim_skips_transpilation(self):
-        """Tests qiskit_compile with verbatim=True returns circuit unchanged."""
-        circuit = QuantumCircuit(1)
-        circuit.h(0)
-        result = qiskit_compile(circuit, verbatim=True)
-        gate_names = [instr.operation.name for instr in result.data]
-        self.assertEqual(gate_names, ["h"])
-
-    def test_consistent_with_to_braket(self):
-        """Tests qiskit_compile output translates to same Braket circuit as to_braket."""
-        circuit = QuantumCircuit(2)
-        circuit.h(0)
-        circuit.cx(0, 1)
-
-        braket_direct = to_braket(circuit)
-        compiled = qiskit_compile(circuit)
-        braket_via_compile = to_braket(compiled)
-
-        self.assertEqual(braket_direct, braket_via_compile)
-
-    def test_openqasm3_program(self):
-        """Tests qiskit_compile works with an OpenQASM 3 program."""
-        qasm_string = """
-        qubit[2] q;
-        h q[0];
-        cnot q[0], q[1];
-        """
-        result = qiskit_compile(Program(source=qasm_string))
-        self.assertIsInstance(result, QuantumCircuit)
-        gate_names = {instr.operation.name for instr in result.data}
-        self.assertTrue(gate_names.issubset({"h", "cx", "measure"}))
 
 class TestFromBraket(TestCase):
     """Test Braket circuit conversion."""
