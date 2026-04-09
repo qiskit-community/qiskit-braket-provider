@@ -11,7 +11,8 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from math import inf, pi, prod
 from numbers import Number
-from typing import NamedTuple, TypeVar
+from dataclasses import dataclass
+from typing import TypeVar
 
 import numpy as np
 import qiskit.circuit.library as qiskit_gates
@@ -982,8 +983,9 @@ def _restore_verbatim_boxes(
     return reconstructed_circuit
 
 
-class _QiskitCompilationContext(NamedTuple):
-    """Internal result from _qiskit_compile containing compiled circuits and resolved state."""
+@dataclass(frozen=True)
+class _CompilationContext:
+    """Internal result from _compile containing compiled circuits and resolved state."""
 
     circuits: list[QuantumCircuit]
     single_instance: bool
@@ -995,7 +997,7 @@ class _QiskitCompilationContext(NamedTuple):
     pass_manager: PassManager | None
 
 
-def _qiskit_compile(
+def _compile(
     circuits: _Translatable | Iterable[_Translatable] = None,
     *args,
     qubit_labels: Sequence[int] | None = None,
@@ -1016,35 +1018,8 @@ def _qiskit_compile(
     layout_method: str | None = None,
     routing_method: str | None = None,
     seed_transpiler: int | None = None,
-) -> _QiskitCompilationContext:
-    """
-        Compiles Qiskit circuits by transpiling and processing verbatim boxes.
+) -> _CompilationContext:
 
-    Args:
-        circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket
-            circuit(s) or OpenQASM 3 program(s) to compile.
-        qubit_labels (Sequence[int] | None): Qubit indices on the Braket device. Default: ``None``.
-        target (Target | None): A backend transpiler target. Default: ``None``.
-        verbatim (bool): Whether to skip transpilation. Default: ``False``.
-        basis_gates (Sequence[str] | None): Gateset to transpile to. Default: ``None``.
-        coupling_map (list[list[int]] | None): Coupling map for transpilation. Default: ``None``.
-        angle_restrictions: Gate parameter angle constraints. Default: ``None``.
-        optimization_level (int): Qiskit transpile optimization level (0-3). Default: 0.
-        callback (Callable | None): Transpiler pass callback. Default: ``None``.
-        num_processes (int | None): Max parallel transpilation processes. Default: ``None``.
-        pass_manager (PassManager): Custom pass manager. Default: ``None``.
-        braket_device (Device): Braket device to transpile to. Default: ``None``.
-        add_measurements (bool): Whether to add measurements. Default: True.
-        circuit: DEPRECATED: use ``circuits``. Default: ``None``.
-        connectivity (list[list[int]] | None): DEPRECATED: use ``coupling_map``. Default: ``None``.
-        verbatim_box_name (str): Label for verbatim BoxOp operations. Default: ``"verbatim"``.
-        layout_method (str | None): Layout method for transpilation. Default: ``None``.
-        routing_method (str | None): Routing method for transpilation. Default: ``None``.
-        seed_transpiler (int | None): Seed for the transpiler. Default: ``None``.
-
-    Returns:
-        _QiskitCompilationContext
-    """
     circuits, single_instance = _get_circuits(circuits, circuit, add_measurements)
     if len(args) > 4:
         raise ValueError(f"Unknown arguments passed: {args[4:]}")
@@ -1149,7 +1124,7 @@ def _qiskit_compile(
             for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes)
         ]
 
-    return _QiskitCompilationContext(
+    return _CompilationContext(
         circuits=circuits,
         single_instance=single_instance,
         target=target,
@@ -1255,7 +1230,7 @@ def to_braket(
     Returns:
         Circuit | list[Circuit]: Braket circuit or circuits
     """
-    result = _qiskit_compile(
+    result = _compile(
         circuits, *args,
         qubit_labels=qubit_labels, target=target, verbatim=verbatim,
         basis_gates=basis_gates, coupling_map=coupling_map,
