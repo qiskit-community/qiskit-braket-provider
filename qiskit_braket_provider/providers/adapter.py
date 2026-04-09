@@ -899,7 +899,7 @@ def to_braket(
     layout_method: str | None = None,
     routing_method: str | None = None,
     seed_transpiler: int | None = None,
-) -> _CompilationContext:
+) -> Circuit | list[Circuit]:
 
     circuits, single_instance = _get_circuits(circuits, circuit, add_measurements)
     if len(args) > 4:
