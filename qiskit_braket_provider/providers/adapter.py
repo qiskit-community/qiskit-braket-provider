@@ -9,6 +9,7 @@ sequences that should not be optimized.
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from math import inf, pi, prod
 from numbers import Number
 from typing import TypeVar
@@ -982,7 +983,21 @@ def _restore_verbatim_boxes(
     return reconstructed_circuit
 
 
-def to_braket(
+@dataclass(frozen=True)
+class _CompilationContext:
+    """Internal result from _compile containing compiled circuits and resolved state."""
+
+    circuits: list[QuantumCircuit]
+    single_instance: bool
+    target: Target | None
+    qubit_labels: Sequence[int] | None
+    verbatim: bool | None
+    basis_gates: Sequence[str] | None
+    angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None
+    pass_manager: PassManager | None
+
+
+def _compile(
     circuits: _Translatable | Iterable[_Translatable] = None,
     *args,
     qubit_labels: Sequence[int] | None = None,
@@ -1002,77 +1017,9 @@ def to_braket(
     verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME,
     layout_method: str | None = None,
     routing_method: str | None = None,
-) -> Circuit | list[Circuit]:
-    """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
+    seed_transpiler: int | None = None,
+) -> _CompilationContext:
 
-    The recommended way to use this method is to minimally pass in qubit labels and a target
-    (instead of basis gates and coupling map). This ensures that the translated circuit is actually
-    supported by the device (and doesn't, for example, include unsupported parameters for gates).
-    The latter guarantees that the output Braket circuit uses the qubit labels of the Braket device,
-    which are not necessarily contiguous.
-
-    Args:
-        circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket
-            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
-        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
-            qubits in the underlying Amazon Braket device. If not supplied, then the indices are
-            assumed to be contiguous. Default: ``None``.
-        target (Target | None): A backend transpiler target. Can only be provided
-            if basis_gates is ``None``. Default: ``None``.
-        verbatim (bool): Whether to translate the circuit without any modification, in other
-            words without transpiling it. Default: ``False``.
-        basis_gates (Sequence[str] | None): The gateset to transpile to. Can only be provided
-            if target is ``None``. If ``None`` and target is ``None``, the transpiler will use
-            all gates defined in the Braket SDK. Default: ``None``.
-        coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
-            with this coupling map. Default: ``None``.
-        angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
-            Mapping of gate names to parameter angle constraints used to
-            validate numeric parameters. Default: ``None``.
-        optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.
-            From Qiskit:
-
-            * 0: no optimization - basic translation, no optimization, trivial layout
-            * 1: light optimization - routing + potential SaberSwap, some gate cancellation
-              and 1Q gate folding
-            * 2: medium optimization - better routing (noise aware) and commutative cancellation
-            * 3: high optimization - gate resynthesis and unitary-breaking passes
-
-            Default: 0.
-        callback (Callable | None): A callback function that will be called after each transpiler
-            pass execution. Default: ``None``.
-        num_processes (int | None): The maximum number of parallel transpilation processes for
-            multiple circuits. Default: ``None``.
-        pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
-            used in conjunction with a target, basis gates, or connectivity. Default: ``None``.
-        braket_device (Device): Braket device to transpile to. Can only be provided if `target`
-            and ``basis_gates`` are ``None``. Default: ``None``.
-        add_measurements (bool): Whether to add measurements when translating Braket circuits.
-            Default: True.
-        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
-            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
-            Default: ``None``. DEPRECATED: use first positional argument or ``circuits`` instead.
-        connectivity (list[list[int]] | None): If provided, will transpile to a circuit
-            with this connectivity. Default: ``None``. DEPRECATED: use ``coupling_map`` instead.
-        verbatim_box_name (str): The label name used to identify verbatim BoxOp operations
-            in Qiskit circuits. When circuits contain BoxOp operations with this label, they
-            will be preserved during transpilation by temporarily replacing them with barriers.
-            Default: ``"verbatim"``.
-        layout_method (str | None): The layout method to use during transpilation. If ``None``
-            and the circuit contains verbatim boxes, defaults to ``'trivial'`` to preserve
-            physical qubit mappings. Otherwise uses Qiskit's default. Default: ``None``.
-        routing_method (str | None): The routing method to use during transpilation. If ``None``
-            and the circuit contains verbatim boxes, defaults to ``'none'`` to disable routing
-            and preserve physical qubit structure. Otherwise uses Qiskit's default. Default: ``None``.
-
-    Raises:
-        ValueError: If more than one of `target`, ``basis_gates``
-            or ``coupling_map``/``connectivity``, ``pass_manager``, and ``braket_device``
-            are passed together, or if `qubit_labels` is passed with ``braket_device``.
-
-    Returns:
-        Circuit | list[Circuit]: Braket circuit or circuits
-    """
     circuits, single_instance = _get_circuits(circuits, circuit, add_measurements)
     if len(args) > 4:
         raise ValueError(f"Unknown arguments passed: {args[4:]}")
@@ -1166,6 +1113,7 @@ def to_braket(
                 num_processes=num_processes,
                 layout_method=effective_layout_method,
                 routing_method=effective_routing_method,
+                seed_transpiler=seed_transpiler,
             )
     if isinstance(target, _SubstitutedTarget):
         circuits = target._substitute(circuits)
@@ -1176,13 +1124,131 @@ def to_braket(
             for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes)
         ]
 
+    return _CompilationContext(
+        circuits=circuits,
+        single_instance=single_instance,
+        target=target,
+        qubit_labels=qubit_labels,
+        verbatim=verbatim,
+        basis_gates=basis_gates,
+        angle_restrictions=angle_restrictions,
+        pass_manager=pass_manager,
+    )
+
+
+def to_braket(
+    circuits: _Translatable | Iterable[_Translatable] = None,
+    *args,
+    qubit_labels: Sequence[int] | None = None,
+    target: Target | None = None,
+    verbatim: bool | None = None,
+    basis_gates: Sequence[str] | None = None,
+    coupling_map: list[list[int]] | None = None,
+    angle_restrictions: Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None = None,
+    optimization_level: int = 0,
+    callback: Callable | None = None,
+    num_processes: int | None = None,
+    pass_manager: PassManager | None = None,
+    braket_device: Device | None = None,
+    add_measurements: bool = True,
+    circuit: _Translatable | Iterable[_Translatable] | None = None,
+    connectivity: list[list[int]] | None = None,
+    verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME,
+    layout_method: str | None = None,
+    routing_method: str | None = None,
+    seed_transpiler: int | None = None,
+) -> Circuit | list[Circuit]:
+    """Converts a single or list of Qiskit QuantumCircuits to a single or list of Braket Circuits.
+
+    The recommended way to use this method is to minimally pass in qubit labels and a target
+    (instead of basis gates and coupling map). This ensures that the translated circuit is actually
+    supported by the device (and doesn't, for example, include unsupported parameters for gates).
+    The latter guarantees that the output Braket circuit uses the qubit labels of the Braket device,
+    which are not necessarily contiguous.
+
+    Args:
+        circuits (QuantumCircuit | Circuit | Program | str | Iterable): Qiskit or Braket
+            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
+        qubit_labels (Sequence[int] | None): A list of (not necessarily contiguous) indices of
+            qubits in the underlying Amazon Braket device. If not supplied, then the indices are
+            assumed to be contiguous. Default: ``None``.
+        target (Target | None): A backend transpiler target. Can only be provided
+            if basis_gates is ``None``. Default: ``None``.
+        verbatim (bool): Whether to translate the circuit without any modification, in other
+            words without transpiling it. Default: ``False``.
+        basis_gates (Sequence[str] | None): The gateset to transpile to. Can only be provided
+            if target is ``None``. If ``None`` and target is ``None``, the transpiler will use
+            all gates defined in the Braket SDK. Default: ``None``.
+        coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
+            with this coupling map. Default: ``None``.
+        angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
+            Mapping of gate names to parameter angle constraints used to
+            validate numeric parameters. Default: ``None``.
+        optimization_level (int | None): The optimization level to pass to ``qiskit.transpile``.
+            From Qiskit:
+
+            * 0: no optimization - basic translation, no optimization, trivial layout
+            * 1: light optimization - routing + potential SaberSwap, some gate cancellation
+              and 1Q gate folding
+            * 2: medium optimization - better routing (noise aware) and commutative cancellation
+            * 3: high optimization - gate resynthesis and unitary-breaking passes
+
+            Default: 0.
+        callback (Callable | None): A callback function that will be called after each transpiler
+            pass execution. Default: ``None``.
+        num_processes (int | None): The maximum number of parallel transpilation processes for
+            multiple circuits. Default: ``None``.
+        pass_manager (PassManager): `PassManager` to transpile the circuit; will raise an error if
+            used in conjunction with a target, basis gates, or connectivity. Default: ``None``.
+        braket_device (Device): Braket device to transpile to. Can only be provided if `target`
+            and ``basis_gates`` are ``None``. Default: ``None``.
+        add_measurements (bool): Whether to add measurements when translating Braket circuits.
+            Default: True.
+        circuit (QuantumCircuit | Circuit | Program | str | Iterable | None): Qiskit or Braket
+            circuit(s) or OpenQASM 3 program(s) to transpile and translate to Braket.
+            Default: ``None``. DEPRECATED: use first positional argument or ``circuits`` instead.
+        connectivity (list[list[int]] | None): If provided, will transpile to a circuit
+            with this connectivity. Default: ``None``. DEPRECATED: use ``coupling_map`` instead.
+        verbatim_box_name (str): The label name used to identify verbatim BoxOp operations
+            in Qiskit circuits. When circuits contain BoxOp operations with this label, they
+            will be preserved during transpilation by temporarily replacing them with barriers.
+            Default: ``"verbatim"``.
+        layout_method (str | None): The layout method to use during transpilation. If ``None``
+            and the circuit contains verbatim boxes, defaults to ``'trivial'`` to preserve
+            physical qubit mappings. Otherwise uses Qiskit's default. Default: ``None``.
+        routing_method (str | None): The routing method to use during transpilation. If ``None``
+            and the circuit contains verbatim boxes, defaults to ``'none'`` to disable routing
+            and preserve physical qubit structure. Otherwise uses Qiskit's default. Default: ``None``.
+        seed_transpiler (int | None): This specifies a seed used for the stochastic parts 
+            of the transpiler. Default: ``None``.
+
+    Raises:
+        ValueError: If more than one of `target`, ``basis_gates``
+            or ``coupling_map``/``connectivity``, ``pass_manager``, and ``braket_device``
+            are passed together, or if `qubit_labels` is passed with ``braket_device``.
+
+    Returns:
+        Circuit | list[Circuit]: Braket circuit or circuits
+    """
+    result = _compile(
+        circuits, *args,
+        qubit_labels=qubit_labels, target=target, verbatim=verbatim,
+        basis_gates=basis_gates, coupling_map=coupling_map,
+        angle_restrictions=angle_restrictions, optimization_level=optimization_level,
+        callback=callback, num_processes=num_processes, pass_manager=pass_manager,
+        braket_device=braket_device, add_measurements=add_measurements,
+        circuit=circuit, connectivity=connectivity, verbatim_box_name=verbatim_box_name,
+        layout_method=layout_method, routing_method=routing_method,
+        seed_transpiler=seed_transpiler,
+    )
     translated = [
         _translate_to_braket(
-            circ, target, qubit_labels, verbatim, basis_gates, angle_restrictions, pass_manager
+            circ, result.target, result.qubit_labels, result.verbatim,
+            result.basis_gates, result.angle_restrictions, result.pass_manager,
         )
-        for circ in circuits
+        for circ in result.circuits
     ]
-    return translated[0] if single_instance else translated
+    return translated[0] if result.single_instance else translated
 
 
 def _get_circuits(
