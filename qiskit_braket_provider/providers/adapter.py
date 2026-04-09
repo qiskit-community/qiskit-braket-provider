@@ -981,6 +981,7 @@ def to_braket(
                 coupling_map=coupling_map,
                 layout_method="trivial" if has_verbatim_boxes else layout_method,
                 routing_method="none" if has_verbatim_boxes else routing_method,
+                seed_transpiler=seed_transpiler,
             )
             if has_verbatim_boxes:
                 pm.pre_init = PassManager([ExtractVerbatimBoxes(verbatim_box_name)])
