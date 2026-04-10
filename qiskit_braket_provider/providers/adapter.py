@@ -9,6 +9,7 @@ sequences that should not be optimized.
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from math import inf, pi, prod
 from numbers import Number
@@ -25,6 +26,7 @@ from qiskit.circuit import (
     Clbit,
     ControlledGate,
     Gate,
+    IfElseOp,
     Measure,
     Parameter,
     ParameterExpression,
@@ -52,13 +54,28 @@ from braket.circuits import Observable as BraketObservable
 from braket.circuits import gates as braket_gates
 from braket.circuits import noises as braket_noises
 from braket.circuits import observables as braket_observables
+from braket.default_simulator.openqasm._helpers.arrays import convert_range_def_to_range
+from braket.default_simulator.openqasm._helpers.casting import cast_to
 from braket.default_simulator.openqasm.interpreter import Interpreter, VerbatimBoxDelimiter
 from braket.default_simulator.openqasm.parser.openqasm_ast import (
+    BinaryExpression,
     BitType,
+    BooleanLiteral,
+    BranchingStatement,
     ClassicalType,
+    ForInLoop,
+    Identifier,
+    IndexedIdentifier,
+    IndexExpression,
     IntegerLiteral,
+    RangeDefinition,
+    WhileLoop,
 )
-from braket.default_simulator.openqasm.program_context import AbstractProgramContext
+from braket.default_simulator.openqasm.program_context import (
+    AbstractProgramContext,
+    _BreakSignal,
+    _ContinueSignal,
+)
 from braket.device_schema import (
     DeviceActionType,
     DeviceCapabilities,
@@ -336,6 +353,8 @@ class _QiskitProgramContext(AbstractProgramContext):
         self._in_verbatim_box = False
         self._verbatim_circuit: QuantumCircuit | None = None
         self._verbatim_box_name = verbatim_box_name
+        self._visitor: Callable | None = None
+        self._clbit_offset: dict[str, int] = {}
 
     @property
     def circuit(self):
@@ -380,6 +399,8 @@ class _QiskitProgramContext(AbstractProgramContext):
             else:
                 size = 1
             
+            # this is used deal with Qiskit circuit storing all classical bits in a flat list
+            self._clbit_offset[name] = self._circuit.num_clbits
             self._circuit.add_bits([Clbit() for _ in range(size)])
 
     def is_builtin_gate(self, name: str) -> bool:
@@ -474,6 +495,103 @@ class _QiskitProgramContext(AbstractProgramContext):
         
         else:
             raise ValueError("Verbatim box created using invalid marker")
+
+    @property
+    def supports_midcircuit_measurement(self) -> bool:
+        return True
+
+    def set_visitor(self, visitor: Callable) -> None:
+        self._visitor = visitor
+
+    def handle_branching_statement(self, node: BranchingStatement) -> None:
+        # Try static evaluation first; fall back to MCM if the condition
+        # can't be resolved (e.g. it depends on a measurement result) due to
+        # NameError (uninitialized variable, i.e. measurement result) or
+        # TypeError (can't cast to boolean)
+        try:
+            condition = cast_to(BooleanLiteral, self._visitor(node.condition))
+        except (NameError, TypeError):
+            pass
+        else:
+            if condition.value:
+                self._visitor(node.if_block)
+            elif node.else_block:
+                self._visitor(node.else_block)
+            return
+
+        condition = self._resolve_condition(node.condition)
+        main_circuit = self._circuit
+
+        # Visit if block into a separate circuit
+        true_body = QuantumCircuit(main_circuit.num_qubits, main_circuit.num_clbits)
+        self._circuit = true_body
+        for statement in node.if_block:
+            self._visitor(statement)
+
+        # Visit else block if present
+        false_body = None
+        if node.else_block:
+            false_body = QuantumCircuit(main_circuit.num_qubits, main_circuit.num_clbits)
+            self._circuit = false_body
+            for statement in node.else_block:
+                self._visitor(statement)
+
+        self._circuit = main_circuit
+
+        if_else_op = IfElseOp(condition, true_body, false_body)
+        qubits = list(range(main_circuit.num_qubits))
+        clbits = list(range(main_circuit.num_clbits))
+        self._circuit.append(if_else_op, qubits, clbits)
+
+    def handle_for_loop(self, node: ForInLoop) -> None:
+        index = self._visitor(node.set_declaration)
+        if isinstance(index, RangeDefinition):
+            index_values = [IntegerLiteral(x) for x in convert_range_def_to_range(index)]
+        else:
+            index_values = index.values
+        for i in index_values:
+            with self.enter_scope():
+                self.declare_variable(node.identifier.name, node.type, i)
+                try:
+                    self._visitor(deepcopy(node.block))
+                except _BreakSignal:
+                    break
+                except _ContinueSignal:
+                    continue
+
+    def handle_while_loop(self, node: WhileLoop) -> None:
+        while cast_to(BooleanLiteral, self._visitor(node.while_condition)).value:
+            try:
+                self._visitor(deepcopy(node.block))
+            except _BreakSignal:
+                break
+            except _ContinueSignal:
+                continue
+
+    def _resolve_condition(
+        self, condition: BinaryExpression
+    ) -> tuple[Clbit, int]:
+        """Convert an OpenQASM condition AST node to a Qiskit (Clbit, int) condition."""
+        if isinstance(condition.lhs, (Identifier, IndexedIdentifier, IndexExpression)):
+            clbit_index = self._resolve_clbit_index(condition.lhs)
+            value = condition.rhs.value
+        else:
+            clbit_index = self._resolve_clbit_index(condition.rhs)
+            value = condition.lhs.value
+        return (self._circuit.clbits[clbit_index], int(value))
+
+    def _resolve_clbit_index(self, node: Identifier | IndexExpression) -> int:
+        """Resolve an identifier or indexed identifier to a classical bit index."""
+        if isinstance(node, IndexExpression):
+            name = node.collection.name
+            index = node.index[0].value
+        elif isinstance(node, Identifier):
+            name = node.name
+            index = 0
+        else:
+            raise TypeError(f"Unsupported condition operand type: {type(node)}")
+
+        return self._clbit_offset[name] + index
 
 
 def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
