@@ -439,8 +439,6 @@ if (c[0] == 1) {
     assert 1 in qubit_indices
 
 
-# --- Coverage: static branching ---
-
 
 def test_static_true_condition_takes_if_branch():
     """A static true condition should execute only the if block."""
@@ -480,9 +478,6 @@ c[0] = measure q[0];
     assert ("h", [0]) not in ops
 
 
-# --- Coverage: while loop ---
-
-
 def test_while_loop_before_measurement():
     """A while loop with a static condition should execute normally."""
     qasm = """
@@ -499,9 +494,6 @@ c[0] = measure q[0];
     qc = to_qiskit(qasm)
     h_count = sum(1 for name, _ in _get_ops_with_qubits(qc) if name == "h")
     assert h_count == 2
-
-
-# --- Coverage: for loop with break/continue and DiscreteSet ---
 
 
 def test_for_loop_with_break():
@@ -536,9 +528,6 @@ c[0] = measure q[0];
     assert h_count == 0
 
 
-# --- Coverage: _resolve_condition with literal on LHS ---
-
-
 def test_condition_literal_on_lhs():
     """Condition with literal on the left side: if (1 == c[0])."""
     qasm = """
@@ -555,9 +544,6 @@ if (1 == c[0]) {
     clbit, value = op.condition
     assert qc.clbits.index(clbit) == 0
     assert value == 1
-
-
-# --- Coverage: _resolve_clbit_index for bare Identifier ---
 
 
 def test_condition_bare_identifier():
@@ -577,9 +563,6 @@ if (c == 1) {
     assert qc.clbits.index(clbit) == 0
     assert value == 1
     assert _get_ops_with_qubits(op.params[0]) == [("h", [1])]
-
-
-# --- Coverage: while loop break/continue ---
 
 
 def test_while_loop_with_break():
@@ -616,9 +599,6 @@ c[0] = measure q[0];
     qc = to_qiskit(qasm)
     h_count = sum(1 for name, _ in _get_ops_with_qubits(qc) if name == "h")
     assert h_count == 0
-
-
-# --- Coverage: _resolve_clbit_index unsupported type ---
 
 
 def test_resolve_clbit_index_unsupported_type():
