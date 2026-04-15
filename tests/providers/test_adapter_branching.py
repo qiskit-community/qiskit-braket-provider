@@ -608,3 +608,67 @@ def test_resolve_clbit_index_unsupported_type():
     ctx = _QiskitProgramContext()
     with pytest.raises(TypeError, match="Unsupported condition operand type"):
         ctx._resolve_clbit_index(IntegerLiteral(value=0))
+
+
+def test_bare_indexed_identifier_condition():
+    """Condition `if (c[0])` should be treated as `if (c[0] == 1)`."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit[1] c;
+c[0] = measure q[0];
+if (c[0]) {
+    h q[1];
+} else {
+    x q[1];
+}
+"""
+    qc = to_qiskit(qasm)
+    if_else_ops = _get_if_else_ops(qc)
+    assert len(if_else_ops) == 1
+
+    op = if_else_ops[0].operation
+    clbit, value = op.condition
+    assert qc.clbits.index(clbit) == 0
+    assert value == 1
+
+    true_body, false_body = op.params
+    assert _get_ops_with_qubits(true_body) == [("h", [1])]
+    assert _get_ops_with_qubits(false_body) == [("x", [1])]
+
+
+def test_bare_identifier_condition_mcm():
+    """Condition `if (c)` on a single-bit variable should be treated as `if (c == 1)`."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+if (c) {
+    h q[1];
+}
+"""
+    qc = to_qiskit(qasm)
+    if_else_ops = _get_if_else_ops(qc)
+    assert len(if_else_ops) == 1
+
+    op = if_else_ops[0].operation
+    clbit, value = op.condition
+    assert qc.clbits.index(clbit) == 0
+    assert value == 1
+    assert _get_ops_with_qubits(op.params[0]) == [("h", [1])]
+
+
+def test_unsupported_operator_in_condition():
+    """Operators other than == should raise TypeError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit[1] c;
+c[0] = measure q[0];
+if (c[0] != 1) {
+    h q[1];
+}
+"""
+    with pytest.raises(TypeError, match="Unsupported operator.*Only '==' is supported"):
+        to_qiskit(qasm)
