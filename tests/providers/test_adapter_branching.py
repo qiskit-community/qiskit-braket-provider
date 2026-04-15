@@ -702,3 +702,12 @@ def test_evaluate_expression_unsupported_type():
     ctx = _QiskitProgramContext()
     with pytest.raises(TypeError, match="Cannot evaluate expression of type"):
         ctx._evaluate_expression(FunctionCall(name=None, arguments=[]))
+
+
+def test_evaluate_expression_list():
+    """A list input should evaluate each element."""
+    ctx = _QiskitProgramContext()
+    result = ctx._evaluate_expression([IntegerLiteral(value=1), IntegerLiteral(value=2)])
+    assert len(result) == 2
+    assert result[0].value == 1
+    assert result[1].value == 2
