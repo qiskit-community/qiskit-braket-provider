@@ -353,8 +353,7 @@ class _QiskitProgramContext(AbstractProgramContext):
                 Default: "verbatim"
         """
         super().__init__()
-        self._circuit = QuantumCircuit()
-        self._circuit_stack: list[QuantumCircuit] = []
+        self._circuit_stack: list[QuantumCircuit] = [QuantumCircuit()]
         self._param_map = {}
         self._in_verbatim_box = False
         self._verbatim_circuit: QuantumCircuit | None = None
@@ -363,8 +362,8 @@ class _QiskitProgramContext(AbstractProgramContext):
 
     @property
     def _active_circuit(self) -> QuantumCircuit:
-        """The circuit that instructions should be added to (top of stack or main)."""
-        return self._circuit_stack[-1] if self._circuit_stack else self._circuit
+        """The circuit that instructions should be added to (top of stack)."""
+        return self._circuit_stack[-1]
 
     @property
     def circuit(self):
@@ -373,7 +372,7 @@ class _QiskitProgramContext(AbstractProgramContext):
                 "Unclosed verbatim box at end of program. "
                 "Every verbatim box start marker must have a matching end marker."
             )
-        return self._circuit
+        return self._circuit_stack[0]
 
     def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
         super().add_qubits(name, num_qubits)
@@ -525,7 +524,10 @@ class _QiskitProgramContext(AbstractProgramContext):
         # Try static evaluation first
         try:
             result = cast_to(BooleanLiteral, self._evaluate_expression(condition))
-        except (NameError, TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError, AttributeError):
+            # TypeError: unsupported node type (e.g., FunctionCall) in _evaluate_expression
+            # ValueError: binary expression with None operand (unresolved measurement)
+            # AttributeError: cast_to on None.value (bare bit with pending measurement)
             pass
         else:
             yield result.value
@@ -556,7 +558,8 @@ class _QiskitProgramContext(AbstractProgramContext):
         yield True
         self._circuit_stack.pop()
 
-        # Push circuit for else-block
+        # Push circuit for else-block (the interpreter always consumes this yield
+        # even for if-only blocks; the empty circuit is discarded below)
         false_body = QuantumCircuit(main.num_qubits, main.num_clbits)
         self._circuit_stack.append(false_body)
         yield False
@@ -627,14 +630,14 @@ class _QiskitProgramContext(AbstractProgramContext):
         else:
             clbit_index = self._resolve_clbit_index(condition.rhs)
             value = condition.lhs.value
-        return (self._circuit.clbits[clbit_index], int(value))
+        return (self.circuit.clbits[clbit_index], int(value))
 
     def _resolve_condition_from_identifier(
         self, condition: Identifier | IndexExpression
     ) -> tuple[Clbit, int]:
         """Convert a bare identifier condition (e.g., `c` or `c[0]`) to (Clbit, 1)."""
         clbit_index = self._resolve_clbit_index(condition)
-        return (self._circuit.clbits[clbit_index], 1)
+        return (self.circuit.clbits[clbit_index], 1)
 
     def _resolve_clbit_index(self, node: Identifier | IndexExpression) -> int:
         """Resolve an identifier or indexed identifier to a classical bit index."""

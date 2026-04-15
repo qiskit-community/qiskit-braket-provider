@@ -1,5 +1,6 @@
 """Tests for Qiskit to Braket adapter."""
 
+import copy
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -1187,6 +1188,7 @@ class TestAdapter(TestCase):
         qasm_program = Program(source=qasm_string, inputs={"theta": 1.0})
         self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
 
+    @pytest.mark.skip(reason="Requires interpreter pre-evaluation of FunctionCall conditions (amazon-braket-default-simulator-python#feature/pre-evaluate-branching-condition)")
     def test_roundtrip_openqasm_program(self):
         qasm_string = """
         const int[8] n = 4;
@@ -1637,8 +1639,6 @@ class TestThereAndBackAgain(TestCase):
 
     def test_missing_qubit_in_properties_handled_gracefully(self):
         """Tests that missing qubits in topology are handled gracefully with warnings."""
-        import copy
-        from unittest.mock import Mock
 
         # Create a mock device with properties containing qubits not in topology
         mock_device = Mock()

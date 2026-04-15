@@ -5,18 +5,14 @@ from qiskit.circuit import Clbit, IfElseOp
 from qiskit.circuit.library import CXGate, HGate, Measure, XGate, YGate, ZGate
 from qiskit.transpiler import Target
 
+from braket.default_simulator.openqasm.parser.openqasm_ast import IntegerLiteral
 from qiskit_braket_provider import to_qiskit
-from qiskit_braket_provider.providers.adapter import _compile
+from qiskit_braket_provider.providers.adapter import _compile, _QiskitProgramContext
 
 
 def _get_if_else_ops(circuit):
     """Extract all IfElseOp instructions from a circuit."""
     return [instr for instr in circuit.data if isinstance(instr.operation, IfElseOp)]
-
-
-def _get_gate_names(circuit):
-    """Get gate names from a circuit, excluding measurements."""
-    return [instr.operation.name for instr in circuit.data if instr.operation.name != "measure"]
 
 
 def _get_ops_with_qubits(circuit):
@@ -439,7 +435,6 @@ if (c[0] == 1) {
     assert 1 in qubit_indices
 
 
-
 def test_static_true_condition_takes_if_branch():
     """A static true condition should execute only the if block."""
     qasm = """
@@ -602,9 +597,6 @@ c[0] = measure q[0];
 
 
 def test_resolve_clbit_index_unsupported_type():
-    from braket.default_simulator.openqasm.parser.openqasm_ast import IntegerLiteral
-    from qiskit_braket_provider.providers.adapter import _QiskitProgramContext
-
     ctx = _QiskitProgramContext()
     with pytest.raises(TypeError, match="Unsupported condition operand type"):
         ctx._resolve_clbit_index(IntegerLiteral(value=0))
