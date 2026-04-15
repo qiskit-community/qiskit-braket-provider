@@ -5,7 +5,16 @@ from qiskit.circuit import Clbit, IfElseOp
 from qiskit.circuit.library import CXGate, HGate, Measure, XGate, YGate, ZGate
 from qiskit.transpiler import Target
 
-from braket.default_simulator.openqasm.parser.openqasm_ast import IntegerLiteral
+from braket.default_simulator.openqasm.parser.openqasm_ast import (
+    ArrayLiteral,
+    BooleanLiteral,
+    BoolType,
+    Cast,
+    FunctionCall,
+    IntegerLiteral,
+    UnaryExpression,
+    UnaryOperator,
+)
 from qiskit_braket_provider import to_qiskit
 from qiskit_braket_provider.providers.adapter import _compile, _QiskitProgramContext
 
@@ -664,3 +673,32 @@ if (c[0] != 1) {
 """
     with pytest.raises(TypeError, match="Unsupported operator.*Only '==' is supported"):
         to_qiskit(qasm)
+
+
+def test_unsupported_condition_type():
+    """A condition type that is not Identifier, IndexExpression, or BinaryExpression should raise."""
+    ctx = _QiskitProgramContext()
+    gen = ctx.evaluate_condition(ArrayLiteral(values=[BooleanLiteral(value=True)]))
+    with pytest.raises(TypeError, match="Unsupported condition type"):
+        next(gen)
+
+
+def test_evaluate_expression_unary():
+    """UnaryExpression should be handled by _evaluate_expression."""
+    ctx = _QiskitProgramContext()
+    result = ctx._evaluate_expression(UnaryExpression(op=UnaryOperator["!"], expression=BooleanLiteral(value=True)))
+    assert result.value is False
+
+
+def test_evaluate_expression_cast():
+    """Cast should be handled by _evaluate_expression."""
+    ctx = _QiskitProgramContext()
+    result = ctx._evaluate_expression(Cast(type=BoolType(), argument=IntegerLiteral(value=1)))
+    assert result.value is True
+
+
+def test_evaluate_expression_unsupported_type():
+    """An unsupported expression type should raise TypeError."""
+    ctx = _QiskitProgramContext()
+    with pytest.raises(TypeError, match="Cannot evaluate expression of type"):
+        ctx._evaluate_expression(FunctionCall(name=None, arguments=[]))
