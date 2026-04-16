@@ -9,6 +9,8 @@ on:
     branches:
       - main
       - 'stable/**'
+  schedule:
+    - cron: '0 1 * * *'
 
 jobs:
   min-versions:
