@@ -519,6 +519,38 @@ class TestBraketAwsBackend(TestCase):
         backend.run(circuit, verbatim=True)
         assert mock_to_braket.call_args.kwargs["verbatim"] is True
 
+    def test_optimization_level_triggers_transpilation_on_qpu(self):
+        """Tests that optimization_level > 0 actually optimizes circuits on QPU backends,
+        even when all gates are already in the basis gate set."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+
+        mock_batch = Mock()
+        mock_batch.tasks = [Mock(id="task0")]
+        device.run_batch.return_value = mock_batch
+
+        backend = BraketAwsBackend(device=device)
+
+        # Two consecutive H gates should cancel with optimization_level=3
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.h(0)
+        circuit.measure_all()
+
+        backend.run(circuit, shots=100, optimization_level=3)
+
+        # Inspect the Braket circuit that was submitted
+        submitted_circuit = device.run_batch.call_args[0][0][0]
+        h_count = sum(
+            1 for instr in submitted_circuit.instructions if instr.operator.name == "H"
+        )
+        assert h_count == 0, (
+            f"Expected H gates to cancel with optimization_level=3, but found {h_count}"
+        )
+
     @patch("qiskit_braket_provider.providers.braket_provider.AwsDevice")
     def test_queue_depth(self, mocked_device):
         """Tests queue depth."""

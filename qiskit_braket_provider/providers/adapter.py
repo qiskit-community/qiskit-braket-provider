@@ -1096,6 +1096,7 @@ def _compile(
         if (
             target
             or coupling_map
+            or optimization_level > 0
             or (
                 basis_gates
                 and not {instr.operation.name for circ in circuits for instr in circ.data}.issubset(
