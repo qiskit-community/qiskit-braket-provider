@@ -671,15 +671,15 @@ if (c[0] != 1) {
     h q[1];
 }
 """
-    with pytest.raises(TypeError, match="Unsupported operator.*Only '==' is supported"):
+    with pytest.raises(NotImplementedError, match="Unsupported operator.*Only '==' is supported"):
         to_qiskit(qasm)
 
 
 def test_unsupported_condition_type():
-    """A condition type that is not Identifier, IndexExpression, or BinaryExpression should raise."""
+    """A non-boolean-castable static condition should raise an unsupported condition error."""
     ctx = _QiskitProgramContext()
     gen = ctx.evaluate_condition(ArrayLiteral(values=[BooleanLiteral(value=True)]))
-    with pytest.raises(TypeError, match="Unsupported condition type"):
+    with pytest.raises(TypeError, match="Unsupported condition in branching statement"):
         next(gen)
 
 
@@ -711,3 +711,104 @@ def test_evaluate_expression_list():
     assert len(result) == 2
     assert result[0].value == 1
     assert result[1].value == 2
+
+
+def test_multi_bit_register_condition_raises():
+    """Using a multi-bit register as a bare condition should raise TypeError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+bit[3] c;
+c[0] = measure q[0];
+c[1] = measure q[1];
+c[2] = measure q[2];
+if (c == 3) {
+    h q[0];
+}
+"""
+    with pytest.raises(TypeError, match="Multi-bit register.*cannot be used as a single-bit condition"):
+        to_qiskit(qasm)
+
+
+def test_nested_if_else():
+    """Nested if/else should produce an IfElseOp inside the outer IfElseOp's true body."""
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+bit[2] c;
+c[0] = measure q[0];
+c[1] = measure q[1];
+if (c[0] == 1) {
+    if (c[1] == 1) {
+        h q[2];
+    } else {
+        x q[2];
+    }
+}
+"""
+    qc = to_qiskit(qasm)
+    outer_ops = _get_if_else_ops(qc)
+    assert len(outer_ops) == 1
+
+    outer = outer_ops[0].operation
+    true_body, false_body = outer.params
+    assert false_body is None
+
+    # The outer true body should contain a nested IfElseOp
+    inner_ops = _get_if_else_ops(true_body)
+    assert len(inner_ops) == 1
+
+    inner = inner_ops[0].operation
+    inner_true, inner_false = inner.params
+    assert _get_ops_with_qubits(inner_true) == [("h", [2])]
+    assert _get_ops_with_qubits(inner_false) == [("x", [2])]
+
+
+def test_physical_qubit_inside_branch_expands_circuit():
+    """A physical qubit reference inside a branch should expand the main circuit."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit[1] c;
+c[0] = measure q[0];
+if (c[0] == 1) {
+    h $4;
+}
+"""
+    qc = to_qiskit(qasm)
+    assert qc.num_qubits == 5
+    op = _get_if_else_ops(qc)[0].operation
+    true_body = op.params[0]
+    assert _get_ops_with_qubits(true_body) == [("h", [4])]
+
+
+def test_mcm_while_loop_not_supported():
+    """A while loop conditioned on a measurement result is not yet supported."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+while (c == 0) {
+    x q[1];
+    c = measure q[0];
+}
+"""
+    with pytest.raises(ValueError):
+        to_qiskit(qasm)
+
+
+def test_classical_bit_declared_inside_branch_expands_circuit():
+    """A classical bit declared inside a branch should expand the main circuit."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+if (c == 1) {
+    bit d;
+    d = measure q[1];
+}
+"""
+    qc = to_qiskit(qasm)
+    assert qc.num_clbits == 2

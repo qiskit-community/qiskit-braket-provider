@@ -359,6 +359,7 @@ class _QiskitProgramContext(AbstractProgramContext):
         self._verbatim_circuit: QuantumCircuit | None = None
         self._verbatim_box_name = verbatim_box_name
         self._clbit_offset: dict[str, int] = {}
+        self._measured_bits: set[str] = set()
 
     @property
     def _active_circuit(self) -> QuantumCircuit:
@@ -408,7 +409,7 @@ class _QiskitProgramContext(AbstractProgramContext):
             else:
                 size = 1
             
-            # this is used deal with Qiskit circuit storing all classical bits in a flat list
+            # this is used to deal with Qiskit's QuantumCircuit storing all classical bits in a flat list
             self._clbit_offset[name] = self._active_circuit.num_clbits
             self._active_circuit.add_bits([Clbit() for _ in range(size)])
 
@@ -454,7 +455,16 @@ class _QiskitProgramContext(AbstractProgramContext):
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
         return _sympy_to_qiskit(value, self._param_map) if isinstance(value, Expr) else value
 
-    def add_measure(self, target: tuple[int], classical_targets: Iterable[int] | None = None, **kwargs):
+    def add_measure(
+        self,
+        target: tuple[int],
+        classical_targets: Iterable[int] | None = None,
+        *,
+        classical_destination: Identifier | IndexedIdentifier | None = None,
+    ) -> None:
+        if classical_destination is not None:
+            name = classical_destination.name if isinstance(classical_destination, IndexedIdentifier) else classical_destination
+            self._measured_bits.add(name.name)
         active = self._active_circuit
         # this is to cover the edge case where a user measures a qubit without assigning it to a classical register
         if active.num_clbits < len(target):
@@ -511,6 +521,18 @@ class _QiskitProgramContext(AbstractProgramContext):
     def supports_midcircuit_measurement(self) -> bool:
         return True
 
+    def _references_measurement(self, condition) -> bool:
+        """Check if condition references a variable that was measured into."""
+        match condition:
+            case Identifier(name=name):
+                return name in self._measured_bits
+            case IndexExpression(collection=Identifier(name=name)):
+                return name in self._measured_bits
+            case BinaryExpression(lhs=lhs, rhs=rhs):
+                return self._references_measurement(lhs) or self._references_measurement(rhs)
+            case _:
+                return False
+
     def evaluate_condition(self, condition):
         """Evaluate a branching condition using a circuit stack.
 
@@ -521,15 +543,13 @@ class _QiskitProgramContext(AbstractProgramContext):
         For static conditions (no measurement dependency), evaluates directly
         and yields only the taken branch.
         """
-        # Try static evaluation first
-        try:
-            result = cast_to(BooleanLiteral, self._evaluate_expression(condition))
-        except (TypeError, ValueError, AttributeError):
-            # TypeError: unsupported node type (e.g., FunctionCall) in _evaluate_expression
-            # ValueError: binary expression with None operand (unresolved measurement)
-            # AttributeError: cast_to on None.value (bare bit with pending measurement)
-            pass
-        else:
+        if not self._references_measurement(condition):
+            try:
+                result = cast_to(BooleanLiteral, self._evaluate_expression(condition))
+            except (TypeError, ValueError, AttributeError) as e:
+                raise TypeError(
+                    "Unsupported condition in branching statement"
+                ) from e
             yield result.value
             return
 
@@ -540,19 +560,12 @@ class _QiskitProgramContext(AbstractProgramContext):
             resolved_condition = self._resolve_condition_from_identifier(condition)
         elif isinstance(condition, BinaryExpression):
             if condition.op != BinaryOperator["=="]:
-                raise TypeError(
+                raise NotImplementedError(
                     f"Unsupported operator '{condition.op.name}' in branching condition. "
                     f"Only '==' is supported for mid-circuit measurement branching."
                 )
             resolved_condition = self._resolve_condition(condition)
-        else:
-            raise TypeError(
-                f"Unsupported condition type for mid-circuit measurement branching: "
-                f"{type(condition).__name__}. Only binary comparisons on classical bits "
-                f"(e.g., 'c[0] == 1') or bare bit checks (e.g., 'c[0]') are supported."
-            )
 
-        # Push circuit for if-block
         true_body = QuantumCircuit(main.num_qubits, main.num_clbits)
         self._circuit_stack.append(true_body)
         yield True
@@ -565,12 +578,19 @@ class _QiskitProgramContext(AbstractProgramContext):
         yield False
         self._circuit_stack.pop()
 
-        # Only include false_body if it has instructions
         actual_false = false_body if false_body.data else None
 
+        # Sync main circuit dimensions if branch bodies grew
+        max_qubits = max(true_body.num_qubits, false_body.num_qubits)
+        max_clbits = max(true_body.num_clbits, false_body.num_clbits)
+        if max_qubits > main.num_qubits:
+            main.add_bits([Qubit() for _ in range(max_qubits - main.num_qubits)])
+        if max_clbits > main.num_clbits:
+            main.add_bits([Clbit() for _ in range(max_clbits - main.num_clbits)])
+
         if_else_op = IfElseOp(resolved_condition, true_body, actual_false)
-        qubits = list(range(main.num_qubits))
-        clbits = list(range(main.num_clbits))
+        qubits = list(range(max_qubits))
+        clbits = list(range(max_clbits))
         main.append(if_else_op, qubits, clbits)
 
     def evaluate_for_range(self, set_declaration, loop_var: str, loop_type):
@@ -624,7 +644,7 @@ class _QiskitProgramContext(AbstractProgramContext):
         self, condition: BinaryExpression
     ) -> tuple[Clbit, int]:
         """Convert an OpenQASM condition AST node to a Qiskit (Clbit, int) condition."""
-        if isinstance(condition.lhs, (Identifier, IndexedIdentifier, IndexExpression)):
+        if isinstance(condition.lhs, (Identifier, IndexExpression)):
             clbit_index = self._resolve_clbit_index(condition.lhs)
             value = condition.rhs.value
         else:
@@ -646,6 +666,14 @@ class _QiskitProgramContext(AbstractProgramContext):
             index = node.index[0].value
         elif isinstance(node, Identifier):
             name = node.name
+            var_type = self.get_type(name)
+            if isinstance(var_type, BitType) and var_type.size is not None:
+                size = var_type.size.value if isinstance(var_type.size, IntegerLiteral) else None
+                if size is not None and size > 1:
+                    raise TypeError(
+                        f"Multi-bit register '{name}' (bit[{size}]) cannot be used as a "
+                        f"single-bit condition. Use an indexed reference like '{name}[0]'."
+                    )
             index = 0
         else:
             raise TypeError(f"Unsupported condition operand type: {type(node)}")
