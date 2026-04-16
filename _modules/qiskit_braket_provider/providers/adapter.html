@@ -272,6 +272,7 @@
     <span class="n">Clbit</span><span class="p">,</span>
     <span class="n">ControlledGate</span><span class="p">,</span>
     <span class="n">Gate</span><span class="p">,</span>
+    <span class="n">IfElseOp</span><span class="p">,</span>
     <span class="n">Measure</span><span class="p">,</span>
     <span class="n">Parameter</span><span class="p">,</span>
     <span class="n">ParameterExpression</span><span class="p">,</span>
@@ -299,13 +300,34 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">gates</span> <span class="k">as</span> <span class="n">braket_gates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">noises</span> <span class="k">as</span> <span class="n">braket_noises</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.circuits</span><span class="w"> </span><span class="kn">import</span> <span class="n">observables</span> <span class="k">as</span> <span class="n">braket_observables</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm._helpers.arrays</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_range_def_to_range</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm._helpers.casting</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast_to</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm._helpers.functions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">evaluate_binary_expression</span><span class="p">,</span>
+    <span class="n">evaluate_unary_expression</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.interpreter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpreter</span><span class="p">,</span> <span class="n">VerbatimBoxDelimiter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.parser.openqasm_ast</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArrayLiteral</span><span class="p">,</span>
+    <span class="n">BinaryExpression</span><span class="p">,</span>
+    <span class="n">BinaryOperator</span><span class="p">,</span>
     <span class="n">BitType</span><span class="p">,</span>
+    <span class="n">BooleanLiteral</span><span class="p">,</span>
+    <span class="n">Cast</span><span class="p">,</span>
     <span class="n">ClassicalType</span><span class="p">,</span>
+    <span class="n">DiscreteSet</span><span class="p">,</span>
+    <span class="n">FloatLiteral</span><span class="p">,</span>
+    <span class="n">Identifier</span><span class="p">,</span>
+    <span class="n">IndexedIdentifier</span><span class="p">,</span>
+    <span class="n">IndexExpression</span><span class="p">,</span>
     <span class="n">IntegerLiteral</span><span class="p">,</span>
+    <span class="n">RangeDefinition</span><span class="p">,</span>
+    <span class="n">SymbolLiteral</span><span class="p">,</span>
+    <span class="n">UnaryExpression</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.program_context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractProgramContext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">braket.default_simulator.openqasm.program_context</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AbstractProgramContext</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">braket.device_schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DeviceActionType</span><span class="p">,</span>
     <span class="n">DeviceCapabilities</span><span class="p">,</span>
@@ -578,11 +600,18 @@
 <span class="sd">                Default: &quot;verbatim&quot;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">()]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_param_map</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="p">:</span> <span class="n">QuantumCircuit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_box_name</span> <span class="o">=</span> <span class="n">verbatim_box_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clbit_offset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_measured_bits</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_active_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantumCircuit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The circuit that instructions should be added to (top of stack).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -591,11 +620,11 @@
                 <span class="s2">&quot;Unclosed verbatim box at end of program. &quot;</span>
                 <span class="s2">&quot;Every verbatim box start marker must have a matching end marker.&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_qubits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_qubits</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_register</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span><span class="o">.</span><span class="n">add_register</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">declare_variable</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -627,13 +656,15 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
             
-            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)])</span>
+            <span class="c1"># this is used to deal with Qiskit&#39;s QuantumCircuit storing all classical bits in a flat list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clbit_offset</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span><span class="o">.</span><span class="n">num_clbits</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_builtin_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_BRAKET_GATE_NAME_TO_QISKIT_GATE</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_phase_instruction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">phase_value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">+=</span> <span class="n">phase_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">+=</span> <span class="n">phase_value</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_gate_instruction</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">gate_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">params</span><span class="p">,</span> <span class="n">ctrl_modifiers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">power</span><span class="p">:</span> <span class="nb">int</span>
@@ -652,12 +683,13 @@
                 <span class="nb">len</span><span class="p">(</span><span class="n">ctrl_modifiers</span><span class="p">),</span> <span class="n">ctrl_state</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ctrl_modifiers</span><span class="p">]))</span>
             <span class="p">)</span>
 
+        <span class="n">active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
         <span class="c1"># Ensure circuit has enough qubits for the target indices by adding missing qubits</span>
         <span class="c1"># This is needed when using physical qubits ($0, $1, etc.) where no qubit register is declared</span>
         <span class="n">max_qubits</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">target</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="n">num_missing_qubits</span> <span class="o">=</span> <span class="n">max_qubits</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_qubits</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_qubits</span><span class="p">)])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_qubits</span>        
+        <span class="n">num_missing_qubits</span> <span class="o">=</span> <span class="n">max_qubits</span> <span class="o">-</span> <span class="n">active</span><span class="o">.</span><span class="n">num_qubits</span>
+        <span class="n">active</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_qubits</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">active</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span><span class="p">:</span>
             <span class="c1"># Ensure verbatim circuit also has enough qubits by adding missing qubits</span>
@@ -665,19 +697,29 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_qubits</span><span class="p">)])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CircuitInstruction</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CircuitInstruction</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
+            <span class="n">active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CircuitInstruction</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_parameter_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">Expr</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span> <span class="o">|</span> <span class="n">Parameter</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_sympy_to_qiskit</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_map</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Expr</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">add_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">classical_targets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_measure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">classical_targets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">classical_destination</span><span class="p">:</span> <span class="n">Identifier</span> <span class="o">|</span> <span class="n">IndexedIdentifier</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">classical_destination</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">classical_destination</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">classical_destination</span><span class="p">,</span> <span class="n">IndexedIdentifier</span><span class="p">)</span> <span class="k">else</span> <span class="n">classical_destination</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_measured_bits</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
         <span class="c1"># this is to cover the edge case where a user measures a qubit without assigning it to a classical register</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_clbits</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
-            <span class="n">num_missing_clbits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">num_clbits</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_clbits</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">active</span><span class="o">.</span><span class="n">num_clbits</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="n">num_missing_clbits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">-</span> <span class="n">active</span><span class="o">.</span><span class="n">num_clbits</span>
+            <span class="n">active</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_missing_clbits</span><span class="p">)])</span>
         <span class="k">for</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
             <span class="n">index</span> <span class="o">=</span> <span class="n">classical_targets</span><span class="p">[</span><span class="nb">iter</span><span class="p">]</span> <span class="k">if</span> <span class="n">classical_targets</span> <span class="k">else</span> <span class="nb">iter</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+            <span class="n">active</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">add_verbatim_marker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">marker</span><span class="p">:</span> <span class="n">VerbatimBoxDelimiter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle verbatim box start/end markers.</span>
@@ -711,16 +753,179 @@
 
             <span class="n">box_op</span> <span class="o">=</span> <span class="n">BoxOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_box_name</span><span class="p">)</span>
 
-            <span class="c1"># Append BoxOp to main circuit with all qubits (convert indices to Qubit objects)</span>
-            <span class="c1"># We need to pass the actual Qubit objects from the main circuit, not just indices</span>
-            <span class="n">qubit_objects</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">box_op</span><span class="p">,</span> <span class="n">qubit_objects</span><span class="p">)</span>
+            <span class="n">active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
+            <span class="c1"># Append BoxOp to active circuit with all qubits (convert indices to Qubit objects)</span>
+            <span class="n">qubit_objects</span> <span class="o">=</span> <span class="p">[</span><span class="n">active</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)]</span>
+            <span class="n">active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">box_op</span><span class="p">,</span> <span class="n">qubit_objects</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span> <span class="o">=</span> <span class="kc">None</span>
         
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Verbatim box created using invalid marker&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">supports_midcircuit_measurement</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_references_measurement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if condition references a variable that was measured into.&quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="n">condition</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Identifier</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measured_bits</span>
+            <span class="k">case</span> <span class="n">IndexExpression</span><span class="p">(</span><span class="n">collection</span><span class="o">=</span><span class="n">Identifier</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measured_bits</span>
+            <span class="k">case</span> <span class="n">BinaryExpression</span><span class="p">(</span><span class="n">lhs</span><span class="o">=</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="o">=</span><span class="n">rhs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_references_measurement</span><span class="p">(</span><span class="n">lhs</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_references_measurement</span><span class="p">(</span><span class="n">rhs</span><span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a branching condition using a circuit stack.</span>
+
+<span class="sd">        Yields True (visit if-block) then False (visit else-block).</span>
+<span class="sd">        Each yield pushes a new circuit onto the stack; after the interpreter</span>
+<span class="sd">        visits the block, the circuit is popped and used to build an IfElseOp.</span>
+
+<span class="sd">        For static conditions (no measurement dependency), evaluates directly</span>
+<span class="sd">        and yields only the taken branch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_references_measurement</span><span class="p">(</span><span class="n">condition</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">cast_to</span><span class="p">(</span><span class="n">BooleanLiteral</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Unsupported condition in branching statement&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">yield</span> <span class="n">result</span><span class="o">.</span><span class="n">value</span>
+            <span class="k">return</span>
+
+        <span class="c1"># MCM path: resolve condition to (Clbit, value)</span>
+        <span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="p">(</span><span class="n">Identifier</span><span class="p">,</span> <span class="n">IndexExpression</span><span class="p">)):</span>
+            <span class="c1"># Bare identifier like `if (c)` or `if (c[0])` — equivalent to `== 1`</span>
+            <span class="n">resolved_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_condition_from_identifier</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">BinaryExpression</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">op</span> <span class="o">!=</span> <span class="n">BinaryOperator</span><span class="p">[</span><span class="s2">&quot;==&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unsupported operator &#39;</span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in branching condition. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Only &#39;==&#39; is supported for mid-circuit measurement branching.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">resolved_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_condition</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+
+        <span class="n">true_body</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">true_body</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="c1"># Push circuit for else-block (the interpreter always consumes this yield</span>
+        <span class="c1"># even for if-only blocks; the empty circuit is discarded below)</span>
+        <span class="n">false_body</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">false_body</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="n">actual_false</span> <span class="o">=</span> <span class="n">false_body</span> <span class="k">if</span> <span class="n">false_body</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Sync main circuit dimensions if branch bodies grew</span>
+        <span class="n">max_qubits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_body</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">false_body</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)</span>
+        <span class="n">max_clbits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_body</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">,</span> <span class="n">false_body</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_qubits</span> <span class="o">&gt;</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_qubits</span> <span class="o">-</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">max_clbits</span> <span class="o">&gt;</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span> <span class="o">-</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)])</span>
+
+        <span class="n">if_else_op</span> <span class="o">=</span> <span class="n">IfElseOp</span><span class="p">(</span><span class="n">resolved_condition</span><span class="p">,</span> <span class="n">true_body</span><span class="p">,</span> <span class="n">actual_false</span><span class="p">)</span>
+        <span class="n">qubits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_qubits</span><span class="p">))</span>
+        <span class="n">clbits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span><span class="p">))</span>
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">if_else_op</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">clbits</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_for_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_declaration</span><span class="p">,</span> <span class="n">loop_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up each for-loop iteration, yielding once per iteration.&quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">set_declaration</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">RangeDefinition</span><span class="p">):</span>
+            <span class="n">index_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">IntegerLiteral</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">convert_range_def_to_range</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">index_values</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">index_values</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">enter_scope</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">loop_var</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">yield</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_while_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a while-loop condition, yielding True per iteration.&quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="n">cast_to</span><span class="p">(</span><span class="n">BooleanLiteral</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lightweight expression evaluator for loop conditions and ranges.&quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="n">expression</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">BooleanLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">IntegerLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">FloatLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">ArrayLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">SymbolLiteral</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">expression</span>
+            <span class="k">case</span> <span class="n">Identifier</span><span class="p">():</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_value_by_identifier</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">BinaryExpression</span><span class="p">(</span><span class="n">lhs</span><span class="o">=</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="o">=</span><span class="n">rhs</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">op</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">evaluate_binary_expression</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">lhs</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">rhs</span><span class="p">),</span>
+                    <span class="n">op</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">UnaryExpression</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="n">inner</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">op</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">evaluate_unary_expression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">inner</span><span class="p">),</span> <span class="n">op</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">Cast</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">cast_type</span><span class="p">,</span> <span class="n">argument</span><span class="o">=</span><span class="n">argument</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">cast_to</span><span class="p">(</span><span class="n">cast_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">argument</span><span class="p">))</span>
+            <span class="k">case</span> <span class="n">RangeDefinition</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">RangeDefinition</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="k">if</span> <span class="n">start</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">end</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="k">if</span> <span class="n">step</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">DiscreteSet</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">DiscreteSet</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">])</span>
+            <span class="k">case</span> <span class="nb">list</span><span class="p">():</span>
+                <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">expression</span><span class="p">]</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot evaluate expression of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_condition</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">BinaryExpression</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Clbit</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert an OpenQASM condition AST node to a Qiskit (Clbit, int) condition.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="p">(</span><span class="n">Identifier</span><span class="p">,</span> <span class="n">IndexExpression</span><span class="p">)):</span>
+            <span class="n">clbit_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_clbit_index</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">clbit_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_clbit_index</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">clbits</span><span class="p">[</span><span class="n">clbit_index</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_condition_from_identifier</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Identifier</span> <span class="o">|</span> <span class="n">IndexExpression</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Clbit</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a bare identifier condition (e.g., `c` or `c[0]`) to (Clbit, 1).&quot;&quot;&quot;</span>
+        <span class="n">clbit_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_clbit_index</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">clbits</span><span class="p">[</span><span class="n">clbit_index</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_clbit_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Identifier</span> <span class="o">|</span> <span class="n">IndexExpression</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve an identifier or indexed identifier to a classical bit index.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">IndexExpression</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">Identifier</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">var_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_type</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var_type</span><span class="p">,</span> <span class="n">BitType</span><span class="p">)</span> <span class="ow">and</span> <span class="n">var_type</span><span class="o">.</span><span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">var_type</span><span class="o">.</span><span class="n">size</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var_type</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">IntegerLiteral</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Multi-bit register &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; (bit[</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">]) cannot be used as a &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;single-bit condition. Use an indexed reference like &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">[0]&#39;.&quot;</span>
+                    <span class="p">)</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported condition operand type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clbit_offset</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">+</span> <span class="n">index</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">native_gate_connectivity</span><span class="p">(</span><span class="n">properties</span><span class="p">:</span> <span class="n">DeviceCapabilities</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
