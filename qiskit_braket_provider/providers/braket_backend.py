@@ -395,6 +395,9 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                 "Set native=True to use optimization_level."
             )
 
+        if native and optimization_level is None:
+            raise QiskitBraketException("native=True requires optimization_level to be specified.")
+
         # Always use target for simulator
         target, basis_gates = self._target_and_basis_gates(native, pass_manager)
         braket_circuits = (

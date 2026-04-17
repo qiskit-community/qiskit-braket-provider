@@ -334,7 +334,7 @@ class TestBraketAwsBackend(TestCase):
         braket_circuit = Circuit().h(1)
         device.run_batch.assert_called_once_with([braket_circuit, braket_circuit], shots=0)
 
-        backend.run([circuit, circuit], shots=0, native=True, num_processes=2)
+        backend.run([circuit, circuit], shots=0, native=True, optimization_level=0, num_processes=2)
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(1, np.pi / 2).rx(1, np.pi / 2).rz(1, np.pi / 2)
         )
@@ -366,7 +366,7 @@ class TestBraketAwsBackend(TestCase):
             ProgramSet([braket_circuit, braket_circuit], shots_per_executable=5)
         )
 
-        backend.run([circuit, circuit], shots=5, native=True, num_processes=2)
+        backend.run([circuit, circuit], shots=5, native=True, optimization_level=0, num_processes=2)
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(1, np.pi / 2).rx(1, np.pi / 2).rz(1, np.pi / 2)
         )
@@ -427,6 +427,23 @@ class TestBraketAwsBackend(TestCase):
             "optimization_level requires native=True",
         ):
             backend.run(circuit, shots=0, optimization_level=2)
+
+    def test_run_native_without_optimization_level_raises(self):
+        """Tests that specifying native=True without optimization_level raises."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        backend = BraketAwsBackend(device=device)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.measure_all()
+        with self.assertRaisesRegex(
+            exception.QiskitBraketException,
+            "native=True requires optimization_level to be specified",
+        ):
+            backend.run(circuit, shots=0, native=True)
 
     @patch("qiskit_braket_provider.providers.braket_backend.AwsQuantumTask")
     @patch("qiskit_braket_provider.providers.braket_backend.BraketQuantumTask")
@@ -529,7 +546,7 @@ class TestBraketAwsBackend(TestCase):
 
         backend = AWSBraketBackend(device=mock_device)
 
-        backend.run(circuit, native=True)
+        backend.run(circuit, native=True, optimization_level=0)
         assert mock_to_braket.call_args.kwargs["target"] == backend.target
 
         backend.run(circuit, verbatim=True)
