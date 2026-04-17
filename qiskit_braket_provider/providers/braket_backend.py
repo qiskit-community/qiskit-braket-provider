@@ -352,7 +352,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
         verbatim: bool = False,
         native: bool = False,
         *,
-        optimization_level: int = 0,
+        optimization_level: int | None = None,
         callback: Callable | None = None,
         num_processes: int | None = None,
         pass_manager: PassManager | None = None,
@@ -370,8 +370,8 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             native (bool): use the Qiskit transpiler to compile to a verbatim native circuit
                 with noise aware transpilation when available and optimization_level > 2.
                 Default: ``False``.
-            optimization_level (int): Qiskit transpiler optimization level (see adapter.py).
-                Default: 0.
+            optimization_level (int | None): Qiskit transpiler optimization level
+                (see adapter.py). Requires ``native=True``. Default: ``None``.
             callback (Callable | None): Function for the Qiskit transpiler. Default: ``None``.
             num_processes (int | None): Allow for parallel transpilation. Default: ``None``.
             pass_manager (PassManager | None): User-specified ``PassManager`` for the
@@ -389,6 +389,15 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             self._validate_meas_level(options["meas_level"])
             del options["meas_level"]
 
+        if optimization_level is not None and not native:
+            raise QiskitBraketException(
+                "optimization_level requires native=True. "
+                "Set native=True to use optimization_level."
+            )
+
+        if native and optimization_level is None:
+            raise QiskitBraketException("native=True requires optimization_level to be specified.")
+
         # Always use target for simulator
         target, basis_gates = self._target_and_basis_gates(native, pass_manager)
         braket_circuits = (
@@ -402,7 +411,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
                 angle_restrictions=(
                     native_angle_restrictions(self._device.properties) if native else None
                 ),
-                optimization_level=optimization_level,
+                optimization_level=optimization_level or 0,
                 callback=callback,
                 num_processes=num_processes,
                 pass_manager=pass_manager,
