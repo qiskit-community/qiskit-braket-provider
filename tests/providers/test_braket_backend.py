@@ -543,9 +543,7 @@ class TestBraketAwsBackend(TestCase):
 
         # Inspect the Braket circuit that was submitted
         submitted_circuit = device.run_batch.call_args[0][0][0]
-        h_count = sum(
-            1 for instr in submitted_circuit.instructions if instr.operator.name == "H"
-        )
+        h_count = sum(1 for instr in submitted_circuit.instructions if instr.operator.name == "H")
         assert h_count == 0, (
             f"Expected H gates to cancel with optimization_level=3, but found {h_count}"
         )
