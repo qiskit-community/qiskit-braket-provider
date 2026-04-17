@@ -411,6 +411,23 @@ class TestBraketAwsBackend(TestCase):
         with self.assertRaises(exception.QiskitBraketException):
             backend.run(1, shots=0)
 
+    def test_run_optimization_level_without_native_raises(self):
+        """Tests that specifying optimization_level without native=True raises."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        backend = BraketAwsBackend(device=device)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.measure_all()
+        with self.assertRaisesRegex(
+            exception.QiskitBraketException,
+            "optimization_level requires native=True",
+        ):
+            backend.run(circuit, shots=0, optimization_level=2)
+
     @patch("qiskit_braket_provider.providers.braket_backend.AwsQuantumTask")
     @patch("qiskit_braket_provider.providers.braket_backend.BraketQuantumTask")
     def test_retrieve_job_task_ids(self, mock_braket_quantum_task, mock_aws_quantum_task):
@@ -539,7 +556,7 @@ class TestBraketAwsBackend(TestCase):
         circuit.h(0)
         circuit.measure_all()
 
-        backend.run(circuit, shots=100, optimization_level=3)
+        backend.run(circuit, shots=100, optimization_level=3, native=True)
 
         # Inspect the Braket circuit that was submitted
         submitted_circuit = device.run_batch.call_args[0][0][0]
