@@ -225,7 +225,9 @@ y q[1];
 """
     qc = to_qiskit(qasm)
 
-    main_ops = [(instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data]
+    main_ops = [
+        (instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data
+    ]
     assert main_ops[0] == ("x", [0])
     assert main_ops[1] == ("measure", [0])
     assert main_ops[2][0] == "if_else"
@@ -275,7 +277,9 @@ for int[8] i in [0:1] {
 c[0] = measure q[0];
 """
     qc = to_qiskit(qasm)
-    main_ops = [(instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data]
+    main_ops = [
+        (instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data
+    ]
     assert main_ops[0] == ("h", [0])
     assert main_ops[1] == ("h", [0])
     assert main_ops[2] == ("measure", [0])
@@ -293,7 +297,9 @@ for int[8] i in [0:1] {
 }
 """
     qc = to_qiskit(qasm)
-    main_ops = [(instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data]
+    main_ops = [
+        (instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data
+    ]
     assert main_ops[0] == ("measure", [0])
     assert main_ops[1] == ("h", [1])
     assert main_ops[2] == ("h", [1])
@@ -392,7 +398,9 @@ def test_compile_preserves_if_else_ops(qasm, expected_if_else_count, mcm_target)
     """IfElseOps should survive compilation through _compile."""
     result = _compile(qasm, target=mcm_target)
     compiled_circuit = result.circuits[0]
-    if_else_ops = [instr for instr in compiled_circuit.data if isinstance(instr.operation, IfElseOp)]
+    if_else_ops = [
+        instr for instr in compiled_circuit.data if isinstance(instr.operation, IfElseOp)
+    ]
     assert len(if_else_ops) == expected_if_else_count
 
 
@@ -411,7 +419,9 @@ if (c[0] == 1) {
 """
     result = _compile(qasm, target=mcm_target)
     compiled_circuit = result.circuits[0]
-    op = next(instr for instr in compiled_circuit.data if isinstance(instr.operation, IfElseOp)).operation
+    op = next(
+        instr for instr in compiled_circuit.data if isinstance(instr.operation, IfElseOp)
+    ).operation
     true_body, false_body = op.params
 
     assert _get_ops_with_qubits(true_body) == [("h", [1])]
@@ -686,7 +696,9 @@ def test_unsupported_condition_type():
 def test_evaluate_expression_unary():
     """UnaryExpression should be handled by _evaluate_expression."""
     ctx = _QiskitProgramContext()
-    result = ctx._evaluate_expression(UnaryExpression(op=UnaryOperator["!"], expression=BooleanLiteral(value=True)))
+    result = ctx._evaluate_expression(
+        UnaryExpression(op=UnaryOperator["!"], expression=BooleanLiteral(value=True))
+    )
     assert result.value is False
 
 
@@ -726,7 +738,9 @@ if (c == 3) {
     h q[0];
 }
 """
-    with pytest.raises(TypeError, match="Multi-bit register.*cannot be used as a single-bit condition"):
+    with pytest.raises(
+        TypeError, match="Multi-bit register.*cannot be used as a single-bit condition"
+    ):
         to_qiskit(qasm)
 
 
