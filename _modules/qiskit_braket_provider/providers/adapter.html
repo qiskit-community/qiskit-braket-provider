@@ -583,18 +583,19 @@
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_QiskitProgramContext</span><span class="p">(</span><span class="n">AbstractProgramContext</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Program context for converting OpenQASM 3 programs to Qiskit circuits.</span>
-<span class="sd">    </span>
+
 <span class="sd">    This context extends AbstractProgramContext to build Qiskit QuantumCircuits from</span>
 <span class="sd">    OpenQASM 3 programs. It supports Braket verbatim pragmas, which are converted to</span>
 <span class="sd">    Qiskit BoxOp operations to preserve gate sequences that should not be optimized.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Verbatim boxes are represented using Qiskit&#39;s native BoxOp construct, which treats</span>
 <span class="sd">    a block of operations atomically. All verbatim boxes in a circuit use the same</span>
 <span class="sd">    configurable label name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_BRAKET_VERBATIM_BOX_NAME</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Qiskit program context.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            verbatim_box_name: Name to use for BoxOp labels when converting verbatim boxes.</span>
 <span class="sd">                Default: &quot;verbatim&quot;</span>
@@ -634,16 +635,16 @@
         <span class="n">const</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Override to add classical bits to the Qiskit circuit when declared.</span>
-<span class="sd">        </span>
+
 <span class="sd">        When a classical bit array is declared (e.g., bit[2] c;), we need to add</span>
 <span class="sd">        the corresponding classical bits to the Qiskit circuit.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Note: This only adds classical bits when the size is known at declaration time.</span>
 <span class="sd">        For function parameters with variable sizes (e.g., bit[n] where n is a parameter),</span>
 <span class="sd">        the classical bits are not added since the size is not yet determined.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">symbol_type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
-        
+
         <span class="c1"># If this is a bit type declaration, add classical bits to the circuit</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">symbol_type</span><span class="p">,</span> <span class="n">BitType</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">symbol_type</span><span class="o">.</span><span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -655,7 +656,7 @@
                     <span class="k">return</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span>
-            
+
             <span class="c1"># this is used to deal with Qiskit&#39;s QuantumCircuit storing all classical bits in a flat list</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_clbit_offset</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span><span class="o">.</span><span class="n">num_clbits</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">)])</span>
@@ -710,7 +711,11 @@
         <span class="n">classical_destination</span><span class="p">:</span> <span class="n">Identifier</span> <span class="o">|</span> <span class="n">IndexedIdentifier</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">classical_destination</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">classical_destination</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">classical_destination</span><span class="p">,</span> <span class="n">IndexedIdentifier</span><span class="p">)</span> <span class="k">else</span> <span class="n">classical_destination</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">classical_destination</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">classical_destination</span><span class="p">,</span> <span class="n">IndexedIdentifier</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">classical_destination</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_measured_bits</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
         <span class="c1"># this is to cover the edge case where a user measures a qubit without assigning it to a classical register</span>
@@ -760,7 +765,7 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_in_verbatim_box</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_verbatim_circuit</span> <span class="o">=</span> <span class="kc">None</span>
-        
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Verbatim box created using invalid marker&quot;</span><span class="p">)</span>
 
@@ -794,9 +799,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">cast_to</span><span class="p">(</span><span class="n">BooleanLiteral</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span>
             <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="s2">&quot;Unsupported condition in branching statement&quot;</span>
-                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Unsupported condition in branching statement&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
             <span class="k">yield</span> <span class="n">result</span><span class="o">.</span><span class="n">value</span>
             <span class="k">return</span>
 
@@ -860,7 +863,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Lightweight expression evaluator for loop conditions and ranges.&quot;&quot;&quot;</span>
         <span class="k">match</span> <span class="n">expression</span><span class="p">:</span>
-            <span class="k">case</span> <span class="n">BooleanLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">IntegerLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">FloatLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">ArrayLiteral</span><span class="p">()</span> <span class="o">|</span> <span class="n">SymbolLiteral</span><span class="p">():</span>
+            <span class="k">case</span> <span class="p">(</span>
+                <span class="n">BooleanLiteral</span><span class="p">()</span>
+                <span class="o">|</span> <span class="n">IntegerLiteral</span><span class="p">()</span>
+                <span class="o">|</span> <span class="n">FloatLiteral</span><span class="p">()</span>
+                <span class="o">|</span> <span class="n">ArrayLiteral</span><span class="p">()</span>
+                <span class="o">|</span> <span class="n">SymbolLiteral</span><span class="p">()</span>
+            <span class="p">):</span>
                 <span class="k">return</span> <span class="n">expression</span>
             <span class="k">case</span> <span class="n">Identifier</span><span class="p">():</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_value_by_identifier</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span>
@@ -887,9 +896,7 @@
             <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot evaluate expression of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_condition</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">BinaryExpression</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Clbit</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">BinaryExpression</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Clbit</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert an OpenQASM condition AST node to a Qiskit (Clbit, int) condition.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">lhs</span><span class="p">,</span> <span class="p">(</span><span class="n">Identifier</span><span class="p">,</span> <span class="n">IndexExpression</span><span class="p">)):</span>
             <span class="n">clbit_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_clbit_index</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">lhs</span><span class="p">)</span>
@@ -1389,7 +1396,9 @@
 <span class="sd">        ValueError: If barrier count doesn&#39;t match verbatim box count</span>
 <span class="sd">        ValueError: If qubit mapping fails</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">reconstructed_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+    <span class="n">reconstructed_circuit</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span>
+        <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">num_clbits</span>
+    <span class="p">)</span>
     <span class="n">reconstructed_circuit</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">=</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">global_phase</span>
 
     <span class="n">verbatim_box_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">verbatim_boxes</span><span class="p">)</span>
@@ -1398,7 +1407,10 @@
     <span class="k">for</span> <span class="n">instruction</span> <span class="ow">in</span> <span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
         <span class="n">operation</span> <span class="o">=</span> <span class="n">instruction</span><span class="o">.</span><span class="n">operation</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">Barrier</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">verbatim_box_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">Barrier</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">verbatim_box_name</span>
+        <span class="p">):</span>
             <span class="n">barrier_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="k">try</span><span class="p">:</span>
@@ -1498,16 +1510,18 @@
                 <span class="c1"># Check if any circuits have verbatim boxes and extract them before transpilation</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instr</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span> <span class="n">BoxOp</span><span class="p">):</span>
                     <span class="n">has_verbatim_boxes</span> <span class="o">=</span> <span class="kc">True</span>
-    
+
     <span class="k">if</span> <span class="n">has_barriers_named_verbatim</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot have a Barrier labeled with the same label used for verbatim boxes&quot;</span><span class="p">)</span>
-    
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot have a Barrier labeled with the same label used for verbatim boxes&quot;</span>
+        <span class="p">)</span>
+
     <span class="k">if</span> <span class="n">pass_manager</span> <span class="ow">and</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;Custom pass_manager is not supported with verbatim boxes. &quot;</span>
             <span class="s2">&quot;Verbatim boxes require controlled transpilation to preserve gate ordering.&quot;</span>
         <span class="p">)</span>
-    
+
     <span class="n">all_verbatim_boxes</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
         <span class="n">extracted_circuits</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1535,16 +1549,19 @@
         <span class="n">circuits</span> <span class="o">=</span> <span class="n">pass_manager</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">verbatim</span><span class="p">:</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
-        
+
         <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Overriding layout method to &#39;trivial&#39; &quot;</span>
-            <span class="s2">&quot;and routing method to &#39;none&#39; as the circuit has verbatim blocks&quot;</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">effective_layout_method</span> <span class="o">=</span> <span class="s1">&#39;trivial&#39;</span>
-            <span class="n">effective_routing_method</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Overriding layout method to &#39;trivial&#39; &quot;</span>
+                <span class="s2">&quot;and routing method to &#39;none&#39; as the circuit has verbatim blocks&quot;</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">effective_layout_method</span> <span class="o">=</span> <span class="s2">&quot;trivial&quot;</span>
+            <span class="n">effective_routing_method</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">effective_layout_method</span> <span class="o">=</span> <span class="n">layout_method</span>
             <span class="n">effective_routing_method</span> <span class="o">=</span> <span class="n">routing_method</span>
-        
+
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">target</span>
             <span class="ow">or</span> <span class="n">coupling_map</span>
@@ -1572,7 +1589,9 @@
 
     <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
         <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">_restore_verbatim_boxes</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">verbatim_boxes</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">verbatim_boxes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">circ</span>
+            <span class="n">_restore_verbatim_boxes</span><span class="p">(</span><span class="n">circ</span><span class="p">,</span> <span class="n">verbatim_boxes</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">verbatim_boxes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="n">circ</span>
             <span class="k">for</span> <span class="n">circ</span><span class="p">,</span> <span class="n">verbatim_boxes</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">all_verbatim_boxes</span><span class="p">)</span>
         <span class="p">]</span>
 
@@ -1673,7 +1692,7 @@
 <span class="sd">        routing_method (str | None): The routing method to use during transpilation. If ``None``</span>
 <span class="sd">            and the circuit contains verbatim boxes, defaults to ``&#39;none&#39;`` to disable routing</span>
 <span class="sd">            and preserve physical qubit structure. Otherwise uses Qiskit&#39;s default. Default: ``None``.</span>
-<span class="sd">        seed_transpiler (int | None): This specifies a seed used for the stochastic parts </span>
+<span class="sd">        seed_transpiler (int | None): This specifies a seed used for the stochastic parts</span>
 <span class="sd">            of the transpiler. Default: ``None``.</span>
 
 <span class="sd">    Raises:</span>
@@ -1685,20 +1704,36 @@
 <span class="sd">        Circuit | list[Circuit]: Braket circuit or circuits</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">_compile</span><span class="p">(</span>
-        <span class="n">circuits</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-        <span class="n">qubit_labels</span><span class="o">=</span><span class="n">qubit_labels</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="n">verbatim</span><span class="o">=</span><span class="n">verbatim</span><span class="p">,</span>
-        <span class="n">basis_gates</span><span class="o">=</span><span class="n">basis_gates</span><span class="p">,</span> <span class="n">coupling_map</span><span class="o">=</span><span class="n">coupling_map</span><span class="p">,</span>
-        <span class="n">angle_restrictions</span><span class="o">=</span><span class="n">angle_restrictions</span><span class="p">,</span> <span class="n">optimization_level</span><span class="o">=</span><span class="n">optimization_level</span><span class="p">,</span>
-        <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">,</span> <span class="n">pass_manager</span><span class="o">=</span><span class="n">pass_manager</span><span class="p">,</span>
-        <span class="n">braket_device</span><span class="o">=</span><span class="n">braket_device</span><span class="p">,</span> <span class="n">add_measurements</span><span class="o">=</span><span class="n">add_measurements</span><span class="p">,</span>
-        <span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span> <span class="n">verbatim_box_name</span><span class="o">=</span><span class="n">verbatim_box_name</span><span class="p">,</span>
-        <span class="n">layout_method</span><span class="o">=</span><span class="n">layout_method</span><span class="p">,</span> <span class="n">routing_method</span><span class="o">=</span><span class="n">routing_method</span><span class="p">,</span>
+        <span class="n">circuits</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">qubit_labels</span><span class="o">=</span><span class="n">qubit_labels</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+        <span class="n">verbatim</span><span class="o">=</span><span class="n">verbatim</span><span class="p">,</span>
+        <span class="n">basis_gates</span><span class="o">=</span><span class="n">basis_gates</span><span class="p">,</span>
+        <span class="n">coupling_map</span><span class="o">=</span><span class="n">coupling_map</span><span class="p">,</span>
+        <span class="n">angle_restrictions</span><span class="o">=</span><span class="n">angle_restrictions</span><span class="p">,</span>
+        <span class="n">optimization_level</span><span class="o">=</span><span class="n">optimization_level</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+        <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">,</span>
+        <span class="n">pass_manager</span><span class="o">=</span><span class="n">pass_manager</span><span class="p">,</span>
+        <span class="n">braket_device</span><span class="o">=</span><span class="n">braket_device</span><span class="p">,</span>
+        <span class="n">add_measurements</span><span class="o">=</span><span class="n">add_measurements</span><span class="p">,</span>
+        <span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span>
+        <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span>
+        <span class="n">verbatim_box_name</span><span class="o">=</span><span class="n">verbatim_box_name</span><span class="p">,</span>
+        <span class="n">layout_method</span><span class="o">=</span><span class="n">layout_method</span><span class="p">,</span>
+        <span class="n">routing_method</span><span class="o">=</span><span class="n">routing_method</span><span class="p">,</span>
         <span class="n">seed_transpiler</span><span class="o">=</span><span class="n">seed_transpiler</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">translated</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">_translate_to_braket</span><span class="p">(</span>
-            <span class="n">circ</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">qubit_labels</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">verbatim</span><span class="p">,</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">basis_gates</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">angle_restrictions</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">pass_manager</span><span class="p">,</span>
+            <span class="n">circ</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">qubit_labels</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">verbatim</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">basis_gates</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">angle_restrictions</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">pass_manager</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">circuits</span>
     <span class="p">]</span>
@@ -2040,10 +2075,10 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        QuantumCircuit: Qiskit quantum circuit</span>
-<span class="sd">    </span>
+
 <span class="sd">    Examples:</span>
 <span class="sd">        Convert an OpenQASM 3 program with a verbatim box:</span>
-<span class="sd">        </span>
+
 <span class="sd">        &gt;&gt;&gt; openqasm_program = &#39;&#39;&#39;</span>
 <span class="sd">        ... OPENQASM 3.0;</span>
 <span class="sd">        ... #pragma braket verbatim</span>
@@ -2058,9 +2093,9 @@
 <span class="sd">        &gt;&gt;&gt; for instruction in qiskit_circuit.data:</span>
 <span class="sd">        ...     if hasattr(instruction.operation, &#39;label&#39;) and instruction.operation.label == &#39;verbatim&#39;:</span>
 <span class="sd">        ...         print(f&quot;Found verbatim box: {instruction.operation}&quot;)</span>
-<span class="sd">        </span>
+
 <span class="sd">        Use a custom name for verbatim boxes:</span>
-<span class="sd">        </span>
+
 <span class="sd">        &gt;&gt;&gt; qiskit_circuit = to_qiskit(openqasm_program, verbatim_box_name=&quot;my_verbatim&quot;)</span>
 <span class="sd">        &gt;&gt;&gt; # All verbatim boxes will have the label &quot;my_verbatim&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
