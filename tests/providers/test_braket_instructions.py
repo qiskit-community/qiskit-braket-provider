@@ -33,6 +33,8 @@ class TestIqmExperimentalCapabilities(unittest.TestCase):
         self.assertEqual(measure1, measure2)
         self.assertNotEqual(measure1, measure3)
         self.assertNotEqual(measure1, "not_a_measure")
+        self.assertEqual(hash(measure1), hash(measure2))
+        self.assertNotEqual(hash(measure1), hash(measure3))
 
     def test_measureff_repr(self):
         """Test MeasureFF string representation"""
@@ -63,6 +65,8 @@ class TestIqmExperimentalCapabilities(unittest.TestCase):
         self.assertNotEqual(ccprx1, ccprx3)
         self.assertNotEqual(ccprx1, ccprx4)
         self.assertNotEqual(ccprx1, "not_a_ccprx")
+        self.assertEqual(hash(ccprx1), hash(ccprx2))
+        self.assertNotEqual(hash(ccprx1), hash(ccprx3))
 
     def test_ccprx_repr(self):
         """Test CCPRx string representation"""

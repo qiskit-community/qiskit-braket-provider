@@ -18,7 +18,7 @@ class TestBraketPrimitiveTask(TestCase):
         mock_task.id = "test-task-id"
         mock_task.state.return_value = "RUNNING"
 
-        task = BraketPrimitiveTask(mock_task, lambda result: PrimitiveResult([]), None)
+        task = BraketPrimitiveTask(mock_task, lambda _result: PrimitiveResult([]), None)
 
         # Test status methods
         self.assertEqual(task.status(), JobStatus.RUNNING)
