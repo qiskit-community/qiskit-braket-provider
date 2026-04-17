@@ -31,7 +31,9 @@ box {
     cnot $0, $1;
 }
 """,
-            2, "verbatim", ["h", "cx"],
+            2,
+            "verbatim",
+            ["h", "cx"],
         ),
         (
             """
@@ -40,7 +42,9 @@ OPENQASM 3.0;
 box {
 }
 """,
-            0, "verbatim", [],
+            0,
+            "verbatim",
+            [],
         ),
         (
             """
@@ -50,7 +54,9 @@ box {
     h $0;
 }
 """,
-            1, "custom_verbatim", ["h"],
+            1,
+            "custom_verbatim",
+            ["h"],
         ),
     ],
     ids=["single_box_with_gates", "empty_box", "custom_label"],
@@ -229,11 +235,13 @@ cnot $0, $1;
             {"add_measurements": False},
         ),
         (
-            Program(source="""
+            Program(
+                source="""
 OPENQASM 3.0;
 h $0;
 cnot $0, $1;
-"""),
+"""
+            ),
             {},
         ),
     ],

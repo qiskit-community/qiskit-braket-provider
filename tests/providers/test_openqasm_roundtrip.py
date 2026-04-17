@@ -26,7 +26,13 @@ def _make_target(num_qubits):
     if num_qubits >= 3:
         target.add_instruction(
             qiskit_gates.CCXGate(),
-            {(i, j, k): None for i in range(num_qubits) for j in range(num_qubits) for k in range(num_qubits) if len({i, j, k}) == 3},
+            {
+                (i, j, k): None
+                for i in range(num_qubits)
+                for j in range(num_qubits)
+                for k in range(num_qubits)
+                if len({i, j, k}) == 3
+            },
         )
     return target
 
@@ -77,9 +83,7 @@ def test_single_h_with_target():
 
 
 def test_bell_state_with_target():
-    _assert_verbatim_roundtrip(
-        "OPENQASM 3.0;\nh $0;\ncnot $0, $1;\n", target=_make_target(2)
-    )
+    _assert_verbatim_roundtrip("OPENQASM 3.0;\nh $0;\ncnot $0, $1;\n", target=_make_target(2))
 
 
 def test_three_qubit_toffoli_with_target():
@@ -96,9 +100,7 @@ def test_rotation_gates_with_target():
 
 
 def test_swap_gate_with_target():
-    _assert_verbatim_roundtrip(
-        "OPENQASM 3.0;\nswap $0, $1;\n", target=_make_target(2)
-    )
+    _assert_verbatim_roundtrip("OPENQASM 3.0;\nswap $0, $1;\n", target=_make_target(2))
 
 
 def test_multi_gate_sequence_with_target():
