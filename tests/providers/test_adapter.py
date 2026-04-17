@@ -3,7 +3,7 @@
 import copy
 import unittest
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -869,14 +869,16 @@ class TestAdapter(TestCase):
         with pytest.raises(ValueError, match="Please rename your parameters."):
             to_braket(qiskit_circuit)
 
-    @patch("qiskit_braket_provider.providers.adapter.transpile")
-    def test_invalid_ctrl_state(self, mock_transpile):
+    @patch("qiskit_braket_provider.providers.adapter.generate_preset_pass_manager")
+    def test_invalid_ctrl_state(self, mock_gen_pm):
         """Tests that control states other than all 1s are rejected."""
         qiskit_circuit = QuantumCircuit(2)
         qiskit_circuit.h(0)
         qiskit_circuit.cx(0, 1, ctrl_state=0)
 
-        mock_transpile.return_value = [qiskit_circuit]
+        mock_pm = MagicMock()
+        mock_pm.run.return_value = [qiskit_circuit]
+        mock_gen_pm.return_value = mock_pm
         with pytest.raises(ValueError):
             to_braket(qiskit_circuit)
 
