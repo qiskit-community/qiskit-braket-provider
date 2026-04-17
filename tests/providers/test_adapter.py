@@ -1,7 +1,6 @@
 """Tests for Qiskit to Braket adapter."""
 
 import copy
-import unittest
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -1179,7 +1178,6 @@ class TestAdapter(TestCase):
         qasm_program = Program(source=qasm_string, inputs={"theta": 1.0})
         self.assertTrue(check_to_braket_openqasm_unitary_correct(qasm_program))
 
-    @unittest.skip("Requires interpreter pre-evaluation of FunctionCall conditions")
     def test_roundtrip_openqasm_program(self):
         qasm_string = """
         const int[8] n = 4;
