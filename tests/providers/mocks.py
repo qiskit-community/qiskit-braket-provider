@@ -319,37 +319,39 @@ MOCK_PROGRAM_RESULT = {
 MOCK_PROGRAM_SET_RESULT = ProgramSetQuantumTaskResult.from_object(
     ProgramSetTaskResult(
         braketSchemaHeader={
-                "name": "braket.task_result.program_set_task_result",
+            "name": "braket.task_result.program_set_task_result",
+            "version": "1",
+        },
+        programResults=[MOCK_PROGRAM_RESULT] * 2,
+        taskMetadata={
+            "braketSchemaHeader": {
+                "name": "braket.task_result.program_set_task_metadata",
                 "version": "1",
-            }, programResults=[MOCK_PROGRAM_RESULT] * 2, taskMetadata={
+            },
+            "id": "TaskID",
+            "deviceId": "arn:aws:braket:::device/quantum-simulator/amazon/sv1",
+            "requestedShots": 120,
+            "successfulShots": 100,
+            "programMetadata": [{"executables": [{}]}],
+            "deviceParameters": {
                 "braketSchemaHeader": {
-                    "name": "braket.task_result.program_set_task_metadata",
+                    "name": "braket.device_schema.simulators.gate_model_simulator_device_parameters",
                     "version": "1",
                 },
-                "id": "TaskID",
-                "deviceId": "arn:aws:braket:::device/quantum-simulator/amazon/sv1",
-                "requestedShots": 120,
-                "successfulShots": 100,
-                "programMetadata": [{"executables": [{}]}],
-                "deviceParameters": {
+                "paradigmParameters": {
                     "braketSchemaHeader": {
-                        "name": "braket.device_schema.simulators.gate_model_simulator_device_parameters",
+                        "name": "braket.device_schema.gate_model_parameters",
                         "version": "1",
                     },
-                    "paradigmParameters": {
-                        "braketSchemaHeader": {
-                            "name": "braket.device_schema.gate_model_parameters",
-                            "version": "1",
-                        },
-                        "qubitCount": 5,
-                        "disableQubitRewiring": False,
-                    },
+                    "qubitCount": 5,
+                    "disableQubitRewiring": False,
                 },
-                "createdAt": "2024-10-15T19:06:58.986Z",
-                "endedAt": "2024-10-15T19:07:00.382Z",
-                "status": "COMPLETED",
-                "totalFailedExecutables": 1,
-            }
+            },
+            "createdAt": "2024-10-15T19:06:58.986Z",
+            "endedAt": "2024-10-15T19:07:00.382Z",
+            "status": "COMPLETED",
+            "totalFailedExecutables": 1,
+        },
     )
 )
 MOCK_PROGRAM_SET_QUANTUM_TASK = LocalQuantumTask(MOCK_PROGRAM_SET_RESULT)
