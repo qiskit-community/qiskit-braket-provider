@@ -1,6 +1,7 @@
 """Amazon Braket task."""
 
 from datetime import UTC, datetime
+from itertools import starmap
 
 from qiskit.providers import BackendV2, JobStatus, JobV1
 from qiskit.quantum_info import Statevector
@@ -134,6 +135,7 @@ class BraketQuantumTask(JobV1):
                     "We don't provide queue information for the LocalQuantumTask."
                 )
             return AwsQuantumTask(self.task_id()).queue_position()
+        return None
 
     def task_id(self) -> str:
         """Return a unique id identifying the task."""
@@ -168,16 +170,18 @@ class BraketQuantumTask(JobV1):
                 status=status,
             )
 
-        experiment_results = [
-            _result_from_circuit_task(task, result)
-            for task, result in zip(
-                tasks,
-                AwsQuantumTaskBatch._retrieve_results(
-                    tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
+        experiment_results = list(
+            starmap(
+                _result_from_circuit_task,
+                zip(
+                    tasks,
+                    AwsQuantumTaskBatch._retrieve_results(
+                        tasks, AwsQuantumTaskBatch.MAX_CONNECTIONS_DEFAULT
+                    ),
+                    strict=True,
                 ),
-                strict=True,
             )
-        ]
+        )
         status = self.status(use_cached_value=True)
 
         return Result(
@@ -211,11 +215,10 @@ class BraketQuantumTask(JobV1):
 
         if "FAILED" in braket_tasks_states:
             return JobStatus.ERROR
-        elif "CANCELLED" in braket_tasks_states:
+        if "CANCELLED" in braket_tasks_states:
             return JobStatus.CANCELLED
-        elif all(state == "COMPLETED" for state in braket_tasks_states):
+        if all(state == "COMPLETED" for state in braket_tasks_states):
             return JobStatus.DONE
-        elif all(state == "RUNNING" for state in braket_tasks_states):
+        if all(state == "RUNNING" for state in braket_tasks_states):
             return JobStatus.RUNNING
-        else:
-            return JobStatus.QUEUED
+        return JobStatus.QUEUED
