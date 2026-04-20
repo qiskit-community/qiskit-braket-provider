@@ -1,5 +1,6 @@
 """Tests for Qiskit to Braket adapter."""
 
+import copy
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -336,9 +337,7 @@ class TestAdapter(TestCase):
     def test_parameterized_global_phase_supported(self):
         """Tests that parameterized global phase is converted to gphase when supported."""
         braket_input = Circuit().phaseshift(0, FreeParameter("theta"))
-        result = to_braket(
-            braket_input, basis_gates=["rx", "rz", "cz", "global_phase"]
-        )
+        result = to_braket(braket_input, basis_gates=["rx", "rz", "cz", "global_phase"])
         self.assertIn("0.5*theta", str(result.global_phase))
 
     def test_exponential_gate_decomp(self):
@@ -463,15 +462,21 @@ class TestAdapter(TestCase):
         circuit.h(0)
         with pytest.raises(TypeError, match="Multiple values for basis_gates"):
             to_braket(circuit, {"h, cx"}, basis_gates={"h", "cx"})
-        with pytest.raises(TypeError, match="Multiple values for verbatim"), pytest.warns(
-            DeprecationWarning,
-            match="Passing basis_gates as a positional argument is deprecated.",
+        with (
+            pytest.raises(TypeError, match="Multiple values for verbatim"),
+            pytest.warns(
+                DeprecationWarning,
+                match="Passing basis_gates as a positional argument is deprecated.",
+            ),
         ):
             to_braket(circuit, {"h, cx"}, True, verbatim=True)
-        with pytest.raises(TypeError, match="Multiple values for connectivity"), pytest.warns(
+        with (
+            pytest.raises(TypeError, match="Multiple values for connectivity"),
+            pytest.warns(
                 DeprecationWarning, match="Passing verbatim as a positional argument is deprecated."
-            ):
-                to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
+            ),
+        ):
+            to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
         with pytest.raises(TypeError, match="Multiple values for angle_restrictions"):
             res = {"rx": {0: {np.pi}}}
             with pytest.warns(
@@ -1495,9 +1500,12 @@ class TestFromBraket(TestCase):
         instr = Instruction(op, range(2))
         circuit = Circuit().add_instruction(instr)
 
-        with self.assertRaises(TypeError), patch.dict(
-            "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
-            {"cnot": None},
+        with (
+            self.assertRaises(TypeError),
+            patch.dict(
+                "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
+                {"cnot": None},
+            ),
         ):
             to_qiskit(circuit)
 
@@ -1637,8 +1645,6 @@ class TestThereAndBackAgain(TestCase):
 
     def test_missing_qubit_in_properties_handled_gracefully(self):
         """Tests that missing qubits in topology are handled gracefully with warnings."""
-        import copy
-        from unittest.mock import Mock
 
         # Create a mock device with properties containing qubits not in topology
         mock_device = Mock()

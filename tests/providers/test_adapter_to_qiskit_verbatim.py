@@ -5,6 +5,7 @@ from qiskit.circuit import BoxOp
 
 from braket.circuits import Circuit
 from braket.default_simulator.openqasm.interpreter import VerbatimBoxDelimiter
+from braket.default_simulator.openqasm.parser.openqasm_ast import BitType, Identifier
 from braket.ir.openqasm import Program
 from qiskit_braket_provider import to_qiskit
 from qiskit_braket_provider.providers.adapter import _QiskitProgramContext
@@ -30,7 +31,9 @@ box {
     cnot $0, $1;
 }
 """,
-            2, "verbatim", ["h", "cx"],
+            2,
+            "verbatim",
+            ["h", "cx"],
         ),
         (
             """
@@ -39,7 +42,9 @@ OPENQASM 3.0;
 box {
 }
 """,
-            0, "verbatim", [],
+            0,
+            "verbatim",
+            [],
         ),
         (
             """
@@ -49,7 +54,9 @@ box {
     h $0;
 }
 """,
-            1, "custom_verbatim", ["h"],
+            1,
+            "custom_verbatim",
+            ["h"],
         ),
     ],
     ids=["single_box_with_gates", "empty_box", "custom_label"],
@@ -228,11 +235,13 @@ cnot $0, $1;
             {"add_measurements": False},
         ),
         (
-            Program(source="""
+            Program(
+                source="""
 OPENQASM 3.0;
 h $0;
 cnot $0, $1;
-"""),
+"""
+            ),
             {},
         ),
     ],
@@ -332,8 +341,6 @@ box {
 
 
 def test_bit_declaration_with_identifier_size_in_verbatim():
-    from braket.default_simulator.openqasm.parser.openqasm_ast import BitType, Identifier
-
     ctx = _QiskitProgramContext()
     ctx.declare_variable("c", BitType(size=Identifier(name="n")))
-    assert ctx._circuit.num_clbits == 0
+    assert ctx.circuit.num_clbits == 0
