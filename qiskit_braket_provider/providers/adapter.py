@@ -1302,7 +1302,7 @@ def _compile(
         circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)
     elif not verbatim:
         target = target if basis_gates or coupling_map or target else _default_target(circuits)
-        
+
         if has_verbatim_boxes:
             warnings.warn(
                 "Overriding layout method to 'trivial' "
