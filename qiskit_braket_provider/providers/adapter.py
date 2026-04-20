@@ -1150,7 +1150,7 @@ def to_braket(
             "Custom pass_manager is not supported with verbatim boxes. "
             "Verbatim boxes require controlled transpilation to preserve gate ordering."
         )
-    
+
     if braket_device:
         if qubit_labels:
             raise ValueError("Cannot specify qubit labels with Braket device")

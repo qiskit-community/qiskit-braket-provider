@@ -206,10 +206,13 @@ def test_multiple_verbatim_boxes_restoration(h_circuit, cx_circuit):
     transpiled.x(1)
     transpiled.append(Barrier(NUM_QUBITS, label=f"{VERBATIM_LABEL}__1"), QUBIT_PAIR)
 
-    restored = _restore(transpiled, {
-        f"{VERBATIM_LABEL}__0": h_circuit,
-        f"{VERBATIM_LABEL}__1": cx_circuit,
-    })
+    restored = _restore(
+        transpiled,
+        {
+            f"{VERBATIM_LABEL}__0": h_circuit,
+            f"{VERBATIM_LABEL}__1": cx_circuit,
+        },
+    )
 
     gate_names = [i.operation.name for i in restored.data]
     assert gate_names == ["h", "x", "cx"]
@@ -228,7 +231,9 @@ def test_barrier_box_count_mismatch(num_barriers, num_boxes, error_match):
     for i in range(num_barriers):
         transpiled.append(Barrier(NUM_QUBITS, label=f"{VERBATIM_LABEL}__{i}"), QUBIT_PAIR)
 
-    boxes = {f"{VERBATIM_LABEL}__{i}": _make_circuit(NUM_QUBITS, [("h", [0])]) for i in range(num_boxes)}
+    boxes = {
+        f"{VERBATIM_LABEL}__{i}": _make_circuit(NUM_QUBITS, [("h", [0])]) for i in range(num_boxes)
+    }
 
     with pytest.raises(RuntimeError, match=error_match):
         _restore(transpiled, boxes)
