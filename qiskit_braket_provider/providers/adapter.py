@@ -1301,7 +1301,7 @@ def _compile(
     if pass_manager:
         circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)
     elif not verbatim:
-        target = target if basis_gates or target or coupling_map else _default_target(circuits)
+        target = target if basis_gates or coupling_map or target else _default_target(circuits)
         
         if has_verbatim_boxes:
             warnings.warn(
