@@ -1548,7 +1548,7 @@
     <span class="k">if</span> <span class="n">pass_manager</span><span class="p">:</span>
         <span class="n">circuits</span> <span class="o">=</span> <span class="n">pass_manager</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span> <span class="n">num_processes</span><span class="o">=</span><span class="n">num_processes</span><span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="n">verbatim</span><span class="p">:</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="k">if</span> <span class="n">basis_gates</span> <span class="ow">or</span> <span class="n">coupling_map</span> <span class="ow">or</span> <span class="n">target</span> <span class="k">else</span> <span class="n">_default_target</span><span class="p">(</span><span class="n">circuits</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">has_verbatim_boxes</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
@@ -1653,7 +1653,7 @@
 <span class="sd">            if target is ``None``. If ``None`` and target is ``None``, the transpiler will use</span>
 <span class="sd">            all gates defined in the Braket SDK. Default: ``None``.</span>
 <span class="sd">        coupling_map (list[list[int]] | None): If provided, will transpile to a circuit</span>
-<span class="sd">            with this coupling map. Default: ``None``.</span>
+<span class="sd">            with this coupling map (reflects Qiskit physical qubits). Default: ``None``.</span>
 <span class="sd">        angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):</span>
 <span class="sd">            Mapping of gate names to parameter angle constraints used to</span>
 <span class="sd">            validate numeric parameters. Default: ``None``.</span>

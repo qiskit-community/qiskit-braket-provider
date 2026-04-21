@@ -272,7 +272,7 @@ words without transpiling it. Default: <code class="docutils literal notranslate
 if target is <code class="docutils literal notranslate"><span class="pre">None</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code> and target is <code class="docutils literal notranslate"><span class="pre">None</span></code>, the transpiler will use
 all gates defined in the Braket SDK. Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>coupling_map</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>int</em><em>]</em><em>] </em><em>| </em><em>None</em>) – If provided, will transpile to a circuit
-with this coupling map. Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+with this coupling map (reflects Qiskit physical qubits). Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>angle_restrictions</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>Mapping</em><em>[</em><em>int</em><em>, </em><em>set</em><em>[</em><em>float</em><em>] </em><em>| </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em><em>] </em><em>| </em><em>None</em>) – Mapping of gate names to parameter angle constraints used to
 validate numeric parameters. Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>optimization_level</strong> (<em>int</em><em> | </em><em>None</em>) – <p>The optimization level to pass to <code class="docutils literal notranslate"><span class="pre">qiskit.transpile</span></code>.
