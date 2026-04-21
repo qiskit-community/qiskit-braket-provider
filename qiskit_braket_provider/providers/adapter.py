@@ -1365,7 +1365,7 @@ def _compile(
     if pass_manager:
         circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)
     elif not verbatim:
-        target = target if basis_gates or target else _default_target(circuits)
+        target = target if basis_gates or coupling_map or target else _default_target(circuits)
 
         if has_verbatim_boxes:
             warnings.warn(
@@ -1468,7 +1468,7 @@ def to_braket(
             if target is ``None``. If ``None`` and target is ``None``, the transpiler will use
             all gates defined in the Braket SDK. Default: ``None``.
         coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
-            with this coupling map. Default: ``None``.
+            with this coupling map (reflects Qiskit physical qubits). Default: ``None``.
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: ``None``.
