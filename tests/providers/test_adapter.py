@@ -1,5 +1,6 @@
 """Tests for Qiskit to Braket adapter."""
 
+import copy
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -1688,8 +1689,6 @@ class TestThereAndBackAgain(TestCase):
 
     def test_missing_qubit_in_properties_handled_gracefully(self):
         """Tests that missing qubits in topology are handled gracefully with warnings."""
-        import copy
-        from unittest.mock import Mock
 
         # Create a mock device with properties containing qubits not in topology
         mock_device = Mock()

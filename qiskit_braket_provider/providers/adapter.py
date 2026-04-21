@@ -25,6 +25,7 @@ from qiskit.circuit import (
     Clbit,
     ControlledGate,
     Gate,
+    IfElseOp,
     Measure,
     Parameter,
     ParameterExpression,
@@ -52,13 +53,34 @@ from braket.circuits import Observable as BraketObservable
 from braket.circuits import gates as braket_gates
 from braket.circuits import noises as braket_noises
 from braket.circuits import observables as braket_observables
+from braket.default_simulator.openqasm._helpers.arrays import convert_range_def_to_range
+from braket.default_simulator.openqasm._helpers.casting import cast_to
+from braket.default_simulator.openqasm._helpers.functions import (
+    evaluate_binary_expression,
+    evaluate_unary_expression,
+)
 from braket.default_simulator.openqasm.interpreter import Interpreter, VerbatimBoxDelimiter
 from braket.default_simulator.openqasm.parser.openqasm_ast import (
+    ArrayLiteral,
+    BinaryExpression,
+    BinaryOperator,
     BitType,
+    BooleanLiteral,
+    Cast,
     ClassicalType,
+    DiscreteSet,
+    FloatLiteral,
+    Identifier,
+    IndexedIdentifier,
+    IndexExpression,
     IntegerLiteral,
+    RangeDefinition,
+    SymbolLiteral,
+    UnaryExpression,
 )
-from braket.default_simulator.openqasm.program_context import AbstractProgramContext
+from braket.default_simulator.openqasm.program_context import (
+    AbstractProgramContext,
+)
 from braket.device_schema import (
     DeviceActionType,
     DeviceCapabilities,
@@ -332,11 +354,18 @@ class _QiskitProgramContext(AbstractProgramContext):
                 Default: "verbatim"
         """
         super().__init__()
-        self._circuit = QuantumCircuit()
+        self._circuit_stack: list[QuantumCircuit] = [QuantumCircuit()]
         self._param_map = {}
         self._in_verbatim_box = False
         self._verbatim_circuit: QuantumCircuit | None = None
         self._verbatim_box_name = verbatim_box_name
+        self._clbit_offset: dict[str, int] = {}
+        self._measured_bits: set[str] = set()
+
+    @property
+    def _active_circuit(self) -> QuantumCircuit:
+        """The circuit that instructions should be added to (top of stack)."""
+        return self._circuit_stack[-1]
 
     @property
     def circuit(self):
@@ -345,11 +374,11 @@ class _QiskitProgramContext(AbstractProgramContext):
                 "Unclosed verbatim box at end of program. "
                 "Every verbatim box start marker must have a matching end marker."
             )
-        return self._circuit
+        return self._circuit_stack[0]
 
     def add_qubits(self, name: str, num_qubits: int | None = 1) -> None:
         super().add_qubits(name, num_qubits)
-        self._circuit.add_register(num_qubits)
+        self._active_circuit.add_register(num_qubits)
 
     def declare_variable(
         self,
@@ -381,13 +410,15 @@ class _QiskitProgramContext(AbstractProgramContext):
             else:
                 size = 1
 
-            self._circuit.add_bits([Clbit() for _ in range(size)])
+            # this is used to deal with Qiskit's QuantumCircuit storing all classical bits in a flat list
+            self._clbit_offset[name] = self._active_circuit.num_clbits
+            self._active_circuit.add_bits([Clbit() for _ in range(size)])
 
     def is_builtin_gate(self, name: str) -> bool:
         return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE
 
     def add_phase_instruction(self, target, phase_value):
-        self._circuit.global_phase += phase_value
+        self._active_circuit.global_phase += phase_value
 
     def add_gate_instruction(
         self, gate_name: str, target: tuple[int, ...], params, ctrl_modifiers: list[int], power: int
@@ -406,12 +437,13 @@ class _QiskitProgramContext(AbstractProgramContext):
                 len(ctrl_modifiers), ctrl_state=str("".join([str(i) for i in ctrl_modifiers]))
             )
 
+        active = self._active_circuit
         # Ensure circuit has enough qubits for the target indices by adding missing qubits
         # This is needed when using physical qubits ($0, $1, etc.) where no qubit register is declared
         max_qubits = (max(target) + 1) if target else -1
-        num_missing_qubits = max_qubits - self._circuit.num_qubits
-        self._circuit.add_bits([Qubit() for _ in range(num_missing_qubits)])
-        self.num_qubits = self._circuit.num_qubits
+        num_missing_qubits = max_qubits - active.num_qubits
+        active.add_bits([Qubit() for _ in range(num_missing_qubits)])
+        self.num_qubits = max(self.num_qubits, active.num_qubits)
 
         if self._in_verbatim_box:
             # Ensure verbatim circuit also has enough qubits by adding missing qubits
@@ -419,19 +451,33 @@ class _QiskitProgramContext(AbstractProgramContext):
             self._verbatim_circuit.add_bits([Qubit() for _ in range(num_missing_qubits)])
             self._verbatim_circuit.append(CircuitInstruction(gate, target))
         else:
-            self._circuit.append(CircuitInstruction(gate, target))
+            active.append(CircuitInstruction(gate, target))
 
     def handle_parameter_value(self, value: Number | Expr) -> Number | Parameter:
         return _sympy_to_qiskit(value, self._param_map) if isinstance(value, Expr) else value
 
-    def add_measure(self, target: tuple[int], classical_targets: Iterable[int] | None = None):
+    def add_measure(
+        self,
+        target: tuple[int],
+        classical_targets: Iterable[int] | None = None,
+        *,
+        classical_destination: Identifier | IndexedIdentifier | None = None,
+    ) -> None:
+        if classical_destination is not None:
+            name = (
+                classical_destination.name
+                if isinstance(classical_destination, IndexedIdentifier)
+                else classical_destination
+            )
+            self._measured_bits.add(name.name)
+        active = self._active_circuit
         # this is to cover the edge case where a user measures a qubit without assigning it to a classical register
-        if self._circuit.num_clbits < len(target):
-            num_missing_clbits = len(target) - self._circuit.num_clbits
-            self._circuit.add_bits([Clbit() for _ in range(num_missing_clbits)])
+        if active.num_clbits < len(target):
+            num_missing_clbits = len(target) - active.num_clbits
+            active.add_bits([Clbit() for _ in range(num_missing_clbits)])
         for iter, qubit in enumerate(target):
             index = classical_targets[iter] if classical_targets else iter
-            self._circuit.measure(qubit, index)
+            active.measure(qubit, index)
 
     def add_verbatim_marker(self, marker: VerbatimBoxDelimiter) -> None:
         """Handle verbatim box start/end markers.
@@ -465,18 +511,181 @@ class _QiskitProgramContext(AbstractProgramContext):
 
             box_op = BoxOp(self._verbatim_circuit, label=self._verbatim_box_name)
 
-            # Append BoxOp to main circuit with all qubits (convert indices to Qubit objects)
-            # We need to pass the actual Qubit objects from the main circuit, not just indices
-            qubit_objects = [
-                self._circuit.qubits[i] for i in range(self._verbatim_circuit.num_qubits)
-            ]
-            self._circuit.append(box_op, qubit_objects)
+            active = self._active_circuit
+            # Append BoxOp to active circuit with all qubits (convert indices to Qubit objects)
+            qubit_objects = [active.qubits[i] for i in range(self._verbatim_circuit.num_qubits)]
+            active.append(box_op, qubit_objects)
 
             self._in_verbatim_box = False
             self._verbatim_circuit = None
 
         else:
             raise ValueError("Verbatim box created using invalid marker")
+
+    @property
+    def supports_midcircuit_measurement(self) -> bool:
+        return True
+
+    def _references_measurement(self, condition) -> bool:
+        """Check if condition references a variable that was measured into."""
+        match condition:
+            case Identifier(name=name):
+                return name in self._measured_bits
+            case IndexExpression(collection=Identifier(name=name)):
+                return name in self._measured_bits
+            case BinaryExpression(lhs=lhs, rhs=rhs):
+                return self._references_measurement(lhs) or self._references_measurement(rhs)
+            case _:
+                return False
+
+    def evaluate_condition(self, condition):
+        """Evaluate a branching condition using a circuit stack.
+
+        Yields True (visit if-block) then False (visit else-block).
+        Each yield pushes a new circuit onto the stack; after the interpreter
+        visits the block, the circuit is popped and used to build an IfElseOp.
+
+        For static conditions (no measurement dependency), evaluates directly
+        and yields only the taken branch.
+        """
+        if not self._references_measurement(condition):
+            try:
+                result = cast_to(BooleanLiteral, self._evaluate_expression(condition))
+            except (TypeError, ValueError, AttributeError) as e:
+                raise TypeError("Unsupported condition in branching statement") from e
+            yield result.value
+            return
+
+        # MCM path: resolve condition to (Clbit, value)
+        main = self._active_circuit
+        if isinstance(condition, (Identifier, IndexExpression)):
+            # Bare identifier like `if (c)` or `if (c[0])` — equivalent to `== 1`
+            resolved_condition = self._resolve_condition_from_identifier(condition)
+        elif isinstance(condition, BinaryExpression):
+            if condition.op != BinaryOperator["=="]:
+                raise NotImplementedError(
+                    f"Unsupported operator '{condition.op.name}' in branching condition. "
+                    f"Only '==' is supported for mid-circuit measurement branching."
+                )
+            resolved_condition = self._resolve_condition(condition)
+
+        true_body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(true_body)
+        yield True
+        self._circuit_stack.pop()
+
+        # Push circuit for else-block (the interpreter always consumes this yield
+        # even for if-only blocks; the empty circuit is discarded below)
+        false_body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(false_body)
+        yield False
+        self._circuit_stack.pop()
+
+        actual_false = false_body if false_body.data else None
+
+        # Sync main circuit dimensions if branch bodies grew
+        max_qubits = max(true_body.num_qubits, false_body.num_qubits)
+        max_clbits = max(true_body.num_clbits, false_body.num_clbits)
+        if max_qubits > main.num_qubits:
+            main.add_bits([Qubit() for _ in range(max_qubits - main.num_qubits)])
+        if max_clbits > main.num_clbits:
+            main.add_bits([Clbit() for _ in range(max_clbits - main.num_clbits)])
+
+        if_else_op = IfElseOp(resolved_condition, true_body, actual_false)
+        qubits = list(range(max_qubits))
+        clbits = list(range(max_clbits))
+        main.append(if_else_op, qubits, clbits)
+
+    def evaluate_for_range(self, set_declaration, loop_var: str, loop_type):
+        """Set up each for-loop iteration, yielding once per iteration."""
+        index = self._evaluate_expression(set_declaration)
+        if isinstance(index, RangeDefinition):
+            index_values = [IntegerLiteral(x) for x in convert_range_def_to_range(index)]
+        else:
+            index_values = index.values
+        for i in index_values:
+            with self.enter_scope():
+                self.declare_variable(loop_var, loop_type, i)
+                yield
+
+    def evaluate_while_condition(self, condition):
+        """Evaluate a while-loop condition, yielding True per iteration."""
+        while cast_to(BooleanLiteral, self._evaluate_expression(condition)).value:
+            yield True
+
+    def _evaluate_expression(self, expression):
+        """Lightweight expression evaluator for loop conditions and ranges."""
+        match expression:
+            case (
+                BooleanLiteral()
+                | IntegerLiteral()
+                | FloatLiteral()
+                | ArrayLiteral()
+                | SymbolLiteral()
+            ):
+                return expression
+            case Identifier():
+                return self.get_value_by_identifier(expression)
+            case BinaryExpression(lhs=lhs, rhs=rhs, op=op):
+                return evaluate_binary_expression(
+                    self._evaluate_expression(lhs),
+                    self._evaluate_expression(rhs),
+                    op,
+                )
+            case UnaryExpression(expression=inner, op=op):
+                return evaluate_unary_expression(self._evaluate_expression(inner), op)
+            case Cast(type=cast_type, argument=argument):
+                return cast_to(cast_type, self._evaluate_expression(argument))
+            case RangeDefinition(start=start, end=end, step=step):
+                return RangeDefinition(
+                    self._evaluate_expression(start) if start else None,
+                    self._evaluate_expression(end),
+                    self._evaluate_expression(step) if step else None,
+                )
+            case DiscreteSet(values=values):
+                return DiscreteSet(values=[self._evaluate_expression(v) for v in values])
+            case list():
+                return [self._evaluate_expression(item) for item in expression]
+            case _:
+                raise TypeError(f"Cannot evaluate expression of type {type(expression).__name__}")
+
+    def _resolve_condition(self, condition: BinaryExpression) -> tuple[Clbit, int]:
+        """Convert an OpenQASM condition AST node to a Qiskit (Clbit, int) condition."""
+        if isinstance(condition.lhs, (Identifier, IndexExpression)):
+            clbit_index = self._resolve_clbit_index(condition.lhs)
+            value = condition.rhs.value
+        else:
+            clbit_index = self._resolve_clbit_index(condition.rhs)
+            value = condition.lhs.value
+        return (self.circuit.clbits[clbit_index], int(value))
+
+    def _resolve_condition_from_identifier(
+        self, condition: Identifier | IndexExpression
+    ) -> tuple[Clbit, int]:
+        """Convert a bare identifier condition (e.g., `c` or `c[0]`) to (Clbit, 1)."""
+        clbit_index = self._resolve_clbit_index(condition)
+        return (self.circuit.clbits[clbit_index], 1)
+
+    def _resolve_clbit_index(self, node: Identifier | IndexExpression) -> int:
+        """Resolve an identifier or indexed identifier to a classical bit index."""
+        if isinstance(node, IndexExpression):
+            name = node.collection.name
+            index = node.index[0].value
+        elif isinstance(node, Identifier):
+            name = node.name
+            var_type = self.get_type(name)
+            if isinstance(var_type, BitType) and var_type.size is not None:
+                size = var_type.size.value if isinstance(var_type.size, IntegerLiteral) else None
+                if size is not None and size > 1:
+                    raise TypeError(
+                        f"Multi-bit register '{name}' (bit[{size}]) cannot be used as a "
+                        f"single-bit condition. Use an indexed reference like '{name}[0]'."
+                    )
+            index = 0
+        else:
+            raise TypeError(f"Unsupported condition operand type: {type(node)}")
+
+        return self._clbit_offset[name] + index
 
 
 def native_gate_connectivity(properties: DeviceCapabilities) -> list[list[int]] | None:
@@ -1095,7 +1304,7 @@ def _compile(
     if pass_manager:
         circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)
     elif not verbatim:
-        target = target if basis_gates or target else _default_target(circuits)
+        target = target if basis_gates or coupling_map or target else _default_target(circuits)
 
         if has_verbatim_boxes:
             warnings.warn(
@@ -1198,7 +1407,7 @@ def to_braket(
             if target is ``None``. If ``None`` and target is ``None``, the transpiler will use
             all gates defined in the Braket SDK. Default: ``None``.
         coupling_map (list[list[int]] | None): If provided, will transpile to a circuit
-            with this coupling map. Default: ``None``.
+            with this coupling map (reflects Qiskit physical qubits). Default: ``None``.
         angle_restrictions (Mapping[str, Mapping[int, set[float] | tuple[float, float]]] | None):
             Mapping of gate names to parameter angle constraints used to
             validate numeric parameters. Default: ``None``.

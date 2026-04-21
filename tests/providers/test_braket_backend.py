@@ -311,7 +311,6 @@ class TestBraketAwsBackend(TestCase):
             class SubclassAWSBraketBackend(AWSBraketBackend):  # pylint: disable=unused-variable
                 """A subclass of AWSBraketBackend for testing purposes"""
 
-
     def test_run_multiple_circuits(self):
         """Tests run with multiple circuits"""
         device = Mock()
