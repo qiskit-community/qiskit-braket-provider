@@ -122,6 +122,21 @@ if (c[0] == 1) {
     assert false_body is None
 
 
+def test_mcm_branch_empty_bodies():
+    """A branching statement conditioned on MCM with no quantum ops raises ValueError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+bit c;
+c = measure q[0];
+if (c == 1) {
+    int[8] x = 0;
+}
+"""
+    with pytest.raises(ValueError, match="empty bodies"):
+        to_qiskit(qasm)
+
+
 @pytest.mark.parametrize(
     "condition_value, expected_value",
     [
@@ -915,6 +930,21 @@ while (flag) {
     assert len(while_ops) == 0
     op_names = [instr.operation.name for instr in qc.data]
     assert "h" in op_names
+
+
+def test_mcm_while_loop_empty_body():
+    """A while loop conditioned on MCM with no quantum ops in body raises ValueError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+bit c;
+c = measure q[0];
+while (c == 1) {
+    int[8] x = 0;
+}
+"""
+    with pytest.raises(ValueError, match="empty body"):
+        to_qiskit(qasm)
 
 
 def test_mcm_while_loop_break():

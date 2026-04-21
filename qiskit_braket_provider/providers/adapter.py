@@ -585,6 +585,12 @@ class _QiskitProgramContext(AbstractProgramContext):
 
         actual_false = false_body if false_body.data else None
 
+        if not true_body.data and not actual_false:
+            raise ValueError(
+                "Branching statement conditioned on a measurement has empty bodies. "
+                "Both if and else branches contain no quantum operations."
+            )
+
         # Sync main circuit dimensions if branch bodies grew
         max_qubits = max(true_body.num_qubits, false_body.num_qubits)
         max_clbits = max(true_body.num_clbits, false_body.num_clbits)
@@ -601,8 +607,9 @@ class _QiskitProgramContext(AbstractProgramContext):
     def evaluate_for_range(self, set_declaration, loop_var: str, loop_type):
         """Capture the for-loop body into a ForLoopOp.
 
-        Yields exactly once to let the interpreter populate the body circuit.
-        Break/continue are not supported in Qiskit control flow.
+        Yields once to capture the body. If the body contains quantum operations,
+        wraps it in a ForLoopOp. If purely classical (empty body circuit),
+        falls back to static unrolling for remaining iterations.
         """
         index = self._evaluate_expression(set_declaration)
         if isinstance(index, RangeDefinition):
@@ -617,6 +624,14 @@ class _QiskitProgramContext(AbstractProgramContext):
             self.declare_variable(loop_var, loop_type, index_values[0])
             yield
         self._circuit_stack.pop()
+
+        if not body.data:
+            # Purely classical loop body — statically unroll remaining iterations
+            for i in index_values[1:]:
+                with self.enter_scope():
+                    self.declare_variable(loop_var, loop_type, i)
+                    yield
+            return
 
         indexset = tuple(iv.value for iv in index_values)
         loop_param = Parameter(loop_var)
@@ -666,6 +681,12 @@ class _QiskitProgramContext(AbstractProgramContext):
         self._circuit_stack.append(body)
         yield True
         self._circuit_stack.pop()
+
+        if not body.data:
+            raise ValueError(
+                "While loop conditioned on a measurement has an empty body. "
+                "This would result in an infinite loop."
+            )
 
         max_qubits = max(body.num_qubits, main.num_qubits)
         max_clbits = max(body.num_clbits, main.num_clbits)
