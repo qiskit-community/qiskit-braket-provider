@@ -24,6 +24,7 @@ from qiskit.circuit import (
     CircuitInstruction,
     Clbit,
     ControlledGate,
+    ForLoopOp,
     Gate,
     IfElseOp,
     Measure,
@@ -31,6 +32,7 @@ from qiskit.circuit import (
     ParameterExpression,
     ParameterVectorElement,
     Qubit,
+    WhileLoopOp,
 )
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
@@ -597,21 +599,83 @@ class _QiskitProgramContext(AbstractProgramContext):
         main.append(if_else_op, qubits, clbits)
 
     def evaluate_for_range(self, set_declaration, loop_var: str, loop_type):
-        """Set up each for-loop iteration, yielding once per iteration."""
+        """Capture the for-loop body into a ForLoopOp.
+
+        Yields exactly once to let the interpreter populate the body circuit.
+        Break/continue are not supported in Qiskit control flow.
+        """
         index = self._evaluate_expression(set_declaration)
         if isinstance(index, RangeDefinition):
             index_values = [IntegerLiteral(x) for x in convert_range_def_to_range(index)]
         else:
             index_values = index.values
-        for i in index_values:
-            with self.enter_scope():
-                self.declare_variable(loop_var, loop_type, i)
-                yield
+
+        main = self._active_circuit
+        body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(body)
+        with self.enter_scope():
+            self.declare_variable(loop_var, loop_type, index_values[0])
+            yield
+        self._circuit_stack.pop()
+
+        indexset = tuple(iv.value for iv in index_values)
+        loop_param = Parameter(loop_var)
+        for_op = ForLoopOp(indexset, loop_param, body)
+        max_qubits = max(body.num_qubits, main.num_qubits)
+        max_clbits = max(body.num_clbits, main.num_clbits)
+        if max_qubits > main.num_qubits:
+            main.add_bits([Qubit() for _ in range(max_qubits - main.num_qubits)])
+        if max_clbits > main.num_clbits:
+            main.add_bits([Clbit() for _ in range(max_clbits - main.num_clbits)])
+        main.append(for_op, list(range(max_qubits)), list(range(max_clbits)))
+
+    def handle_loop_break(self):
+        raise NotImplementedError("break statements are not supported in loops.")
+
+    def handle_loop_continue(self):
+        raise NotImplementedError("continue statements are not supported in loops.")
 
     def evaluate_while_condition(self, condition):
-        """Evaluate a while-loop condition, yielding True per iteration."""
-        while cast_to(BooleanLiteral, self._evaluate_expression(condition)).value:
-            yield True
+        """Evaluate a while-loop condition, yielding True per iteration.
+
+        For static conditions (no measurement dependency), evaluates directly.
+        For MCM-dependent conditions, captures the body into a WhileLoopOp.
+        """
+        if not self._references_measurement(condition):
+            try:
+                while cast_to(BooleanLiteral, self._evaluate_expression(condition)).value:
+                    yield True
+            except (TypeError, ValueError, AttributeError) as e:
+                raise TypeError("Unsupported condition in while loop") from e
+            else:
+                return
+
+        # MCM path: resolve condition and capture body into WhileLoopOp
+        main = self._active_circuit
+        if isinstance(condition, (Identifier, IndexExpression)):
+            resolved_condition = self._resolve_condition_from_identifier(condition)
+        else:
+            if condition.op != BinaryOperator["=="]:
+                raise NotImplementedError(
+                    f"Unsupported operator '{condition.op.name}' in while-loop condition. "
+                    f"Only '==' is supported for mid-circuit measurement while loops."
+                )
+            resolved_condition = self._resolve_condition(condition)
+
+        body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(body)
+        yield True
+        self._circuit_stack.pop()
+
+        max_qubits = max(body.num_qubits, main.num_qubits)
+        max_clbits = max(body.num_clbits, main.num_clbits)
+        if max_qubits > main.num_qubits:
+            main.add_bits([Qubit() for _ in range(max_qubits - main.num_qubits)])
+        if max_clbits > main.num_clbits:
+            main.add_bits([Clbit() for _ in range(max_clbits - main.num_clbits)])
+
+        while_op = WhileLoopOp(resolved_condition, body)
+        main.append(while_op, list(range(max_qubits)), list(range(max_clbits)))
 
     def _evaluate_expression(self, expression):
         """Lightweight expression evaluator for loop conditions and ranges."""
