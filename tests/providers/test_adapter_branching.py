@@ -4,6 +4,7 @@ import pytest
 from qiskit.circuit import Clbit, IfElseOp
 from qiskit.circuit.library import CXGate, HGate, Measure, XGate, YGate, ZGate
 from qiskit.transpiler import Target
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 from braket.default_simulator.openqasm.parser.openqasm_ast import (
     ArrayLiteral,
@@ -16,7 +17,7 @@ from braket.default_simulator.openqasm.parser.openqasm_ast import (
     UnaryOperator,
 )
 from qiskit_braket_provider import to_qiskit
-from qiskit_braket_provider.providers.adapter import _compile, _QiskitProgramContext
+from qiskit_braket_provider.providers.adapter import _QiskitProgramContext
 
 
 def _get_if_else_ops(circuit):
@@ -396,8 +397,9 @@ if (c[0] == 1) {
 )
 def test_compile_preserves_if_else_ops(qasm, expected_if_else_count, mcm_target):
     """IfElseOps should survive compilation through _compile."""
-    result = _compile(qasm, target=mcm_target)
-    compiled_circuit = result.circuits[0]
+    compiled_circuit = generate_preset_pass_manager(optimization_level=0, target=mcm_target).run(
+        to_qiskit(qasm)
+    )
     if_else_ops = [
         instr for instr in compiled_circuit.data if isinstance(instr.operation, IfElseOp)
     ]
@@ -417,8 +419,9 @@ if (c[0] == 1) {
     x q[1];
 }
 """
-    result = _compile(qasm, target=mcm_target)
-    compiled_circuit = result.circuits[0]
+    compiled_circuit = generate_preset_pass_manager(optimization_level=0, target=mcm_target).run(
+        to_qiskit(qasm)
+    )
     op = next(
         instr for instr in compiled_circuit.data if isinstance(instr.operation, IfElseOp)
     ).operation
@@ -439,8 +442,9 @@ if (c[0] == 1) {
     h q[1];
 }
 """
-    result = _compile(qasm, target=mcm_target)
-    compiled_circuit = result.circuits[0]
+    compiled_circuit = generate_preset_pass_manager(optimization_level=0, target=mcm_target).run(
+        to_qiskit(qasm)
+    )
     instr = next(i for i in compiled_circuit.data if isinstance(i.operation, IfElseOp))
     op = instr.operation
     clbit, value = op.condition
