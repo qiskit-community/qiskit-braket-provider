@@ -47,7 +47,7 @@ MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES_JSON = {
     },
     "paradigm": {
         "qubitCount": 30,
-        "nativeGateSet": ["rx", "rz", "cnot"],
+        "nativeGateSet": ["rx", "rz", "cnot", "barrier"],
         "connectivity": {
             "fullyConnected": False,
             "connectivityGraph": {
