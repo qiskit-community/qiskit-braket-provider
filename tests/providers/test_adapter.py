@@ -106,7 +106,9 @@ class TestAdapter(TestCase):
         with self.assertWarns(UserWarning):
             target = aws_device_to_target(mock_device)
             num_qubits = len(topology_graph)
-            num_native_gates_unsupported = 2  # Needs to match number of 3q+ gates in capabilities; now includes Barrier 
+            num_native_gates_unsupported = (
+                2  # Needs to match number of 3q+ gates in capabilities; now includes Barrier
+            )
             num_native_gates = (
                 len(mock_device.properties.paradigm.nativeGateSet) - num_native_gates_unsupported
             )
@@ -116,7 +118,8 @@ class TestAdapter(TestCase):
             self.assertEqual(
                 len(target.instructions),
                 (num_native_gates - num_native_gates_2q + 1) * num_qubits
-                + num_native_gates_2q * len(topology_graph.edges) + 1,
+                + num_native_gates_2q * len(topology_graph.edges)
+                + 1,
             )
             self.assertIn("Target for Amazon Braket QPU", target.description)
 
@@ -222,7 +225,7 @@ class TestAdapter(TestCase):
             aws_device_to_target(mock_device)
 
     def test_barrier_detected(self):
-        """ test nativeGateSet will propagate to target"""
+        """test nativeGateSet will propagate to target"""
         import copy
         from unittest.mock import Mock
 
@@ -261,7 +264,6 @@ class TestAdapter(TestCase):
         target = aws_device_to_target(mock_device)
 
         assert "barrier" in target
-
 
     def test_state_preparation_01(self):
         """Tests state_preparation handling of Adapter"""
@@ -378,9 +380,7 @@ class TestAdapter(TestCase):
     def test_parameterized_global_phase_supported(self):
         """Tests that parameterized global phase is converted to gphase when supported."""
         braket_input = Circuit().phaseshift(0, FreeParameter("theta"))
-        result = to_braket(
-            braket_input, basis_gates=["rx", "rz", "cz", "global_phase"]
-        )
+        result = to_braket(braket_input, basis_gates=["rx", "rz", "cz", "global_phase"])
         self.assertIn("0.5*theta", str(result.global_phase))
 
     def test_exponential_gate_decomp(self):
@@ -505,15 +505,21 @@ class TestAdapter(TestCase):
         circuit.h(0)
         with pytest.raises(TypeError, match="Multiple values for basis_gates"):
             to_braket(circuit, {"h, cx"}, basis_gates={"h", "cx"})
-        with pytest.raises(TypeError, match="Multiple values for verbatim"), pytest.warns(
-            DeprecationWarning,
-            match="Passing basis_gates as a positional argument is deprecated.",
+        with (
+            pytest.raises(TypeError, match="Multiple values for verbatim"),
+            pytest.warns(
+                DeprecationWarning,
+                match="Passing basis_gates as a positional argument is deprecated.",
+            ),
         ):
             to_braket(circuit, {"h, cx"}, True, verbatim=True)
-        with pytest.raises(TypeError, match="Multiple values for connectivity"), pytest.warns(
+        with (
+            pytest.raises(TypeError, match="Multiple values for connectivity"),
+            pytest.warns(
                 DeprecationWarning, match="Passing verbatim as a positional argument is deprecated."
-            ):
-                to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
+            ),
+        ):
+            to_braket(circuit, {"h, cx"}, True, [[0, 1]], connectivity=[[0, 1]])
         with pytest.raises(TypeError, match="Multiple values for angle_restrictions"):
             res = {"rx": {0: {np.pi}}}
             with pytest.warns(
@@ -1537,9 +1543,12 @@ class TestFromBraket(TestCase):
         instr = Instruction(op, range(2))
         circuit = Circuit().add_instruction(instr)
 
-        with self.assertRaises(TypeError), patch.dict(
-            "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
-            {"cnot": None},
+        with (
+            self.assertRaises(TypeError),
+            patch.dict(
+                "qiskit_braket_provider.providers.adapter._BRAKET_GATE_NAME_TO_QISKIT_GATE",
+                {"cnot": None},
+            ),
         ):
             to_qiskit(circuit)
 
