@@ -1168,7 +1168,7 @@ def to_braket(
     if pass_manager:
         circuits = pass_manager.run(circuits, callback=callback, num_processes=num_processes)
     elif not verbatim:
-        target = target if basis_gates or target else _default_target(circuits)
+        target = target if basis_gates or coupling_map or target else _default_target(circuits)
 
         needs_transpile = (
             target
