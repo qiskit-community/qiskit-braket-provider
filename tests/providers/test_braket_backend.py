@@ -394,7 +394,9 @@ class TestBraketAwsBackend(TestCase):
         circuit = QuantumCircuit(1)
         circuit.h(0)
 
-        backend.run(circuit, shots=0, pass_manager=generate_preset_pass_manager(1, backend))
+        backend.run(
+            circuit, shots=0, native=True, pass_manager=generate_preset_pass_manager(1, backend)
+        )
         native_circuit = Circuit().add_verbatim_box(
             Circuit().rz(1, np.pi / 2).rx(1, np.pi / 2).rz(1, np.pi / 2)
         )
@@ -424,12 +426,12 @@ class TestBraketAwsBackend(TestCase):
         circuit.measure_all()
         with self.assertRaisesRegex(
             exception.QiskitBraketException,
-            "optimization_level requires native=True",
+            "optimization_level and pass_manager require native=True",
         ):
             backend.run(circuit, shots=0, optimization_level=2)
 
-    def test_run_native_without_optimization_level_raises(self):
-        """Tests that specifying native=True without optimization_level raises."""
+    def test_run_pass_manager_without_native_raises(self):
+        """Tests that specifying pass_manager without native=True raises."""
         device = Mock()
         device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
         device.gate_calibrations = None
@@ -441,9 +443,70 @@ class TestBraketAwsBackend(TestCase):
         circuit.measure_all()
         with self.assertRaisesRegex(
             exception.QiskitBraketException,
-            "native=True requires optimization_level to be specified",
+            "optimization_level and pass_manager require native=True",
+        ):
+            backend.run(
+                circuit,
+                shots=0,
+                pass_manager=generate_preset_pass_manager(1, backend),
+            )
+
+    def test_run_native_without_optimization_level_or_pass_manager_raises(self):
+        """Tests that specifying native=True without optimization_level or pass_manager raises."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        backend = BraketAwsBackend(device=device)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.measure_all()
+        with self.assertRaisesRegex(
+            exception.QiskitBraketException,
+            "native=True requires either optimization_level or pass_manager",
         ):
             backend.run(circuit, shots=0, native=True)
+
+    def test_run_verbatim_and_native_raises(self):
+        """Tests that verbatim=True and native=True cannot be used together."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        backend = BraketAwsBackend(device=device)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.measure_all()
+        with self.assertRaisesRegex(
+            exception.QiskitBraketException,
+            "verbatim and native cannot both be True",
+        ):
+            backend.run(circuit, shots=0, verbatim=True, native=True, optimization_level=1)
+
+    def test_run_native_with_both_optimization_level_and_pass_manager_raises(self):
+        """Tests that optimization_level and pass_manager cannot both be specified."""
+        device = Mock()
+        device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES
+        device.gate_calibrations = None
+        device.type = "QPU"
+        device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        backend = BraketAwsBackend(device=device)
+        circuit = QuantumCircuit(1)
+        circuit.h(0)
+        circuit.measure_all()
+        with self.assertRaisesRegex(
+            exception.QiskitBraketException,
+            "optimization_level and pass_manager cannot both be specified",
+        ):
+            backend.run(
+                circuit,
+                shots=0,
+                native=True,
+                optimization_level=2,
+                pass_manager=generate_preset_pass_manager(1, backend),
+            )
 
     @patch("qiskit_braket_provider.providers.braket_backend.AwsQuantumTask")
     @patch("qiskit_braket_provider.providers.braket_backend.BraketQuantumTask")
