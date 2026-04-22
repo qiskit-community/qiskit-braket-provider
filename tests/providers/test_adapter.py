@@ -177,7 +177,7 @@ class TestAdapter(TestCase):
                 ),
             )
             self.assertEqual(
-                len(target.operations) - 1,
+                len(target.operations) - 1,  # barrier does not have calibration
                 # measure adds 1 instruction, but rx(pi) and rx(-pi) have the same equivalent,
                 # subtracting 1; as a result, the number of operations in the target should be
                 # equal to the number of pulse sequence keys
@@ -194,7 +194,7 @@ class TestAdapter(TestCase):
                 ]
             )
             self.assertEqual(
-                len(target.instructions) - 1,
+                len(target.instructions) - 1,  # barrier does not have calibration
                 num_instructions_1q
                 + len(MOCK_RIGETTI_STANARDIZED_PROPERTIES.twoQubitProperties)
                 + len(properties_1q)  # measurements
