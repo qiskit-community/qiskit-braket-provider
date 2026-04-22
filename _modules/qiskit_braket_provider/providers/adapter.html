@@ -1183,6 +1183,9 @@
             <span class="n">default_props_2q</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="k">if</span> <span class="s2">&quot;barrier&quot;</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">paradigm</span><span class="o">.</span><span class="n">nativeGateSet</span><span class="p">:</span>
+        <span class="n">target</span><span class="o">.</span><span class="n">add_instruction</span><span class="p">(</span><span class="n">Barrier</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
     <span class="c1"># Add measurement if not already added</span>
     <span class="k">if</span> <span class="s2">&quot;measure&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
         <span class="n">target</span><span class="o">.</span><span class="n">add_instruction</span><span class="p">(</span><span class="n">Measure</span><span class="p">(),</span> <span class="n">instruction_props_measurement</span><span class="p">)</span>
