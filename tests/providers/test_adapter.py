@@ -227,8 +227,6 @@ class TestAdapter(TestCase):
 
     def test_barrier_detected(self):
         """test nativeGateSet will propagate to target"""
-        import copy
-        from unittest.mock import Mock
 
         # Create a mock device with properties containing qubits not in topology
         mock_device = Mock()
