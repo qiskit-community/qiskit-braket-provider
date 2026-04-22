@@ -1203,15 +1203,18 @@ def _restore_verbatim_boxes(
 
     return reconstructed_circuit
 
-def _remove_terminal_barrier(circ : QuantumCircuit, verbatim_box_name : str = _BRAKET_VERBATIM_BOX_NAME): 
-    """ If the instruction before a final measurements is a non-verbatim barrier, remove it.
-    
-    Main application is to help remove the terminal barrier added by (1) measure_all, or 
-    (2) measure_active in cases where the device does not support barrier 
+
+def _remove_terminal_barrier(
+    circ: QuantumCircuit, verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME
+):
+    """If the instruction before a final measurements is a non-verbatim barrier, remove it.
+
+    Main application is to help remove the terminal barrier added by (1) measure_all, or
+    (2) measure_active in cases where the device does not support barrier
     [TODO: refactor as a TransformationPass]
     """
     n_i = len(circ.data)
-    for n,instr in enumerate(circ.data[::-1]):
+    for n, instr in enumerate(circ.data[::-1]):
         if getattr(instr[0], "name", None) == "measure":
             continue
         if isinstance(instr.operation, Barrier):
