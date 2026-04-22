@@ -104,104 +104,102 @@ MOCK_RIGETTI_GATE_MODEL_M_3_QPU = {
     "deviceArn": RIGETTI_ASPEN_ARN,
     "deviceCapabilities": MOCK_RIGETTI_M_3_QPU_CAPABILITIES.json(),
 }
-MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.parse_obj(
-    {
-        "braketSchemaHeader": {
-            "name": "braket.device_schema.standardized_gate_model_qpu_device_properties",
-            "version": "1",
+MOCK_RIGETTI_STANARDIZED_PROPERTIES = StandardizedGateModelQpuDeviceProperties.parse_obj({
+    "braketSchemaHeader": {
+        "name": "braket.device_schema.standardized_gate_model_qpu_device_properties",
+        "version": "1",
+    },
+    "oneQubitProperties": {
+        "1": {
+            "T1": {"value": 28.9, "standardError": 0.01, "unit": "us"},
+            "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
+            "oneQubitFidelity": [
+                {
+                    "fidelityType": {
+                        "name": "RANDOMIZED_BENCHMARKING",
+                        "description": "uses a standard RB technique",
+                    },
+                    "fidelity": 0.9993,
+                },
+                {
+                    "fidelityType": {"name": "SIMULTANEOUS_RANDOMIZED_BENCHMARKING"},
+                    "fidelity": 0.9976,
+                    "standardError": None,
+                },
+                {
+                    "fidelityType": {"name": "READOUT"},
+                    "fidelity": 0.903,
+                    "standardError": None,
+                },
+                {
+                    "fidelityType": {"name": "READOUT_ERROR_0_1"},
+                    "fidelity": 0.05,
+                    "standardError": None,
+                },
+            ],
         },
-        "oneQubitProperties": {
-            "1": {
-                "T1": {"value": 28.9, "standardError": 0.01, "unit": "us"},
-                "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
-                "oneQubitFidelity": [
-                    {
-                        "fidelityType": {
-                            "name": "RANDOMIZED_BENCHMARKING",
-                            "description": "uses a standard RB technique",
-                        },
-                        "fidelity": 0.9993,
-                    },
-                    {
-                        "fidelityType": {"name": "SIMULTANEOUS_RANDOMIZED_BENCHMARKING"},
-                        "fidelity": 0.9976,
-                        "standardError": None,
-                    },
-                    {
-                        "fidelityType": {"name": "READOUT"},
-                        "fidelity": 0.903,
-                        "standardError": None,
-                    },
-                    {
-                        "fidelityType": {"name": "READOUT_ERROR_0_1"},
-                        "fidelity": 0.05,
-                        "standardError": None,
-                    },
-                ],
-            },
-            "2": {
-                "T1": {"value": 28.9, "unit": "us"},
-                "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
-                "oneQubitFidelity": [
-                    {
-                        "fidelityType": {"name": "RANDOMIZED_BENCHMARKING"},
-                        "fidelity": 0.9986,
-                        "standardError": None,
-                    },
-                    {
-                        "fidelityType": {"name": "SIMULTANEOUS_RANDOMIZED_BENCHMARKING"},
-                        "fidelity": 0.9991,
-                        "standardError": None,
-                    },
-                    {
-                        "fidelityType": {"name": "READOUT"},
-                        "fidelity": 0.867,
-                        "standardError": None,
-                    },
-                    {
-                        "fidelityType": {"name": "READOUT_ERROR_0_1"},
-                        "fidelity": 0.05,
-                        "standardError": None,
-                    },
-                ],
-            },
+        "2": {
+            "T1": {"value": 28.9, "unit": "us"},
+            "T2": {"value": 44.5, "standardError": 0.02, "unit": "us"},
+            "oneQubitFidelity": [
+                {
+                    "fidelityType": {"name": "RANDOMIZED_BENCHMARKING"},
+                    "fidelity": 0.9986,
+                    "standardError": None,
+                },
+                {
+                    "fidelityType": {"name": "SIMULTANEOUS_RANDOMIZED_BENCHMARKING"},
+                    "fidelity": 0.9991,
+                    "standardError": None,
+                },
+                {
+                    "fidelityType": {"name": "READOUT"},
+                    "fidelity": 0.867,
+                    "standardError": None,
+                },
+                {
+                    "fidelityType": {"name": "READOUT_ERROR_0_1"},
+                    "fidelity": 0.05,
+                    "standardError": None,
+                },
+            ],
         },
-        "twoQubitProperties": {
-            "1-2": {
-                "twoQubitGateFidelity": [
-                    {
-                        "direction": {"control": 0, "target": 1},
-                        "gateName": "CNOT",
-                        "fidelity": 0.877,
-                        "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
-                    }
-                ]
-            },
-            "2-5": {
-                "twoQubitGateFidelity": [
-                    {
-                        "direction": {"control": 2, "target": 5},
-                        "gateName": "CNOT",
-                        "fidelity": 0.877,
-                        "standardError": 0.001,
-                        "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
-                    }
-                ]
-            },
-            "5-6": {
-                "twoQubitGateFidelity": [
-                    {
-                        "direction": {"control": 5, "target": 6},
-                        "gateName": "CNOT",
-                        "fidelity": 0.877,
-                        "standardError": 0.001,
-                        "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
-                    }
-                ]
-            },
+    },
+    "twoQubitProperties": {
+        "1-2": {
+            "twoQubitGateFidelity": [
+                {
+                    "direction": {"control": 0, "target": 1},
+                    "gateName": "CNOT",
+                    "fidelity": 0.877,
+                    "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                }
+            ]
         },
-    }
-)
+        "2-5": {
+            "twoQubitGateFidelity": [
+                {
+                    "direction": {"control": 2, "target": 5},
+                    "gateName": "CNOT",
+                    "fidelity": 0.877,
+                    "standardError": 0.001,
+                    "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                }
+            ]
+        },
+        "5-6": {
+            "twoQubitGateFidelity": [
+                {
+                    "direction": {"control": 5, "target": 6},
+                    "gateName": "CNOT",
+                    "fidelity": 0.877,
+                    "standardError": 0.001,
+                    "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                }
+            ]
+        },
+    },
+})
 
 MOCK_GATE_MODEL_SIMULATOR_CAPABILITIES_JSON = {
     "braketSchemaHeader": {

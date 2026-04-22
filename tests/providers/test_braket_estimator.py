@@ -170,10 +170,10 @@ class TestBraketEstimator(TestCase):
         qc.cx(0, 1)
 
         # Parameter values with shape (3, 6)
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         param_data = {
-            "θ": np.random.uniform(0, 2 * np.pi, size=(3, 6)),
-            "φ": np.random.uniform(0, 2 * np.pi, size=(3, 6)),
+            "θ": rng.uniform(0, 2 * np.pi, size=(3, 6)),
+            "φ": rng.uniform(0, 2 * np.pi, size=(3, 6)),
         }
         parameter_values = BindingsArray(param_data)
 
@@ -338,12 +338,10 @@ class TestBraketEstimator(TestCase):
                 [SparsePauliOp("XZ")],
                 [SparsePauliOp(["ZX", "XZ"], [0.3, 0.8])],
             ],
-            np.vstack(
-                [
-                    np.linspace(-np.pi, np.pi, num_params),
-                    np.linspace(-4 * np.pi, 4 * np.pi, num_params),
-                ]
-            ).T,
+            np.vstack([
+                np.linspace(-np.pi, np.pi, num_params),
+                np.linspace(-4 * np.pi, 4 * np.pi, num_params),
+            ]).T,
         )
 
         task = self.estimator.run([pub])
@@ -370,12 +368,10 @@ class TestBraketEstimator(TestCase):
                 [SparsePauliOp(["XX", "IY"], [0.5, 0.5])],
                 [SparsePauliOp(["YY", "ZI", "XY"], [0.5, 0.5, 0.1])],
             ],
-            np.vstack(
-                [
-                    np.linspace(-np.pi, np.pi, num_params),
-                    np.linspace(-4 * np.pi, 4 * np.pi, num_params),
-                ]
-            ).T,
+            np.vstack([
+                np.linspace(-np.pi, np.pi, num_params),
+                np.linspace(-4 * np.pi, 4 * np.pi, num_params),
+            ]).T,
         )
 
         task = self.estimator.run([pub])

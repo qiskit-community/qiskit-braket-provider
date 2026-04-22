@@ -130,37 +130,33 @@ class TestAdapter(TestCase):
         mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
         mock_device.properties.standardized = MOCK_RIGETTI_STANARDIZED_PROPERTIES.copy()
         mock_device.properties.standardized.twoQubitProperties["1-2"].twoQubitGateFidelity.append(
-            GateFidelity2Q.parse_obj(
-                {
-                    "direction": {"control": 0, "target": 1},
-                    "gateName": "Two_Qubit_Clifford",
-                    "fidelity": 0.877,
-                    "fidelityType": {"name": "SIMULTANEOUS_INTERLEAVED_RANDOMIZED_BENCHMARKING"},
-                }
-            )
+            GateFidelity2Q.parse_obj({
+                "direction": {"control": 0, "target": 1},
+                "gateName": "Two_Qubit_Clifford",
+                "fidelity": 0.877,
+                "fidelityType": {"name": "SIMULTANEOUS_INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+            })
         )
         theta = FreeParameter("theta")
         pulse = PulseSequence()
-        gate_calibrations = GateCalibrations(
-            {
-                (braket_gates.Rx(np.pi / 2), QubitSet(1)): pulse,
-                (braket_gates.Rx(np.pi / 2), QubitSet(5)): pulse,
-                (braket_gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
-                (braket_gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
-                (braket_gates.Rx(np.pi), QubitSet(1)): pulse,
-                (braket_gates.Rx(np.pi), QubitSet(5)): pulse,
-                (braket_gates.Rx(np.pi), QubitSet(6)): pulse,
-                (braket_gates.Rx(-np.pi), QubitSet(2)): pulse,
-                (braket_gates.Rx(-np.pi), QubitSet(5)): pulse,
-                (braket_gates.Rx(-np.pi), QubitSet(6)): pulse,
-                (braket_gates.Ry(1.23), QubitSet(1)): pulse,
-                (braket_gates.Rz(theta), QubitSet(1)): pulse,
-                (braket_gates.Rz(theta), QubitSet(2)): pulse,
-                (braket_gates.CNot(), QubitSet([1, 2])): pulse,
-                (braket_gates.CNot(), QubitSet([2, 5])): pulse,
-                (braket_gates.CSwap(), QubitSet([1, 2, 5])): pulse,
-            }
-        )
+        gate_calibrations = GateCalibrations({
+            (braket_gates.Rx(np.pi / 2), QubitSet(1)): pulse,
+            (braket_gates.Rx(np.pi / 2), QubitSet(5)): pulse,
+            (braket_gates.Rx(-np.pi / 2), QubitSet(2)): pulse,
+            (braket_gates.Rx(-np.pi / 2), QubitSet(6)): pulse,
+            (braket_gates.Rx(np.pi), QubitSet(1)): pulse,
+            (braket_gates.Rx(np.pi), QubitSet(5)): pulse,
+            (braket_gates.Rx(np.pi), QubitSet(6)): pulse,
+            (braket_gates.Rx(-np.pi), QubitSet(2)): pulse,
+            (braket_gates.Rx(-np.pi), QubitSet(5)): pulse,
+            (braket_gates.Rx(-np.pi), QubitSet(6)): pulse,
+            (braket_gates.Ry(1.23), QubitSet(1)): pulse,
+            (braket_gates.Rz(theta), QubitSet(1)): pulse,
+            (braket_gates.Rz(theta), QubitSet(2)): pulse,
+            (braket_gates.CNot(), QubitSet([1, 2])): pulse,
+            (braket_gates.CNot(), QubitSet([2, 5])): pulse,
+            (braket_gates.CSwap(), QubitSet([1, 2, 5])): pulse,
+        })
         mock_device.gate_calibrations = gate_calibrations
         mock_device.type = "QPU"
         topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
@@ -171,9 +167,9 @@ class TestAdapter(TestCase):
             self.assertEqual(
                 target.num_qubits,
                 len(
-                    set.union(
-                        *[set(q) for _, q in gate_calibrations.pulse_sequences if len(q) == 2]
-                    )
+                    set.union(*[
+                        set(q) for _, q in gate_calibrations.pulse_sequences if len(q) == 2
+                    ])
                 ),
             )
             self.assertEqual(
@@ -186,13 +182,11 @@ class TestAdapter(TestCase):
             properties_1q = MOCK_RIGETTI_STANARDIZED_PROPERTIES.oneQubitProperties
             self.assertTrue({"x", "sx", "sxdg"}.issubset(target.operation_names))
             self.assertTrue("rx" not in target.operation_names)
-            num_instructions_1q = len(
-                [
-                    g
-                    for g, q in gate_calibrations.pulse_sequences
-                    if (len(q) == 1 and str(int(q[0])) in properties_1q)
-                ]
-            )
+            num_instructions_1q = len([
+                g
+                for g, q in gate_calibrations.pulse_sequences
+                if (len(q) == 1 and str(int(q[0])) in properties_1q)
+            ])
             self.assertEqual(
                 len(target.instructions) - 1,  # barrier does not have calibration
                 num_instructions_1q
@@ -605,14 +599,12 @@ class TestAdapter(TestCase):
         }
         self.assertFalse(len(braket_operators.intersection({braket_gates.H})))
         self.assertTrue(
-            braket_operators.issubset(
-                {
-                    braket_gates.Rx,
-                    braket_gates.Rz,
-                    braket_compiler_directives.StartVerbatimBox,
-                    braket_compiler_directives.EndVerbatimBox,
-                }
-            )
+            braket_operators.issubset({
+                braket_gates.Rx,
+                braket_gates.Rz,
+                braket_compiler_directives.StartVerbatimBox,
+                braket_compiler_directives.EndVerbatimBox,
+            })
         )
         self.assertEqual(braket_circuit.qubits, {1})
 
@@ -911,7 +903,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.rx(v0, 0)
         qiskit_circuit.ry(v[0] + 1, 0)
 
-        with pytest.raises(ValueError, match="Please rename your parameters."):
+        with pytest.raises(ValueError, match=r"Please rename your parameters."):
             to_braket(qiskit_circuit)
 
     @patch("qiskit_braket_provider.providers.adapter.transpile")
@@ -999,24 +991,22 @@ class TestAdapter(TestCase):
 
     def test_native_angle_restrictions_default(self):
         """Unknown device types should return an empty restriction map."""
-        properties = GateModelSimulatorDeviceCapabilities.parse_obj(
-            {
-                "braketSchemaHeader": {
-                    "name": "braket.device_schema.simulators.gate_model_simulator_device_capabilities",
-                    "version": "1",
-                },
-                "service": {"executionWindows": [], "shotsRange": [1, 10]},
-                "action": {
-                    "braket.ir.jaqcd.program": {
-                        "actionType": "braket.ir.jaqcd.program",
-                        "version": ["1"],
-                        "supportedOperations": ["x"],
-                    }
-                },
-                "paradigm": {"qubitCount": 2},
-                "deviceParameters": {},
-            }
-        )
+        properties = GateModelSimulatorDeviceCapabilities.parse_obj({
+            "braketSchemaHeader": {
+                "name": "braket.device_schema.simulators.gate_model_simulator_device_capabilities",
+                "version": "1",
+            },
+            "service": {"executionWindows": [], "shotsRange": [1, 10]},
+            "action": {
+                "braket.ir.jaqcd.program": {
+                    "actionType": "braket.ir.jaqcd.program",
+                    "version": ["1"],
+                    "supportedOperations": ["x"],
+                }
+            },
+            "paradigm": {"qubitCount": 2},
+            "deviceParameters": {},
+        })
         assert not native_angle_restrictions(properties)
 
     def test_angle_restrictions_ionq(self):
@@ -1039,50 +1029,48 @@ class TestAdapter(TestCase):
 
     def test_native_angle_restrictions_ionq(self):
         """Tests that IonQ capabilities return the correct angle restriction map."""
-        properties = IonqDeviceCapabilities.parse_obj(
-            {
+        properties = IonqDeviceCapabilities.parse_obj({
+            "braketSchemaHeader": {
+                "name": "braket.device_schema.ionq.ionq_device_capabilities",
+                "version": "1",
+            },
+            "service": {
                 "braketSchemaHeader": {
-                    "name": "braket.device_schema.ionq.ionq_device_capabilities",
+                    "name": "braket.device_schema.device_service_properties",
                     "version": "1",
                 },
-                "service": {
-                    "braketSchemaHeader": {
-                        "name": "braket.device_schema.device_service_properties",
-                        "version": "1",
-                    },
-                    "executionWindows": [],
-                    "shotsRange": [1, 10],
-                    "deviceCost": {"price": 0.25, "unit": "minute"},
-                    "deviceDocumentation": {
-                        "imageUrl": "",
-                        "summary": "",
-                        "externalDocumentationUrl": "",
-                    },
-                    "deviceLocation": "us-east-1",
-                    "updatedAt": "2020-06-16T00:00:00",
+                "executionWindows": [],
+                "shotsRange": [1, 10],
+                "deviceCost": {"price": 0.25, "unit": "minute"},
+                "deviceDocumentation": {
+                    "imageUrl": "",
+                    "summary": "",
+                    "externalDocumentationUrl": "",
                 },
-                "action": {
-                    "braket.ir.jaqcd.program": {
-                        "actionType": "braket.ir.jaqcd.program",
-                        "version": ["1"],
-                        "supportedOperations": ["x"],
-                    }
+                "deviceLocation": "us-east-1",
+                "updatedAt": "2020-06-16T00:00:00",
+            },
+            "action": {
+                "braket.ir.jaqcd.program": {
+                    "actionType": "braket.ir.jaqcd.program",
+                    "version": ["1"],
+                    "supportedOperations": ["x"],
+                }
+            },
+            "paradigm": {
+                "braketSchemaHeader": {
+                    "name": "braket.device_schema.gate_model_qpu_paradigm_properties",
+                    "version": "1",
                 },
-                "paradigm": {
-                    "braketSchemaHeader": {
-                        "name": "braket.device_schema.gate_model_qpu_paradigm_properties",
-                        "version": "1",
-                    },
-                    "qubitCount": 2,
-                    "nativeGateSet": [],
-                    "connectivity": {
-                        "fullyConnected": False,
-                        "connectivityGraph": {"0": ["1"], "1": ["0"]},
-                    },
+                "qubitCount": 2,
+                "nativeGateSet": [],
+                "connectivity": {
+                    "fullyConnected": False,
+                    "connectivityGraph": {"0": ["1"], "1": ["0"]},
                 },
-                "deviceParameters": {},
-            }
-        )
+            },
+            "deviceParameters": {},
+        })
 
         assert native_angle_restrictions(properties) == {"ms": {2: (0.0, 0.25)}}
 
@@ -1098,12 +1086,10 @@ class TestAdapter(TestCase):
 
     def test_kraus_conversion_with_to_braket(self):
         """test qiskit Kraus operator converts to Braket"""
-        op = Kraus(
-            [
-                np.array([[0.5, 0.5], [0.5, 0.5]]),
-                np.array([[0.5, -0.5], [-0.5, 0.5]]),
-            ]
-        )
+        op = Kraus([
+            np.array([[0.5, 0.5], [0.5, 0.5]]),
+            np.array([[0.5, -0.5], [-0.5, 0.5]]),
+        ])
         qc = QuantumCircuit(1)
         qc.append(Kraus(op), [0])
         bqc = to_braket(qc)
@@ -1288,7 +1274,7 @@ class TestAdapter(TestCase):
 
         with pytest.raises(
             NotImplementedError,
-            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+            match=r"Conditional operations are not supported.*Only MeasureFF and CCPRx",
         ):
             to_braket(qc)
 
@@ -1306,7 +1292,7 @@ class TestAdapter(TestCase):
 
         with pytest.raises(
             NotImplementedError,
-            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+            match=r"Conditional operations are not supported.*Only MeasureFF and CCPRx",
         ):
             to_braket(qc, verbatim=True)
 
@@ -1324,7 +1310,7 @@ class TestAdapter(TestCase):
 
         with pytest.raises(
             NotImplementedError,
-            match="Conditional operations are not supported.*Only MeasureFF and CCPRx",
+            match=r"Conditional operations are not supported.*Only MeasureFF and CCPRx",
         ):
             to_braket(qc, verbatim=True)
 
@@ -1471,7 +1457,7 @@ class TestFromBraket(TestCase):
         braket_circuit = Circuit().rx(0, 1j * FreeParameter("alpha"))
         with pytest.raises(
             TypeError,
-            match="unrecognized parameter type in conversion: <class 'sympy.core.numbers.ImaginaryUnit'>",
+            match=r"unrecognized parameter type in conversion: <class 'sympy.core.numbers.ImaginaryUnit'>",
         ):
             to_qiskit(braket_circuit)
 

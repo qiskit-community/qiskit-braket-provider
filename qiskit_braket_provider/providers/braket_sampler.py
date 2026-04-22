@@ -136,9 +136,9 @@ class BraketSampler(BaseSamplerV2):
         param_indices = np.fromiter(np.ndindex(param_values.shape), dtype=object).flatten()
         return CircuitBinding(
             circuit,
-            input_sets=BraketSampler._translate_parameters(
-                [param_values[pi] for pi in param_indices]
-            ),
+            input_sets=BraketSampler._translate_parameters([
+                param_values[pi] for pi in param_indices
+            ]),
         ), param_indices
 
     @staticmethod
@@ -192,11 +192,11 @@ class BraketSampler(BaseSamplerV2):
                 for creg in circuit.cregs
             ]
             shape = pub.shape
-            measurements = np.array(
-                [executable_result.measurements for executable_result in program_result]
-            )
+            measurements = np.array([
+                executable_result.measurements for executable_result in program_result
+            ])
             arrays = {
-                item.creg_name: np.zeros(shape + (shots, item.num_bytes), dtype=np.uint8)
+                item.creg_name: np.zeros((*shape, shots, item.num_bytes), dtype=np.uint8)
                 for item in meas_info
             }
             for i, samples in enumerate(measurements):
