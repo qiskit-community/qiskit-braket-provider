@@ -120,7 +120,7 @@ class TestAdapter(TestCase):
                 len(target.instructions),
                 (num_native_gates - num_native_gates_2q + 1) * num_qubits
                 + num_native_gates_2q * len(topology_graph.edges)
-                + 1, # additional Barrier instruction 
+                + 1,  # additional Barrier instruction
             )
             self.assertIn("Target for Amazon Braket QPU", target.description)
 
@@ -258,17 +258,14 @@ class TestAdapter(TestCase):
 
         assert "barrier" in target
 
-
-        circuit = QuantumCircuit(2,2)
-        circuit.rx(np.pi/2, 0)
-        circuit.barrier( [0, 1])
+        circuit = QuantumCircuit(2, 2)
+        circuit.rx(np.pi / 2, 0)
+        circuit.barrier([0, 1])
         circuit.x(1)
         self.assertEqual(
-            to_braket(circuit, target=target), 
-            Circuit().add_verbatim_box(Circuit().rx(0, np.pi/2).barrier([0, 1]).rx(1, np.pi))
-            )
-
-
+            to_braket(circuit, target=target),
+            Circuit().add_verbatim_box(Circuit().rx(0, np.pi / 2).barrier([0, 1]).rx(1, np.pi)),
+        )
 
     def test_state_preparation_01(self):
         """Tests state_preparation handling of Adapter"""
