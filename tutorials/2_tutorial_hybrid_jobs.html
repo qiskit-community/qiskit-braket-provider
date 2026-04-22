@@ -305,16 +305,14 @@ qiskit-braket provider.</p>
     <span class="n">vqe_result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">h2_op</span><span class="p">)</span>
 
     <span class="c1"># Save the results of the VQE computation.</span>
-    <span class="n">save_job_result</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;VQE&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;eigenvalue&quot;</span><span class="p">:</span> <span class="n">vqe_result</span><span class="o">.</span><span class="n">eigenvalue</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
-                <span class="s2">&quot;optimal_parameters&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">vqe_result</span><span class="o">.</span><span class="n">optimal_parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
-                <span class="s2">&quot;optimal_point&quot;</span><span class="p">:</span> <span class="n">vqe_result</span><span class="o">.</span><span class="n">optimal_point</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-                <span class="s2">&quot;optimal_value&quot;</span><span class="p">:</span> <span class="n">vqe_result</span><span class="o">.</span><span class="n">optimal_value</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
-            <span class="p">}</span>
+    <span class="n">save_job_result</span><span class="p">({</span>
+        <span class="s2">&quot;VQE&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;eigenvalue&quot;</span><span class="p">:</span> <span class="n">vqe_result</span><span class="o">.</span><span class="n">eigenvalue</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
+            <span class="s2">&quot;optimal_parameters&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">vqe_result</span><span class="o">.</span><span class="n">optimal_parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="s2">&quot;optimal_point&quot;</span><span class="p">:</span> <span class="n">vqe_result</span><span class="o">.</span><span class="n">optimal_point</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;optimal_value&quot;</span><span class="p">:</span> <span class="n">vqe_result</span><span class="o">.</span><span class="n">optimal_value</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
         <span class="p">}</span>
-    <span class="p">)</span>
+    <span class="p">})</span>
 </pre></div>
 </div>
 </div>

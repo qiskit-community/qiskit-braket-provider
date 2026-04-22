@@ -811,13 +811,11 @@ T   : │        0        │         1         │         2         │  3  �
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">basis_gates</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;rx&quot;</span><span class="p">,</span> <span class="s2">&quot;ry&quot;</span><span class="p">,</span> <span class="s2">&quot;rxx&quot;</span><span class="p">]</span>
-<span class="n">pass_manager</span> <span class="o">=</span> <span class="n">PassManager</span><span class="p">(</span>
-    <span class="p">[</span>
-        <span class="n">Collect2qBlocks</span><span class="p">(),</span>
-        <span class="n">ConsolidateBlocks</span><span class="p">(</span><span class="n">basis_gates</span><span class="o">=</span><span class="n">basis_gates</span><span class="p">),</span>
-        <span class="n">UnitarySynthesis</span><span class="p">(</span><span class="n">basis_gates</span><span class="p">),</span>
-    <span class="p">]</span>
-<span class="p">)</span>
+<span class="n">pass_manager</span> <span class="o">=</span> <span class="n">PassManager</span><span class="p">([</span>
+    <span class="n">Collect2qBlocks</span><span class="p">(),</span>
+    <span class="n">ConsolidateBlocks</span><span class="p">(</span><span class="n">basis_gates</span><span class="o">=</span><span class="n">basis_gates</span><span class="p">),</span>
+    <span class="n">UnitarySynthesis</span><span class="p">(</span><span class="n">basis_gates</span><span class="p">),</span>
+<span class="p">])</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">to_braket</span><span class="p">(</span><span class="n">ghz_4</span><span class="p">,</span> <span class="n">qubit_labels</span><span class="o">=</span><span class="n">qubit_labels</span><span class="p">,</span> <span class="n">pass_manager</span><span class="o">=</span><span class="n">pass_manager</span><span class="p">))</span>
 </pre></div>
 </div>
