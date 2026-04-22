@@ -854,6 +854,7 @@ def _simulator_target(device: Device, description: str):
             if gate in _STANDARD_GATE_NAME_MAPPING:
                 target.add_instruction(_STANDARD_GATE_NAME_MAPPING[gate])
     target.add_instruction(Measure())
+    target.add_instruction(Barrier(1))
     return target
 
 
@@ -1346,8 +1347,6 @@ def _compile(
                 )
             )
         ):
-            if target and "barrier" in target.operation_names:
-                circuits = [_remove_terminal_barrier(c, verbatim_box_name) for c in circuits]
             circuits = transpile(
                 circuits,
                 basis_gates=basis_gates,
@@ -1360,6 +1359,7 @@ def _compile(
                 routing_method=effective_routing_method,
                 seed_transpiler=seed_transpiler,
             )
+
     if isinstance(target, _SubstitutedTarget):
         circuits = target._substitute(circuits)
 
@@ -1370,6 +1370,8 @@ def _compile(
             else circ
             for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes, strict=False)
         ]
+    if target and "barrier" not in target.operation_names:
+        circuits = [_remove_terminal_barrier(c, verbatim_box_name) for c in circuits]
 
     return _CompilationContext(
         circuits=circuits,
@@ -1701,6 +1703,7 @@ def _default_target(circuits: Iterable[QuantumCircuit]) -> Target:
         if name := _BRAKET_TO_QISKIT_NAMES.get(braket_name.lower()):
             target.add_instruction(instruction, name=name)
     target.add_instruction(Measure())
+    target.add_instruction(Barrier(1))
     return target
 
 
