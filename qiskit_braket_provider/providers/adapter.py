@@ -71,6 +71,7 @@ from braket.default_simulator.openqasm.parser.openqasm_ast import (
     Cast,
     ClassicalType,
     DiscreteSet,
+    Expression,
     FloatLiteral,
     Identifier,
     IndexedIdentifier,
@@ -604,7 +605,9 @@ class _QiskitProgramContext(AbstractProgramContext):
         clbits = list(range(max_clbits))
         main.append(if_else_op, qubits, clbits)
 
-    def evaluate_for_range(self, set_declaration, loop_var: str, loop_type):
+    def evaluate_for_range(
+        self, set_declaration: Expression, loop_var: str, loop_type: ClassicalType
+    ):
         """Capture the for-loop body into a ForLoopOp.
 
         Yields once to capture the body. If the body contains quantum operations,
@@ -618,14 +621,15 @@ class _QiskitProgramContext(AbstractProgramContext):
             index_values = index.values
 
         main = self._active_circuit
-        body = QuantumCircuit(main.num_qubits, main.num_clbits)
-        self._circuit_stack.append(body)
+        # First pass: capture with concrete value to detect classical vs quantum body
+        probe = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(probe)
         with self.enter_scope():
             self.declare_variable(loop_var, loop_type, index_values[0])
             yield
         self._circuit_stack.pop()
 
-        if not body.data:
+        if not probe.data:
             # Purely classical loop body — statically unroll remaining iterations
             for i in index_values[1:]:
                 with self.enter_scope():
@@ -633,8 +637,16 @@ class _QiskitProgramContext(AbstractProgramContext):
                     yield
             return
 
+        # Second pass: re-capture with symbolic loop variable for correct ForLoopOp binding
+        body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(body)
+        with self.enter_scope():
+            self.declare_variable(loop_var, loop_type, SymbolLiteral(Symbol(loop_var)))
+            yield
+        self._circuit_stack.pop()
+
         indexset = tuple(iv.value for iv in index_values)
-        loop_param = Parameter(loop_var)
+        loop_param = self._param_map.get(loop_var) or Parameter(loop_var)
         for_op = ForLoopOp(indexset, loop_param, body)
         max_qubits = max(body.num_qubits, main.num_qubits)
         max_clbits = max(body.num_clbits, main.num_clbits)
@@ -645,12 +657,14 @@ class _QiskitProgramContext(AbstractProgramContext):
         main.append(for_op, list(range(max_qubits)), list(range(max_clbits)))
 
     def handle_loop_break(self):
+        """Reject break statements since Qiskit's ForLoopOp/WhileLoopOp do not support them."""
         raise NotImplementedError("break statements are not supported in loops.")
 
     def handle_loop_continue(self):
+        """Reject continue statements since Qiskit's ForLoopOp/WhileLoopOp do not support them."""
         raise NotImplementedError("continue statements are not supported in loops.")
 
-    def evaluate_while_condition(self, condition):
+    def evaluate_while_condition(self, condition: Expression):
         """Evaluate a while-loop condition, yielding True per iteration.
 
         For static conditions (no measurement dependency), evaluates directly.

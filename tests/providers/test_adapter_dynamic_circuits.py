@@ -1,4 +1,4 @@
-"""Tests for branching statement (if/else) support in the Qiskit adapter."""
+"""Tests for dynamic circuit support (if/else, for loops, while loops) in the Qiskit adapter."""
 
 import pytest
 from qiskit.circuit import Clbit, ForLoopOp, IfElseOp, WhileLoopOp
@@ -319,6 +319,21 @@ for int[8] i in [0:1] {
     assert indexset == (0, 1)
     assert len(body.data) == 1
     assert body.data[0].operation.name == "h"
+
+
+def test_for_loop_body_references_loop_var():
+    """ForLoopOp body should reference the loop parameter symbolically."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+for int[8] i in [0:2] {
+    rx(i * 0.5) q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    for_op = next(d.operation for d in qc.data if isinstance(d.operation, ForLoopOp))
+    _, loop_param, body = for_op.params
+    assert loop_param in body.parameters
 
 
 def test_mcm_branch_inside_for_loop():
