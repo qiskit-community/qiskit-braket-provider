@@ -107,17 +107,20 @@ class TestAdapter(TestCase):
         with self.assertWarns(UserWarning):
             target = aws_device_to_target(mock_device)
             num_qubits = len(topology_graph)
-            num_native_gates_unsupported = 1  # Needs to match number of 3q+ gates in capabilities
+            num_native_gates_unsupported = (
+                2  # Needs to match number of 3q+ gates in capabilities; now includes Barrier
+            )
             num_native_gates = (
                 len(mock_device.properties.paradigm.nativeGateSet) - num_native_gates_unsupported
             )
             num_native_gates_2q = 1  # Needs to match number of 2q gates in capabilities
             self.assertEqual(target.num_qubits, num_qubits)
-            self.assertEqual(len(target.operations), num_native_gates + 1)
+            self.assertEqual(len(target.operations), num_native_gates + 2)
             self.assertEqual(
                 len(target.instructions),
                 (num_native_gates - num_native_gates_2q + 1) * num_qubits
-                + num_native_gates_2q * len(topology_graph.edges),
+                + num_native_gates_2q * len(topology_graph.edges)
+                + 1,  # additional Barrier instruction
             )
             self.assertIn("Target for Amazon Braket QPU", target.description)
 
@@ -170,7 +173,7 @@ class TestAdapter(TestCase):
                 ),
             )
             self.assertEqual(
-                len(target.operations),
+                len(target.operations) - 1,  # barrier does not have calibration
                 # measure adds 1 instruction, but rx(pi) and rx(-pi) have the same equivalent,
                 # subtracting 1; as a result, the number of operations in the target should be
                 # equal to the number of pulse sequence keys
@@ -185,7 +188,7 @@ class TestAdapter(TestCase):
                 if (len(q) == 1 and str(int(q[0])) in properties_1q)
             ])
             self.assertEqual(
-                len(target.instructions),
+                len(target.instructions) - 1,  # barrier does not have calibration
                 num_instructions_1q
                 + len(MOCK_RIGETTI_STANARDIZED_PROPERTIES.twoQubitProperties)
                 + len(properties_1q)  # measurements
@@ -215,6 +218,54 @@ class TestAdapter(TestCase):
 
         with self.assertRaises(exception.QiskitBraketException):
             aws_device_to_target(mock_device)
+
+    def test_barrier_detected(self):
+        """test nativeGateSet will propagate to target"""
+
+        # Create a mock device with properties containing qubits not in topology
+        mock_device = Mock()
+        mock_device.properties = MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES.copy()
+        mock_device.gate_calibrations = None
+        mock_device.type = "QPU"
+
+        # Create standardized properties with a qubit (1001) not in topology
+        mock_standardized = copy.deepcopy(MOCK_RIGETTI_STANARDIZED_PROPERTIES)
+        mock_standardized.oneQubitProperties["1001"] = {
+            "T1": {"value": 25.0, "unit": "us"},
+            "T2": {"value": 40.0, "unit": "us"},
+            "oneQubitFidelity": [
+                {
+                    "fidelityType": {"name": "RANDOMIZED_BENCHMARKING"},
+                    "fidelity": 0.995,
+                }
+            ],
+        }
+        mock_standardized.twoQubitProperties["1001-1"] = {
+            "twoQubitGateFidelity": [
+                {
+                    "direction": {"control": 1001, "target": 1},
+                    "gateName": "CNOT",
+                    "fidelity": 0.85,
+                    "fidelityType": {"name": "INTERLEAVED_RANDOMIZED_BENCHMARKING"},
+                }
+            ]
+        }
+        mock_device.properties.standardized = mock_standardized
+
+        # Use original topology (which doesn't include qubit 1001)
+        mock_device.topology_graph = MOCK_RIGETTI_TOPOLOGY_GRAPH
+        target = aws_device_to_target(mock_device)
+
+        assert "barrier" in target
+
+        circuit = QuantumCircuit(2, 2)
+        circuit.rx(np.pi / 2, 0)
+        circuit.barrier([0, 1])
+        circuit.x(1)
+        self.assertEqual(
+            to_braket(circuit, target=target),
+            Circuit().add_verbatim_box(Circuit().rx(0, np.pi / 2).barrier([0, 1]).rx(1, np.pi)),
+        )
 
     def test_state_preparation_01(self):
         """Tests state_preparation handling of Adapter"""

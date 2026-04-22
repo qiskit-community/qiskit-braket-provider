@@ -936,6 +936,9 @@ def _qpu_target(device: AwsDevice, description: str):
             default_props_2q,
         )
 
+    if "barrier" in properties.paradigm.nativeGateSet:
+        target.add_instruction(Barrier(1))
+
     # Add measurement if not already added
     if "measure" not in target:
         target.add_instruction(Measure(), instruction_props_measurement)
