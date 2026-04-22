@@ -82,9 +82,8 @@ class BraketBackend(BackendV2, ABC, Generic[T]):
         """
         if native:
             return native_gate_set(self._device.properties)
-        else:
-            action = self._device.properties.action.get(DeviceActionType.OPENQASM)
-            return gateset_from_properties(action) if action else None
+        action = self._device.properties.action.get(DeviceActionType.OPENQASM)
+        return gateset_from_properties(action) if action else None
 
     def _run_program_set(self, braket_circuits: list[Circuit], shots: int | None, **options):
         program_set = ProgramSet(braket_circuits, shots_per_executable=shots)

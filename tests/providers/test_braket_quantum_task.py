@@ -204,6 +204,16 @@ class TestBraketQuantumTask(TestCase):
         with pytest.raises(NotImplementedError, match=message):
             task.queue_position()
 
+    def test_queue_position_empty_tasks(self):
+        """Tests queue position returns None for empty tasks list."""
+        task = BraketQuantumTask(
+            backend=BraketLocalBackend(name="default"),
+            task_id="MockId",
+            tasks=[],
+            shots=100,
+        )
+        assert task.queue_position() is None
+
 
 class TestAmazonBraketTask(TestCase):
     """Tests AmazonBraketTask."""
@@ -252,7 +262,7 @@ class TestAWSBraketJob(TestCase):
             shots=10,
         )
 
-    def test_AWS_job(self):
+    def test_aws_job(self):
         """Tests job."""
         job = self._get_job()
 
@@ -262,7 +272,7 @@ class TestAWSBraketJob(TestCase):
         self.assertEqual(job.result().job_id, "AwesomeId")
         self.assertEqual(job.status(), JobStatus.DONE)
 
-    def test_AWS_result(self):
+    def test_aws_result(self):
         """Tests result."""
         job = self._get_job()
 
