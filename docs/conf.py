@@ -18,18 +18,17 @@ Sphinx documentation builder
 
 # General options:
 from pathlib import Path
-from typing import Any
 
 project = "Qiskit-Braket provider"
 copyright = "2022"  # pylint: disable=redefined-builtin  # noqa: A001
 author = "Qiskit team"
 
 # The full version, including alpha/beta/rc tags
-version_path = Path(__file__).resolve().parent / ".." / "qiskit_braket_provider" / "version.py"
-version_dict: dict[str, Any] | None = {}
-exec(Path(version_path).read_text(encoding="utf-8"), version_dict)  # noqa: S102
-version = version_dict["__version__"]
-release = version_dict["__version__"]
+with (Path(__file__).resolve().parent / ".." / "qiskit_braket_provider" / "_version.py").open(
+    encoding="utf-8"
+) as f:
+    version = f.readlines()[-1].split()[-1].strip("\"'")
+release = version
 
 extensions = [
     "sphinx.ext.napoleon",
