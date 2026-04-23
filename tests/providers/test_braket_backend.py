@@ -28,8 +28,8 @@ from qiskit_braket_provider import (
     BraketAwsBackend,
     BraketLocalBackend,
     BraketProvider,
+    __version__,
     exception,
-    version,
 )
 from qiskit_braket_provider.providers.adapter import native_gate_connectivity
 from tests.providers.mocks import (
@@ -267,7 +267,7 @@ class TestBraketAwsBackend(TestCase):
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
-        user_agent = f"QiskitBraketProvider/{version.__version__}"
+        user_agent = f"QiskitBraketProvider/{__version__}"
         device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
         with self.assertRaises(NotImplementedError):
             backend.dtm()
