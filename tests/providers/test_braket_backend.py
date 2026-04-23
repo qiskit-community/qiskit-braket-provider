@@ -28,8 +28,8 @@ from qiskit_braket_provider import (
     BraketAwsBackend,
     BraketLocalBackend,
     BraketProvider,
+    __version__,
     exception,
-    version,
 )
 from qiskit_braket_provider.providers.adapter import native_gate_connectivity
 from tests.providers.mocks import (
@@ -125,9 +125,9 @@ class TestBraketLocalBackend(TestCase):
         # Result 0
         self.assertEqual(results[0].get_counts(), {"11": 1024})
         # Result 1
-        _00 = results[1].get_counts()["00"]
-        _11 = results[1].get_counts()["11"]
-        self.assertEqual(_00 + _11, 1024)
+        count_00 = results[1].get_counts()["00"]
+        count_11 = results[1].get_counts()["11"]
+        self.assertEqual(count_00 + count_11, 1024)
 
     def test_local_backend_circuit_shots0(self):
         """Tests local backend with circuit with shots=0."""
@@ -267,7 +267,7 @@ class TestBraketAwsBackend(TestCase):
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
-        user_agent = f"QiskitBraketProvider/{version.__version__}"
+        user_agent = f"QiskitBraketProvider/{__version__}"
         device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
         with self.assertRaises(NotImplementedError):
             backend.dtm()

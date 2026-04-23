@@ -21,7 +21,7 @@ from braket.devices import Device, LocalSimulator
 from braket.program_sets import ProgramSet
 from braket.tasks.local_quantum_task import LocalQuantumTask
 
-from .. import version
+from .._version import __version__
 from ..exception import QiskitBraketException
 from .adapter import (
     aws_device_to_target,
@@ -82,9 +82,8 @@ class BraketBackend(BackendV2, ABC, Generic[T]):
         """
         if native:
             return native_gate_set(self._device.properties)
-        else:
-            action = self._device.properties.action.get(DeviceActionType.OPENQASM)
-            return gateset_from_properties(action) if action else None
+        action = self._device.properties.action.get(DeviceActionType.OPENQASM)
+        return gateset_from_properties(action) if action else None
 
     def _run_program_set(self, braket_circuits: list[Circuit], shots: int | None, **options):
         program_set = ProgramSet(braket_circuits, shots_per_executable=shots)
@@ -242,9 +241,7 @@ class BraketAwsBackend(BraketBackend[AwsDevice]):
             backend_version=backend_version,
             **fields,
         )
-        self._device.aws_session.add_braket_user_agent(
-            f"QiskitBraketProvider/{version.__version__}"
-        )
+        self._device.aws_session.add_braket_user_agent(f"QiskitBraketProvider/{__version__}")
         self._target = aws_device_to_target(device=self._device)
         self._qubit_labels = (
             tuple(sorted(self._device.topology_graph.nodes))
