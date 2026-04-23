@@ -45,7 +45,7 @@ from qiskit_braket_provider.providers.adapter import (
     translate_sparse_pauli_op,
 )
 from qiskit_braket_provider.providers.braket_instructions import CCPRx, MeasureFF
-from tests.providers.mocks import (
+from test.unit_tests.mocks import (
     MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES,
     MOCK_RIGETTI_STANARDIZED_PROPERTIES,
     MOCK_RIGETTI_TOPOLOGY_GRAPH,
