@@ -50,4 +50,4 @@ For information on how to contribute to this project, please take a look at our 
 ----------------------------------------------------------------------------------------------------
 
 ### License
-[Apache License 2.0](LICENSE.txt)
+[Apache License 2.0](LICENSE)
