@@ -1,35 +1,32 @@
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2022.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Portions Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
-# obtain a copy of this license in the LICENSE.txt file in the root directory
+# obtain a copy of this license in the LICENSE file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
 #
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-# pylint: disable=invalid-name
-
 """
 Sphinx documentation builder
 """
 
 # General options:
+import datetime
 from pathlib import Path
-from typing import Any
 
 project = "Qiskit-Braket provider"
-copyright = "2022"  # pylint: disable=redefined-builtin  # noqa: A001
-author = "Qiskit team"
+copyright = f"{datetime.datetime.now(tz=datetime.UTC).year}, Amazon.com"  # noqa: A001
+author = "Amazon Web Services"
 
 # The full version, including alpha/beta/rc tags
-version_path = Path(__file__).resolve().parent / ".." / "qiskit_braket_provider" / "version.py"
-version_dict: dict[str, Any] | None = {}
-exec(Path(version_path).read_text(encoding="utf-8"), version_dict)  # noqa: S102
-version = version_dict["__version__"]
-release = version_dict["__version__"]
+with (Path(__file__).resolve().parent / ".." / "qiskit_braket_provider" / "_version.py").open(
+    encoding="utf-8"
+) as f:
+    version = f.readlines()[-1].split()[-1].strip("\"'")
+release = version
 
 extensions = [
     "sphinx.ext.napoleon",
