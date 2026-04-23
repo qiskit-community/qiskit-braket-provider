@@ -1,23 +1,18 @@
 """Setup file for Qiskit-Braket provider."""
 
-import os
+import pathlib
 from typing import Any
 
 import setuptools
 
-with open("README.md", encoding="utf-8") as f:
-    long_description = f.read()
+long_description = pathlib.Path("README.md").read_text(encoding="utf-8")
 
-with open("requirements.txt") as f:
-    install_requires = f.read().splitlines()
+install_requires = pathlib.Path("requirements.txt").read_text(encoding="utf-8").splitlines()
 
-version_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "qiskit_braket_provider", "version.py")
-)
+version_path = pathlib.Path(__file__).resolve().parent / "qiskit_braket_provider" / "version.py"
 
 version_dict: dict[str, Any] | None = {}
-with open(version_path) as fp:
-    exec(fp.read(), version_dict)  # noqa: S102
+exec(pathlib.Path(version_path).read_text(encoding="utf-8"), version_dict)  # noqa: S102
 version = version_dict["__version__"]
 
 setuptools.setup(

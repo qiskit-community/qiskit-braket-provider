@@ -17,23 +17,17 @@ Sphinx documentation builder
 """
 
 # General options:
-import os
+from pathlib import Path
 from typing import Any
 
 project = "Qiskit-Braket provider"
-copyright = "2022"  # pylint: disable=redefined-builtin
+copyright = "2022"  # pylint: disable=redefined-builtin  # noqa: A001
 author = "Qiskit team"
 
 # The full version, including alpha/beta/rc tags
-version_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "..",
-    "qiskit_braket_provider",
-    "version.py",
-)
+version_path = Path(__file__).resolve().parent / ".." / "qiskit_braket_provider" / "version.py"
 version_dict: dict[str, Any] | None = {}
-with open(version_path) as fp:
-    exec(fp.read(), version_dict)  # noqa: S102
+exec(Path(version_path).read_text(encoding="utf-8"), version_dict)  # noqa: S102
 version = version_dict["__version__"]
 release = version_dict["__version__"]
 

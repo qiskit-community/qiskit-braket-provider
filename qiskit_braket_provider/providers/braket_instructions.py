@@ -24,6 +24,9 @@ class MeasureFF(Instruction):
     def __eq__(self, other):
         return isinstance(other, MeasureFF) and self.feedback_key == other.feedback_key
 
+    def __hash__(self):
+        return hash((self.name, self.feedback_key))
+
     def __repr__(self):
         return f"{self.__class__.__name__}(feedback_key={self.feedback_key})"
 
@@ -57,6 +60,9 @@ class CCPRx(Instruction):
             and self.angle_1 == other.angle_1
             and self.angle_2 == other.angle_2
         )
+
+    def __hash__(self):
+        return hash((self.name, self.angle_1, self.angle_2, self.feedback_key))
 
     def __repr__(self):
         return (

@@ -420,7 +420,7 @@ class _QiskitProgramContext(AbstractProgramContext):
     def is_builtin_gate(self, name: str) -> bool:
         return name in _BRAKET_GATE_NAME_TO_QISKIT_GATE
 
-    def add_phase_instruction(self, target, phase_value):
+    def add_phase_instruction(self, target, phase_value):  # noqa: ARG002
         self._active_circuit.global_phase += phase_value
 
     def add_gate_instruction(
@@ -478,8 +478,8 @@ class _QiskitProgramContext(AbstractProgramContext):
         if active.num_clbits < len(target):
             num_missing_clbits = len(target) - active.num_clbits
             active.add_bits([Clbit() for _ in range(num_missing_clbits)])
-        for iter, qubit in enumerate(target):
-            index = classical_targets[iter] if classical_targets else iter
+        for idx, qubit in enumerate(target):
+            index = classical_targets[idx] if classical_targets else idx
             active.measure(qubit, index)
 
     def add_verbatim_marker(self, marker: VerbatimBoxDelimiter) -> None:
@@ -936,10 +936,8 @@ def aws_device_to_target(device: AwsDevice) -> Target:
 def _simulator_target(device: Device, description: str):
     properties: GateModelSimulatorDeviceCapabilities = device.properties
     target = Target(description=description, num_qubits=properties.paradigm.qubitCount)
-    action = (
-        properties.action.get(DeviceActionType.OPENQASM)
-        if properties.action.get(DeviceActionType.OPENQASM)
-        else properties.action.get(DeviceActionType.JAQCD)
+    action = properties.action.get(DeviceActionType.OPENQASM) or properties.action.get(
+        DeviceActionType.JAQCD
     )
     for operation in action.supportedOperations:
         instruction = _BRAKET_GATE_NAME_TO_QISKIT_GATE.get(operation.lower())
@@ -978,6 +976,7 @@ def _qpu_target(device: AwsDevice, description: str):
                     f"Qubit {q} found in device properties but not in topology. "
                     f"Skipping qubit {q} and its associated properties.",
                     UserWarning,
+                    stacklevel=2,
                 )
                 continue
             props = props_1q[str(q)]
@@ -1036,6 +1035,9 @@ def _qpu_target(device: AwsDevice, description: str):
             default_props_2q,
         )
 
+    if "barrier" in properties.paradigm.nativeGateSet:
+        target.add_instruction(Barrier(1))
+
     # Add measurement if not already added
     if "measure" not in target:
         target.add_instruction(Measure(), instruction_props_measurement)
@@ -1057,6 +1059,7 @@ def _build_instruction_props_2q(
                 f"Edge {k} contains qubits {missing_qubits} not found in topology. "
                 f"Skipping edge {k} and its associated properties.",
                 UserWarning,
+                stacklevel=2,
             )
             continue
 
@@ -1071,12 +1074,10 @@ def _build_instruction_props_2q(
                 )
     # Standardized 2q gate props assume bidirectionality
     for edge_props in instruction_props_2q.values():
-        edge_props.update(
-            {
-                tuple(reversed(edge)): instruction_props
-                for edge, instruction_props in edge_props.items()
-            }
-        )
+        edge_props.update({
+            tuple(reversed(edge)): instruction_props
+            for edge, instruction_props in edge_props.items()
+        })
     return instruction_props_2q
 
 
@@ -1129,7 +1130,8 @@ def _add_instructions_parameter_restrictions(
                 case _:
                     warnings.warn(
                         f"Instruction {gate_name} has {num_qubits} qubits "
-                        "and cannot be added to target"
+                        "and cannot be added to target",
+                        stacklevel=2,
                     )
 
 
@@ -1157,7 +1159,7 @@ def _add_single_instruction_parameter_restriction(
                         target._gate_substitutes[substitute_name][q] = instruction_copy
             else:
                 target.add_instruction(substitute, props)
-                target._gate_substitutes[substitute_name] = {q: instruction_copy for q in props}
+                target._gate_substitutes[substitute_name] = dict.fromkeys(props, instruction_copy)
         else:
             target.add_instruction(instruction_copy, props)
 
@@ -1182,7 +1184,8 @@ def _add_instructions_no_parameter_restrictions(
                 case _:
                     warnings.warn(
                         f"Instruction {gate_name} has {num_qubits} qubits "
-                        "and cannot be added to target"
+                        "and cannot be added to target",
+                        stacklevel=2,
                     )
 
 
@@ -1267,10 +1270,10 @@ def _restore_verbatim_boxes(
 
             try:
                 box_circuit, _ = next(verbatim_box_iter)
-            except StopIteration:
+            except StopIteration as err:
                 raise ValueError(
                     f"Compiler error while processing verbatim boxes. Illegal barriers with label '{verbatim_box_name}'"
-                )
+                ) from err
 
             # Insert gates from the verbatim box directly (not as BoxOp)
             # Since verbatim boxes can only exist in circuits using physical qubits,
@@ -1444,7 +1447,7 @@ def _compile(
             _restore_verbatim_boxes(circ, verbatim_boxes, verbatim_box_name)
             if len(verbatim_boxes) > 0
             else circ
-            for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes)
+            for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes, strict=False)
         ]
 
     return _CompilationContext(
@@ -1648,14 +1651,12 @@ def _validate_arguments(
             stacklevel=1,
         )
     if (
-        sum(
-            [
-                (1 if target else 0),
-                (1 if (basis_gates or coupling_map or connectivity) else 0),
-                (1 if pass_manager else 0),
-                (1 if braket_device else 0),
-            ]
-        )
+        sum([
+            (1 if target else 0),
+            (1 if (basis_gates or coupling_map or connectivity) else 0),
+            (1 if pass_manager else 0),
+            (1 if braket_device else 0),
+        ])
         > 1
     ):
         raise ValueError(
@@ -1700,7 +1701,7 @@ def _translate_to_braket(
                 measured_qubits[clbit] = qubit_index
             case "barrier":
                 qubit_indices = [qubit_labels[circuit.find_bit(qubit).index] for qubit in qubits]
-                braket_circuit.barrier(target=qubit_indices if qubit_indices else None)
+                braket_circuit.barrier(target=qubit_indices or None)
             case "reset":
                 raise NotImplementedError(
                     "reset operation not supported by qiskit to braket adapter"
@@ -1755,7 +1756,8 @@ def _translate_to_braket(
         else:
             warnings.warn(
                 f"Device does not support global phase; "
-                f"global phase of {global_phase} will not be included in Braket circuit"
+                f"global phase of {global_phase} will not be included in Braket circuit",
+                stacklevel=2,
             )
 
     # QPU targets will have qubits/pairs specified for each instruction;
@@ -1873,12 +1875,10 @@ def translate_sparse_pauli_op(op: SparsePauliOp) -> BraketObservable:
         BraketObservable: Corresponding Braket observable.
     """
     return (
-        braket_observables.Sum(
-            [
-                _translate_pauli(pauli, np.real(coeff))
-                for pauli, coeff in zip(op.paulis, op.coeffs, strict=True)
-            ]
-        )
+        braket_observables.Sum([
+            _translate_pauli(pauli, np.real(coeff))
+            for pauli, coeff in zip(op.paulis, op.coeffs, strict=True)
+        ])
         if len(op) > 1
         else _translate_pauli(op.paulis[0], np.real(op.coeffs[0]))
     )
@@ -2083,6 +2083,7 @@ def convert_qiskit_to_braket_circuit(circuit: QuantumCircuit) -> Circuit:
         "will be removed in a future release. "
         "Use to_braket() instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
     return to_braket(circuit)
 
@@ -2103,6 +2104,7 @@ def convert_qiskit_to_braket_circuits(
         "will be removed in a future release. "
         "Use to_braket() instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
     for circuit in circuits:
         yield to_braket(circuit)

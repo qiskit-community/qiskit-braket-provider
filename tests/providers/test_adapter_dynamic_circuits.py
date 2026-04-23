@@ -718,7 +718,7 @@ if (c[0] != 1) {
     h q[1];
 }
 """
-    with pytest.raises(NotImplementedError, match="Unsupported operator.*Only '==' is supported"):
+    with pytest.raises(NotImplementedError, match=r"Unsupported operator.*Only '==' is supported"):
         to_qiskit(qasm)
 
 
@@ -776,7 +776,7 @@ if (c == 3) {
 }
 """
     with pytest.raises(
-        TypeError, match="Multi-bit register.*cannot be used as a single-bit condition"
+        TypeError, match=r"Multi-bit register.*cannot be used as a single-bit condition"
     ):
         to_qiskit(qasm)
 
