@@ -1,5 +1,6 @@
 """Qiskit-Braket provider."""
 
+from ._version import __version__  # noqa: F401
 from .providers import (
     AmazonBraketTask as AmazonBraketTask,
 )
