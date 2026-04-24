@@ -24,6 +24,7 @@ from qiskit.circuit import (
     CircuitInstruction,
     Clbit,
     ControlledGate,
+    ForLoopOp,
     Gate,
     IfElseOp,
     Measure,
@@ -31,6 +32,7 @@ from qiskit.circuit import (
     ParameterExpression,
     ParameterVectorElement,
     Qubit,
+    WhileLoopOp,
 )
 from qiskit.circuit import Instruction as QiskitInstruction
 from qiskit.circuit.library import get_standard_gate_name_mapping
@@ -69,6 +71,7 @@ from braket.default_simulator.openqasm.parser.openqasm_ast import (
     Cast,
     ClassicalType,
     DiscreteSet,
+    Expression,
     FloatLiteral,
     Identifier,
     IndexedIdentifier,
@@ -583,6 +586,12 @@ class _QiskitProgramContext(AbstractProgramContext):
 
         actual_false = false_body if false_body.data else None
 
+        if not true_body.data and not actual_false:
+            raise ValueError(
+                "Branching statement conditioned on a measurement has empty bodies. "
+                "Both if and else branches contain no quantum operations."
+            )
+
         # Sync main circuit dimensions if branch bodies grew
         max_qubits = max(true_body.num_qubits, false_body.num_qubits)
         max_clbits = max(true_body.num_clbits, false_body.num_clbits)
@@ -596,22 +605,131 @@ class _QiskitProgramContext(AbstractProgramContext):
         clbits = list(range(max_clbits))
         main.append(if_else_op, qubits, clbits)
 
-    def evaluate_for_range(self, set_declaration, loop_var: str, loop_type):
-        """Set up each for-loop iteration, yielding once per iteration."""
+    def evaluate_for_range(
+        self, set_declaration: Expression, loop_var: str, loop_type: ClassicalType
+    ):
+        """Capture the for-loop body into a ForLoopOp.
+
+        Yields once to capture the body. If the body contains quantum operations,
+        wraps it in a ForLoopOp. If purely classical (empty body circuit),
+        falls back to static unrolling for remaining iterations.
+        """
         index = self._evaluate_expression(set_declaration)
         if isinstance(index, RangeDefinition):
             index_values = [IntegerLiteral(x) for x in convert_range_def_to_range(index)]
         else:
             index_values = index.values
-        for i in index_values:
-            with self.enter_scope():
-                self.declare_variable(loop_var, loop_type, i)
-                yield
 
-    def evaluate_while_condition(self, condition):
-        """Evaluate a while-loop condition, yielding True per iteration."""
-        while cast_to(BooleanLiteral, self._evaluate_expression(condition)).value:
-            yield True
+        if not index_values:
+            return
+
+        main = self._active_circuit
+        # First pass: capture with concrete value to detect classical vs quantum body
+        # Snapshot outer scope variables to detect classical side effects
+        outer_vars = dict(self.variable_table.current_scope)
+        probe = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(probe)
+        with self.enter_scope():
+            self.declare_variable(loop_var, loop_type, index_values[0])
+            yield
+        self._circuit_stack.pop()
+
+        if not probe.data:
+            # Purely classical loop body — statically unroll remaining iterations
+            for i in index_values[1:]:
+                with self.enter_scope():
+                    self.declare_variable(loop_var, loop_type, i)
+                    yield
+            return
+
+        # Detect classical side effects: if outer scope variables changed during
+        # the probe, the body mutates classical state that ForLoopOp won't capture
+        modified_vars = [
+            name
+            for name, val in self.variable_table.current_scope.items()
+            if name in outer_vars and outer_vars[name] != val
+        ]
+        if modified_vars:
+            raise ValueError(
+                f"For loop body modifies classical variable(s) {modified_vars} "
+                f"which cannot be captured by ForLoopOp. "
+                f"Only quantum operations are preserved across loop iterations."
+            )
+
+        # Second pass: re-capture with symbolic loop variable for correct ForLoopOp binding
+        body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(body)
+        with self.enter_scope():
+            self.declare_variable(loop_var, loop_type, SymbolLiteral(Symbol(loop_var)))
+            yield
+        self._circuit_stack.pop()
+
+        indexset = tuple(iv.value for iv in index_values)
+        loop_param = self._param_map.get(loop_var) or Parameter(loop_var)
+        for_op = ForLoopOp(indexset, loop_param, body)
+        max_qubits = max(body.num_qubits, main.num_qubits)
+        max_clbits = max(body.num_clbits, main.num_clbits)
+        if max_qubits > main.num_qubits:
+            main.add_bits([Qubit() for _ in range(max_qubits - main.num_qubits)])
+        if max_clbits > main.num_clbits:
+            main.add_bits([Clbit() for _ in range(max_clbits - main.num_clbits)])
+        main.append(for_op, list(range(max_qubits)), list(range(max_clbits)))
+
+    def handle_loop_break(self):
+        """Reject break statements since Qiskit's ForLoopOp/WhileLoopOp do not support them."""
+        raise NotImplementedError("break statements are not supported in loops.")
+
+    def handle_loop_continue(self):
+        """Reject continue statements since Qiskit's ForLoopOp/WhileLoopOp do not support them."""
+        raise NotImplementedError("continue statements are not supported in loops.")
+
+    def evaluate_while_condition(self, condition: Expression):
+        """Evaluate a while-loop condition, yielding True per iteration.
+
+        For static conditions (no measurement dependency), evaluates directly.
+        For MCM-dependent conditions, captures the body into a WhileLoopOp.
+        """
+        if not self._references_measurement(condition):
+            try:
+                while cast_to(BooleanLiteral, self._evaluate_expression(condition)).value:
+                    yield True
+            except (TypeError, ValueError, AttributeError) as e:
+                raise TypeError("Unsupported condition in while loop") from e
+            else:
+                return
+
+        # MCM path: resolve condition and capture body into WhileLoopOp
+        main = self._active_circuit
+        if isinstance(condition, (Identifier, IndexExpression)):
+            resolved_condition = self._resolve_condition_from_identifier(condition)
+        else:
+            if condition.op != BinaryOperator["=="]:
+                raise NotImplementedError(
+                    f"Unsupported operator '{condition.op.name}' in while-loop condition. "
+                    f"Only '==' is supported for mid-circuit measurement while loops."
+                )
+            resolved_condition = self._resolve_condition(condition)
+
+        body = QuantumCircuit(main.num_qubits, main.num_clbits)
+        self._circuit_stack.append(body)
+        yield True
+        self._circuit_stack.pop()
+
+        if not body.data:
+            raise ValueError(
+                "While loop conditioned on a measurement has an empty body. "
+                "This would result in an infinite loop."
+            )
+
+        max_qubits = max(body.num_qubits, main.num_qubits)
+        max_clbits = max(body.num_clbits, main.num_clbits)
+        if max_qubits > main.num_qubits:
+            main.add_bits([Qubit() for _ in range(max_qubits - main.num_qubits)])
+        if max_clbits > main.num_clbits:
+            main.add_bits([Clbit() for _ in range(max_clbits - main.num_clbits)])
+
+        while_op = WhileLoopOp(resolved_condition, body)
+        main.append(while_op, list(range(max_qubits)), list(range(max_clbits)))
 
     def _evaluate_expression(self, expression):
         """Lightweight expression evaluator for loop conditions and ranges."""
