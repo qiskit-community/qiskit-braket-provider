@@ -308,7 +308,7 @@ class TestBraketAwsBackend(TestCase):
 
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketBackend(AWSBraketBackend):  # pylint: disable=unused-variable
+            class SubclassAWSBraketBackend(AWSBraketBackend):
                 """A subclass of AWSBraketBackend for testing purposes"""
 
     def test_run_multiple_circuits(self):
