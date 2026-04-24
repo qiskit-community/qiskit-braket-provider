@@ -1215,7 +1215,7 @@ def _remove_terminal_barrier(
     """
     n_i = len(circ.data)
     for n, instr in enumerate(circ.data[::-1]):
-        if getattr(instr[0], "name", None) == "measure":
+        if isinstance(instr.operation, Measure):
             continue
         if isinstance(instr.operation, Barrier):
             label = getattr(instr.operation, "label", None)
