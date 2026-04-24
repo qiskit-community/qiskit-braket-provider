@@ -33,6 +33,17 @@ please ensure that:
    ```
    from the root of the repository clone for lint and format checks.
 
+2. Other tests will run upon PR submission. You can run 
+   ```shell script
+   tox 
+   ```
+   to perform a complete test. For debugging, you can utilize tox with additional positional arguments. For instance:
+   ```shell script
+   tox -e min-versions -- --exitfirst -s
+   ```
+   runs the minimal environment, but will fail on first failed test will all print outputs to STDOUT. 
+
+
 ### PR Title Format
 
 We use PR titles to update the project version number and generate changelog entries.
