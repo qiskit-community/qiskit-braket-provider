@@ -972,6 +972,7 @@ def _simulator_target(device: Device, description: str):
             if gate in _STANDARD_GATE_NAME_MAPPING:
                 target.add_instruction(_STANDARD_GATE_NAME_MAPPING[gate])
     target.add_instruction(Measure())
+    target.add_instruction(Barrier(1))
     return target
 
 
@@ -1321,6 +1322,28 @@ def _restore_verbatim_boxes(
     return reconstructed_circuit
 
 
+def _remove_terminal_barrier(
+    circ: QuantumCircuit, verbatim_box_name: str = _BRAKET_VERBATIM_BOX_NAME
+):
+    """If the instruction before a final measurements is a non-verbatim barrier, remove it.
+
+    Main application is to help remove the terminal barrier added by (1) measure_all, or
+    (2) measure_active in cases where the device does not support barrier
+    [TODO: refactor as a TransformationPass]
+    """
+    n_i = len(circ.data)
+    for n, instr in enumerate(circ.data[::-1]):
+        if isinstance(instr.operation, Measure):
+            continue
+        if isinstance(instr.operation, Barrier):
+            label = getattr(instr.operation, "label", None)
+            if label != verbatim_box_name:
+                del circ.data[n_i - 1 - n]
+            break
+        break
+    return circ
+
+
 @dataclass(frozen=True)
 class _CompilationContext:
     """Internal result from _compile containing compiled circuits and resolved state."""
@@ -1458,6 +1481,7 @@ def _compile(
                 routing_method=effective_routing_method,
                 seed_transpiler=seed_transpiler,
             )
+
     if isinstance(target, _SubstitutedTarget):
         circuits = target._substitute(circuits)
 
@@ -1468,6 +1492,8 @@ def _compile(
             else circ
             for circ, verbatim_boxes in zip(circuits, all_verbatim_boxes, strict=False)
         ]
+    if target and "barrier" not in target.operation_names:
+        circuits = [_remove_terminal_barrier(c, verbatim_box_name) for c in circuits]
 
     return _CompilationContext(
         circuits=circuits,
@@ -1799,6 +1825,7 @@ def _default_target(circuits: Iterable[QuantumCircuit]) -> Target:
         if name := _BRAKET_TO_QISKIT_NAMES.get(braket_name.lower()):
             target.add_instruction(instruction, name=name)
     target.add_instruction(Measure())
+    target.add_instruction(Barrier(1))
     return target
 
 
