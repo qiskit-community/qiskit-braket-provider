@@ -1222,6 +1222,7 @@ def _remove_terminal_barrier(
             if label != verbatim_box_name:
                 del circ.data[n_i - 1 - n]
             break
+        break
     return circ
 
 

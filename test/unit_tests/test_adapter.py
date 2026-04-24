@@ -713,13 +713,40 @@ class TestAdapter(TestCase):
         qc.measure_all()
 
         expected = Circuit().h(0).cnot(0, 1).measure([0, 1, 2])
-        self.assertEqual(
-            to_braket(
-                qc,
-                target=target,
-            ),
-            expected,
-        )
+        self.assertEqual(to_braket(qc,target=target), expected)
+
+    def test_non_terminal_barrier_not_removed(self):
+        """test that prior barriers will remain, and can be validated out later """
+        target = Target(num_qubits=3)
+        target.add_instruction(qiskit_gates.HGate())
+        target.add_instruction(qiskit_gates.CXGate())
+        target.add_instruction(Measure())
+
+        qc = QuantumCircuit(3)
+        qc.h(0)
+        qc.barrier(0)
+        qc.cx(0, 1)
+        qc.measure_all()
+
+        expected = Circuit().h(0).barrier(0).cnot(0, 1).measure([0, 1, 2])
+        self.assertEqual(to_braket(qc,target=target), expected)
+
+    def test_barrier_with_post_instruction_not_removed(self):
+        """test non-terminal barriers are not removed, even if only one """
+        target = Target(num_qubits=3)
+        target.add_instruction(qiskit_gates.HGate())
+        target.add_instruction(qiskit_gates.CXGate())
+        target.add_instruction(Measure())
+
+        qc = QuantumCircuit(3,3)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.barrier()
+        qc.h(2)
+        qc.measure(0,0)
+        qc.measure(1,1)
+        expected = Circuit().h(0).cnot(0, 1).barrier([0,1,2]).h(2).measure([0, 1])
+        self.assertEqual(to_braket(qc,target=target), expected)
 
     def test_measure(self):
         """Tests the translation of a measure instruction"""
