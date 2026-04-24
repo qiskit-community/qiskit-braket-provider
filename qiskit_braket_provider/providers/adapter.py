@@ -1966,27 +1966,13 @@ def to_qiskit(
         >>> # All verbatim boxes will have the label "my_verbatim"
     """
     if isinstance(circuit, Program):
-        try:
-            return (
-                Interpreter(_QiskitProgramContext(verbatim_box_name))
-                .run(circuit.source, inputs=circuit.inputs)
-                .circuit
-            )
-        except AttributeError as e:
-            if "SymbolLiteral" in str(e):
-                raise TypeError(
-                    "Loop variable used in a context that requires a static integer value."
-                ) from e
-            raise  # pragma: no cover
+        return (
+            Interpreter(_QiskitProgramContext(verbatim_box_name))
+            .run(circuit.source, inputs=circuit.inputs)
+            .circuit
+        )
     if isinstance(circuit, str):
-        try:
-            return Interpreter(_QiskitProgramContext(verbatim_box_name)).run(circuit).circuit
-        except AttributeError as e:
-            if "SymbolLiteral" in str(e):
-                raise TypeError(
-                    "Loop variable used in a context that requires a static integer value."
-                ) from e
-            raise  # pragma: no cover
+        return Interpreter(_QiskitProgramContext(verbatim_box_name)).run(circuit).circuit
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 
