@@ -1,7 +1,7 @@
-"""Tests for branching statement (if/else) support in the Qiskit adapter."""
+"""Tests for dynamic circuit support (if/else, for loops, while loops) in the Qiskit adapter."""
 
 import pytest
-from qiskit.circuit import Clbit, IfElseOp
+from qiskit.circuit import Clbit, ForLoopOp, IfElseOp, WhileLoopOp
 from qiskit.circuit.library import CXGate, HGate, Measure, XGate, YGate, ZGate
 from qiskit.transpiler import Target
 
@@ -120,6 +120,21 @@ if (c[0] == 1) {
 
     assert _get_ops_with_qubits(true_body) == [("h", [1])]
     assert false_body is None
+
+
+def test_mcm_branch_empty_bodies():
+    """A branching statement conditioned on MCM with no quantum ops raises ValueError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+bit c;
+c = measure q[0];
+if (c == 1) {
+    int[8] x = 0;
+}
+"""
+    with pytest.raises(ValueError, match="empty bodies"):
+        to_qiskit(qasm)
 
 
 @pytest.mark.parametrize(
@@ -266,7 +281,7 @@ if (c[1] == 1) {
 
 
 def test_for_loop_before_measurement_works():
-    """For loops that appear before any measurement should work normally."""
+    """For loops that appear before any measurement produce a ForLoopOp."""
     qasm = """
 OPENQASM 3.0;
 qubit[2] q;
@@ -277,16 +292,16 @@ for int[8] i in [0:1] {
 c[0] = measure q[0];
 """
     qc = to_qiskit(qasm)
-    main_ops = [
-        (instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data
-    ]
-    assert main_ops[0] == ("h", [0])
-    assert main_ops[1] == ("h", [0])
-    assert main_ops[2] == ("measure", [0])
+    for_ops = [instr for instr in qc.data if isinstance(instr.operation, ForLoopOp)]
+    assert len(for_ops) == 1
+    indexset, _, body = for_ops[0].operation.params
+    assert indexset == (0, 1)
+    assert len(body.data) == 1
+    assert body.data[0].operation.name == "h"
 
 
 def test_for_loop_after_unrelated_measurement_works():
-    """A for loop after a measurement on a different qubit should work."""
+    """A for loop after a measurement produces a ForLoopOp."""
     qasm = """
 OPENQASM 3.0;
 qubit[2] q;
@@ -297,16 +312,88 @@ for int[8] i in [0:1] {
 }
 """
     qc = to_qiskit(qasm)
-    main_ops = [
-        (instr.operation.name, [qc.find_bit(q).index for q in instr.qubits]) for instr in qc.data
-    ]
-    assert main_ops[0] == ("measure", [0])
-    assert main_ops[1] == ("h", [1])
-    assert main_ops[2] == ("h", [1])
+    assert qc.data[0].operation.name == "measure"
+    for_ops = [instr for instr in qc.data if isinstance(instr.operation, ForLoopOp)]
+    assert len(for_ops) == 1
+    indexset, _, body = for_ops[0].operation.params
+    assert indexset == (0, 1)
+    assert len(body.data) == 1
+    assert body.data[0].operation.name == "h"
+
+
+def test_for_loop_body_references_loop_var():
+    """ForLoopOp body should reference the loop parameter symbolically."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+for int[8] i in [0:2] {
+    rx(i * 0.5) q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    for_op = next(d.operation for d in qc.data if isinstance(d.operation, ForLoopOp))
+    _, loop_param, body = for_op.params
+    assert loop_param in body.parameters
+
+
+def test_for_loop_var_as_qubit_index():
+    """Using the loop variable as a qubit index should raise an error."""
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+for int[8] i in [0:3] {
+    h q[i];
+}
+"""
+    with pytest.raises(AttributeError):
+        to_qiskit(qasm)
+
+
+def test_for_loop_var_as_qubit_index_program():
+    """Using the loop variable as a qubit index via Program should raise an error."""
+    from braket.ir.openqasm import Program
+
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+for int[8] i in [0:3] {
+    h q[i];
+}
+"""
+    with pytest.raises(AttributeError):
+        to_qiskit(Program(source=qasm))
+
+
+def test_for_loop_mixed_classical_quantum_body():
+    """A for loop with both quantum ops and classical side effects should raise."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+int[8] counter = 0;
+for int[8] i in [0:3] {
+    counter = counter + 1;
+    rx(i * 0.5) q[0];
+}
+"""
+    with pytest.raises(ValueError, match="modifies classical variable"):
+        to_qiskit(qasm)
+
+
+def test_for_loop_empty_range():
+    """A for loop with an empty range should produce no operations."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+for int[8] i in [0:-1] {
+    h q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    assert len(qc.data) == 0
 
 
 def test_mcm_branch_inside_for_loop():
-    """An MCM branching statement inside a for loop should produce IfElseOps."""
+    """An MCM branching statement inside a for loop should produce a ForLoopOp."""
     qasm = """
 OPENQASM 3.0;
 qubit[2] q;
@@ -321,14 +408,20 @@ for int[8] i in [0:1] {
 }
 """
     qc = to_qiskit(qasm)
-    if_else_ops = _get_if_else_ops(qc)
-    assert len(if_else_ops) == 2
+    for_ops = [instr for instr in qc.data if isinstance(instr.operation, ForLoopOp)]
+    assert len(for_ops) == 1
 
-    for op_instr in if_else_ops:
-        true_body, false_body = op_instr.operation.params
-        assert _get_ops_with_qubits(true_body) == [("h", [1])]
-        assert _get_ops_with_qubits(false_body) == [("x", [1])]
-        assert qc.clbits.index(op_instr.operation.condition[0]) == 0
+    op = for_ops[0].operation
+    indexset, _, body = op.params
+    assert indexset == (0, 1)
+
+    # The body should contain the IfElseOp
+    if_else_ops = [instr for instr in body.data if isinstance(instr.operation, IfElseOp)]
+    assert len(if_else_ops) == 1
+
+    true_body, false_body = if_else_ops[0].operation.params
+    assert _get_ops_with_qubits(true_body) == [("h", [1])]
+    assert _get_ops_with_qubits(false_body) == [("x", [1])]
 
 
 @pytest.fixture
@@ -511,6 +604,7 @@ c[0] = measure q[0];
 
 
 def test_for_loop_with_break():
+    """break statements in for loops are not supported."""
     qasm = """
 OPENQASM 3.0;
 qubit[1] q;
@@ -521,12 +615,12 @@ for int[8] i in {0, 1, 2} {
 }
 c[0] = measure q[0];
 """
-    qc = to_qiskit(qasm)
-    h_count = sum(1 for name, _ in _get_ops_with_qubits(qc) if name == "h")
-    assert h_count == 1
+    with pytest.raises(NotImplementedError, match="break statements are not supported"):
+        to_qiskit(qasm)
 
 
 def test_for_loop_with_continue():
+    """continue statements in for loops are not supported."""
     qasm = """
 OPENQASM 3.0;
 qubit[1] q;
@@ -537,9 +631,8 @@ for int[8] i in {0, 1} {
 }
 c[0] = measure q[0];
 """
-    qc = to_qiskit(qasm)
-    h_count = sum(1 for name, _ in _get_ops_with_qubits(qc) if name == "h")
-    assert h_count == 0
+    with pytest.raises(NotImplementedError, match="continue statements are not supported"):
+        to_qiskit(qasm)
 
 
 def test_condition_literal_on_lhs():
@@ -580,6 +673,7 @@ if (c == 1) {
 
 
 def test_while_loop_with_break():
+    """break statements in while loops are not supported."""
     qasm = """
 OPENQASM 3.0;
 qubit[1] q;
@@ -592,12 +686,12 @@ while (i < 5) {
 }
 c[0] = measure q[0];
 """
-    qc = to_qiskit(qasm)
-    h_count = sum(1 for name, _ in _get_ops_with_qubits(qc) if name == "h")
-    assert h_count == 1
+    with pytest.raises(NotImplementedError, match="break statements are not supported"):
+        to_qiskit(qasm)
 
 
 def test_while_loop_with_continue():
+    """continue statements in while loops are not supported."""
     qasm = """
 OPENQASM 3.0;
 qubit[1] q;
@@ -610,9 +704,8 @@ while (i < 2) {
 }
 c[0] = measure q[0];
 """
-    qc = to_qiskit(qasm)
-    h_count = sum(1 for name, _ in _get_ops_with_qubits(qc) if name == "h")
-    assert h_count == 0
+    with pytest.raises(NotImplementedError, match="continue statements are not supported"):
+        to_qiskit(qasm)
 
 
 def test_resolve_clbit_index_unsupported_type():
@@ -782,9 +875,9 @@ def test_physical_qubit_inside_branch_expands_circuit():
     """A physical qubit reference inside a branch should expand the main circuit."""
     qasm = """
 OPENQASM 3.0;
-qubit[2] q;
 bit[1] c;
-c[0] = measure q[0];
+x $0;
+c[0] = measure $0;
 if (c[0] == 1) {
     h $4;
 }
@@ -796,8 +889,8 @@ if (c[0] == 1) {
     assert _get_ops_with_qubits(true_body) == [("h", [4])]
 
 
-def test_mcm_while_loop_not_supported():
-    """A while loop conditioned on a measurement result is not yet supported."""
+def test_mcm_while_loop():
+    """A while loop conditioned on a measurement result produces a WhileLoopOp."""
     qasm = """
 OPENQASM 3.0;
 qubit[2] q;
@@ -808,8 +901,200 @@ while (c == 0) {
     c = measure q[0];
 }
 """
-    with pytest.raises(ValueError):
+    qc = to_qiskit(qasm)
+    while_ops = [instr for instr in qc.data if isinstance(instr.operation, WhileLoopOp)]
+    assert len(while_ops) == 1
+
+    op = while_ops[0].operation
+    clbit, value = op.condition
+    assert qc.clbits.index(clbit) == 0
+    assert value == 0
+
+    body = op.params[0]
+    body_ops = [
+        (instr.operation.name, [body.find_bit(q).index for q in instr.qubits])
+        for instr in body.data
+    ]
+    assert body_ops == [("x", [1]), ("measure", [0])]
+
+
+def test_mcm_while_loop_bare_identifier():
+    """A while loop with a bare identifier condition (no ==) produces a WhileLoopOp."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+while (c) {
+    h q[1];
+    c = measure q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    while_ops = [instr for instr in qc.data if isinstance(instr.operation, WhileLoopOp)]
+    assert len(while_ops) == 1
+
+    op = while_ops[0].operation
+    clbit, value = op.condition
+    assert qc.clbits.index(clbit) == 0
+    assert value == 1  # bare identifier implies == 1
+
+
+def test_mcm_while_loop_circuit_dimensions():
+    """WhileLoopOp body should have the same dimensions as the main circuit."""
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+bit[2] c;
+c[0] = measure q[0];
+while (c[0] == 1) {
+    x q[1];
+    c[0] = measure q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    while_ops = [instr for instr in qc.data if isinstance(instr.operation, WhileLoopOp)]
+    assert len(while_ops) == 1
+
+    body = while_ops[0].operation.params[0]
+    assert body.num_qubits == qc.num_qubits
+    assert body.num_clbits == qc.num_clbits
+
+
+def test_mcm_while_loop_with_branch_inside():
+    """A while loop containing an MCM branch should produce WhileLoopOp with IfElseOp body."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+while (c == 1) {
+    if (c == 1) {
+        x q[1];
+    }
+    c = measure q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    while_ops = [instr for instr in qc.data if isinstance(instr.operation, WhileLoopOp)]
+    assert len(while_ops) == 1
+
+    body = while_ops[0].operation.params[0]
+    body_op_names = [instr.operation.name for instr in body.data]
+    assert "if_else" in body_op_names
+    assert "measure" in body_op_names
+
+
+def test_static_while_loop_unchanged():
+    """A while loop with a static condition should still unroll normally."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+bool flag = true;
+while (flag) {
+    h q[0];
+    flag = false;
+}
+"""
+    qc = to_qiskit(qasm)
+    while_ops = [instr for instr in qc.data if isinstance(instr.operation, WhileLoopOp)]
+    assert len(while_ops) == 0
+    op_names = [instr.operation.name for instr in qc.data]
+    assert "h" in op_names
+
+
+def test_mcm_while_loop_empty_body():
+    """A while loop conditioned on MCM with no quantum ops in body raises ValueError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+bit c;
+c = measure q[0];
+while (c == 1) {
+    int[8] x = 0;
+}
+"""
+    with pytest.raises(ValueError, match="empty body"):
         to_qiskit(qasm)
+
+
+def test_mcm_while_loop_break():
+    """break in an MCM while loop raises NotImplementedError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+while (c == 1) {
+    x q[1];
+    break;
+}
+"""
+    with pytest.raises(NotImplementedError, match="break statements are not supported"):
+        to_qiskit(qasm)
+
+
+def test_mcm_while_loop_unsupported_operator():
+    """A while loop with != operator raises NotImplementedError."""
+    qasm = """
+OPENQASM 3.0;
+qubit[2] q;
+bit c;
+c = measure q[0];
+while (c != 0) {
+    x q[1];
+    c = measure q[0];
+}
+"""
+    with pytest.raises(NotImplementedError, match="Unsupported operator"):
+        to_qiskit(qasm)
+
+
+def test_while_loop_unsupported_condition_type():
+    """A non-boolean-castable static while condition should raise an unsupported condition error."""
+    ctx = _QiskitProgramContext()
+    gen = ctx.evaluate_while_condition(ArrayLiteral(values=[BooleanLiteral(value=True)]))
+    with pytest.raises(TypeError, match="Unsupported condition in while loop"):
+        next(gen)
+
+
+def test_for_loop_body_expands_circuit():
+    """A physical qubit reference inside a for-loop body expands the main circuit."""
+    qasm = """
+OPENQASM 3.0;
+bit[1] c;
+x $0;
+c[0] = measure $0;
+for int[8] i in [0:1] {
+    if (c[0] == 1) {
+        h $4;
+    }
+    bit[1] extra;
+    extra[0] = measure $1;
+}
+"""
+    qc = to_qiskit(qasm)
+    assert qc.num_qubits == 5
+    assert qc.num_clbits == 2
+
+
+def test_while_loop_body_expands_circuit():
+    """A physical qubit reference inside a while-loop body expands the main circuit."""
+    qasm = """
+OPENQASM 3.0;
+bit[1] c;
+x $0;
+c[0] = measure $0;
+while (c[0] == 1) {
+    h $4;
+    bit[1] extra;
+    extra[0] = measure $1;
+    c[0] = measure $0;
+}
+"""
+    qc = to_qiskit(qasm)
+    assert qc.num_qubits == 5
+    assert qc.num_clbits == 2
 
 
 def test_classical_bit_declared_inside_branch_expands_circuit():
