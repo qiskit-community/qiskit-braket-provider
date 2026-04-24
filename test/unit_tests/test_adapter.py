@@ -638,7 +638,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
+            Circuit()
             .rz(0, FreeParameter("θ"))
             .u(0, FreeParameter("θ"), FreeParameter("φ"), FreeParameter("λ"))
             .u(0, FreeParameter("θ"), FreeParameter("φ"), np.pi)
@@ -709,9 +709,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.measure(0, 0)
         braket_circuit = to_braket(qiskit_circuit)
 
-        expected_braket_circuit = (
-            Circuit().h(0).cnot(0, 1).measure(0)  # pylint: disable=no-member
-        )
+        expected_braket_circuit = Circuit().h(0).cnot(0, 1).measure(0)
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -728,7 +726,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit().h(0).cnot(0, 1).cnot(1, 2).measure(2).measure(0).measure(1)  # pylint: disable=no-member
+            Circuit().h(0).cnot(0, 1).cnot(1, 2).measure(2).measure(0).measure(1)
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -779,9 +777,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.measure(0, 1)
         braket_circuit = to_braket(qiskit_circuit)
 
-        expected_braket_circuit = (
-            Circuit().h(0).cnot(0, 1).measure(0)  # pylint: disable=no-member
-        )
+        expected_braket_circuit = Circuit().h(0).cnot(0, 1).measure(0)
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
@@ -801,13 +797,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
-            .h(0)
-            .cnot(0, 1)
-            .cnot(1, 2)
-            .cnot(2, 3)
-            .measure(0)
-            .measure(2)
+            Circuit().h(0).cnot(0, 1).cnot(1, 2).cnot(2, 3).measure(0).measure(2)
         )
 
         self.assertEqual(braket_circuit, expected_braket_circuit)
@@ -826,7 +816,7 @@ class TestAdapter(TestCase):
         braket_circuit = to_braket(qiskit_circuit)
 
         expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
+            Circuit()
             .h(0)
             .cnot(0, 1)
             .cnot(1, 2)
@@ -857,14 +847,7 @@ class TestAdapter(TestCase):
         qiskit_circuit.measure(qreg_b[0], creg[0])
         braket_circuit = to_braket(qiskit_circuit)
 
-        expected_braket_circuit = (
-            Circuit()  # pylint: disable=no-member
-            .h(0)
-            .x(1)
-            .cnot(0, 2)
-            .measure(2)
-            .measure(0)
-        )
+        expected_braket_circuit = Circuit().h(0).x(1).cnot(0, 2).measure(2).measure(0)
         self.assertEqual(braket_circuit, expected_braket_circuit)
 
     def test_verbatim(self):

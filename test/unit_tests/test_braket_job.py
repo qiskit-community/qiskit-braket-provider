@@ -12,7 +12,7 @@ class TestAmazonBraketTask(TestCase):
         """Test to check if a deprecation warning is raised when initializing AmazonBraketTask"""
         with self.assertWarns(DeprecationWarning):
 
-            class SubAmazonBraketTask(AmazonBraketTask):  # pylint: disable=unused-variable
+            class SubAmazonBraketTask(AmazonBraketTask):
                 """Subclass of AmazonBraketTask for testing"""
 
 
@@ -23,5 +23,5 @@ class TestAWSBraketJob(TestCase):
         """Test to check if a deprecation warning is raised when initializing AWSBraketJob"""
         with self.assertWarns(DeprecationWarning):
 
-            class SubAwsBraketJob(AWSBraketJob):  # pylint: disable=unused-variable
+            class SubAwsBraketJob(AWSBraketJob):
                 """Subclass of AWSBraketJob for testing"""
