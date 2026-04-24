@@ -313,7 +313,6 @@ MOCK_PROGRAM_RESULT = {
         }
     },
 }
-# pylint: disable-next=no-value-for-parameter
 MOCK_PROGRAM_SET_RESULT = ProgramSetQuantumTaskResult.from_object(
     ProgramSetTaskResult(
         braketSchemaHeader={

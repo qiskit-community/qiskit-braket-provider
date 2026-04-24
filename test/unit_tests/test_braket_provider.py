@@ -23,7 +23,7 @@ from qiskit_braket_provider import (
     to_qiskit,
 )
 from qiskit_braket_provider.providers.braket_backend import BraketBackend
-from tests.providers.mocks import (
+from test.unit_tests.mocks import (
     MOCK_GATE_MODEL_SIMULATOR_SV,
     MOCK_GATE_MODEL_SIMULATOR_TN,
     MOCK_RIGETTI_GATE_MODEL_M_3_QPU,
@@ -84,7 +84,7 @@ class TestBraketProvider(TestCase):
         """Check if a DeprecationWarning is raised when a subclass of AWSBraketProvider is created"""
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketProvider(AWSBraketProvider):  # pylint: disable=unused-variable
+            class SubclassAWSBraketProvider(AWSBraketProvider):
                 """This is a subclass of AWSBraketProvider for testing purposes."""
 
     def test_provider_backends_kwargs_local(self):

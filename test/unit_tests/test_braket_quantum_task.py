@@ -16,7 +16,7 @@ from qiskit_braket_provider import (
     BraketQuantumTask,
 )
 from qiskit_braket_provider.providers.braket_quantum_task import retry_if_result_none
-from tests.providers.mocks import MOCK_LOCAL_QUANTUM_TASK, MOCK_PROGRAM_SET_QUANTUM_TASK
+from test.unit_tests.mocks import MOCK_LOCAL_QUANTUM_TASK, MOCK_PROGRAM_SET_QUANTUM_TASK
 
 
 class TestBraketQuantumTask(TestCase):
@@ -51,12 +51,10 @@ class TestBraketQuantumTask(TestCase):
         self.assertEqual(task.result().backend_name, "default")
         self.assertEqual(task.result().get_memory(), ["10", "10", "1"])
 
-        # pylint: disable=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
         self.assertEqual(task.result().results[0].data.memory, ["0x2", "0x2", "0x1"])
         self.assertEqual(task.result().results[0].status, "COMPLETED")
         self.assertEqual(task.result().results[0].shots, 3)
-        # pylint: enable=no-member
 
     def test_program_set(self):
         """Tests program set."""
@@ -71,12 +69,10 @@ class TestBraketQuantumTask(TestCase):
         self.assertEqual(task.result().job_id, "TaskID")
         self.assertEqual(task.result().status, "COMPLETED")
         self.assertEqual(
-            # pylint: disable-next=no-member
             task.result().results[0].data.counts,
             {"11": 9, "00": 7, "01": 2, "10": 2},
         )
         self.assertEqual(
-            # pylint: disable-next=no-member
             task.result().results[0].data.memory,
             [
                 "0x0",
@@ -101,7 +97,6 @@ class TestBraketQuantumTask(TestCase):
                 "0x0",
             ],
         )
-        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].shots, 20)
 
     @patch(
@@ -240,13 +235,9 @@ class TestAmazonBraketTask(TestCase):
         task = self._get_task()
 
         self.assertEqual(task.result().job_id, "AwesomeId")
-        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.counts, {"01": 1, "10": 2})
-        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].data.memory, ["0x2", "0x2", "0x1"])
-        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].status, "COMPLETED")
-        # pylint: disable-next=no-member
         self.assertEqual(task.result().results[0].shots, 3)
         self.assertEqual(task.result().get_memory(), ["10", "10", "1"])
 
@@ -277,13 +268,9 @@ class TestAWSBraketJob(TestCase):
         job = self._get_job()
 
         self.assertEqual(job.result().job_id, "AwesomeId")
-        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].data.counts, {"01": 1, "10": 2})
-        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].data.memory, ["0x2", "0x2", "0x1"])
-        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].status, "COMPLETED")
-        # pylint: disable-next=no-member
         self.assertEqual(job.result().results[0].shots, 3)
         self.assertEqual(job.result().get_memory(), ["10", "10", "1"])
 

@@ -1,19 +1,16 @@
 """Setup file for Qiskit-Braket provider."""
 
 import pathlib
-from typing import Any
 
 import setuptools
 
 long_description = pathlib.Path("README.md").read_text(encoding="utf-8")
 
 install_requires = pathlib.Path("requirements.txt").read_text(encoding="utf-8").splitlines()
+test_requires = pathlib.Path("requirements-dev.txt").read_text(encoding="utf-8").splitlines()
 
-version_path = pathlib.Path(__file__).resolve().parent / "qiskit_braket_provider" / "version.py"
-
-version_dict: dict[str, Any] | None = {}
-exec(pathlib.Path(version_path).read_text(encoding="utf-8"), version_dict)  # noqa: S102
-version = version_dict["__version__"]
+with pathlib.Path("qiskit_braket_provider/_version.py").open(encoding="utf-8") as f:
+    version = f.readlines()[-1].split()[-1].strip("\"'")
 
 setuptools.setup(
     name="qiskit_braket_provider",
@@ -23,6 +20,7 @@ setuptools.setup(
     keywords="qiskit braket sdk quantum",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
+    extras_require={"test": test_requires},
     python_requires=">=3.11",
     version=version,
     classifiers=[

@@ -28,11 +28,11 @@ from qiskit_braket_provider import (
     BraketAwsBackend,
     BraketLocalBackend,
     BraketProvider,
+    __version__,
     exception,
-    version,
 )
 from qiskit_braket_provider.providers.adapter import native_gate_connectivity
-from tests.providers.mocks import (
+from test.unit_tests.mocks import (
     MOCK_RIGETTI_GATE_MODEL_QPU_CAPABILITIES,
     MOCK_RIGETTI_M_3_QPU_CAPABILITIES,
     MOCK_RIGETTI_STANARDIZED_PROPERTIES,
@@ -267,7 +267,7 @@ class TestBraketAwsBackend(TestCase):
         self.assertTrue(backend)
         self.assertIsInstance(backend.target, Target)
         self.assertIsNone(backend.max_circuits)
-        user_agent = f"QiskitBraketProvider/{version.__version__}"
+        user_agent = f"QiskitBraketProvider/{__version__}"
         device.aws_session.add_braket_user_agent.assert_called_with(user_agent)
         with self.assertRaises(NotImplementedError):
             backend.dtm()
@@ -308,7 +308,7 @@ class TestBraketAwsBackend(TestCase):
 
         with self.assertWarns(DeprecationWarning):
 
-            class SubclassAWSBraketBackend(AWSBraketBackend):  # pylint: disable=unused-variable
+            class SubclassAWSBraketBackend(AWSBraketBackend):
                 """A subclass of AWSBraketBackend for testing purposes"""
 
     def test_run_multiple_circuits(self):
