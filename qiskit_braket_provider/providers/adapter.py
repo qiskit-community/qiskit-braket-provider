@@ -620,8 +620,13 @@ class _QiskitProgramContext(AbstractProgramContext):
         else:
             index_values = index.values
 
+        if not index_values:
+            return
+
         main = self._active_circuit
         # First pass: capture with concrete value to detect classical vs quantum body
+        # Snapshot outer scope variables to detect classical side effects
+        outer_vars = dict(self.variable_table.current_scope)
         probe = QuantumCircuit(main.num_qubits, main.num_clbits)
         self._circuit_stack.append(probe)
         with self.enter_scope():
@@ -636,6 +641,20 @@ class _QiskitProgramContext(AbstractProgramContext):
                     self.declare_variable(loop_var, loop_type, i)
                     yield
             return
+
+        # Detect classical side effects: if outer scope variables changed during
+        # the probe, the body mutates classical state that ForLoopOp won't capture
+        modified_vars = [
+            name
+            for name, val in self.variable_table.current_scope.items()
+            if name in outer_vars and outer_vars[name] != val
+        ]
+        if modified_vars:
+            raise ValueError(
+                f"For loop body modifies classical variable(s) {modified_vars} "
+                f"which cannot be captured by ForLoopOp. "
+                f"Only quantum operations are preserved across loop iterations."
+            )
 
         # Second pass: re-capture with symbolic loop variable for correct ForLoopOp binding
         body = QuantumCircuit(main.num_qubits, main.num_clbits)
@@ -1947,13 +1966,27 @@ def to_qiskit(
         >>> # All verbatim boxes will have the label "my_verbatim"
     """
     if isinstance(circuit, Program):
-        return (
-            Interpreter(_QiskitProgramContext(verbatim_box_name))
-            .run(circuit.source, inputs=circuit.inputs)
-            .circuit
-        )
+        try:
+            return (
+                Interpreter(_QiskitProgramContext(verbatim_box_name))
+                .run(circuit.source, inputs=circuit.inputs)
+                .circuit
+            )
+        except AttributeError as e:
+            if "SymbolLiteral" in str(e):
+                raise TypeError(
+                    "Loop variable used in a context that requires a static integer value."
+                ) from e
+            raise  # pragma: no cover
     if isinstance(circuit, str):
-        return Interpreter(_QiskitProgramContext(verbatim_box_name)).run(circuit).circuit
+        try:
+            return Interpreter(_QiskitProgramContext(verbatim_box_name)).run(circuit).circuit
+        except AttributeError as e:
+            if "SymbolLiteral" in str(e):
+                raise TypeError(
+                    "Loop variable used in a context that requires a static integer value."
+                ) from e
+            raise  # pragma: no cover
     if not isinstance(circuit, Circuit):
         raise TypeError(f"Expected a Circuit, got {type(circuit)} instead.")
 

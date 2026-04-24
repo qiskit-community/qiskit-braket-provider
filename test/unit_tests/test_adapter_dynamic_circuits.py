@@ -336,6 +336,62 @@ for int[8] i in [0:2] {
     assert loop_param in body.parameters
 
 
+def test_for_loop_var_as_qubit_index():
+    """Using the loop variable as a qubit index should raise a clear error."""
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+for int[8] i in [0:3] {
+    h q[i];
+}
+"""
+    with pytest.raises(TypeError, match="requires a static integer value"):
+        to_qiskit(qasm)
+
+
+def test_for_loop_var_as_qubit_index_program():
+    """Using the loop variable as a qubit index via Program should raise a clear error."""
+    from braket.ir.openqasm import Program
+
+    qasm = """
+OPENQASM 3.0;
+qubit[3] q;
+for int[8] i in [0:3] {
+    h q[i];
+}
+"""
+    with pytest.raises(TypeError, match="requires a static integer value"):
+        to_qiskit(Program(source=qasm))
+
+
+def test_for_loop_mixed_classical_quantum_body():
+    """A for loop with both quantum ops and classical side effects should raise."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+int[8] counter = 0;
+for int[8] i in [0:3] {
+    counter = counter + 1;
+    rx(i * 0.5) q[0];
+}
+"""
+    with pytest.raises(ValueError, match="modifies classical variable"):
+        to_qiskit(qasm)
+
+
+def test_for_loop_empty_range():
+    """A for loop with an empty range should produce no operations."""
+    qasm = """
+OPENQASM 3.0;
+qubit[1] q;
+for int[8] i in [0:-1] {
+    h q[0];
+}
+"""
+    qc = to_qiskit(qasm)
+    assert len(qc.data) == 0
+
+
 def test_mcm_branch_inside_for_loop():
     """An MCM branching statement inside a for loop should produce a ForLoopOp."""
     qasm = """
