@@ -7,6 +7,7 @@ import setuptools
 long_description = pathlib.Path("README.md").read_text(encoding="utf-8")
 
 install_requires = pathlib.Path("requirements.txt").read_text(encoding="utf-8").splitlines()
+test_requires = pathlib.Path("requirements-dev.txt").read_text(encoding="utf-8").splitlines()
 
 with pathlib.Path("qiskit_braket_provider/_version.py").open(encoding="utf-8") as f:
     version = f.readlines()[-1].split()[-1].strip("\"'")
@@ -19,6 +20,7 @@ setuptools.setup(
     keywords="qiskit braket sdk quantum",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
+    extras_require={"test": test_requires},
     python_requires=">=3.11",
     version=version,
     classifiers=[
