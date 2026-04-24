@@ -271,6 +271,7 @@
     <span class="n">CircuitInstruction</span><span class="p">,</span>
     <span class="n">Clbit</span><span class="p">,</span>
     <span class="n">ControlledGate</span><span class="p">,</span>
+    <span class="n">ForLoopOp</span><span class="p">,</span>
     <span class="n">Gate</span><span class="p">,</span>
     <span class="n">IfElseOp</span><span class="p">,</span>
     <span class="n">Measure</span><span class="p">,</span>
@@ -278,6 +279,7 @@
     <span class="n">ParameterExpression</span><span class="p">,</span>
     <span class="n">ParameterVectorElement</span><span class="p">,</span>
     <span class="n">Qubit</span><span class="p">,</span>
+    <span class="n">WhileLoopOp</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Instruction</span> <span class="k">as</span> <span class="n">QiskitInstruction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qiskit.circuit.library</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_standard_gate_name_mapping</span>
@@ -316,6 +318,7 @@
     <span class="n">Cast</span><span class="p">,</span>
     <span class="n">ClassicalType</span><span class="p">,</span>
     <span class="n">DiscreteSet</span><span class="p">,</span>
+    <span class="n">Expression</span><span class="p">,</span>
     <span class="n">FloatLiteral</span><span class="p">,</span>
     <span class="n">Identifier</span><span class="p">,</span>
     <span class="n">IndexedIdentifier</span><span class="p">,</span>
@@ -830,6 +833,12 @@
 
         <span class="n">actual_false</span> <span class="o">=</span> <span class="n">false_body</span> <span class="k">if</span> <span class="n">false_body</span><span class="o">.</span><span class="n">data</span> <span class="k">else</span> <span class="kc">None</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">true_body</span><span class="o">.</span><span class="n">data</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">actual_false</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Branching statement conditioned on a measurement has empty bodies. &quot;</span>
+                <span class="s2">&quot;Both if and else branches contain no quantum operations.&quot;</span>
+            <span class="p">)</span>
+
         <span class="c1"># Sync main circuit dimensions if branch bodies grew</span>
         <span class="n">max_qubits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_body</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">false_body</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)</span>
         <span class="n">max_clbits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">true_body</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">,</span> <span class="n">false_body</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
@@ -843,22 +852,131 @@
         <span class="n">clbits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span><span class="p">))</span>
         <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">if_else_op</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">clbits</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_for_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">set_declaration</span><span class="p">,</span> <span class="n">loop_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up each for-loop iteration, yielding once per iteration.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_for_range</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">set_declaration</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">loop_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">:</span> <span class="n">ClassicalType</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Capture the for-loop body into a ForLoopOp.</span>
+
+<span class="sd">        Yields once to capture the body. If the body contains quantum operations,</span>
+<span class="sd">        wraps it in a ForLoopOp. If purely classical (empty body circuit),</span>
+<span class="sd">        falls back to static unrolling for remaining iterations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">set_declaration</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">RangeDefinition</span><span class="p">):</span>
             <span class="n">index_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">IntegerLiteral</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">convert_range_def_to_range</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">index_values</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">values</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">index_values</span><span class="p">:</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">enter_scope</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">loop_var</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-                <span class="k">yield</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_while_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a while-loop condition, yielding True per iteration.&quot;&quot;&quot;</span>
-        <span class="k">while</span> <span class="n">cast_to</span><span class="p">(</span><span class="n">BooleanLiteral</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">index_values</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
+        <span class="c1"># First pass: capture with concrete value to detect classical vs quantum body</span>
+        <span class="c1"># Snapshot outer scope variables to detect classical side effects</span>
+        <span class="n">outer_vars</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variable_table</span><span class="o">.</span><span class="n">current_scope</span><span class="p">)</span>
+        <span class="n">probe</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">probe</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">enter_scope</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">loop_var</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">,</span> <span class="n">index_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">yield</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">probe</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="c1"># Purely classical loop body — statically unroll remaining iterations</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">index_values</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">enter_scope</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">loop_var</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="k">yield</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Detect classical side effects: if outer scope variables changed during</span>
+        <span class="c1"># the probe, the body mutates classical state that ForLoopOp won&#39;t capture</span>
+        <span class="n">modified_vars</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">name</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_table</span><span class="o">.</span><span class="n">current_scope</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">outer_vars</span> <span class="ow">and</span> <span class="n">outer_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">!=</span> <span class="n">val</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">modified_vars</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;For loop body modifies classical variable(s) </span><span class="si">{</span><span class="n">modified_vars</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;which cannot be captured by ForLoopOp. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Only quantum operations are preserved across loop iterations.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Second pass: re-capture with symbolic loop variable for correct ForLoopOp binding</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">enter_scope</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">declare_variable</span><span class="p">(</span><span class="n">loop_var</span><span class="p">,</span> <span class="n">loop_type</span><span class="p">,</span> <span class="n">SymbolLiteral</span><span class="p">(</span><span class="n">Symbol</span><span class="p">(</span><span class="n">loop_var</span><span class="p">)))</span>
+            <span class="k">yield</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="n">indexset</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">iv</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">iv</span> <span class="ow">in</span> <span class="n">index_values</span><span class="p">)</span>
+        <span class="n">loop_param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">loop_var</span><span class="p">)</span> <span class="ow">or</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">loop_var</span><span class="p">)</span>
+        <span class="n">for_op</span> <span class="o">=</span> <span class="n">ForLoopOp</span><span class="p">(</span><span class="n">indexset</span><span class="p">,</span> <span class="n">loop_param</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+        <span class="n">max_qubits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)</span>
+        <span class="n">max_clbits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_qubits</span> <span class="o">&gt;</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_qubits</span> <span class="o">-</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">max_clbits</span> <span class="o">&gt;</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span> <span class="o">-</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)])</span>
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">for_op</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_qubits</span><span class="p">)),</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span><span class="p">)))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_loop_break</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reject break statements since Qiskit&#39;s ForLoopOp/WhileLoopOp do not support them.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;break statements are not supported in loops.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_loop_continue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reject continue statements since Qiskit&#39;s ForLoopOp/WhileLoopOp do not support them.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;continue statements are not supported in loops.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_while_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Expression</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate a while-loop condition, yielding True per iteration.</span>
+
+<span class="sd">        For static conditions (no measurement dependency), evaluates directly.</span>
+<span class="sd">        For MCM-dependent conditions, captures the body into a WhileLoopOp.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_references_measurement</span><span class="p">(</span><span class="n">condition</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">cast_to</span><span class="p">(</span><span class="n">BooleanLiteral</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_expression</span><span class="p">(</span><span class="n">condition</span><span class="p">))</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Unsupported condition in while loop&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
+
+        <span class="c1"># MCM path: resolve condition and capture body into WhileLoopOp</span>
+        <span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_circuit</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="p">(</span><span class="n">Identifier</span><span class="p">,</span> <span class="n">IndexExpression</span><span class="p">)):</span>
+            <span class="n">resolved_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_condition_from_identifier</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">condition</span><span class="o">.</span><span class="n">op</span> <span class="o">!=</span> <span class="n">BinaryOperator</span><span class="p">[</span><span class="s2">&quot;==&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unsupported operator &#39;</span><span class="si">{</span><span class="n">condition</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in while-loop condition. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Only &#39;==&#39; is supported for mid-circuit measurement while loops.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">resolved_condition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_condition</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+
+        <span class="n">body</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_circuit_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">body</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;While loop conditioned on a measurement has an empty body. &quot;</span>
+                <span class="s2">&quot;This would result in an infinite loop.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">max_qubits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)</span>
+        <span class="n">max_clbits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">,</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_qubits</span> <span class="o">&gt;</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Qubit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_qubits</span> <span class="o">-</span> <span class="n">main</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">max_clbits</span> <span class="o">&gt;</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">:</span>
+            <span class="n">main</span><span class="o">.</span><span class="n">add_bits</span><span class="p">([</span><span class="n">Clbit</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span> <span class="o">-</span> <span class="n">main</span><span class="o">.</span><span class="n">num_clbits</span><span class="p">)])</span>
+
+        <span class="n">while_op</span> <span class="o">=</span> <span class="n">WhileLoopOp</span><span class="p">(</span><span class="n">resolved_condition</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">while_op</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_qubits</span><span class="p">)),</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">max_clbits</span><span class="p">)))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_evaluate_expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Lightweight expression evaluator for loop conditions and ranges.&quot;&quot;&quot;</span>
